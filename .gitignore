@@ -1,0 +1,9 @@
+# Build Artifacts
+bazel-bin
+bazel-out
+bazel-testlogs
+bazel-webgba
+bazel-bin/
+bazel-out/
+bazel-testlogs/
+bazel-webgba/
