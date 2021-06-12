@@ -1,4 +1,4 @@
-#include "emulator/cpu/cpu.h"
+#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 #include <string.h>
 

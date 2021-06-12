@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_CPU_CPU_
-#define _WEBGBA_EMULATOR_CPU_CPU_
+#ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
+#define _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -75,4 +75,4 @@ typedef struct {
 
 CpuState CreateCpuState();
 
-#endif // _WEBGBA_EMULATOR_CPU_CPU_
+#endif // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
