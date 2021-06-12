@@ -4,6 +4,59 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+typedef enum {
+    REGISTER_R0 = 0,
+    REGISTER_R1 = 1,
+    REGISTER_R2 = 2,
+    REGISTER_R3 = 3,
+    REGISTER_R4 = 4,
+    REGISTER_R5 = 5,
+    REGISTER_R6 = 6,
+    REGISTER_R7 = 7,
+    REGISTER_R8 = 8,
+    REGISTER_R9 = 9,
+    REGISTER_R10 = 10,
+    REGISTER_R11 = 11,
+    REGISTER_R12 = 12,
+    REGISTER_R13 = 13,
+    REGISTER_SP = 13,
+    REGISTER_R14 = 14,
+    REGISTER_LR = 14,
+    REGISTER_R15 = 15,
+    REGISTER_PC = 15
+} ArmRegisterIndex;
+
+typedef union {
+    struct {
+        uint32_t r0;
+        uint32_t r1;
+        uint32_t r2;
+        uint32_t r3;
+        uint32_t r4;
+        uint32_t r5;
+        uint32_t r6;
+        uint32_t r7;
+        uint32_t r8;
+        uint32_t r9;
+        uint32_t r10;
+        uint32_t r11;
+        uint32_t r12;
+        union {
+            uint32_t r13;
+            uint32_t sp;
+        };
+        union {
+            uint32_t r14;
+            uint32_t lr;
+        };
+        union {
+            uint32_t r15;
+            uint32_t pc;
+        };
+    };
+    uint32_t gprs[16];
+} ArmGeneralPurposeRegisters;
+
 #define MODE_USER 0x10
 #define MODE_FIQ 0x11
 #define MODE_IRQ 0x12
@@ -33,46 +86,17 @@ typedef union {
         bool negative : 1;
     };
     uint32_t value;
-} PSR;
+} ArmProgramStatusRegister;
 
 typedef struct {
-    union {
-        uint32_t r0;
-        uint32_t r1;
-        uint32_t r2;
-        uint32_t r3;
-        uint32_t r4;
-        uint32_t r5;
-        uint32_t r6;
-        uint32_t r7;
-        uint32_t r8;
-        uint32_t r9;
-        uint32_t r10;
-        uint32_t r11;
-        uint32_t r12;
-        union {
-            uint32_t r13;
-            uint32_t sp;
-        };
-        union {
-            uint32_t r14;
-            uint32_t lr;
-        };
-        union {
-            uint32_t r15;
-            uint32_t pc;
-        };
-        uint32_t gpsrs[16];
-    };
-    PSR cpsr;
-    PSR spsr;
-} Registers;
+    ArmGeneralPurposeRegisters gprs;
+    ArmProgramStatusRegister cpsr;    
+} ArmUserRegisters;
 
 typedef struct {
-    Registers registers;
-    uint32_t banked_registers[6][7];
-} CpuState;
-
-CpuState CreateCpuState();
+    ArmGeneralPurposeRegisters gprs;
+    ArmProgramStatusRegister cpsr;
+    ArmProgramStatusRegister spsr;
+} ArmGeneralAndStatusRegister;
 
 #endif // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
