@@ -16,3 +16,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "multiply_long",
+    hdrs = ["multiply_long.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "multiply_long_test",
+    srcs = ["multiply_long_test.cc"],
+    deps = [
+        ":multiply_long",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
