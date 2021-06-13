@@ -106,3 +106,90 @@ TEST(ArmMULS, Negative) {
   registers.cpsr.negative = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
+
+TEST(ArmMLA, Compute) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 2u;
+  registers.r1 = 50u;
+  registers.r3 = 10u;
+  ArmMLA(&registers, REGISTER_R2, REGISTER_R0, REGISTER_R1, REGISTER_R3);
+  EXPECT_EQ(2u, registers.r0);
+  EXPECT_EQ(50u, registers.r1);
+  EXPECT_EQ(110u, registers.r2);
+  EXPECT_EQ(10u, registers.r3);
+
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+  registers.r2 = 0u;
+  registers.r3 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmMLA, SameSourceAndDest) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 2u;
+  ArmMLA(&registers, REGISTER_R0, REGISTER_R0, REGISTER_R0, REGISTER_R0);
+  EXPECT_EQ(6u, registers.r0);
+
+  registers.r0 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmMLAS, Compute) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 2u;
+  registers.gprs.r1 = 50u;
+  registers.gprs.r3 = 10u;
+  ArmMLAS(&registers, REGISTER_R2, REGISTER_R0, REGISTER_R1, REGISTER_R3);
+  EXPECT_EQ(2u, registers.gprs.r0);
+  EXPECT_EQ(50u, registers.gprs.r1);
+  EXPECT_EQ(110u, registers.gprs.r2);
+  EXPECT_EQ(10u, registers.gprs.r3);
+
+  registers.gprs.r0 = 0u;
+  registers.gprs.r1 = 0u;
+  registers.gprs.r2 = 0u;
+  registers.gprs.r3 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmMLAS, SameSourceAndDest) {
+  auto registers = CreateArmUserRegisters();
+  registers.gprs.r0 = 2u;
+  ArmMLAS(&registers, REGISTER_R0, REGISTER_R0, REGISTER_R0, REGISTER_R0);
+  EXPECT_EQ(6u, registers.gprs.r0);
+
+  registers.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmMLAS, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  ArmMLAS(&registers, REGISTER_R0, REGISTER_R0, REGISTER_R0, REGISTER_R0);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmMLAS, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 64000u;
+  registers.gprs.r1 = 66000u;
+  registers.gprs.r3 = 1u;
+  ArmMLAS(&registers, REGISTER_R2, REGISTER_R0, REGISTER_R1, REGISTER_R3);
+  EXPECT_EQ(4224000001u, registers.gprs.r2);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0 = 0u;
+  registers.gprs.r1 = 0u;
+  registers.gprs.r2 = 0u;
+  registers.gprs.r3 = 0u;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
