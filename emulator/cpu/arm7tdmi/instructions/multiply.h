@@ -14,7 +14,7 @@ static inline void ArmMULS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->gprs.gprs[Rd] =
       registers->gprs.gprs[Rm] * registers->gprs.gprs[Rs];
   registers->cpsr.zero = (registers->gprs.gprs[Rd] == 0);
-  registers->cpsr.negative = !!(registers->gprs.gprs[Rd] & (1 << 31));
+  registers->cpsr.negative = ((int32_t)registers->gprs.gprs[Rd] < 0);
 }
 
 static inline void ArmMLA(ArmGeneralPurposeRegisters *registers,
@@ -31,7 +31,7 @@ static inline void ArmMLAS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
       registers->gprs.gprs[Rn] +
       (registers->gprs.gprs[Rm] * registers->gprs.gprs[Rs]);
   registers->cpsr.zero = (registers->gprs.gprs[Rd] == 0);
-  registers->cpsr.negative = !!(registers->gprs.gprs[Rd] & (1 << 31));
+  registers->cpsr.negative = ((int32_t)registers->gprs.gprs[Rd] < 0);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_

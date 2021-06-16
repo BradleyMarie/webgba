@@ -19,9 +19,8 @@ static inline void ArmUMULLS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
       (uint64_t)registers->gprs.gprs[Rm] * (uint64_t)registers->gprs.gprs[Rs];
   registers->gprs.gprs[RdLo] = (uint32_t)product;
   registers->gprs.gprs[RdHi] = (uint32_t)(product >> 32);
-  registers->cpsr.zero =
-      ((registers->gprs.gprs[RdLo] | registers->gprs.gprs[RdHi]) == 0);
-  registers->cpsr.negative = !!(registers->gprs.gprs[RdHi] & (1 << 31));
+  registers->cpsr.zero = (product == 0);
+  registers->cpsr.negative = (int64_t)product < 0;
 }
 
 static inline void ArmUMLAL(ArmGeneralPurposeRegisters *registers,
@@ -43,9 +42,28 @@ static inline void ArmUMLALS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
       (uint64_t)registers->gprs.gprs[Rm] * (uint64_t)registers->gprs.gprs[Rs];
   registers->gprs.gprs[RdLo] = (uint32_t)result;
   registers->gprs.gprs[RdHi] = (uint32_t)(result >> 32);
-  registers->cpsr.zero =
-      ((registers->gprs.gprs[RdLo] | registers->gprs.gprs[RdHi]) == 0);
-  registers->cpsr.negative = !!(registers->gprs.gprs[RdHi] & (1 << 31));
+  registers->cpsr.zero = (result == 0);
+  registers->cpsr.negative = (int64_t)result < 0;
+}
+
+static inline void ArmSMULL(ArmGeneralPurposeRegisters *registers,
+                            ArmRegisterIndex RdLo, ArmRegisterIndex RdHi,
+                            ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
+  int64_t product =
+      (int64_t)registers->gprs_s[Rm] * (int64_t)registers->gprs_s[Rs];
+  registers->gprs[RdLo] = (uint32_t)(uint64_t)product;
+  registers->gprs[RdHi] = (uint32_t)((uint64_t)product >> 32);
+}
+
+static inline void ArmSMULLS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
+                             ArmRegisterIndex RdHi, ArmRegisterIndex Rm,
+                             ArmRegisterIndex Rs) {
+  int64_t product =
+      (int64_t)registers->gprs.gprs_s[Rm] * (int64_t)registers->gprs.gprs_s[Rs];
+  registers->gprs.gprs[RdLo] = (uint32_t)(uint64_t)product;
+  registers->gprs.gprs[RdHi] = (uint32_t)((uint64_t)product >> 32);
+  registers->cpsr.zero = (product == 0);
+  registers->cpsr.negative = (product < 0);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_LONG_
