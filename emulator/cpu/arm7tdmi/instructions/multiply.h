@@ -11,8 +11,7 @@ static inline void ArmMUL(ArmGeneralPurposeRegisters *registers,
 
 static inline void ArmMULS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
-  registers->gprs.gprs[Rd] =
-      registers->gprs.gprs[Rm] * registers->gprs.gprs[Rs];
+  ArmMUL(&registers->gprs, Rd, Rm, Rs);
   registers->cpsr.zero = (registers->gprs.gprs[Rd] == 0);
   registers->cpsr.negative = ((int32_t)registers->gprs.gprs[Rd] < 0);
 }
@@ -27,9 +26,7 @@ static inline void ArmMLA(ArmGeneralPurposeRegisters *registers,
 static inline void ArmMLAS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rm, ArmRegisterIndex Rs,
                            ArmRegisterIndex Rn) {
-  registers->gprs.gprs[Rd] =
-      registers->gprs.gprs[Rn] +
-      (registers->gprs.gprs[Rm] * registers->gprs.gprs[Rs]);
+  ArmMLA(&registers->gprs, Rd, Rm, Rs, Rn);
   registers->cpsr.zero = (registers->gprs.gprs[Rd] == 0);
   registers->cpsr.negative = ((int32_t)registers->gprs.gprs[Rd] < 0);
 }

@@ -20,7 +20,7 @@ static inline void ArmUMULLS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
   registers->gprs.gprs[RdLo] = (uint32_t)product;
   registers->gprs.gprs[RdHi] = (uint32_t)(product >> 32);
   registers->cpsr.zero = (product == 0);
-  registers->cpsr.negative = (int64_t)product < 0;
+  registers->cpsr.negative = ((int64_t)product < 0);
 }
 
 static inline void ArmUMLAL(ArmGeneralPurposeRegisters *registers,
@@ -43,7 +43,7 @@ static inline void ArmUMLALS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
   registers->gprs.gprs[RdLo] = (uint32_t)result;
   registers->gprs.gprs[RdHi] = (uint32_t)(result >> 32);
   registers->cpsr.zero = (result == 0);
-  registers->cpsr.negative = (int64_t)result < 0;
+  registers->cpsr.negative = ((int64_t)result < 0);
 }
 
 static inline void ArmSMULL(ArmGeneralPurposeRegisters *registers,
