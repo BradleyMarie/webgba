@@ -225,10 +225,10 @@ TEST(ArmSMULL, Compute) {
   EXPECT_EQ(-1, registers.r2_s);
   EXPECT_EQ(-65537, registers.r3_s);
 
-  registers.r0_s = 0u;
-  registers.r1_s = 0u;
-  registers.r2_s = 0u;
-  registers.r3_s = 0u;
+  registers.r0_s = 0;
+  registers.r1_s = 0;
+  registers.r2_s = 0;
+  registers.r3_s = 0;
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
@@ -241,8 +241,8 @@ TEST(ArmSMULL, ReuseSourceAndDest) {
   EXPECT_EQ(-65537, registers.r1_s);
   EXPECT_EQ(-1, registers.r0_s);
 
-  registers.r0_s = 0u;
-  registers.r1_s = 0u;
+  registers.r0_s = 0;
+  registers.r1_s = 0;
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
@@ -273,8 +273,8 @@ TEST(ArmSMULLS, ReuseSourceAndDest) {
   EXPECT_EQ(262147, registers.gprs.r0_s);
   EXPECT_EQ(1, registers.gprs.r1_s);
 
-  registers.gprs.r0_s = 0u;
-  registers.gprs.r1_s = 0u;
+  registers.gprs.r0_s = 0;
+  registers.gprs.r1_s = 0;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -286,7 +286,7 @@ TEST(ArmSMULLS, Zero) {
   EXPECT_EQ(65537u, registers.gprs.r0);
   EXPECT_TRUE(registers.cpsr.zero);
 
-  registers.gprs.r0 = 0u;
+  registers.gprs.r0_s = 0;
   registers.cpsr.zero = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
@@ -303,6 +303,106 @@ TEST(ArmSMULLS, Negative) {
 
   registers.gprs.r0_s = 0;
   registers.gprs.r1_s = 0;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmSMLAL, Compute) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0_s = 65537;
+  registers.r1_s = -1;
+  registers.r2_s = -2;
+  registers.r3_s = -1;
+  ArmSMLAL(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(65537, registers.r0_s);
+  EXPECT_EQ(-1, registers.r1_s);
+  EXPECT_EQ(-2, registers.r2_s);
+  EXPECT_EQ(-65538, registers.r3_s);
+
+  registers.r0_s = 0;
+  registers.r1_s = 0;
+  registers.r2_s = 0;
+  registers.r3_s = 0;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmSMLAL, ReuseSourceAndDest) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0_s = 65537;
+  registers.r1_s = -1;
+  ArmSMLAL(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(-65538, registers.r1_s);
+  EXPECT_EQ(65537, registers.r0_s);
+
+  registers.r0_s = 0;
+  registers.r1_s = 0;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmSMLALS, Compute) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = 65537;
+  registers.gprs.r1_s = -1;
+  registers.gprs.r2_s = 65537;
+  registers.gprs.r3_s = 65537;
+  ArmSMLALS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(65537, registers.gprs.r0_s);
+  EXPECT_EQ(-1, registers.gprs.r1_s);
+  EXPECT_EQ(65537, registers.gprs.r2_s);
+  EXPECT_EQ(0, registers.gprs.r3_s);
+
+  registers.gprs.r0_s = 0;
+  registers.gprs.r1_s = 0;
+  registers.gprs.r2_s = 0;
+  registers.gprs.r3_s = 0;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmSMLALS, ReuseSourceAndDest) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = 65537;
+  registers.gprs.r1_s = 1;
+  ArmSMLALS(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(131074, registers.gprs.r0_s);
+  EXPECT_EQ(1, registers.gprs.r1_s);
+
+  registers.gprs.r0_s = 0;
+  registers.gprs.r1_s = 0;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmSMLALS, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = 65537;
+  ArmSMLALS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(65537u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmSMLALS, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = -1;
+  registers.gprs.r1_s = -1;
+  registers.gprs.r2_s = 1;
+  ArmSMLALS(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R2, REGISTER_R1);
+  EXPECT_EQ(-1, registers.gprs.r0_s);
+  EXPECT_EQ(-2, registers.gprs.r1_s);
+  EXPECT_EQ(1, registers.gprs.r2_s);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0_s = 0;
+  registers.gprs.r1_s = 0;
+  registers.gprs.r2_s = 0;
   registers.cpsr.negative = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
