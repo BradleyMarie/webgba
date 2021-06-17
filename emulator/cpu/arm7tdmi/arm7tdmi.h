@@ -100,21 +100,27 @@ typedef union {
   int32_t gprs_s[16];
 } ArmGeneralPurposeRegisters;
 
-#define MODE_USER 0x10
-#define MODE_FIQ 0x11
-#define MODE_IRQ 0x12
-#define MODE_SUPERVISOR 0x13
-#define MODE_ABORT 0x15
-#define MODE_UNDEFINED 0x1B
-#define MODE_SYSTEM 0x1F
+#define MODE_USR 0x10u
+#define MODE_FIQ 0x11u
+#define MODE_IRQ 0x12u
+#define MODE_SVC 0x13u
+#define MODE_ABT 0x15u
+#define MODE_UND 0x1Bu
+#define MODE_SYS 0x1Fu
 
-#define MODE_USER_BANK_INDEX 0
-#define MODE_FIQ_INDEX 1
-#define MODE_IRQ_INDEX 2
-#define MODE_SUPERVISOR_INDEX 3
-#define MODE_ABORT_INDEX 4
-#define MODE_UNDEFINED_INDEX 5
-#define MODE_SYSTEM_BANK_INDEX 0
+#define FIQ_BANK_INDEX 0u
+#define IRQ_BANK_INDEX 1u
+#define SVC_BANK_INDEX 2u
+#define ABT_BANK_INDEX 3u
+#define UND_BANK_INDEX 4u
+
+#define BANKED_R8_INDEX 6u
+#define BANKED_R9_INDEX 5u
+#define BANKED_R10_INDEX 4u
+#define BANKED_R11_INDEX 3u
+#define BANKED_R12_INDEX 2u
+#define BANKED_R13_INDEX 1u
+#define BANKED_R14_INDEX 0u
 
 typedef union {
   struct {
@@ -137,9 +143,14 @@ typedef struct {
 } ArmUserRegisters;
 
 typedef struct {
-  ArmGeneralPurposeRegisters gprs;
-  ArmProgramStatusRegister cpsr;
+  ArmUserRegisters user;
   ArmProgramStatusRegister spsr;
-} ArmGeneralAndStatusRegister;
+} ArmPrivilegedRegisters;
+
+typedef struct {
+  ArmPrivilegedRegisters current;
+  uint32_t banked_gprs[5][7];
+  ArmProgramStatusRegister banked_spsrs[5];
+} ArmAllRegisters;
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_

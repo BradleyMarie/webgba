@@ -61,3 +61,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "swi",
+    hdrs = ["swi.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "swi_test",
+    srcs = ["swi_test.cc"],
+    deps = [
+        ":swi",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
