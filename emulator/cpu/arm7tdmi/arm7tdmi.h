@@ -1,6 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -108,11 +109,13 @@ typedef union {
 #define MODE_UND 0x1Bu
 #define MODE_SYS 0x1Fu
 
-#define FIQ_BANK_INDEX 0u
-#define IRQ_BANK_INDEX 1u
-#define SVC_BANK_INDEX 2u
-#define ABT_BANK_INDEX 3u
-#define UND_BANK_INDEX 4u
+#define USR_BANK_INDEX 0u
+#define SYS_BANK_INDEX 0u
+#define FIQ_BANK_INDEX 1u
+#define IRQ_BANK_INDEX 2u
+#define SVC_BANK_INDEX 3u
+#define ABT_BANK_INDEX 4u
+#define UND_BANK_INDEX 5u
 
 #define BANKED_R8_INDEX 6u
 #define BANKED_R9_INDEX 5u
@@ -149,8 +152,22 @@ typedef struct {
 
 typedef struct {
   ArmPrivilegedRegisters current;
-  uint32_t banked_gprs[5][7];
-  ArmProgramStatusRegister banked_spsrs[5];
+  uint32_t banked_gprs[6][7];
+  ArmProgramStatusRegister banked_spsrs[6];
 } ArmAllRegisters;
+
+static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
+  assert(MODE_USR <= mode && mode <= MODE_SYS);
+  const static uint8_t bank_index[32] = {
+      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
+      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
+      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
+      0xFFu, USR_BANK_INDEX, FIQ_BANK_INDEX, IRQ_BANK_INDEX, SVC_BANK_INDEX,
+      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
+      0xFFu, 0xFFu,          ABT_BANK_INDEX, 0xFFu,          0xFFu,
+      0xFFu, SYS_BANK_INDEX};
+  assert(bank_index[mode] != 0xFFu);
+  return bank_index[mode];
+}
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
