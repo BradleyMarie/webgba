@@ -7,3 +7,7 @@ bazel-bin/
 bazel-out/
 bazel-testlogs/
 bazel-webgba/
+
+# IDE
+.vscode
+.vscode/
