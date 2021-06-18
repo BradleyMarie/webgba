@@ -170,4 +170,45 @@ static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
   return bank_index[mode];
 }
 
+static inline bool ArmNegativeFlagInt32(int32_t result) {
+  return result < 0;
+}
+
+static inline bool ArmNegativeFlagInt64(int64_t result) {
+  return result < 0;
+}
+
+static inline bool ArmNegativeFlagUInt32(uint32_t result) {
+  return result >> 31;
+}
+
+static inline bool ArmNegativeFlagUInt64(uint64_t result) {
+  return result >> 63;
+}
+
+static inline bool ArmZeroFlagInt32(int32_t result) {
+  return result == 0;
+}
+
+static inline bool ArmZeroFlagInt64(int64_t result) {
+  return result == 0;
+}
+
+static inline bool ArmZeroFlagUInt32(uint32_t result) {
+  return result == 0;
+}
+
+static inline bool ArmZeroFlagUInt64(uint64_t result) {
+  return result == 0;
+}
+
+static inline bool ArmCarryFlag(uint64_t result) {
+  assert(result <= (uint64_t)UINT32_MAX + (uint64_t)UINT32_MAX + 1);
+  return result >> 32;
+}
+
+static inline bool ArmOverflowFlag(int64_t result) {
+  return (result < (int64_t)INT32_MIN) | (result > (int64_t)INT32_MAX);
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
