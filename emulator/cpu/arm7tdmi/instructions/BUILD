@@ -33,6 +33,21 @@ cc_test(
 )
 
 cc_library(
+    name = "data_processing",
+    hdrs = ["data_processing.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "data_processing_test",
+    srcs = ["data_processing_test.cc"],
+    deps = [
+        ":data_processing",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "multiply",
     hdrs = ["multiply.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
