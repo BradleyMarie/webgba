@@ -63,6 +63,21 @@ cc_test(
 )
 
 cc_library(
+    name = "single_data_swap",
+    hdrs = ["single_data_swap.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "single_data_swap_test",
+    srcs = ["single_data_swap_test.cc"],
+    deps = [
+        ":single_data_swap",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "swi",
     hdrs = ["swi.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
