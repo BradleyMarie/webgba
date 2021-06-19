@@ -196,7 +196,14 @@ static inline bool ArmZeroFlagUInt32(uint32_t result) { return result == 0; }
 
 static inline bool ArmZeroFlagUInt64(uint64_t result) { return result == 0; }
 
-static inline bool ArmCarryFlag(uint64_t result) { return result > UINT32_MAX; }
+static inline bool ArmAdditionCarryFlag(uint64_t result) {
+  assert(result < (uint64_t)UINT32_MAX + (uint64_t)UINT32_MAX + 1);
+  return !!(result >> 32);
+}
+
+static inline bool ArmSubtractionCarryFlag(uint64_t result) {
+  return !(result >> 63);
+}
 
 static inline bool ArmOverflowFlag(int64_t result) {
   return (result < (int64_t)INT32_MIN) | (result > (int64_t)INT32_MAX);
