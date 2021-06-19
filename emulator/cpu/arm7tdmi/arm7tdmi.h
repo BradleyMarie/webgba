@@ -170,13 +170,9 @@ static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
   return bank_index[mode];
 }
 
-static inline bool ArmNegativeFlagInt32(int32_t result) {
-  return result < 0;
-}
+static inline bool ArmNegativeFlagInt32(int32_t result) { return result < 0; }
 
-static inline bool ArmNegativeFlagInt64(int64_t result) {
-  return result < 0;
-}
+static inline bool ArmNegativeFlagInt64(int64_t result) { return result < 0; }
 
 static inline bool ArmNegativeFlagUInt32(uint32_t result) {
   return result >> 31;
@@ -186,25 +182,15 @@ static inline bool ArmNegativeFlagUInt64(uint64_t result) {
   return result >> 63;
 }
 
-static inline bool ArmZeroFlagInt32(int32_t result) {
-  return result == 0;
-}
+static inline bool ArmZeroFlagInt32(int32_t result) { return result == 0; }
 
-static inline bool ArmZeroFlagInt64(int64_t result) {
-  return result == 0;
-}
+static inline bool ArmZeroFlagInt64(int64_t result) { return result == 0; }
 
-static inline bool ArmZeroFlagUInt32(uint32_t result) {
-  return result == 0;
-}
+static inline bool ArmZeroFlagUInt32(uint32_t result) { return result == 0; }
 
-static inline bool ArmZeroFlagUInt64(uint64_t result) {
-  return result == 0;
-}
+static inline bool ArmZeroFlagUInt64(uint64_t result) { return result == 0; }
 
-static inline bool ArmCarryFlag(uint64_t result) {
-  return result > UINT32_MAX;
-}
+static inline bool ArmCarryFlag(uint64_t result) { return result > UINT32_MAX; }
 
 static inline bool ArmOverflowFlag(int64_t result) {
   return (result < (int64_t)INT32_MIN) | (result > (int64_t)INT32_MAX);
