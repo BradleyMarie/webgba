@@ -48,11 +48,12 @@ static inline void ArmAND(ArmGeneralPurposeRegisters *registers,
 }
 
 static inline void ArmANDS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
-                           ArmRegisterIndex Rn, uint32_t operand2, bool carry) {
+                           ArmRegisterIndex Rn, uint32_t operand2,
+                           bool operand2_carry) {
   ArmAND(&registers->gprs, Rd, Rn, operand2);
   registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
-  registers->cpsr.carry = carry;
+  registers->cpsr.carry = operand2_carry;
 }
 
 static inline void ArmBIC(ArmGeneralPurposeRegisters *registers,
@@ -62,7 +63,7 @@ static inline void ArmBIC(ArmGeneralPurposeRegisters *registers,
 }
 
 static inline void ArmBICS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
-                           ArmRegisterIndex Rn, uint32_t operand2, bool carry) {
+                           ArmRegisterIndex Rn, uint32_t operand2) {
   ArmBIC(&registers->gprs, Rd, Rn, operand2);
   registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
@@ -88,6 +89,21 @@ static inline void ArmCMP(ArmUserRegisters *registers, ArmRegisterIndex Rn,
   registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)difference);
   registers->cpsr.carry = ArmCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
+static inline void ArmEOR(ArmGeneralPurposeRegisters *registers,
+                          ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                          uint32_t operand2) {
+  registers->gprs[Rd] = registers->gprs[Rn] ^ operand2;
+}
+
+static inline void ArmEORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+                           ArmRegisterIndex Rn, uint32_t operand2,
+                           bool operand2_carry) {
+  ArmEOR(&registers->gprs, Rd, Rn, operand2);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.carry = operand2_carry;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
