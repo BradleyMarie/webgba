@@ -106,4 +106,78 @@ static inline void ArmEORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->cpsr.carry = operand2_carry;
 }
 
+static inline void ArmMOV(ArmGeneralPurposeRegisters *registers,
+                          ArmRegisterIndex Rd, uint32_t operand2) {
+  registers->gprs[Rd] = operand2;
+}
+
+static inline void ArmMOVS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
+                           uint32_t operand2, bool operand2_carry) {
+  ArmMOV(&registers->current.user.gprs, Rd, operand2);
+  if (Rd != REGISTER_R15) {
+    registers->current.user.cpsr.negative =
+        ArmNegativeFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+    registers->current.user.cpsr.zero =
+        ArmZeroFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+    registers->current.user.cpsr.carry = operand2_carry;
+  } else {
+    uint_fast8_t current_bank_index =
+        ArmModeToBankIndex(registers->current.user.cpsr.mode);
+    uint_fast8_t current_bank_size = ArmBankIndexToBankSize(current_bank_index);
+    for (uint_fast8_t i = 0; i < current_bank_size; i++) {
+      registers->banked_gprs[current_bank_index][i] =
+          registers->current.user.gprs.gprs[REGISTER_R14 - i];
+    }
+    registers->banked_spsrs[current_bank_index] = registers->current.spsr;
+
+    registers->current.user.cpsr = registers->current.spsr;
+
+    uint_fast8_t next_bank_index =
+        ArmModeToBankIndex(registers->current.spsr.mode);
+    uint_fast8_t next_bank_size = ArmBankIndexToBankSize(next_bank_index);
+    for (uint_fast8_t i = 0; i < next_bank_size; i++) {
+      registers->current.user.gprs.gprs[REGISTER_R14 - i] =
+          registers->banked_gprs[next_bank_index][i];
+    }
+    registers->current.spsr = registers->banked_spsrs[next_bank_index];
+  }
+}
+
+static inline void ArmMVN(ArmGeneralPurposeRegisters *registers,
+                          ArmRegisterIndex Rd, uint32_t operand2) {
+  registers->gprs[Rd] = ~operand2;
+}
+
+static inline void ArmMVNS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
+                           uint32_t operand2, bool operand2_carry) {
+  ArmMVN(&registers->current.user.gprs, Rd, operand2);
+  if (Rd != REGISTER_R15) {
+    registers->current.user.cpsr.negative =
+        ArmNegativeFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+    registers->current.user.cpsr.zero =
+        ArmZeroFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+    registers->current.user.cpsr.carry = operand2_carry;
+  } else {
+    uint_fast8_t current_bank_index =
+        ArmModeToBankIndex(registers->current.user.cpsr.mode);
+    uint_fast8_t current_bank_size = ArmBankIndexToBankSize(current_bank_index);
+    for (uint_fast8_t i = 0; i < current_bank_size; i++) {
+      registers->banked_gprs[current_bank_index][i] =
+          registers->current.user.gprs.gprs[REGISTER_R14 - i];
+    }
+    registers->banked_spsrs[current_bank_index] = registers->current.spsr;
+
+    registers->current.user.cpsr = registers->current.spsr;
+
+    uint_fast8_t next_bank_index =
+        ArmModeToBankIndex(registers->current.spsr.mode);
+    uint_fast8_t next_bank_size = ArmBankIndexToBankSize(next_bank_index);
+    for (uint_fast8_t i = 0; i < next_bank_size; i++) {
+      registers->current.user.gprs.gprs[REGISTER_R14 - i] =
+          registers->banked_gprs[next_bank_index][i];
+    }
+    registers->current.spsr = registers->banked_spsrs[next_bank_index];
+  }
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_

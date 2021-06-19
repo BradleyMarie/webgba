@@ -170,6 +170,12 @@ static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
   return bank_index[mode];
 }
 
+static inline uint_fast8_t ArmBankIndexToBankSize(uint_fast8_t bank_index) {
+  assert(USR_BANK_INDEX <= bank_index && bank_index <= UND_BANK_INDEX);
+  const static uint8_t bank_index_size[6] = {7u, 7u, 2u, 2u, 2u, 2u};
+  return bank_index_size[bank_index];
+}
+
 static inline bool ArmNegativeFlagInt32(int32_t result) { return result < 0; }
 
 static inline bool ArmNegativeFlagInt64(int64_t result) { return result < 0; }
