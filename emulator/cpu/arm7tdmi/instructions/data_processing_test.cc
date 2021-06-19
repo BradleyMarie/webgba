@@ -583,9 +583,11 @@ TEST(ArmCMP, Zero) {
   registers.gprs.r0 = 1u;
   ArmCMP(&registers, REGISTER_R0, 1u);
   EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0 = 0u;
   registers.cpsr.zero = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -596,22 +598,22 @@ TEST(ArmCMP, Negative) {
   ArmCMP(&registers, REGISTER_R0, 0);
   EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
   EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0_s = 0;
   registers.cpsr.negative = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
-TEST(ArmCMP, Carry) {
+TEST(ArmCMP, NotCarry) {
   auto registers = CreateArmUserRegisters();
 
   registers.gprs.r0 = 1u;
   ArmCMP(&registers, REGISTER_R0, UINT32_MAX);
   EXPECT_EQ(1u, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0 = 0u;
-  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -623,12 +625,10 @@ TEST(ArmCMP, Overflow) {
   EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
   EXPECT_TRUE(registers.cpsr.overflow);
   EXPECT_TRUE(registers.cpsr.negative);
-  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0_s = 0;
   registers.cpsr.overflow = false;
   registers.cpsr.negative = false;
-  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -639,9 +639,11 @@ TEST(ArmCMP, Underflow) {
   ArmCMP(&registers, REGISTER_R0, 1);
   EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
   EXPECT_TRUE(registers.cpsr.overflow);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0_s = 0;
   registers.cpsr.overflow = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -1118,9 +1120,11 @@ TEST(ArmRSBS, Compute) {
   ArmRSBS(&registers, REGISTER_R1, REGISTER_R0, 3u);
   EXPECT_EQ(2u, registers.gprs.r1);
   EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0 = 0u;
   registers.gprs.r1 = 0u;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -1130,8 +1134,10 @@ TEST(ArmRSBS, SameSourceAndDest) {
   registers.gprs.r0 = 2u;
   ArmRSBS(&registers, REGISTER_R0, REGISTER_R0, 4u);
   EXPECT_EQ(2u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0 = 0u;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -1140,8 +1146,10 @@ TEST(ArmRSBS, Zero) {
 
   ArmRSBS(&registers, REGISTER_R0, REGISTER_R0, 0);
   EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.cpsr.zero = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -1152,23 +1160,23 @@ TEST(ArmRSBS, Negative) {
   ArmRSBS(&registers, REGISTER_R0, REGISTER_R0, UINT32_MAX);
   EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
   EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0 = 0u;
   registers.cpsr.negative = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
-TEST(ArmRSBS, Carry) {
+TEST(ArmRSBS, NotCarry) {
   auto registers = CreateArmUserRegisters();
 
   registers.gprs.r0 = 1;
   ArmRSBS(&registers, REGISTER_R0, REGISTER_R0, 0);
   EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.carry);
   EXPECT_TRUE(registers.cpsr.negative);
 
   registers.gprs.r0 = 0u;
-  registers.cpsr.carry = false;
   registers.cpsr.negative = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
@@ -1181,12 +1189,10 @@ TEST(ArmRSBS, Overflow) {
   EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
   EXPECT_TRUE(registers.cpsr.overflow);
   EXPECT_TRUE(registers.cpsr.negative);
-  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0_s = 0;
   registers.cpsr.overflow = false;
   registers.cpsr.negative = false;
-  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
@@ -1198,9 +1204,11 @@ TEST(ArmRSBS, Underflow) {
   ArmRSBS(&registers, REGISTER_R0, REGISTER_R0, registers.gprs.r1);
   EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
   EXPECT_TRUE(registers.cpsr.overflow);
+  EXPECT_TRUE(registers.cpsr.carry);
 
   registers.gprs.r0_s = 0;
   registers.gprs.r1_s = 0;
   registers.cpsr.overflow = false;
+  registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }

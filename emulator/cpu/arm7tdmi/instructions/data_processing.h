@@ -87,7 +87,7 @@ static inline void ArmCMP(ArmUserRegisters *registers, ArmRegisterIndex Rn,
       (int64_t)registers->gprs.gprs_s[Rn] - (int64_t)(int32_t)operand2;
   registers->cpsr.negative = ArmNegativeFlagUInt32((uint32_t)difference);
   registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)difference);
-  registers->cpsr.carry = ArmCarryFlag(difference);
+  registers->cpsr.carry = !ArmCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
 }
 
@@ -210,7 +210,7 @@ static inline void ArmRSBS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   uint64_t difference = ArmRSB(&registers->gprs, Rd, Rn, operand2);
   registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
-  registers->cpsr.carry = ArmCarryFlag(difference);
+  registers->cpsr.carry = !ArmCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
 }
 
