@@ -495,3 +495,141 @@ TEST(ArmBICS, Negative) {
   registers.cpsr.negative = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
+
+TEST(ArmCMN, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 0u;
+  ArmCMN(&registers, REGISTER_R0, 0u);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMN, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = INT32_MIN;
+  ArmCMN(&registers, REGISTER_R0, 0);
+  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMN, Carry) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = UINT32_MAX;
+  ArmCMN(&registers, REGISTER_R0, 1);
+  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.carry = false;
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMN, Overflow) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = INT32_MAX;
+  ArmCMN(&registers, REGISTER_R0, 1);
+  EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.overflow);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.overflow = false;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMN, Underflow) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = -1;
+  ArmCMN(&registers, REGISTER_R0, INT32_MIN);
+  EXPECT_EQ(-1, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.overflow);
+  EXPECT_TRUE(registers.cpsr.carry);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.overflow = false;
+  registers.cpsr.carry = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMP, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 1u;
+  ArmCMP(&registers, REGISTER_R0, 1u);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMP, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = INT32_MIN;
+  ArmCMP(&registers, REGISTER_R0, 0);
+  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMP, Carry) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 1u;
+  ArmCMP(&registers, REGISTER_R0, UINT32_MAX);
+  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.carry = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMP, Overflow) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = INT32_MAX;
+  ArmCMP(&registers, REGISTER_R0, UINT32_MAX);
+  EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.overflow);
+  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_TRUE(registers.cpsr.carry);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.overflow = false;
+  registers.cpsr.negative = false;
+  registers.cpsr.carry = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmCMP, Underflow) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0_s = INT32_MIN;
+  ArmCMP(&registers, REGISTER_R0, 1);
+  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
+  EXPECT_TRUE(registers.cpsr.overflow);
+
+  registers.gprs.r0_s = 0;
+  registers.cpsr.overflow = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}

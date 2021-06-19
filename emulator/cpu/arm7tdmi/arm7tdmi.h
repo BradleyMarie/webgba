@@ -203,8 +203,7 @@ static inline bool ArmZeroFlagUInt64(uint64_t result) {
 }
 
 static inline bool ArmCarryFlag(uint64_t result) {
-  assert(result <= (uint64_t)UINT32_MAX + (uint64_t)UINT32_MAX + 1);
-  return result >> 32;
+  return result > UINT32_MAX;
 }
 
 static inline bool ArmOverflowFlag(int64_t result) {
