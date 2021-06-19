@@ -68,4 +68,26 @@ static inline void ArmBICS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
+static inline void ArmCMN(ArmUserRegisters *registers, ArmRegisterIndex Rn,
+                          uint32_t operand2) {
+  uint64_t sum = (uint64_t)registers->gprs.gprs[Rn] + (uint64_t)operand2;
+  int64_t sum_s =
+      (int64_t)registers->gprs.gprs_s[Rn] + (int64_t)(int32_t)operand2;
+  registers->cpsr.negative = ArmNegativeFlagUInt32((uint32_t)sum);
+  registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)sum);
+  registers->cpsr.carry = ArmCarryFlag(sum);
+  registers->cpsr.overflow = ArmOverflowFlag(sum_s);
+}
+
+static inline void ArmCMP(ArmUserRegisters *registers, ArmRegisterIndex Rn,
+                          uint32_t operand2) {
+  uint64_t difference = (uint64_t)registers->gprs.gprs[Rn] - (uint64_t)operand2;
+  int64_t difference_s =
+      (int64_t)registers->gprs.gprs_s[Rn] - (int64_t)(int32_t)operand2;
+  registers->cpsr.negative = ArmNegativeFlagUInt32((uint32_t)difference);
+  registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)difference);
+  registers->cpsr.carry = ArmCarryFlag(difference);
+  registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
