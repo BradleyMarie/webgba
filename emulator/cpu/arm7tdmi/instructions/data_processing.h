@@ -195,4 +195,23 @@ static inline void ArmOORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->cpsr.carry = operand2_carry;
 }
 
+static inline uint64_t ArmRSB(ArmGeneralPurposeRegisters *registers,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t operand2) {
+  uint64_t difference = (uint64_t)operand2 - (uint64_t)registers->gprs[Rn];
+  registers->gprs[Rd] = (uint32_t)difference;
+  return difference;
+}
+
+static inline void ArmRSBS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+                           ArmRegisterIndex Rn, uint32_t operand2) {
+  int64_t difference_s =
+      (int64_t)(int32_t)operand2 - (int64_t)registers->gprs.gprs_s[Rn];
+  uint64_t difference = ArmRSB(&registers->gprs, Rd, Rn, operand2);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.carry = ArmCarryFlag(difference);
+  registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
