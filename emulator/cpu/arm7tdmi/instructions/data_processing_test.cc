@@ -338,3 +338,88 @@ TEST(ArmADDS, Underflow) {
   registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
+
+TEST(ArmAND, Compute) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 15u;
+  ArmAND(&registers, REGISTER_R1, REGISTER_R0, 23u);
+  EXPECT_EQ(7u, registers.r1);
+  EXPECT_EQ(15u, registers.r0);
+
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmAND, SameSourceAndDest) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 15u;
+  ArmAND(&registers, REGISTER_R0, REGISTER_R0, 23u);
+  EXPECT_EQ(7u, registers.r0);
+
+  registers.r0 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmANDS, Compute) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 15u;
+  ArmANDS(&registers, REGISTER_R1, REGISTER_R0, 23u, false);
+  EXPECT_EQ(7u, registers.gprs.r1);
+  EXPECT_EQ(15u, registers.gprs.r0);
+
+  registers.gprs.r0 = 0u;
+  registers.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmANDS, SameSourceAndDest) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 15u;
+  ArmANDS(&registers, REGISTER_R0, REGISTER_R0, 23u, false);
+  EXPECT_EQ(7u, registers.gprs.r0);
+
+  registers.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmANDS, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 1u;
+  ArmANDS(&registers, REGISTER_R0, REGISTER_R0, 2u, false);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmANDS, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = UINT32_MAX;
+  ArmANDS(&registers, REGISTER_R0, REGISTER_R0, UINT32_MAX, false);
+  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmANDS, Carry) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = UINT32_MAX;
+  ArmANDS(&registers, REGISTER_R0, REGISTER_R0, 1u, true);
+  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.carry = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
