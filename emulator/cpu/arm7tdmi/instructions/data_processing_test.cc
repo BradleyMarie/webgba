@@ -423,3 +423,75 @@ TEST(ArmANDS, Carry) {
   registers.cpsr.carry = false;
   EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
+
+TEST(ArmBIC, Compute) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 15u;
+  ArmBIC(&registers, REGISTER_R1, REGISTER_R0, 1u);
+  EXPECT_EQ(14u, registers.r1);
+  EXPECT_EQ(15u, registers.r0);
+
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmBIC, SameSourceAndDest) {
+  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+
+  registers.r0 = 15u;
+  ArmBIC(&registers, REGISTER_R0, REGISTER_R0, 1u);
+  EXPECT_EQ(14u, registers.r0);
+
+  registers.r0 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST(ArmBICS, Compute) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 15u;
+  ArmBICS(&registers, REGISTER_R1, REGISTER_R0, 1u, false);
+  EXPECT_EQ(14u, registers.gprs.r1);
+  EXPECT_EQ(15u, registers.gprs.r0);
+
+  registers.gprs.r0 = 0u;
+  registers.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmBICS, SameSourceAndDest) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 15u;
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u, false);
+  EXPECT_EQ(14u, registers.gprs.r0);
+
+  registers.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmBICS, Zero) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = 1u;
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u, false);
+  EXPECT_TRUE(registers.cpsr.zero);
+
+  registers.cpsr.zero = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmBICS, Negative) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.r0 = UINT32_MAX;
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u, false);
+  EXPECT_EQ(UINT32_MAX - 1u, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.negative);
+
+  registers.gprs.r0 = 0u;
+  registers.cpsr.negative = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
