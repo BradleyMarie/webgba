@@ -235,4 +235,43 @@ static inline void ArmRSCS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
 }
 
+static inline uint64_t ArmSBC(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint32_t operand2) {
+  uint64_t difference = (uint64_t)registers->gprs.gprs[Rn] -
+  (uint64_t)operand2 -  (uint64_t)!registers->cpsr.carry;
+  registers->gprs.gprs[Rd] = (uint32_t)difference;
+  return difference;
+}
+
+static inline void ArmSBCS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+                           ArmRegisterIndex Rn, uint32_t operand2) {
+  int64_t difference_s = (int64_t)registers->gprs.gprs_s[Rn] -
+  (int64_t)(int32_t)operand2 -
+                         (int64_t)!registers->cpsr.carry;
+  uint64_t difference = ArmSBC(registers, Rd, Rn, operand2);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.carry = ArmSubtractionCarryFlag(difference);
+  registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
+static inline uint64_t ArmSUB(ArmGeneralPurposeRegisters *registers,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t operand2) {
+  uint64_t difference = (uint64_t)registers->gprs[Rn] - (uint64_t)operand2;
+  registers->gprs[Rd] = (uint32_t)difference;
+  return difference;
+}
+
+static inline void ArmSUBS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+                           ArmRegisterIndex Rn, uint32_t operand2) {
+  int64_t difference_s =
+      (int64_t)registers->gprs.gprs_s[Rn] - (int64_t)(int32_t)operand2;
+  uint64_t difference = ArmSUB(&registers->gprs, Rd, Rn, operand2);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.carry = ArmSubtractionCarryFlag(difference);
+  registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
