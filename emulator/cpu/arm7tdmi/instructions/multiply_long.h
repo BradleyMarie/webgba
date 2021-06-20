@@ -18,7 +18,7 @@ static inline void ArmUMULLS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
                              ArmRegisterIndex Rs) {
   uint64_t product = ArmUMULL(&registers->gprs, RdLo, RdHi, Rm, Rs);
   registers->cpsr.zero = ArmZeroFlagUInt64(product);
-  registers->cpsr.negative = ArmNegativeFlagUInt64(product);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[RdHi]);
 }
 
 static inline uint64_t ArmUMLAL(ArmGeneralPurposeRegisters *registers,
@@ -37,7 +37,7 @@ static inline void ArmUMLALS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
                              ArmRegisterIndex Rs) {
   uint64_t result = ArmUMLAL(&registers->gprs, RdLo, RdHi, Rm, Rs);
   registers->cpsr.zero = ArmZeroFlagUInt64(result);
-  registers->cpsr.negative = ArmNegativeFlagUInt64(result);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[RdHi]);
 }
 
 static inline int64_t ArmSMULL(ArmGeneralPurposeRegisters *registers,
@@ -55,7 +55,7 @@ static inline void ArmSMULLS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
                              ArmRegisterIndex Rs) {
   int64_t product = ArmSMULL(&registers->gprs, RdLo, RdHi, Rm, Rs);
   registers->cpsr.zero = ArmZeroFlagInt64(product);
-  registers->cpsr.negative = ArmNegativeFlagInt64(product);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[RdHi]);
 }
 
 static inline int64_t ArmSMLAL(ArmGeneralPurposeRegisters *registers,
@@ -74,7 +74,7 @@ static inline void ArmSMLALS(ArmUserRegisters *registers, ArmRegisterIndex RdLo,
                              ArmRegisterIndex Rs) {
   int64_t result = ArmSMLAL(&registers->gprs, RdLo, RdHi, Rm, Rs);
   registers->cpsr.zero = ArmZeroFlagInt64(result);
-  registers->cpsr.negative = ArmNegativeFlagInt64(result);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[RdHi]);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_LONG_

@@ -16,7 +16,7 @@ static inline void ArmADCS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   int64_t sum_s = (int64_t)registers->gprs.gprs_s[Rn] +
                   (int64_t)(int32_t)operand2 + (int64_t)registers->cpsr.carry;
   uint64_t sum = ArmADC(registers, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs_s[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs_s[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs_s[Rd]);
   registers->cpsr.carry = ArmAdditionCarryFlag(sum);
   registers->cpsr.overflow = ArmOverflowFlag(sum_s);
@@ -35,7 +35,7 @@ static inline void ArmADDS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   int64_t sum_s =
       (int64_t)registers->gprs.gprs_s[Rn] + (int64_t)(int32_t)operand2;
   uint64_t sum = ArmADD(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = ArmAdditionCarryFlag(sum);
   registers->cpsr.overflow = ArmOverflowFlag(sum_s);
@@ -51,7 +51,7 @@ static inline void ArmANDS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rn, uint32_t operand2,
                            bool operand2_carry) {
   ArmAND(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = operand2_carry;
 }
@@ -65,7 +65,7 @@ static inline void ArmBIC(ArmGeneralPurposeRegisters *registers,
 static inline void ArmBICS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rn, uint32_t operand2) {
   ArmBIC(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
@@ -74,7 +74,7 @@ static inline void ArmCMN(ArmUserRegisters *registers, ArmRegisterIndex Rn,
   uint64_t sum = (uint64_t)registers->gprs.gprs[Rn] + (uint64_t)operand2;
   int64_t sum_s =
       (int64_t)registers->gprs.gprs_s[Rn] + (int64_t)(int32_t)operand2;
-  registers->cpsr.negative = ArmNegativeFlagUInt32((uint32_t)sum);
+  registers->cpsr.negative = ArmNegativeFlag((uint32_t)sum);
   registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)sum);
   registers->cpsr.carry = ArmAdditionCarryFlag(sum);
   registers->cpsr.overflow = ArmOverflowFlag(sum_s);
@@ -85,7 +85,7 @@ static inline void ArmCMP(ArmUserRegisters *registers, ArmRegisterIndex Rn,
   uint64_t difference = (uint64_t)registers->gprs.gprs[Rn] - (uint64_t)operand2;
   int64_t difference_s =
       (int64_t)registers->gprs.gprs_s[Rn] - (int64_t)(int32_t)operand2;
-  registers->cpsr.negative = ArmNegativeFlagUInt32((uint32_t)difference);
+  registers->cpsr.negative = ArmNegativeFlag((uint32_t)difference);
   registers->cpsr.zero = ArmZeroFlagUInt32((uint32_t)difference);
   registers->cpsr.carry = ArmSubtractionCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
@@ -101,7 +101,7 @@ static inline void ArmEORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rn, uint32_t operand2,
                            bool operand2_carry) {
   ArmEOR(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = operand2_carry;
 }
@@ -116,7 +116,7 @@ static inline void ArmMOVS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   ArmMOV(&registers->current.user.gprs, Rd, operand2);
   if (Rd != REGISTER_R15) {
     registers->current.user.cpsr.negative =
-        ArmNegativeFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+        ArmNegativeFlag(registers->current.user.gprs.gprs[Rd]);
     registers->current.user.cpsr.zero =
         ArmZeroFlagUInt32(registers->current.user.gprs.gprs[Rd]);
     registers->current.user.cpsr.carry = operand2_carry;
@@ -153,7 +153,7 @@ static inline void ArmMVNS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   ArmMVN(&registers->current.user.gprs, Rd, operand2);
   if (Rd != REGISTER_R15) {
     registers->current.user.cpsr.negative =
-        ArmNegativeFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+        ArmNegativeFlag(registers->current.user.gprs.gprs[Rd]);
     registers->current.user.cpsr.zero =
         ArmZeroFlagUInt32(registers->current.user.gprs.gprs[Rd]);
     registers->current.user.cpsr.carry = operand2_carry;
@@ -190,7 +190,7 @@ static inline void ArmOORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rn, uint32_t operand2,
                            bool operand2_carry) {
   ArmOOR(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = operand2_carry;
 }
@@ -208,7 +208,7 @@ static inline void ArmRSBS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   int64_t difference_s =
       (int64_t)(int32_t)operand2 - (int64_t)registers->gprs.gprs_s[Rn];
   uint64_t difference = ArmRSB(&registers->gprs, Rd, Rn, operand2);
-  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = ArmSubtractionCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
