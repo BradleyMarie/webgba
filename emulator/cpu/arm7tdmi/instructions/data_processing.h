@@ -238,7 +238,7 @@ static inline void ArmRSCS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
 static inline uint64_t ArmSBC(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                               ArmRegisterIndex Rn, uint32_t operand2) {
   uint64_t difference = (uint64_t)registers->gprs.gprs[Rn] -
-  (uint64_t)operand2 -  (uint64_t)!registers->cpsr.carry;
+                        (uint64_t)operand2 - (uint64_t)!registers->cpsr.carry;
   registers->gprs.gprs[Rd] = (uint32_t)difference;
   return difference;
 }
@@ -246,7 +246,7 @@ static inline uint64_t ArmSBC(ArmUserRegisters *registers, ArmRegisterIndex Rd,
 static inline void ArmSBCS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rn, uint32_t operand2) {
   int64_t difference_s = (int64_t)registers->gprs.gprs_s[Rn] -
-  (int64_t)(int32_t)operand2 -
+                         (int64_t)(int32_t)operand2 -
                          (int64_t)!registers->cpsr.carry;
   uint64_t difference = ArmSBC(registers, Rd, Rn, operand2);
   registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
@@ -272,6 +272,22 @@ static inline void ArmSUBS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.carry = ArmSubtractionCarryFlag(difference);
   registers->cpsr.overflow = ArmOverflowFlag(difference_s);
+}
+
+static inline void ArmTEQ(ArmUserRegisters *registers, ArmRegisterIndex Rn,
+                          uint32_t operand2, bool operand2_carry) {
+  uint32_t result = registers->gprs.gprs[Rn] ^ operand2;
+  registers->cpsr.negative = ArmNegativeFlag(result);
+  registers->cpsr.zero = ArmZeroFlagUInt32(result);
+  registers->cpsr.carry = operand2_carry;
+}
+
+static inline void ArmTST(ArmUserRegisters *registers, ArmRegisterIndex Rn,
+                          uint32_t operand2, bool operand2_carry) {
+  uint32_t result = registers->gprs.gprs[Rn] & operand2;
+  registers->cpsr.negative = ArmNegativeFlag(result);
+  registers->cpsr.zero = ArmZeroFlagUInt32(result);
+  registers->cpsr.carry = operand2_carry;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
