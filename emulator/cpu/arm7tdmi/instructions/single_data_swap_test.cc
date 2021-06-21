@@ -34,9 +34,20 @@ ArmPrivilegedRegisters CreateArmPrivilegedRegisters() {
   return registers;
 }
 
-bool ArmArmPrivilegedRegistersAreZero(const ArmPrivilegedRegisters& regs) {
+bool ArmPrivilegedRegistersAreZero(const ArmPrivilegedRegisters& regs) {
   auto zero = CreateArmPrivilegedRegisters();
   return !memcmp(&zero, &regs, sizeof(ArmPrivilegedRegisters));
+}
+
+ArmAllRegisters CreateArmAllRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
+  return registers;
+}
+
+bool ArmAllRegistersAreZero(const ArmAllRegisters& regs) {
+  auto zero = CreateArmAllRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 TEST(ArmMRS, Move) {
@@ -67,5 +78,298 @@ TEST(ArmMRSR, Move) {
   registers.user.cpsr.mode = 0u;
   registers.spsr.mode = 0u;
 
-  EXPECT_TRUE(ArmArmPrivilegedRegistersAreZero(registers));
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmMSR_Immediate, FlagsOnly) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_USR;
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  ArmMSR_Immediate(&registers, false, true, next_status.value);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+  EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
+
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  registers.current.user.cpsr.negative = false;
+  registers.current.user.cpsr.mode = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST(ArmMSR_Immediate, FromUsr) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_USR;
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_SVC;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  ArmMSR_Immediate(&registers, true, true, next_status.value);
+  EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
+  EXPECT_TRUE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.thumb = false;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST(ArmMSR_Immediate, ToIrq) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_IRQ;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.mode = MODE_USR;
+  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 28u;
+  registers.banked_spsrs[IRQ_BANK_INDEX].carry = true;
+
+  ArmMSR_Immediate(&registers, true, true, next_status.value);
+  EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
+  EXPECT_TRUE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+  EXPECT_TRUE(registers.current.spsr.carry);
+  EXPECT_EQ(28u, registers.current.user.gprs.r14);
+  EXPECT_EQ(14u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
+  EXPECT_EQ(MODE_USR, registers.banked_spsrs[SVC_BANK_INDEX].mode);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.thumb = false;
+  registers.current.user.cpsr.fiq_disable = false;
+  registers.current.user.cpsr.irq_disable = false;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  registers.current.user.cpsr.negative = false;
+  registers.banked_spsrs[IRQ_BANK_INDEX].carry = false;
+  registers.current.spsr.carry = false;
+  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
+  registers.banked_spsrs[SVC_BANK_INDEX].mode = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST(ArmMSR_Register, ToIrq) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_IRQ;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+  registers.current.user.gprs.r0 = next_status.value;
+
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.mode = MODE_USR;
+  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 28u;
+  registers.banked_spsrs[IRQ_BANK_INDEX].carry = true;
+
+  ArmMSR_Register(&registers, REGISTER_R0);
+  EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
+  EXPECT_TRUE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+  EXPECT_TRUE(registers.current.spsr.carry);
+  EXPECT_EQ(28u, registers.current.user.gprs.r14);
+  EXPECT_EQ(next_status.value, registers.current.user.gprs.r0);
+  EXPECT_EQ(14u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
+  EXPECT_EQ(MODE_USR, registers.banked_spsrs[SVC_BANK_INDEX].mode);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.thumb = false;
+  registers.current.user.cpsr.fiq_disable = false;
+  registers.current.user.cpsr.irq_disable = false;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  registers.current.user.cpsr.negative = false;
+  registers.banked_spsrs[IRQ_BANK_INDEX].carry = false;
+  registers.current.spsr.carry = false;
+  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
+  registers.banked_spsrs[SVC_BANK_INDEX].mode = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST(ArmMSRR_Immediate, FlagsOnly) {
+  auto registers = CreateArmPrivilegedRegisters();
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_USR;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  ArmMSRR_Immediate(&registers, false, true, next_status.value);
+  EXPECT_TRUE(registers.spsr.overflow);
+  EXPECT_TRUE(registers.spsr.carry);
+  EXPECT_TRUE(registers.spsr.zero);
+  EXPECT_TRUE(registers.spsr.negative);
+
+  registers.spsr.overflow = false;
+  registers.spsr.carry = false;
+  registers.spsr.zero = false;
+  registers.spsr.negative = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmMSRR_Immediate, ControlOnly) {
+  auto registers = CreateArmPrivilegedRegisters();
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_USR;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  ArmMSRR_Immediate(&registers, true, false, next_status.value);
+  EXPECT_EQ(MODE_USR, registers.spsr.mode);
+  EXPECT_TRUE(registers.spsr.thumb);
+  EXPECT_TRUE(registers.spsr.fiq_disable);
+  EXPECT_TRUE(registers.spsr.irq_disable);
+
+  registers.spsr.mode = 0u;
+  registers.spsr.thumb = false;
+  registers.spsr.fiq_disable = false;
+  registers.spsr.irq_disable = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmMSRR_Immediate, Both) {
+  auto registers = CreateArmPrivilegedRegisters();
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_USR;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  ArmMSRR_Immediate(&registers, true, true, next_status.value);
+  EXPECT_EQ(MODE_USR, registers.spsr.mode);
+  EXPECT_TRUE(registers.spsr.thumb);
+  EXPECT_TRUE(registers.spsr.fiq_disable);
+  EXPECT_TRUE(registers.spsr.irq_disable);
+  EXPECT_TRUE(registers.spsr.overflow);
+  EXPECT_TRUE(registers.spsr.carry);
+  EXPECT_TRUE(registers.spsr.zero);
+  EXPECT_TRUE(registers.spsr.negative);
+
+  registers.spsr.mode = 0u;
+  registers.spsr.thumb = false;
+  registers.spsr.fiq_disable = false;
+  registers.spsr.irq_disable = false;
+  registers.spsr.overflow = false;
+  registers.spsr.carry = false;
+  registers.spsr.zero = false;
+  registers.spsr.negative = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmMSRR_Register, Both) {
+  auto registers = CreateArmPrivilegedRegisters();
+
+  ArmProgramStatusRegister next_status;
+  memset(&next_status, 0, sizeof(ArmProgramStatusRegister));
+  next_status.mode = MODE_USR;
+  next_status.thumb = true;
+  next_status.fiq_disable = true;
+  next_status.irq_disable = true;
+  next_status.overflow = true;
+  next_status.carry = true;
+  next_status.zero = true;
+  next_status.negative = true;
+
+  registers.user.gprs.r0 = next_status.value;
+  ArmMSRR_Register(&registers, REGISTER_R0);
+  EXPECT_EQ(next_status.value, registers.user.gprs.r0);
+  EXPECT_EQ(MODE_USR, registers.spsr.mode);
+  EXPECT_TRUE(registers.spsr.thumb);
+  EXPECT_TRUE(registers.spsr.fiq_disable);
+  EXPECT_TRUE(registers.spsr.irq_disable);
+  EXPECT_TRUE(registers.spsr.overflow);
+  EXPECT_TRUE(registers.spsr.carry);
+  EXPECT_TRUE(registers.spsr.zero);
+  EXPECT_TRUE(registers.spsr.negative);
+
+  registers.user.gprs.r0 = 0u;
+  registers.spsr.mode = 0u;
+  registers.spsr.thumb = false;
+  registers.spsr.fiq_disable = false;
+  registers.spsr.irq_disable = false;
+  registers.spsr.overflow = false;
+  registers.spsr.carry = false;
+  registers.spsr.zero = false;
+  registers.spsr.negative = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
 }
