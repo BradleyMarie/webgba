@@ -28,6 +28,17 @@ bool ArmUserRegistersAreZero(const ArmUserRegisters& regs) {
   return !memcmp(&zero, &regs, sizeof(ArmUserRegisters));
 }
 
+ArmPrivilegedRegisters CreateArmPrivilegedRegisters() {
+  ArmPrivilegedRegisters registers;
+  memset(&registers, 0, sizeof(ArmPrivilegedRegisters));
+  return registers;
+}
+
+bool ArmPrivilegedRegistersAreZero(const ArmPrivilegedRegisters& regs) {
+  auto zero = CreateArmPrivilegedRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmPrivilegedRegisters));
+}
+
 ArmAllRegisters CreateArmAllRegisters() {
   ArmAllRegisters registers;
   memset(&registers, 0, sizeof(ArmAllRegisters));
@@ -796,75 +807,13 @@ TEST(ArmMOVS, R15ToUSR) {
   registers.current.user.gprs.r14 = 28u;
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX] = 9u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX] = 10u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX] = 11u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX] = 12u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX] = 13u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX] = 14u;
   ArmMOVS(&registers, REGISTER_R15, 15u, true);
-  EXPECT_EQ(9u, registers.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers.current.user.gprs.r12);
-  EXPECT_EQ(13u, registers.current.user.gprs.r13);
-  EXPECT_EQ(14u, registers.current.user.gprs.r14);
   EXPECT_EQ(15u, registers.current.user.gprs.r15);
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
-  EXPECT_EQ(26u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX]);
-  EXPECT_EQ(28u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
 
-  registers.current.user.gprs.r9 = 0u;
-  registers.current.user.gprs.r10 = 0u;
-  registers.current.user.gprs.r11 = 0u;
-  registers.current.user.gprs.r12 = 0u;
-  registers.current.user.gprs.r13 = 0u;
-  registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.r15 = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_spsrs[SVC_BANK_INDEX].mode = 0;
   registers.current.user.cpsr.mode = 0;
-  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
-}
-
-TEST(ArmMOVS, R15ToSVC) {
-  auto registers = CreateArmAllRegisters();
-
-  registers.current.user.gprs.r13 = 26u;
-  registers.current.user.gprs.r14 = 28u;
-  registers.current.user.cpsr.mode = MODE_IRQ;
-  registers.current.spsr.mode = MODE_SVC;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 13u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 14u;
-  registers.banked_spsrs[SVC_BANK_INDEX].thumb = true;
-  ArmMOVS(&registers, REGISTER_R15, 15u, true);
-  EXPECT_EQ(13u, registers.current.user.gprs.r13);
-  EXPECT_EQ(14u, registers.current.user.gprs.r14);
-  EXPECT_EQ(15u, registers.current.user.gprs.r15);
-  EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
-  EXPECT_TRUE(registers.current.spsr.thumb);
-  EXPECT_EQ(26u, registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX]);
-  EXPECT_EQ(28u, registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX]);
-
-  registers.current.user.gprs.r13 = 0u;
-  registers.current.user.gprs.r14 = 0u;
-  registers.current.user.gprs.r15 = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_spsrs[IRQ_BANK_INDEX].mode = 0;
-  registers.banked_spsrs[SVC_BANK_INDEX].thumb = false;
-  registers.current.user.cpsr.mode = 0;
-  registers.current.spsr.thumb = false;
-  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers.current));
 }
 
 TEST(ArmMVN, Compute) {
@@ -933,75 +882,13 @@ TEST(ArmMVNS, R15ToUSR) {
   registers.current.user.gprs.r14 = 28u;
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX] = 9u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX] = 10u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX] = 11u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX] = 12u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX] = 13u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX] = 14u;
   ArmMVNS(&registers, REGISTER_R15, ~15u, true);
-  EXPECT_EQ(9u, registers.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers.current.user.gprs.r12);
-  EXPECT_EQ(13u, registers.current.user.gprs.r13);
-  EXPECT_EQ(14u, registers.current.user.gprs.r14);
   EXPECT_EQ(15u, registers.current.user.gprs.r15);
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
-  EXPECT_EQ(26u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX]);
-  EXPECT_EQ(28u, registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
 
-  registers.current.user.gprs.r9 = 0u;
-  registers.current.user.gprs.r10 = 0u;
-  registers.current.user.gprs.r11 = 0u;
-  registers.current.user.gprs.r12 = 0u;
-  registers.current.user.gprs.r13 = 0u;
-  registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.r15 = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_spsrs[SVC_BANK_INDEX].mode = 0;
   registers.current.user.cpsr.mode = 0;
-  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
-}
-
-TEST(ArmMVNS, R15ToSVC) {
-  auto registers = CreateArmAllRegisters();
-
-  registers.current.user.gprs.r13 = 26u;
-  registers.current.user.gprs.r14 = 28u;
-  registers.current.user.cpsr.mode = MODE_IRQ;
-  registers.current.spsr.mode = MODE_SVC;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 13u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 14u;
-  registers.banked_spsrs[SVC_BANK_INDEX].thumb = true;
-  ArmMVNS(&registers, REGISTER_R15, ~15u, true);
-  EXPECT_EQ(13u, registers.current.user.gprs.r13);
-  EXPECT_EQ(14u, registers.current.user.gprs.r14);
-  EXPECT_EQ(15u, registers.current.user.gprs.r15);
-  EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
-  EXPECT_TRUE(registers.current.spsr.thumb);
-  EXPECT_EQ(26u, registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX]);
-  EXPECT_EQ(28u, registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX]);
-
-  registers.current.user.gprs.r13 = 0u;
-  registers.current.user.gprs.r14 = 0u;
-  registers.current.user.gprs.r15 = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX] = 0u;
-  registers.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] = 0u;
-  registers.banked_spsrs[IRQ_BANK_INDEX].mode = 0;
-  registers.banked_spsrs[SVC_BANK_INDEX].thumb = false;
-  registers.current.user.cpsr.mode = 0;
-  registers.current.spsr.thumb = false;
-  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers.current));
 }
 
 TEST(ArmOOR, Compute) {

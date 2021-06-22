@@ -1,5 +1,21 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
+#define USR_BANK_INDEX 0u
+#define SYS_BANK_INDEX 0u
+#define FIQ_BANK_INDEX 1u
+#define IRQ_BANK_INDEX 2u
+#define SVC_BANK_INDEX 3u
+#define ABT_BANK_INDEX 4u
+#define UND_BANK_INDEX 5u
+
+#define BANKED_R8_INDEX 6u
+#define BANKED_R9_INDEX 5u
+#define BANKED_R10_INDEX 4u
+#define BANKED_R11_INDEX 3u
+#define BANKED_R12_INDEX 2u
+#define BANKED_R13_INDEX 1u
+#define BANKED_R14_INDEX 0u
+
 static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
   assert(MODE_USR <= mode && mode <= MODE_SYS);
   const static uint8_t bank_index[32] = {
