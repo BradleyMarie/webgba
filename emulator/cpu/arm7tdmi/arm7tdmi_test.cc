@@ -224,6 +224,9 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_USR, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_USR != GetParam() && MODE_SYS != GetParam()) {
     EXPECT_EQ((MODE_USR << 4) | 8u, registers_.current.user.gprs.r8);
@@ -234,6 +237,7 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
     EXPECT_EQ((MODE_USR << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_USR << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_USR << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -246,7 +250,6 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_USR);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToSYS) {
@@ -265,6 +268,9 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_SYS, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_SYS != GetParam() && MODE_USR != GetParam()) {
     EXPECT_EQ((MODE_USR << 4) | 8u, registers_.current.user.gprs.r8);
@@ -275,6 +281,7 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
     EXPECT_EQ((MODE_USR << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_USR << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_USR << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -287,7 +294,6 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_SYS);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToABT) {
@@ -311,11 +317,15 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
   EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_ABT, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_ABT != GetParam()) {
     EXPECT_EQ((MODE_ABT << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_ABT << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_ABT << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -323,7 +333,6 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_ABT);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToFIQ) {
@@ -342,6 +351,9 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_FIQ, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_FIQ != GetParam()) {
     EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
@@ -352,6 +364,7 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
     EXPECT_EQ((MODE_FIQ << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_FIQ << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_FIQ << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -364,7 +377,6 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_FIQ);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToIRQ) {
@@ -388,11 +400,15 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
   EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_IRQ, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_IRQ != GetParam()) {
     EXPECT_EQ((MODE_IRQ << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_IRQ << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_IRQ << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -400,7 +416,6 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_IRQ);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToSVC) {
@@ -424,11 +439,15 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
   EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_SVC, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_SVC != GetParam()) {
     EXPECT_EQ((MODE_SVC << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_SVC << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_SVC << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -436,7 +455,6 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_SVC);
-  ValidateNewlyBankedRegisters();
 }
 
 TEST_P(ArmLoadCPSRTest, ToUND) {
@@ -460,11 +478,15 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
   EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
+  // Definitely Modified Registers
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
+
   // Potentially Modified Registers
   if (MODE_UND != GetParam()) {
     EXPECT_EQ((MODE_UND << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_UND << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_UND << 4, registers_.current.spsr.value);
+    ValidateNewlyBankedRegisters();
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -472,7 +494,6 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
   }
 
   ValidateBanksUnmodifiedExcept(MODE_UND);
-  ValidateNewlyBankedRegisters();
 }
 
 INSTANTIATE_TEST_SUITE_P(ArmLoadCPSRModule, ArmLoadCPSRTest,
