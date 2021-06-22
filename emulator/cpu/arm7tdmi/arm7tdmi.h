@@ -156,25 +156,7 @@ typedef struct {
   ArmProgramStatusRegister banked_spsrs[6];
 } ArmAllRegisters;
 
-static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
-  assert(MODE_USR <= mode && mode <= MODE_SYS);
-  const static uint8_t bank_index[32] = {
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, USR_BANK_INDEX, FIQ_BANK_INDEX, IRQ_BANK_INDEX, SVC_BANK_INDEX,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          ABT_BANK_INDEX, 0xFFu,          0xFFu,
-      0xFFu, SYS_BANK_INDEX};
-  assert(bank_index[mode] != 0xFFu);
-  return bank_index[mode];
-}
-
-static inline uint_fast8_t ArmBankIndexToBankSize(uint_fast8_t bank_index) {
-  assert(USR_BANK_INDEX <= bank_index && bank_index <= UND_BANK_INDEX);
-  const static uint8_t bank_index_size[6] = {7u, 7u, 2u, 2u, 2u, 2u};
-  return bank_index_size[bank_index];
-}
+void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
 
 static inline bool ArmNegativeFlag(uint32_t result) { return result >> 31; }
 
