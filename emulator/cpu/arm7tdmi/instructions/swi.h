@@ -4,25 +4,19 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 static inline void ArmSWI(ArmAllRegisters *registers) {
-  uint_fast8_t current_bank =
-      ArmModeToBankIndex(registers->current.user.cpsr.mode);
-  registers->banked_gprs[current_bank][BANKED_R13_INDEX] =
-      registers->current.user.gprs.r13;
-  registers->banked_gprs[current_bank][BANKED_R14_INDEX] =
-      registers->current.user.gprs.r14;
-  registers->banked_spsrs[current_bank] = registers->current.spsr;
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_SVC;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  ArmLoadCPSR(registers, next_status);
 
   const static uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
-  registers->current.user.gprs.r13 =
-      registers->banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX];
-  registers->current.user.gprs.r14 =
-      registers->current.user.gprs.pc -
-      next_instruction_pc_offset[registers->current.user.cpsr.thumb];
+  registers->current.user.gprs.r14 = registers->current.user.gprs.pc -
+                                     next_instruction_pc_offset[old_cpsr.thumb];
 
-  registers->current.spsr = registers->current.user.cpsr;
-  registers->current.user.cpsr.mode = MODE_SVC;
-  registers->current.user.cpsr.thumb = false;
-  registers->current.user.cpsr.irq_disable = true;
+  registers->current.spsr = old_cpsr;
   registers->current.user.gprs.pc = 0x8;
 }
 
