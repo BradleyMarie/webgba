@@ -37,22 +37,25 @@ static inline uint_fast8_t ArmBankIndexToBankSize(uint_fast8_t bank_index) {
 }
 
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr) {
-  uint_fast8_t current_bank_index =
-      ArmModeToBankIndex(registers->current.user.cpsr.mode);
-  uint_fast8_t current_bank_size = ArmBankIndexToBankSize(current_bank_index);
-  for (uint_fast8_t i = 0; i < current_bank_size; i++) {
-    registers->banked_gprs[current_bank_index][i] =
-        registers->current.user.gprs.gprs[REGISTER_R14 - i];
-  }
-  registers->banked_spsrs[current_bank_index] = registers->current.spsr;
+  unsigned current_mode = registers->current.user.cpsr.mode;
+  unsigned next_mode = cpsr.mode;
+  if (current_mode != next_mode) {
+    uint_fast8_t current_bank_index = ArmModeToBankIndex(current_mode);
+    uint_fast8_t current_bank_size = ArmBankIndexToBankSize(current_bank_index);
+    for (uint_fast8_t i = 0; i < current_bank_size; i++) {
+      registers->banked_gprs[current_bank_index][i] =
+          registers->current.user.gprs.gprs[REGISTER_R14 - i];
+    }
+    registers->banked_spsrs[current_bank_index] = registers->current.spsr;
 
-  uint_fast8_t next_bank_index = ArmModeToBankIndex(cpsr.mode);
-  uint_fast8_t next_bank_size = ArmBankIndexToBankSize(next_bank_index);
-  for (uint_fast8_t i = 0; i < next_bank_size; i++) {
-    registers->current.user.gprs.gprs[REGISTER_R14 - i] =
-        registers->banked_gprs[next_bank_index][i];
+    uint_fast8_t next_bank_index = ArmModeToBankIndex(next_mode);
+    uint_fast8_t next_bank_size = ArmBankIndexToBankSize(next_bank_index);
+    for (uint_fast8_t i = 0; i < next_bank_size; i++) {
+      registers->current.user.gprs.gprs[REGISTER_R14 - i] =
+          registers->banked_gprs[next_bank_index][i];
+    }
+    registers->current.spsr = registers->banked_spsrs[next_bank_index];
   }
-  registers->current.spsr = registers->banked_spsrs[next_bank_index];
 
   registers->current.user.cpsr = cpsr;
 }
