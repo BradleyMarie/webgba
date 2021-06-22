@@ -7,8 +7,8 @@ static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
       0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
       0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
       0xFFu, USR_BANK_INDEX, FIQ_BANK_INDEX, IRQ_BANK_INDEX, SVC_BANK_INDEX,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          ABT_BANK_INDEX, 0xFFu,          0xFFu,
+      0xFFu, ABT_BANK_INDEX, 0xFFu,          0xFFu,          0xFFu,
+      0xFFu, 0xFFu,          UND_BANK_INDEX, 0xFFu,          0xFFu,
       0xFFu, SYS_BANK_INDEX};
   assert(bank_index[mode] != 0xFFu);
   return bank_index[mode];
