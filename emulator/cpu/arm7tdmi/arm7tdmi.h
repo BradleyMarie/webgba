@@ -109,22 +109,6 @@ typedef union {
 #define MODE_UND 0x1Bu
 #define MODE_SYS 0x1Fu
 
-#define USR_BANK_INDEX 0u
-#define SYS_BANK_INDEX 0u
-#define FIQ_BANK_INDEX 1u
-#define IRQ_BANK_INDEX 2u
-#define SVC_BANK_INDEX 3u
-#define ABT_BANK_INDEX 4u
-#define UND_BANK_INDEX 5u
-
-#define BANKED_R8_INDEX 6u
-#define BANKED_R9_INDEX 5u
-#define BANKED_R10_INDEX 4u
-#define BANKED_R11_INDEX 3u
-#define BANKED_R12_INDEX 2u
-#define BANKED_R13_INDEX 1u
-#define BANKED_R14_INDEX 0u
-
 typedef union {
   struct {
     unsigned mode : 5;
