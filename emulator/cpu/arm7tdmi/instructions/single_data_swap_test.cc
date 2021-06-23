@@ -354,7 +354,31 @@ std::vector<char> MemoryTest::memory_space_(1024, 0);
 TEST_F(MemoryTest, ArmSWP) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
-  ASSERT_TRUE(Store32LE(nullptr, 8u, 16u));
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.r0 = 8u;
+  registers.r1 = 0xCAFEBABE;
+  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
+  EXPECT_EQ(8u, registers.r0);
+  EXPECT_EQ(0xCAFEBABE, registers.r1);
+  EXPECT_EQ(0xDEADC0DE, registers.r2);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xCAFEBABE, memory_contents);
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+  registers.r2 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSWPB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 16u));
   registers.r0 = 8u;
   registers.r1 = 32u;
   ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
@@ -362,11 +386,11 @@ TEST_F(MemoryTest, ArmSWP) {
   EXPECT_EQ(32u, registers.r1);
   EXPECT_EQ(16u, registers.r2);
 
-  uint32_t memory_contents;
-  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
   EXPECT_EQ(32u, memory_contents);
 
-  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  ASSERT_TRUE(Store8(nullptr, 8u, 0u));
   registers.r0 = 0u;
   registers.r1 = 0u;
   registers.r2 = 0u;
