@@ -80,7 +80,10 @@ cc_test(
 cc_library(
     name = "single_data_swap",
     hdrs = ["single_data_swap.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator:memory",
+    ],
 )
 
 cc_test(

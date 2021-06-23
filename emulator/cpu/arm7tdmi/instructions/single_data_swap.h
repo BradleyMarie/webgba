@@ -2,6 +2,7 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/memory.h"
 
 static inline void ArmMRS(ArmUserRegisters *registers, ArmRegisterIndex Rd) {
   registers->gprs.gprs[Rd] = registers->cpsr.value;
@@ -64,6 +65,19 @@ static inline void ArmMSRR_Immediate(ArmPrivilegedRegisters *registers,
 static inline void ArmMSRR_Register(ArmPrivilegedRegisters *registers,
                                     ArmRegisterIndex Rm) {
   registers->spsr.value = registers->user.gprs.gprs[Rm];
+}
+
+static inline void ArmSWP(ArmGeneralPurposeRegisters *registers, Memory *memory,
+                          ArmRegisterIndex Rd, ArmRegisterIndex Rm,
+                          ArmRegisterIndex Rn) {
+  uint32_t temp;
+  bool success = Load32LE(memory, registers->gprs[Rn], &temp);
+  assert(success);
+
+  success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rm]);
+  assert(success);
+
+  registers->gprs[Rd] = temp;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
