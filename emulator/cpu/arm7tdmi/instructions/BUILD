@@ -96,6 +96,24 @@ cc_test(
 )
 
 cc_library(
+    name = "signed_data_transfer",
+    hdrs = ["signed_data_transfer.h"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator:memory",
+    ],
+)
+
+cc_test(
+    name = "signed_data_transfer_test",
+    srcs = ["signed_data_transfer_test.cc"],
+    deps = [
+        ":signed_data_transfer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "single_data_swap",
     hdrs = ["single_data_swap.h"],
     deps = [
