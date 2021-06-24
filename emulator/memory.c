@@ -47,6 +47,20 @@ bool Load8(const Memory *memory, uint32_t address, uint8_t *value) {
   return memory->load_8(memory->context, address, value);
 }
 
+bool Load32SLE(const Memory *memory, uint32_t address, int32_t *value) {
+  return memory->load_le_32(memory->context, address,
+                            (uint32_t *)(void *)value);
+}
+
+bool Load16SLE(const Memory *memory, uint32_t address, int16_t *value) {
+  return memory->load_le_16(memory->context, address,
+                            (uint16_t *)(void *)value);
+}
+
+bool Load8S(const Memory *memory, uint32_t address, int8_t *value) {
+  return memory->load_8(memory->context, address, (uint8_t *)(void *)value);
+}
+
 bool Store32LE(Memory *memory, uint32_t address, uint32_t value) {
   return memory->store_le_32(memory->context, address, value);
 }
@@ -57,6 +71,18 @@ bool Store16LE(Memory *memory, uint32_t address, uint16_t value) {
 
 bool Store8(Memory *memory, uint32_t address, uint8_t value) {
   return memory->store_8(memory->context, address, value);
+}
+
+bool Store32SLE(Memory *memory, uint32_t address, int32_t value) {
+  return memory->store_le_32(memory->context, address, (uint32_t)value);
+}
+
+bool Store16SLE(Memory *memory, uint32_t address, int16_t value) {
+  return memory->store_le_16(memory->context, address, (uint16_t)value);
+}
+
+bool Store8S(Memory *memory, uint32_t address, int8_t value) {
+  return memory->store_8(memory->context, address, (uint8_t)value);
 }
 
 void MemoryFree(Memory *memory) {
