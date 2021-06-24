@@ -48,6 +48,24 @@ cc_test(
 )
 
 cc_library(
+    name = "load_store_register_byte",
+    hdrs = ["load_store_register_byte.h"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator:memory",
+    ],
+)
+
+cc_test(
+    name = "load_store_register_byte_test",
+    srcs = ["load_store_register_byte_test.cc"],
+    deps = [
+        ":load_store_register_byte",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "multiply",
     hdrs = ["multiply.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
