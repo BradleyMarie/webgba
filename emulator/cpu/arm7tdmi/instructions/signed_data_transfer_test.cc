@@ -420,3 +420,109 @@ TEST_F(MemoryTest, ArmLDRSH_IncrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
 }
+
+TEST_F(MemoryTest, ArmSTRH) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  ArmSTRH(&registers, memory_, REGISTER_R0, 8u);
+  EXPECT_EQ(137u, registers.r0);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRH_DecrementPreIndexed) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  registers.r1 = 12u;
+  ArmSTRH_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                              4u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(8u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRH_DecrementPostIndexed) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  registers.r1 = 8u;
+  ArmSTRH_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(4u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRH_IncrementPreIndexed) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  registers.r1 = 4u;
+  ArmSTRH_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                              4u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(8u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRH_IncrementPostIndexed) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  registers.r1 = 8u;
+  ArmSTRH_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(12u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
