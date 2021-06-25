@@ -3,6 +3,26 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"])
 
 cc_library(
+    name = "block_data_transfer",
+    hdrs = ["block_data_transfer.h"],
+    srcs = ["block_data_transfer.c"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator:memory",
+    ],
+)
+
+cc_test(
+    name = "block_data_transfer_test",
+    srcs = ["block_data_transfer_test.cc"],
+    shard_count = 32,
+    deps = [
+        ":block_data_transfer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "branch_exchange",
     hdrs = ["branch_exchange.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
