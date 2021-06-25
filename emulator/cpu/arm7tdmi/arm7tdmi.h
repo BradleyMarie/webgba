@@ -136,7 +136,8 @@ typedef struct {
 
 typedef struct {
   ArmPrivilegedRegisters current;
-  uint32_t banked_gprs[6][7];
+  uint32_t banked_splrs[6][2];
+  uint32_t banked_fiq_gprs[5];
   ArmProgramStatusRegister banked_spsrs[6];
 } ArmAllRegisters;
 
