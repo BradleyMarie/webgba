@@ -16,11 +16,11 @@ extern "C" {
 #define ABT_BANK_INDEX 4u
 #define UND_BANK_INDEX 5u
 
-#define BANKED_R8_INDEX 6u
-#define BANKED_R9_INDEX 5u
-#define BANKED_R10_INDEX 4u
-#define BANKED_R11_INDEX 3u
-#define BANKED_R12_INDEX 2u
+#define BANKED_R8_INDEX 4u
+#define BANKED_R9_INDEX 3u
+#define BANKED_R10_INDEX 2u
+#define BANKED_R11_INDEX 1u
+#define BANKED_R12_INDEX 0u
 #define BANKED_R13_INDEX 1u
 #define BANKED_R14_INDEX 0u
 
@@ -36,171 +36,148 @@ class ArmLoadCPSRTest : public testing::TestWithParam<unsigned> {
     registers_.current.user.cpsr.mode = GetParam();
     registers_.current.spsr.value = 65535u;
 
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R8_INDEX] =
-        (MODE_USR << 4) | 8u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX] =
-        (MODE_USR << 4) | 9u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX] =
-        (MODE_USR << 4) | 10u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX] =
-        (MODE_USR << 4) | 11u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX] =
-        (MODE_USR << 4) | 12u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[USR_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_USR << 4) | 13u;
-    registers_.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[USR_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_USR << 4) | 14u;
     registers_.banked_spsrs[USR_BANK_INDEX].value = (MODE_USR << 4);
 
-    registers_.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[SVC_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_SVC << 4) | 13u;
-    registers_.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[SVC_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_SVC << 4) | 14u;
     registers_.banked_spsrs[SVC_BANK_INDEX].value = (MODE_SVC << 4);
 
-    registers_.banked_gprs[ABT_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[ABT_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_ABT << 4) | 13u;
-    registers_.banked_gprs[ABT_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[ABT_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_ABT << 4) | 14u;
     registers_.banked_spsrs[ABT_BANK_INDEX].value = (MODE_ABT << 4);
 
-    registers_.banked_gprs[UND_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[UND_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_UND << 4) | 13u;
-    registers_.banked_gprs[UND_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[UND_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_UND << 4) | 14u;
     registers_.banked_spsrs[UND_BANK_INDEX].value = (MODE_UND << 4);
 
-    registers_.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[IRQ_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_IRQ << 4) | 13u;
-    registers_.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[IRQ_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_IRQ << 4) | 14u;
     registers_.banked_spsrs[IRQ_BANK_INDEX].value = (MODE_IRQ << 4);
 
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R8_INDEX] =
-        (MODE_FIQ << 4) | 8u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R9_INDEX] =
-        (MODE_FIQ << 4) | 9u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R10_INDEX] =
-        (MODE_FIQ << 4) | 10u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R11_INDEX] =
-        (MODE_FIQ << 4) | 11u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R12_INDEX] =
-        (MODE_FIQ << 4) | 12u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R13_INDEX] =
+    registers_.banked_splrs[FIQ_BANK_INDEX][BANKED_R13_INDEX] =
         (MODE_FIQ << 4) | 13u;
-    registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R14_INDEX] =
+    registers_.banked_splrs[FIQ_BANK_INDEX][BANKED_R14_INDEX] =
         (MODE_FIQ << 4) | 14u;
     registers_.banked_spsrs[FIQ_BANK_INDEX].value = (MODE_FIQ << 4);
+
+    registers_.banked_fiq_gprs[BANKED_R8_INDEX] = (MODE_FIQ << 4) | 8u;
+    registers_.banked_fiq_gprs[BANKED_R9_INDEX] = (MODE_FIQ << 4) | 9u;
+    registers_.banked_fiq_gprs[BANKED_R10_INDEX] = (MODE_FIQ << 4) | 10u;
+    registers_.banked_fiq_gprs[BANKED_R11_INDEX] = (MODE_FIQ << 4) | 11u;
+    registers_.banked_fiq_gprs[BANKED_R12_INDEX] = (MODE_FIQ << 4) | 12u;
   }
 
   void ValidateBanksUnmodifiedExcept(unsigned new_mode) {
     unsigned old_mode = GetParam();
     if (old_mode != MODE_USR && new_mode != MODE_USR && old_mode != MODE_SYS &&
         new_mode != MODE_SYS) {
-      EXPECT_EQ((MODE_USR << 4) | 8u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R8_INDEX]);
-      EXPECT_EQ((MODE_USR << 4) | 9u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R9_INDEX]);
-      EXPECT_EQ((MODE_USR << 4) | 10u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R10_INDEX]);
-      EXPECT_EQ((MODE_USR << 4) | 11u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R11_INDEX]);
-      EXPECT_EQ((MODE_USR << 4) | 12u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R12_INDEX]);
       EXPECT_EQ((MODE_USR << 4) | 13u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[USR_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_USR << 4) | 14u,
-                registers_.banked_gprs[USR_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[USR_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_USR << 4, registers_.banked_spsrs[USR_BANK_INDEX].value);
     }
 
     if (old_mode != MODE_SVC && new_mode != MODE_SVC) {
       EXPECT_EQ((MODE_SVC << 4) | 13u,
-                registers_.banked_gprs[SVC_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[SVC_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_SVC << 4) | 14u,
-                registers_.banked_gprs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[SVC_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_SVC << 4, registers_.banked_spsrs[SVC_BANK_INDEX].value);
     }
 
     if (old_mode != MODE_ABT && new_mode != MODE_ABT) {
       EXPECT_EQ((MODE_ABT << 4) | 13u,
-                registers_.banked_gprs[ABT_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[ABT_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_ABT << 4) | 14u,
-                registers_.banked_gprs[ABT_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[ABT_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_ABT << 4, registers_.banked_spsrs[ABT_BANK_INDEX].value);
     }
 
     if (old_mode != MODE_UND && new_mode != MODE_UND) {
       EXPECT_EQ((MODE_UND << 4) | 13u,
-                registers_.banked_gprs[UND_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[UND_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_UND << 4) | 14u,
-                registers_.banked_gprs[UND_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[UND_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_UND << 4, registers_.banked_spsrs[UND_BANK_INDEX].value);
     }
 
     if (old_mode != MODE_IRQ && new_mode != MODE_IRQ) {
       EXPECT_EQ((MODE_IRQ << 4) | 13u,
-                registers_.banked_gprs[IRQ_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[IRQ_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_IRQ << 4) | 14u,
-                registers_.banked_gprs[IRQ_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[IRQ_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_IRQ << 4, registers_.banked_spsrs[IRQ_BANK_INDEX].value);
     }
 
     if (old_mode != MODE_FIQ && new_mode != MODE_FIQ) {
       EXPECT_EQ((MODE_FIQ << 4) | 8u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R8_INDEX]);
+                registers_.banked_fiq_gprs[BANKED_R8_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 9u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R9_INDEX]);
+                registers_.banked_fiq_gprs[BANKED_R9_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 10u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R10_INDEX]);
+                registers_.banked_fiq_gprs[BANKED_R10_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 11u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R11_INDEX]);
+                registers_.banked_fiq_gprs[BANKED_R11_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 12u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R12_INDEX]);
+                registers_.banked_fiq_gprs[BANKED_R12_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 13u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R13_INDEX]);
+                registers_.banked_splrs[FIQ_BANK_INDEX][BANKED_R13_INDEX]);
       EXPECT_EQ((MODE_FIQ << 4) | 14u,
-                registers_.banked_gprs[FIQ_BANK_INDEX][BANKED_R14_INDEX]);
+                registers_.banked_splrs[FIQ_BANK_INDEX][BANKED_R14_INDEX]);
       EXPECT_EQ(MODE_FIQ << 4, registers_.banked_spsrs[FIQ_BANK_INDEX].value);
     }
   }
 
-  void ValidateNewlyBankedRegisters() {
-    size_t old_bank_index, old_bank_size;
+  void ValidateNewlyBankedRegisters(unsigned new_mode) {
+    size_t old_bank_index;
     switch (GetParam()) {
       case MODE_USR:
       case MODE_SYS:
         old_bank_index = USR_BANK_INDEX;
-        old_bank_size = 7;
         break;
       case MODE_SVC:
         old_bank_index = SVC_BANK_INDEX;
-        old_bank_size = 2;
         break;
       case MODE_ABT:
         old_bank_index = ABT_BANK_INDEX;
-        old_bank_size = 2;
         break;
       case MODE_UND:
         old_bank_index = UND_BANK_INDEX;
-        old_bank_size = 2;
         break;
       case MODE_IRQ:
         old_bank_index = IRQ_BANK_INDEX;
-        old_bank_size = 2;
         break;
       case MODE_FIQ:
         old_bank_index = FIQ_BANK_INDEX;
-        old_bank_size = 7;
         break;
       default:
         ASSERT_FALSE(true);
         break;
     }
 
-    for (size_t i = 0; i < old_bank_size; i++) {
-      EXPECT_EQ(14u - i, registers_.banked_gprs[old_bank_index][i]);
+    for (size_t i = 0; i < 2; i++) {
+      EXPECT_EQ(14u - i, registers_.banked_splrs[old_bank_index][i]);
     }
+
+    if (GetParam() == MODE_FIQ || new_mode == MODE_FIQ) {
+      for (size_t i = 0; i < 5; i++) {
+        EXPECT_EQ(12u - i, registers_.banked_fiq_gprs[i]);
+      }
+    }
+
     EXPECT_EQ(65535u, registers_.banked_spsrs[old_bank_index].value);
   }
 
@@ -229,15 +206,23 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
 
   // Potentially Modified Registers
   if (MODE_USR != GetParam() && MODE_SYS != GetParam()) {
-    EXPECT_EQ((MODE_USR << 4) | 8u, registers_.current.user.gprs.r8);
-    EXPECT_EQ((MODE_USR << 4) | 9u, registers_.current.user.gprs.r9);
-    EXPECT_EQ((MODE_USR << 4) | 10u, registers_.current.user.gprs.r10);
-    EXPECT_EQ((MODE_USR << 4) | 11u, registers_.current.user.gprs.r11);
-    EXPECT_EQ((MODE_USR << 4) | 12u, registers_.current.user.gprs.r12);
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_USR << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_USR << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_USR << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_USR);
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -273,15 +258,23 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
 
   // Potentially Modified Registers
   if (MODE_SYS != GetParam() && MODE_USR != GetParam()) {
-    EXPECT_EQ((MODE_USR << 4) | 8u, registers_.current.user.gprs.r8);
-    EXPECT_EQ((MODE_USR << 4) | 9u, registers_.current.user.gprs.r9);
-    EXPECT_EQ((MODE_USR << 4) | 10u, registers_.current.user.gprs.r10);
-    EXPECT_EQ((MODE_USR << 4) | 11u, registers_.current.user.gprs.r11);
-    EXPECT_EQ((MODE_USR << 4) | 12u, registers_.current.user.gprs.r12);
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_USR << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_USR << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_USR << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_SYS);
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -310,11 +303,6 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
   EXPECT_EQ(5u, registers_.current.user.gprs.r5);
   EXPECT_EQ(6u, registers_.current.user.gprs.r6);
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
-  EXPECT_EQ(8u, registers_.current.user.gprs.r8);
-  EXPECT_EQ(9u, registers_.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers_.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers_.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
   // Definitely Modified Registers
@@ -322,10 +310,23 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
 
   // Potentially Modified Registers
   if (MODE_ABT != GetParam()) {
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_ABT << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_ABT << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_ABT << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_ABT);
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -364,7 +365,7 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
     EXPECT_EQ((MODE_FIQ << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_FIQ << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_FIQ << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_FIQ);
   } else {
     EXPECT_EQ(8u, registers_.current.user.gprs.r8);
     EXPECT_EQ(9u, registers_.current.user.gprs.r9);
@@ -393,11 +394,6 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
   EXPECT_EQ(5u, registers_.current.user.gprs.r5);
   EXPECT_EQ(6u, registers_.current.user.gprs.r6);
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
-  EXPECT_EQ(8u, registers_.current.user.gprs.r8);
-  EXPECT_EQ(9u, registers_.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers_.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers_.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
   // Definitely Modified Registers
@@ -405,10 +401,23 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
 
   // Potentially Modified Registers
   if (MODE_IRQ != GetParam()) {
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_IRQ << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_IRQ << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_IRQ << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_IRQ);
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -432,11 +441,6 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
   EXPECT_EQ(5u, registers_.current.user.gprs.r5);
   EXPECT_EQ(6u, registers_.current.user.gprs.r6);
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
-  EXPECT_EQ(8u, registers_.current.user.gprs.r8);
-  EXPECT_EQ(9u, registers_.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers_.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers_.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
   // Definitely Modified Registers
@@ -444,10 +448,23 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
 
   // Potentially Modified Registers
   if (MODE_SVC != GetParam()) {
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_SVC << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_SVC << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_SVC << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_SVC);
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
@@ -471,11 +488,6 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
   EXPECT_EQ(5u, registers_.current.user.gprs.r5);
   EXPECT_EQ(6u, registers_.current.user.gprs.r6);
   EXPECT_EQ(7u, registers_.current.user.gprs.r7);
-  EXPECT_EQ(8u, registers_.current.user.gprs.r8);
-  EXPECT_EQ(9u, registers_.current.user.gprs.r9);
-  EXPECT_EQ(10u, registers_.current.user.gprs.r10);
-  EXPECT_EQ(11u, registers_.current.user.gprs.r11);
-  EXPECT_EQ(12u, registers_.current.user.gprs.r12);
   EXPECT_EQ(15u, registers_.current.user.gprs.r15);
 
   // Definitely Modified Registers
@@ -483,10 +495,23 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
 
   // Potentially Modified Registers
   if (MODE_UND != GetParam()) {
+    if (MODE_FIQ == GetParam()) {
+      EXPECT_EQ((MODE_FIQ << 4) | 8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ((MODE_FIQ << 4) | 9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ((MODE_FIQ << 4) | 10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ((MODE_FIQ << 4) | 11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ((MODE_FIQ << 4) | 12u, registers_.current.user.gprs.r12);
+    } else {
+      EXPECT_EQ(8u, registers_.current.user.gprs.r8);
+      EXPECT_EQ(9u, registers_.current.user.gprs.r9);
+      EXPECT_EQ(10u, registers_.current.user.gprs.r10);
+      EXPECT_EQ(11u, registers_.current.user.gprs.r11);
+      EXPECT_EQ(12u, registers_.current.user.gprs.r12);
+    }
     EXPECT_EQ((MODE_UND << 4) | 13u, registers_.current.user.gprs.r13);
     EXPECT_EQ((MODE_UND << 4) | 14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(MODE_UND << 4, registers_.current.spsr.value);
-    ValidateNewlyBankedRegisters();
+    ValidateNewlyBankedRegisters(MODE_UND);
   } else {
     EXPECT_EQ(13u, registers_.current.user.gprs.r13);
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
