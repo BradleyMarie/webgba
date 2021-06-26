@@ -976,7 +976,8 @@ TEST_P(LdmTest, SvcArmLDMSIBW) {
 
 INSTANTIATE_TEST_SUITE_P(ArmLdmTestModule, LdmTest,
                          testing::Range(std::numeric_limits<uint16_t>::min(),
-                                        std::numeric_limits<uint16_t>::max()));
+                                        std::numeric_limits<uint16_t>::max(),
+                                        51u));
 
 class StmTest : public testing::TestWithParam<uint16_t> {
  public:
@@ -1562,4 +1563,5 @@ TEST_P(StmTest, SvcArmSTMSIBW) {
 
 INSTANTIATE_TEST_SUITE_P(ArmStmTestModule, StmTest,
                          testing::Range(std::numeric_limits<uint16_t>::min(),
-                                        std::numeric_limits<uint16_t>::max()));
+                                        std::numeric_limits<uint16_t>::max(),
+                                        51u));
