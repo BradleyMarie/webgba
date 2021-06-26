@@ -15,7 +15,6 @@ cc_library(
 cc_test(
     name = "block_data_transfer_test",
     srcs = ["block_data_transfer_test.cc"],
-    shard_count = 50,
     deps = [
         ":block_data_transfer",
         "@com_google_googletest//:gtest_main",
