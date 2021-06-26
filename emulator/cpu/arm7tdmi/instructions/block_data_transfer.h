@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_BLOCK_DATA_TRANSFER_
-#define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_BLOCK_DATA_TRANSFER_
+#ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTMUCTIONS_BLOCK_DATA_TRANSFER_
+#define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTMUCTIONS_BLOCK_DATA_TRANSFER_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 #include "emulator/memory.h"
@@ -52,4 +52,52 @@ void ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
 void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-#endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_BLOCK_DATA_TRANSFER_
+void ArmSTMDA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
+              ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMDB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
+              ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMDAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMDBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMIA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
+              ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMIB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
+              ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMIAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMIBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMSDB(const ArmAllRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+                uint_fast16_t register_list);
+
+void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+                uint_fast16_t register_list);
+
+void ArmSTMSIA(const ArmAllRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMSIB(const ArmAllRegisters *registers, Memory *memory,
+               ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+                uint_fast16_t register_list);
+
+void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+                uint_fast16_t register_list);
+
+#endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTMUCTIONS_BLOCK_DATA_TRANSFER_
