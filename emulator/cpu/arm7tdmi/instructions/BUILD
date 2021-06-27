@@ -52,6 +52,24 @@ cc_test(
 )
 
 cc_library(
+    name = "coprocessor_data_operation",
+    hdrs = ["coprocessor_data_operation.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_library(
+    name = "coprocessor_data_transfer",
+    hdrs = ["coprocessor_data_transfer.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_library(
+    name = "coprocessor_register_transfer",
+    hdrs = ["coprocessor_register_transfer.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_library(
     name = "data_processing",
     hdrs = ["data_processing.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
