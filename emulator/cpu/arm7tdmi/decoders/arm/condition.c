@@ -18,7 +18,7 @@
 #define ARM_CONDITION_NV 15u
 
 static inline uint_fast8_t ArmInstructionCondition(uint32_t instruction) {
-  return instruction >> 27;
+  return instruction >> 28;
 }
 
 bool ArmInstructionShouldExecute(ArmProgramStatusRegister cpsr,
