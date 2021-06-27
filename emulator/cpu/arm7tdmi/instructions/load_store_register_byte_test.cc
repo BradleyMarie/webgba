@@ -19,6 +19,17 @@ bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters &regs) {
   return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
 }
 
+ArmAllRegisters CreateArmAllRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
+  return registers;
+}
+
+bool ArmAllRegistersAreZero(const ArmAllRegisters &regs) {
+  auto zero = CreateArmAllRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
+}
+
 class MemoryTest : public testing::Test {
  public:
   void SetUp() override {
@@ -189,6 +200,65 @@ TEST_F(MemoryTest, ArmLDR_IncrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDRT) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  ArmLDRT(&registers, memory_, REGISTER_R0, 8u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRT_DecrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 8u;
+  ArmLDRT_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r1);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRT_IncrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 8u;
+  ArmLDRT_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+  EXPECT_EQ(12u, registers.current.user.gprs.r1);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDRB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
@@ -279,6 +349,66 @@ TEST_F(MemoryTest, ArmLDRB_IncrementPostIndexed) {
   registers.r0 = 0u;
   registers.r1 = 0u;
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRBT) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 137u));
+  registers.current.user.gprs.r0 = 8u;
+  ArmLDRBT(&registers, memory_, REGISTER_R0, 8u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRBT_DecrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 137u));
+  registers.current.user.gprs.r1 = 8u;
+  ArmLDRBT_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                                4u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r1);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRBT_IncrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 137u));
+  registers.current.user.gprs.r1 = 8u;
+  ArmLDRBT_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                                4u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(12u, registers.current.user.gprs.r1);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST_F(MemoryTest, ArmSTR) {
@@ -382,6 +512,75 @@ TEST_F(MemoryTest, ArmSTR_IncrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
+TEST_F(MemoryTest, ArmSTRT) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 0xDEADC0DE;
+  ArmSTRT(&registers, memory_, REGISTER_R0, 8u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRT_DecrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 0xDEADC0DE;
+  registers.current.user.gprs.r1 = 8u;
+  ArmSTRT_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r1);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRT_IncrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 0xDEADC0DE;
+  registers.current.user.gprs.r1 = 8u;
+  ArmSTRT_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                               4u);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+  EXPECT_EQ(12u, registers.current.user.gprs.r1);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
 TEST_F(MemoryTest, ArmSTRB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
@@ -482,5 +681,74 @@ TEST_F(MemoryTest, ArmSTRB_IncrementPostIndexed) {
   registers.r1 = 0u;
 
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRBT) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 137u;
+  ArmSTRBT(&registers, memory_, REGISTER_R0, 8u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRBT_DecrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 137u;
+  registers.current.user.gprs.r1 = 8u;
+  ArmSTRBT_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                                4u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r1);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRBT_IncrementPostIndexed) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  registers.current.user.gprs.r0 = 137u;
+  registers.current.user.gprs.r1 = 8u;
+  ArmSTRBT_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
+                                4u);
+  EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(12u, registers.current.user.gprs.r1);
+
+  uint8_t memory_contents;
+  ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store8(nullptr, 8u, 0u));
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
 }
