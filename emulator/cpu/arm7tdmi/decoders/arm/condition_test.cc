@@ -31,7 +31,7 @@ class ArmConditionTest : public testing::TestWithParam<uint32_t> {
   }
 
   uint32_t ConditionToInstruction(uint_fast8_t condition) {
-    return condition << 27;
+    return condition << 28;
   }
 
  protected:
