@@ -5,13 +5,14 @@
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
-static inline void ArmB(ArmGeneralPurposeRegisters *registers, int32_t offset) {
+static inline void ArmB(ArmGeneralPurposeRegisters *registers,
+                        int_fast32_t offset) {
   assert(-8388608 <= offset && offset <= 8388607);
   offset = (int32_t)((uint32_t)offset << 2);
   registers->pc += offset;
 }
 
-static inline void ArmBL(ArmUserRegisters *registers, int32_t offset) {
+static inline void ArmBL(ArmUserRegisters *registers, int_fast32_t offset) {
   assert(-8388608 <= offset && offset <= 8388607);
   const static uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
   offset = (int32_t)((uint32_t)offset << 2);
