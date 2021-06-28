@@ -5,7 +5,6 @@ package(default_visibility = ["//emulator/cpu/arm7tdmi/decoders:__subpackages__"
 cc_library(
     name = "condition",
     hdrs = ["condition.h"],
-    srcs = ["condition.c"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
 )
 
