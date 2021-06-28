@@ -398,6 +398,7 @@ int main(int argc, char* argv[]) {
   sorted_opcodes.erase("ARM_OPCODE_UNDEF");
   opcode_number["ARM_OPCODE_UNDEF"] = 0;
 
+  std::cout << "#include <assert.h>" << std::endl << std::endl;
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
 
   std::cout << "typedef enum {" << std::endl;
@@ -428,8 +429,9 @@ int main(int argc, char* argv[]) {
             << std::endl;
   std::cout
       << "  uint_fast16_t opcode_index = opcode_index_low | opcode_index_hi;"
-      << std::endl
       << std::endl;
+
+  std::cout << "  assert(opcode_index < 4096);" << std::endl << std::endl;
 
   std::cout << "  return (ArmOpcode)opcode_table[opcode_index];" << std::endl;
   std::cout << "}" << std::endl;

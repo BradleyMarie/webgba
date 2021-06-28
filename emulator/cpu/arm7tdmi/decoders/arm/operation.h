@@ -1,6 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERATION_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERATION_
 
+#include <assert.h>
 #include <stdint.h>
 
 typedef enum {
@@ -523,6 +524,7 @@ static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {
   uint_fast16_t opcode_index_low = (instruction << 24u) >> 28u;
   uint_fast16_t opcode_index_hi = (instruction << 4u) >> 24u;
   uint_fast16_t opcode_index = opcode_index_low | opcode_index_hi;
+  assert(opcode_index < 4096);
 
   return (ArmOpcode)opcode_table[opcode_index];
 }
