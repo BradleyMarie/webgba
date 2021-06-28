@@ -17,3 +17,8 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "operation",
+    hdrs = ["operation.h"],
+)
