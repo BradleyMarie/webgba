@@ -453,9 +453,8 @@ int main(int argc, char* argv[]) {
 
   std::cout << "} ArmOpcode;" << std::endl << std::endl;
 
-  std::cout
-      << "static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {"
-      << std::endl;
+  std::cout << "static inline ArmOpcode ArmDecodeOpcode(uint32_t instruction) {"
+            << std::endl;
   std::cout << "  static const uint8_t opcode_table[4096] = {" << std::endl;
   for (const auto& entry : opcodes) {
     std::cout << "    " << opcode_number.at(entry) << "u," << std::endl;

@@ -18,11 +18,11 @@ cc_test(
 )
 
 cc_library(
-    name = "operand",
-    hdrs = ["operand.h"],
+    name = "opcode",
+    hdrs = ["opcode.h"],
 )
 
 cc_library(
-    name = "operation",
-    hdrs = ["operation.h"],
+    name = "operand",
+    hdrs = ["operand.h"],
 )

@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERATION_
-#define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERATION_
+#ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPCODE_
+#define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPCODE_
 
 #include <assert.h>
 #include <stdint.h>
@@ -231,7 +231,7 @@ typedef enum {
   ARM_OPCODE_UMULLS = 223u,
 } ArmOpcode;
 
-static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {
+static inline ArmOpcode ArmDecodeOpcode(uint32_t instruction) {
   static const uint8_t opcode_table[4096] = {
       9u,   9u,   9u,   9u,   9u,   9u,   9u,   9u,   9u,   126u, 9u,   193u,
       9u,   0u,   9u,   0u,   11u,  11u,  11u,  11u,  11u,  11u,  11u,  11u,
@@ -585,4 +585,4 @@ static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {
   return (ArmOpcode)opcode_table[opcode_index];
 }
 
-#endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERATION_
+#endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPCODE_
