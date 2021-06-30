@@ -435,21 +435,21 @@ int main(int argc, char* argv[]) {
 
   std::map<std::string, uint32_t> opcode_number;
   sorted_opcodes.erase("ARM=OPCODE=UNDEF");
-  opcode_number["ARM=OPCODE=UNDEF"] = 0;
 
   std::cout << "#include <assert.h>" << std::endl;
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
 
   std::cout << "typedef enum {" << std::endl;
-  std::cout << "  ARM_OPCODE_UNDEF = 0u," << std::endl;
 
-  uint32_t value = 1;
+  uint32_t value = 0u;
   for (const auto& entry : sorted_opcodes) {
     opcode_number[entry] = value;
     std::string opcode = entry;
     std::replace(opcode.begin(), opcode.end(), '=', '_');
     std::cout << "  " << opcode << " = " << value++ << "u," << std::endl;
   }
+  std::cout << "  ARM_OPCODE_UNDEF = " << value << "u," << std::endl;
+  opcode_number["ARM=OPCODE=UNDEF"] = value++;
 
   std::cout << "} ArmOpcode;" << std::endl << std::endl;
 
