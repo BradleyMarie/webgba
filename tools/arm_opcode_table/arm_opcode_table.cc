@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
@@ -131,12 +132,16 @@ std::string MatchesHalfWordDataTransfer(const std::bitset<32>& instruction) {
     }
   }
 
-  opcode += i ? "_I_" : "_R_";
+  opcode += "_";
 
   opcode += u ? "I" : "D";
   opcode += p ? "B" : "A";
   if (w) {
     opcode += "W";
+  }
+
+  if (i) {
+    opcode += "_I8";
   }
 
   return opcode;
@@ -159,9 +164,7 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += "B";
   }
 
-  if (u || p || w) {
-    opcode += "_";
-  }
+  opcode += "_";
 
   opcode += u ? "I" : "D";
   opcode += p ? "B" : "A";
@@ -169,28 +172,8 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += "W";
   }
 
-  opcode += "_";
-
   if (i) {
-    opcode += "I12";
-  } else {
-    std::bitset<2> shift;
-    shift[0] = instruction[5];
-    shift[1] = instruction[6];
-    switch (shift.to_ulong()) {
-      case 0:
-        opcode += "LSL_R";
-        break;
-      case 1:
-        opcode += "LSR_R";
-        break;
-      case 2:
-        opcode += "ASR_R";
-        break;
-      case 3:
-        opcode += "RR_OR_RRX_R";
-        break;
-    };
+    opcode += "_I12";
   }
 
   return opcode;
@@ -198,6 +181,10 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
 
 std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
   if (instruction[26] != 0 || instruction[27] != 0) {
+    return std::string();
+  }
+
+  if (instruction[4] == 1 && instruction[7] == 1 && instruction[25] == 0) {
     return std::string();
   }
 
@@ -287,33 +274,6 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
 
   if (i) {
     opcode += "_I32";
-  } else {
-    bool r = instruction[4];
-    std::bitset<2> shift;
-    shift[0] = instruction[5];
-    shift[1] = instruction[6];
-    switch (shift.to_ulong()) {
-      case 0:
-        opcode += "_LSL_";
-        break;
-      case 1:
-        opcode += "_LSR_";
-        break;
-      case 2:
-        opcode += "_ASR_";
-        break;
-      case 3:
-        opcode += "_RR_OR_RRX_";
-        break;
-    };
-    if (r) {
-      if (instruction[7]) {
-        return std::string();
-      }
-      opcode += "R";
-    } else {
-      opcode += "I";
-    }
   }
 
   return opcode;
@@ -334,7 +294,7 @@ std::string MatchesBlockDataTransfer(const std::bitset<32>& instruction) {
   opcode += u ? "I" : "D";
   opcode += p ? "B" : "A";
   if (w) {
-    opcode += "W";
+    opcode += "_W";
   }
 
   return opcode;
@@ -461,14 +421,15 @@ int main(int argc, char* argv[]) {
     if (opcode.empty()) {
       return -1;
     }
+    std::replace(opcode.begin(), opcode.end(), '_', '=');
     opcodes.push_back(opcode);
   }
 
   std::set<std::string> sorted_opcodes;
   sorted_opcodes.insert(opcodes.begin(), opcodes.end());
 
-  if (UINT16_MAX < sorted_opcodes.size()) {
-    std::cout << "ERROR: Cannot represent opcodes in a uint16_t" << std::endl;
+  if (UINT8_MAX < sorted_opcodes.size()) {
+    std::cout << "ERROR: Cannot represent opcodes in a uint8_t" << std::endl;
     return -1;
   }
 
@@ -485,7 +446,9 @@ int main(int argc, char* argv[]) {
   uint32_t value = 1;
   for (const auto& entry : sorted_opcodes) {
     opcode_number[entry] = value;
-    std::cout << "  " << entry << " = " << value++ << "u," << std::endl;
+    std::string opcode = entry;
+    std::replace(opcode.begin(), opcode.end(), '=', '_');
+    std::cout << "  " << opcode << " = " << value++ << "u," << std::endl;
   }
 
   std::cout << "} ArmOpcode;" << std::endl << std::endl;
@@ -493,7 +456,7 @@ int main(int argc, char* argv[]) {
   std::cout
       << "static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {"
       << std::endl;
-  std::cout << "  static const uint16_t opcode_table[4096] = {" << std::endl;
+  std::cout << "  static const uint8_t opcode_table[4096] = {" << std::endl;
   for (const auto& entry : opcodes) {
     std::cout << "    " << opcode_number.at(entry) << "u," << std::endl;
   }
