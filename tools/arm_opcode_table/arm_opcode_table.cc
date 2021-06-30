@@ -434,8 +434,8 @@ int main(int argc, char* argv[]) {
   }
 
   std::map<std::string, uint32_t> opcode_number;
-  sorted_opcodes.erase("ARM_OPCODE_UNDEF");
-  opcode_number["ARM_OPCODE_UNDEF"] = 0;
+  sorted_opcodes.erase("ARM=OPCODE=UNDEF");
+  opcode_number["ARM=OPCODE=UNDEF"] = 0;
 
   std::cout << "#include <assert.h>" << std::endl;
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
