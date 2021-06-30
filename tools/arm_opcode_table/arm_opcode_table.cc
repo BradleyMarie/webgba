@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <set>
@@ -158,10 +159,8 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += "B";
   }
 
-  if (i) {
-    opcode += "_I_";
-  } else {
-    opcode += "_R_";
+  if (u || p || w) {
+    opcode += "_";
   }
 
   opcode += u ? "I" : "D";
@@ -170,11 +169,35 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += "W";
   }
 
+  opcode += "_";
+
+  if (i) {
+    opcode += "I12";
+  } else {
+    std::bitset<2> shift;
+    shift[0] = instruction[5];
+    shift[1] = instruction[6];
+    switch (shift.to_ulong()) {
+      case 0:
+        opcode += "LSL_R";
+        break;
+      case 1:
+        opcode += "LSR_R";
+        break;
+      case 2:
+        opcode += "ASR_R";
+        break;
+      case 3:
+        opcode += "RR_OR_RRX_R";
+        break;
+    };
+  }
+
   return opcode;
 }
 
 std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
-  if (instruction[25] != 1 || instruction[26] != 0 || instruction[27] != 0) {
+  if (instruction[26] != 0 || instruction[27] != 0) {
     return std::string();
   }
 
@@ -185,10 +208,9 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
   arm_opcode[1] = instruction[22];
   arm_opcode[2] = instruction[23];
   arm_opcode[3] = instruction[24];
-  unsigned long as_ulong = arm_opcode.to_ulong();
 
   std::string opcode;
-  switch (as_ulong) {
+  switch (arm_opcode.to_ulong()) {
     case 0:
       opcode = "AND";
       break;
@@ -214,16 +236,32 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
       opcode = "RSC";
       break;
     case 8:
+      if (!s) {
+        return std::string();
+      }
       opcode = "TST";
+      s = false;
       break;
     case 9:
+      if (!s) {
+        return std::string();
+      }
       opcode = "TEQ";
+      s = false;
       break;
     case 10:
+      if (!s) {
+        return std::string();
+      }
       opcode = "CMP";
+      s = false;
       break;
     case 11:
+      if (!s) {
+        return std::string();
+      }
       opcode = "CMN";
+      s = false;
       break;
     case 12:
       opcode = "ORR";
@@ -243,6 +281,39 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
 
   if (s) {
     opcode += "S";
+  }
+
+  bool i = instruction[25];
+
+  if (i) {
+    opcode += "_I32";
+  } else {
+    bool r = instruction[4];
+    std::bitset<2> shift;
+    shift[0] = instruction[5];
+    shift[1] = instruction[6];
+    switch (shift.to_ulong()) {
+      case 0:
+        opcode += "_LSL_";
+        break;
+      case 1:
+        opcode += "_LSR_";
+        break;
+      case 2:
+        opcode += "_ASR_";
+        break;
+      case 3:
+        opcode += "_RR_OR_RRX_";
+        break;
+    };
+    if (r) {
+      if (instruction[7]) {
+        return std::string();
+      }
+      opcode += "R";
+    } else {
+      opcode += "I";
+    }
   }
 
   return opcode;
@@ -350,8 +421,10 @@ std::string MatchInstruction(const std::bitset<32>& instruction) {
     }
 
     if (!match.empty()) {
-      std::cout << "ERROR: Instruction " << instruction << " matched " << match
-                << " and " << current_match << "." << std::endl;
+      std::cout << "ERROR: Instruction " << instruction << " (0x" << std::hex
+                << std::setw(8) << std::setfill('0') << instruction.to_ulong()
+                << ") matched " << match << " and " << current_match << "."
+                << std::endl;
       return std::string();
     }
 
@@ -394,12 +467,12 @@ int main(int argc, char* argv[]) {
   std::set<std::string> sorted_opcodes;
   sorted_opcodes.insert(opcodes.begin(), opcodes.end());
 
-  if (UINT8_MAX < sorted_opcodes.size()) {
-    std::cout << "ERROR: Cannot represent opcodes in a uint8_t" << std::endl;
+  if (UINT16_MAX < sorted_opcodes.size()) {
+    std::cout << "ERROR: Cannot represent opcodes in a uint16_t" << std::endl;
     return -1;
   }
 
-  std::map<std::string, uint8_t> opcode_number;
+  std::map<std::string, uint32_t> opcode_number;
   sorted_opcodes.erase("ARM_OPCODE_UNDEF");
   opcode_number["ARM_OPCODE_UNDEF"] = 0;
 
@@ -409,11 +482,10 @@ int main(int argc, char* argv[]) {
   std::cout << "typedef enum {" << std::endl;
   std::cout << "  ARM_OPCODE_UNDEF = 0u," << std::endl;
 
-  uint8_t value = 1;
+  uint32_t value = 1;
   for (const auto& entry : sorted_opcodes) {
     opcode_number[entry] = value;
-    std::cout << "  " << entry << " = " << (uint32_t)value++ << "u,"
-              << std::endl;
+    std::cout << "  " << entry << " = " << value++ << "u," << std::endl;
   }
 
   std::cout << "} ArmOpcode;" << std::endl << std::endl;
@@ -421,10 +493,9 @@ int main(int argc, char* argv[]) {
   std::cout
       << "static inline ArmOpcode ArmDecodeOperation(uint32_t instruction) {"
       << std::endl;
-  std::cout << "  static const uint8_t opcode_table[4096] = {" << std::endl;
+  std::cout << "  static const uint16_t opcode_table[4096] = {" << std::endl;
   for (const auto& entry : opcodes) {
-    std::cout << "    " << (uint32_t)opcode_number.at(entry) << "u,"
-              << std::endl;
+    std::cout << "    " << opcode_number.at(entry) << "u," << std::endl;
   }
   std::cout << "  };" << std::endl << std::endl;
 
