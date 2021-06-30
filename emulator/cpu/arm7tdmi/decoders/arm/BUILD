@@ -18,6 +18,11 @@ cc_test(
 )
 
 cc_library(
+    name = "operand",
+    hdrs = ["operand.h"],
+)
+
+cc_library(
     name = "operation",
     hdrs = ["operation.h"],
 )
