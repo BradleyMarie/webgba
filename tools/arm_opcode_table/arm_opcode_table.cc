@@ -142,7 +142,7 @@ std::string MatchesHalfWordDataTransfer(const std::bitset<32>& instruction) {
 }
 
 std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
-  if (instruction[25] != 1 || instruction[26] != 1 || instruction[27] != 0) {
+  if (instruction[26] != 1 || instruction[27] != 0) {
     return std::string();
   }
 
@@ -151,13 +151,18 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
   bool b = instruction[22];
   bool u = instruction[23];
   bool p = instruction[24];
+  bool i = instruction[25];
 
   std::string opcode = l ? "LDR" : "STR";
   if (b) {
     opcode += "B";
   }
 
-  opcode += "_";
+  if (i) {
+    opcode += "_I_";
+  } else {
+    opcode += "_R_";
+  }
 
   opcode += u ? "I" : "D";
   opcode += p ? "B" : "A";
@@ -398,7 +403,7 @@ int main(int argc, char* argv[]) {
   sorted_opcodes.erase("ARM_OPCODE_UNDEF");
   opcode_number["ARM_OPCODE_UNDEF"] = 0;
 
-  std::cout << "#include <assert.h>" << std::endl << std::endl;
+  std::cout << "#include <assert.h>" << std::endl;
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
 
   std::cout << "typedef enum {" << std::endl;
