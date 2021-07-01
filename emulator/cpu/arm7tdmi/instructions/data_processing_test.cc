@@ -519,7 +519,7 @@ TEST(ArmBICS, Compute) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 15u;
-  ArmBICS(&registers, REGISTER_R1, REGISTER_R0, 1u);
+  ArmBICS(&registers, REGISTER_R1, REGISTER_R0, 1u, false);
   EXPECT_EQ(14u, registers.current.user.gprs.r1);
   EXPECT_EQ(15u, registers.current.user.gprs.r0);
 
@@ -532,7 +532,7 @@ TEST(ArmBICS, SameSourceAndDest) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 15u;
-  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u);
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u, false);
   EXPECT_EQ(14u, registers.current.user.gprs.r0);
 
   registers.current.user.gprs.r0 = 0u;
@@ -545,7 +545,7 @@ TEST(ArmBICS, R15ToUSR) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r15 = 15u;
-  ArmBICS(&registers, REGISTER_R15, REGISTER_R15, 1u);
+  ArmBICS(&registers, REGISTER_R15, REGISTER_R15, 1u, false);
   EXPECT_EQ(14u, registers.current.user.gprs.r15);
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
@@ -558,7 +558,7 @@ TEST(ArmBICS, Zero) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 1u;
-  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u);
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u, false);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.cpsr.zero = false;
@@ -569,12 +569,27 @@ TEST(ArmBICS, Negative) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = UINT32_MAX;
-  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1u);
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1, false);
   EXPECT_EQ(UINT32_MAX - 1u, registers.current.user.gprs.r0);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST(ArmBICS, Carry) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.r0 = UINT32_MAX;
+  ArmBICS(&registers, REGISTER_R0, REGISTER_R0, 1, true);
+  EXPECT_EQ(UINT32_MAX - 1u, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.negative = false;
+  registers.current.user.cpsr.carry = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 

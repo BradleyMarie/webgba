@@ -82,13 +82,15 @@ static inline void ArmBIC(ArmGeneralPurposeRegisters *registers,
 }
 
 static inline void ArmBICS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
-                           ArmRegisterIndex Rn, uint32_t operand2) {
+                           ArmRegisterIndex Rn, uint32_t operand2,
+                           bool operand2_carry) {
   ArmBIC(&registers->current.user.gprs, Rd, Rn, operand2);
   if (Rd != REGISTER_R15) {
     registers->current.user.cpsr.negative =
         ArmNegativeFlag(registers->current.user.gprs.gprs[Rd]);
     registers->current.user.cpsr.zero =
         ArmZeroFlagUInt32(registers->current.user.gprs.gprs[Rd]);
+    registers->current.user.cpsr.carry = operand2_carry;
   } else {
     ArmLoadCPSR(registers, registers->current.spsr);
   }

@@ -18,6 +18,28 @@ cc_test(
 )
 
 cc_library(
+    name = "execute",
+    hdrs = ["execute.h"],
+    deps = [
+        ":condition",
+        ":opcode",
+        ":operand",
+        "//emulator/cpu/arm7tdmi/instructions:branch",
+        "//emulator/cpu/arm7tdmi/instructions:data_processing",
+        "//emulator:memory",
+    ],
+)
+
+cc_test(
+    name = "execute_test",
+    srcs = ["execute_test.cc"],
+    deps = [
+        ":execute",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "opcode",
     hdrs = ["opcode.h"],
 )
