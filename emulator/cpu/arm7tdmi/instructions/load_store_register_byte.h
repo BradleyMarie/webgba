@@ -11,33 +11,33 @@ static inline void ArmLDR(ArmGeneralPurposeRegisters *registers,
   assert(success);
 }
 
-static inline void ArmLDR_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDR_DBW(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] -= offset;
   bool success = Load32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmLDR_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDR_DAW(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   bool success = Load32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmLDR_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDR_IBW(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] += offset;
   bool success = Load32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmLDR_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDR_IAW(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   bool success = Load32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
   assert(success);
   registers->gprs[Rn] += offset;
@@ -58,11 +58,9 @@ static inline void ArmLDRT(ArmAllRegisters *registers, const Memory *memory,
   registers->current.user.gprs.gprs[Rd] = value;
 }
 
-static inline void ArmLDRT_DecrementPostIndexed(ArmAllRegisters *registers,
-                                                const Memory *memory,
-                                                ArmRegisterIndex Rd,
-                                                ArmRegisterIndex Rn,
-                                                uint_fast16_t offset) {
+static inline void ArmLDRT_DAW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -78,11 +76,9 @@ static inline void ArmLDRT_DecrementPostIndexed(ArmAllRegisters *registers,
   registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRT_IncrementPostIndexed(ArmAllRegisters *registers,
-                                                const Memory *memory,
-                                                ArmRegisterIndex Rd,
-                                                ArmRegisterIndex Rn,
-                                                uint_fast16_t offset) {
+static inline void ArmLDRT_IAW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -107,9 +103,9 @@ static inline void ArmLDRB(ArmGeneralPurposeRegisters *registers,
   registers->gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_DBW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] -= offset;
   uint8_t temp;
   bool success = Load8(memory, registers->gprs[Rn], &temp);
@@ -117,9 +113,9 @@ static inline void ArmLDRB_DecrementPreIndexed(
   registers->gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_DAW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   uint8_t temp;
   bool success = Load8(memory, registers->gprs[Rn], &temp);
   assert(success);
@@ -127,9 +123,9 @@ static inline void ArmLDRB_DecrementPostIndexed(
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRB_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_IBW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] += offset;
   uint8_t temp;
   bool success = Load8(memory, registers->gprs[Rn], &temp);
@@ -137,9 +133,9 @@ static inline void ArmLDRB_IncrementPreIndexed(
   registers->gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_IAW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   uint8_t temp;
   bool success = Load8(memory, registers->gprs[Rn], &temp);
   assert(success);
@@ -162,11 +158,9 @@ static inline void ArmLDRBT(ArmAllRegisters *registers, const Memory *memory,
   registers->current.user.gprs.gprs[Rd] = value;
 }
 
-static inline void ArmLDRBT_DecrementPostIndexed(ArmAllRegisters *registers,
-                                                 const Memory *memory,
-                                                 ArmRegisterIndex Rd,
-                                                 ArmRegisterIndex Rn,
-                                                 uint_fast16_t offset) {
+static inline void ArmLDRBT_DAW(ArmAllRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -182,11 +176,9 @@ static inline void ArmLDRBT_DecrementPostIndexed(ArmAllRegisters *registers,
   registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRBT_IncrementPostIndexed(ArmAllRegisters *registers,
-                                                 const Memory *memory,
-                                                 ArmRegisterIndex Rd,
-                                                 ArmRegisterIndex Rn,
-                                                 uint_fast16_t offset) {
+static inline void ArmLDRBT_IAW(ArmAllRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -209,33 +201,33 @@ static inline void ArmSTR(const ArmGeneralPurposeRegisters *registers,
   assert(success);
 }
 
-static inline void ArmSTR_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTR_DBW(ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] -= offset;
   bool success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmSTR_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTR_DAW(ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   bool success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmSTR_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTR_IBW(ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] += offset;
   bool success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmSTR_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTR_IAW(ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint_fast16_t offset) {
   bool success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
   assert(success);
   registers->gprs[Rn] += offset;
@@ -254,11 +246,9 @@ static inline void ArmSTRT(ArmAllRegisters *registers, Memory *memory,
   ArmLoadCPSR(registers, current_status);
 }
 
-static inline void ArmSTRT_DecrementPostIndexed(ArmAllRegisters *registers,
-                                                Memory *memory,
-                                                ArmRegisterIndex Rd,
-                                                ArmRegisterIndex Rn,
-                                                uint_fast16_t offset) {
+static inline void ArmSTRT_DAW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -273,11 +263,9 @@ static inline void ArmSTRT_DecrementPostIndexed(ArmAllRegisters *registers,
   registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRT_IncrementPostIndexed(ArmAllRegisters *registers,
-                                                Memory *memory,
-                                                ArmRegisterIndex Rd,
-                                                ArmRegisterIndex Rn,
-                                                uint_fast16_t offset) {
+static inline void ArmSTRT_IAW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
@@ -299,36 +287,36 @@ static inline void ArmSTRB(const ArmGeneralPurposeRegisters *registers,
   assert(success);
 }
 
-static inline void ArmSTRB_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTRB_DBW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] -= offset;
   uint8_t temp = registers->gprs[Rd];
   bool success = Store8(memory, registers->gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRB_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTRB_DAW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   uint8_t temp = registers->gprs[Rd];
   bool success = Store8(memory, registers->gprs[Rn], temp);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRB_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTRB_IBW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   registers->gprs[Rn] += offset;
   uint8_t temp = registers->gprs[Rd];
   bool success = Store8(memory, registers->gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRB_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmSTRB_IAW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast16_t offset) {
   uint8_t temp = registers->gprs[Rd];
   bool success = Store8(memory, registers->gprs[Rn], temp);
   assert(success);
@@ -348,11 +336,9 @@ static inline void ArmSTRBT(ArmAllRegisters *registers, Memory *memory,
   ArmLoadCPSR(registers, current_status);
 }
 
-static inline void ArmSTRBT_DecrementPostIndexed(ArmAllRegisters *registers,
-                                                 Memory *memory,
-                                                 ArmRegisterIndex Rd,
-                                                 ArmRegisterIndex Rn,
-                                                 uint_fast16_t offset) {
+static inline void ArmSTRBT_DAW(ArmAllRegisters *registers, Memory *memory,
+                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
@@ -367,11 +353,9 @@ static inline void ArmSTRBT_DecrementPostIndexed(ArmAllRegisters *registers,
   registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRBT_IncrementPostIndexed(ArmAllRegisters *registers,
-                                                 Memory *memory,
-                                                 ArmRegisterIndex Rd,
-                                                 ArmRegisterIndex Rn,
-                                                 uint_fast16_t offset) {
+static inline void ArmSTRBT_IAW(ArmAllRegisters *registers, Memory *memory,
+                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
   ArmProgramStatusRegister temporary_status = current_status;
   temporary_status.mode = MODE_USR;
