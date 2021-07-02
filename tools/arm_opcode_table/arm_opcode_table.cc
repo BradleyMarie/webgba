@@ -132,16 +132,17 @@ std::string MatchesHalfWordDataTransfer(const std::bitset<32>& instruction) {
     }
   }
 
-  opcode += "_";
-
-  opcode += u ? "I" : "D";
-  opcode += p ? "B" : "A";
-  if (w) {
-    opcode += "W";
+  if (p) {
+    opcode += u ? "_IB" : "_DB";
+    if (w) {
+      opcode += "W";
+    }
+  } else {
+    opcode += u ? "_IAW" : "_DAW";
   }
 
   if (i) {
-    opcode += "_I8";
+    opcode += "_@8";
   }
 
   return opcode;
@@ -164,16 +165,20 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += "B";
   }
 
-  opcode += "_";
-
-  opcode += u ? "I" : "D";
-  opcode += p ? "B" : "A";
-  if (w) {
-    opcode += "W";
+  if (p) {
+    opcode += u ? "_IB" : "_DB";
+    if (w) {
+      opcode += "W";
+    }
+  } else {
+    if (w) {
+      opcode += "T";
+    }
+    opcode += u ? "_IAW" : "_DAW";
   }
 
   if (i) {
-    opcode += "_I12";
+    opcode += "_@12";
   }
 
   return opcode;
@@ -273,7 +278,7 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
   bool i = instruction[25];
 
   if (i) {
-    opcode += "_I32";
+    opcode += "_@32";
   }
 
   return opcode;
@@ -446,6 +451,7 @@ int main(int argc, char* argv[]) {
     opcode_number[entry] = value;
     std::string opcode = entry;
     std::replace(opcode.begin(), opcode.end(), '=', '_');
+    std::replace(opcode.begin(), opcode.end(), '@', 'I');
     std::cout << "  " << opcode << " = " << value++ << "u," << std::endl;
   }
   std::cout << "  ARM_OPCODE_UNDEF = " << value << "u," << std::endl;
