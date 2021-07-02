@@ -3,6 +3,7 @@ extern "C" {
 }
 
 #include <strings.h>
+
 #include <vector>
 
 #include "googletest/include/gtest/gtest.h"

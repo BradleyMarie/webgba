@@ -143,6 +143,9 @@ typedef struct {
 
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
 
+void ArmExceptionUND(ArmAllRegisters* registers);
+void ArmExceptionSWI(ArmAllRegisters* registers);
+
 static inline bool ArmNegativeFlag(uint32_t result) { return result >> 31; }
 
 static inline bool ArmZeroFlagInt32(int32_t result) { return result == 0; }
