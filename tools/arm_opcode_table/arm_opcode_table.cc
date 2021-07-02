@@ -90,6 +90,44 @@ std::string MatchesSingleDataSwap(const std::bitset<32>& instruction) {
   return b ? "SWPB" : "SWP";
 }
 
+std::string MatchesMrs(const std::bitset<32>& instruction) {
+  if (instruction[4] != 0 || instruction[5] != 0 || instruction[6] != 0 ||
+      instruction[7] != 0 || instruction[20] != 0 || instruction[21] != 0 ||
+      instruction[23] != 0 || instruction[24] != 1 || instruction[25] != 0 ||
+      instruction[26] != 0 || instruction[27] != 0) {
+    return std::string();
+  }
+
+  bool r = instruction[22];
+
+  return r ? "MRS_SPSR" : "MRS_CPSR";
+}
+
+std::string MatchesMsr(const std::bitset<32>& instruction) {
+  if (instruction[20] != 0 || instruction[21] != 1 || instruction[23] != 0 ||
+      instruction[24] != 1 || instruction[26] != 0 || instruction[27] != 0) {
+    return std::string();
+  }
+
+  bool i = instruction[25];
+  if (!i) {
+    if (instruction[4] != 0 || instruction[5] != 0 || instruction[6] != 0 ||
+        instruction[7] != 0) {
+      return std::string();
+    }
+  }
+
+  bool r = instruction[22];
+
+  std::string opcode = r ? "MSR_SPSR" : "MSR_CPSR";
+
+  if (i) {
+    opcode += "_@8";
+  }
+
+  return opcode;
+}
+
 std::string MatchesHalfWordDataTransfer(const std::bitset<32>& instruction) {
   // Ignores bits 8-11
   if (instruction[4] != 1 || instruction[7] != 1 || instruction[25] != 0 ||
@@ -375,7 +413,9 @@ const std::vector<std::function<std::string(const std::bitset<32>&)>>
                   MatchesCoprocessorDataTransfer,
                   MatchesCoprocessorDataOperation,
                   MatchesCoprocessorDataRegisterTransfer,
-                  MatchesSoftwareInterrupt};
+                  MatchesSoftwareInterrupt,
+                  MatchesMrs,
+                  MatchesMsr};
 
 std::string MatchInstruction(const std::bitset<32>& instruction) {
   std::string match;
