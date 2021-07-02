@@ -103,6 +103,21 @@ cc_test(
 )
 
 cc_library(
+    name = "move_status_register",
+    hdrs = ["move_status_register.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "move_status_register_test",
+    srcs = ["move_status_register_test.cc"],
+    deps = [
+        ":move_status_register",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "multiply",
     hdrs = ["multiply.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
