@@ -35,8 +35,8 @@ static inline void ArmOperandMultiplyLong(uint32_t instruction,
 }
 
 static inline void ArmOperandBranchExchange(uint32_t instruction,
-                                            ArmRegisterIndex *Rn) {
-  *Rn = (ArmRegisterIndex)((instruction >> 0u) & 0xFu);
+                                            ArmRegisterIndex *Rm) {
+  *Rm = (ArmRegisterIndex)((instruction >> 0u) & 0xFu);
 }
 
 static inline void ArmOperandSingleDataSwap(uint32_t instruction,
