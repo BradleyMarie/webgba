@@ -14,7 +14,7 @@ static inline void ArmMRS_SPSR(ArmPrivilegedRegisters *registers,
 }
 
 static inline void ArmMSR_CPSR(ArmAllRegisters *registers, bool control,
-                                 bool flags, uint32_t value) {
+                               bool flags, uint32_t value) {
   ArmProgramStatusRegister requested_status;
   requested_status.value = value;
 
@@ -38,8 +38,8 @@ static inline void ArmMSR_CPSR(ArmAllRegisters *registers, bool control,
   ArmLoadCPSR(registers, next_status);
 }
 
-static inline void ArmMSR_SPSR(ArmPrivilegedRegisters *registers,
-                                 bool control, bool flags, uint32_t value) {
+static inline void ArmMSR_SPSR(ArmPrivilegedRegisters *registers, bool control,
+                               bool flags, uint32_t value) {
   ArmProgramStatusRegister next_status;
   next_status.value = value;
   if (control) {

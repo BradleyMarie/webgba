@@ -298,4 +298,33 @@ static inline void ArmOperandBranch(uint32_t instruction,
   assert(-8388608 <= *offset && *offset <= 8388607);
 }
 
+static inline void ArmOperandMoveFromStatusRegister(uint32_t instruction,
+                                                    ArmRegisterIndex *Rd) {
+  *Rd = (ArmRegisterIndex)((instruction >> 12u) & 0xFu);
+}
+
+static inline void ArmOperandMoveToStatusRegisterImmediate(uint32_t instruction,
+                                                           bool *control,
+                                                           bool *flags,
+                                                           uint32_t *value) {
+  *control = (instruction >> 16u) & 0x1;
+  *flags = (instruction >> 19u) & 0x1u;
+
+  uint_fast8_t shift_amount = (instruction >> 8u) & 0xFu;
+  shift_amount *= 2u;
+
+  uint32_t immediate = (uint8_t)instruction;
+  *value = (immediate >> shift_amount) | (immediate << (32u - shift_amount));
+}
+
+static inline void ArmOperandMoveToStatusRegisterRegister(
+    uint32_t instruction, const ArmGeneralPurposeRegisters *registers,
+    bool *control, bool *flags, uint32_t *value) {
+  *control = (instruction >> 16u) & 0x1;
+  *flags = (instruction >> 19u) & 0x1;
+
+  ArmRegisterIndex rm = (ArmRegisterIndex)(instruction & 0xFu);
+  *value = registers->gprs[rm];
+}
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERAND_
