@@ -100,12 +100,12 @@ class MemoryTest : public testing::Test {
 
 std::vector<char> MemoryTest::memory_space_(1024, 0);
 
-TEST_F(MemoryTest, ArmLDRH) {
+TEST_F(MemoryTest, ArmLDRH_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
   registers.r0 = 8u;
-  ArmLDRH(&registers, memory_, REGISTER_R0, 8u);
+  ArmLDRH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.r0);
 
   uint16_t memory_contents;
@@ -116,13 +116,31 @@ TEST_F(MemoryTest, ArmLDRH) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRH_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRH_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
+  registers.r0 = 8u;
+  registers.r1 = 16u;
+  ArmLDRH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(16u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  registers.r0 = 0u;
+  registers.r1 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRH_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
   registers.r1 = 10u;
-  ArmLDRH_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                              2u);
+  ArmLDRH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(8u, registers.r1);
 
@@ -135,13 +153,12 @@ TEST_F(MemoryTest, ArmLDRH_DecrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRH_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRH_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
   registers.r1 = 8u;
-  ArmLDRH_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(6u, registers.r1);
 
@@ -154,13 +171,12 @@ TEST_F(MemoryTest, ArmLDRH_DecrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRH_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRH_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
   registers.r1 = 6u;
-  ArmLDRH_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                              2u);
+  ArmLDRH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(8u, registers.r1);
 
@@ -173,13 +189,12 @@ TEST_F(MemoryTest, ArmLDRH_IncrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRH_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRH_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16LE(nullptr, 8u, 137u));
   registers.r1 = 8u;
-  ArmLDRH_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(10u, registers.r1);
 
@@ -192,12 +207,12 @@ TEST_F(MemoryTest, ArmLDRH_IncrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSB) {
+TEST_F(MemoryTest, ArmLDRSB_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store8S(memory_, 8u, -65));
   registers.r0_s = 8u;
-  ArmLDRSB(&registers, memory_, REGISTER_R0, 8u);
+  ArmLDRSB_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.r0_s);
 
   int8_t memory_contents;
@@ -208,13 +223,31 @@ TEST_F(MemoryTest, ArmLDRSB) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSB_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRSB_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  ASSERT_TRUE(Store8S(memory_, 8u, -65));
+  registers.r0_s = 8u;
+  registers.r1 = 16u;
+  ArmLDRSB_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(-65, registers.r0_s);
+  EXPECT_EQ(16u, registers.r1);
+
+  int8_t memory_contents;
+  ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
+  EXPECT_EQ(-65, memory_contents);
+
+  registers.r0_s = 0u;
+  registers.r1 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRSB_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store8S(memory_, 8u, -65));
   registers.r1 = 10u;
-  ArmLDRSB_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRSB_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -227,13 +260,12 @@ TEST_F(MemoryTest, ArmLDRSB_DecrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSB_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRSB_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store8S(memory_, 8u, -65));
   registers.r1 = 8u;
-  ArmLDRSB_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                2u);
+  ArmLDRSB_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(6u, registers.r1);
 
@@ -246,13 +278,12 @@ TEST_F(MemoryTest, ArmLDRSB_DecrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSB_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRSB_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store8S(memory_, 8u, -65));
   registers.r1 = 6u;
-  ArmLDRSB_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRSB_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -265,13 +296,12 @@ TEST_F(MemoryTest, ArmLDRSB_IncrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSB_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRSB_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store8S(memory_, 8u, -65));
   registers.r1 = 8u;
-  ArmLDRSB_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                2u);
+  ArmLDRSB_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(10u, registers.r1);
 
@@ -284,12 +314,12 @@ TEST_F(MemoryTest, ArmLDRSB_IncrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSH) {
+TEST_F(MemoryTest, ArmLDRSH_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
   registers.r0_s = 8u;
-  ArmLDRSH(&registers, memory_, REGISTER_R0, 8u);
+  ArmLDRSH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.r0_s);
 
   int16_t memory_contents;
@@ -300,13 +330,31 @@ TEST_F(MemoryTest, ArmLDRSH) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSH_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRSH_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
+  registers.r0_s = 8u;
+  registers.r1 = 16u;
+  ArmLDRSH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(-65, registers.r0_s);
+  EXPECT_EQ(16u, registers.r1);
+
+  int16_t memory_contents;
+  ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
+  EXPECT_EQ(-65, memory_contents);
+
+  registers.r0_s = 0u;
+  registers.r1 = 0u;
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRSH_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
   registers.r1 = 10u;
-  ArmLDRSH_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRSH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -319,13 +367,12 @@ TEST_F(MemoryTest, ArmLDRSH_DecrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSH_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRSH_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
   registers.r1 = 8u;
-  ArmLDRSH_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                2u);
+  ArmLDRSH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(6u, registers.r1);
 
@@ -338,13 +385,12 @@ TEST_F(MemoryTest, ArmLDRSH_DecrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSH_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmLDRSH_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
   registers.r1 = 6u;
-  ArmLDRSH_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               2u);
+  ArmLDRSH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -357,13 +403,12 @@ TEST_F(MemoryTest, ArmLDRSH_IncrementPreIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmLDRSH_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmLDRSH_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   ASSERT_TRUE(Store16SLE(memory_, 8u, -65));
   registers.r1 = 8u;
-  ArmLDRSH_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                2u);
+  ArmLDRSH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(10u, registers.r1);
 
@@ -376,11 +421,11 @@ TEST_F(MemoryTest, ArmLDRSH_IncrementPostIndexed) {
   EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
 }
 
-TEST_F(MemoryTest, ArmSTRH) {
+TEST_F(MemoryTest, ArmSTRH_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0 = 137u;
-  ArmSTRH(&registers, memory_, REGISTER_R0, 8u);
+  ArmSTRH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.r0);
 
   uint16_t memory_contents;
@@ -391,13 +436,29 @@ TEST_F(MemoryTest, ArmSTRH) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRH_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRH_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0 = 137u;
+  registers.r1 = 16u;
+  ArmSTRH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(137u, registers.r0);
+  EXPECT_EQ(16u, registers.r1);
+
+  uint16_t memory_contents;
+  ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(137u, memory_contents);
+
+  ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRH_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0 = 137u;
   registers.r1 = 12u;
-  ArmSTRH_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                              4u);
+  ArmSTRH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(8u, registers.r1);
 
@@ -413,13 +474,12 @@ TEST_F(MemoryTest, ArmSTRH_DecrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRH_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRH_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0 = 137u;
   registers.r1 = 8u;
-  ArmSTRH_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(4u, registers.r1);
 
@@ -435,13 +495,12 @@ TEST_F(MemoryTest, ArmSTRH_DecrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRH_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRH_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0 = 137u;
   registers.r1 = 4u;
-  ArmSTRH_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                              4u);
+  ArmSTRH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(8u, registers.r1);
 
@@ -457,13 +516,12 @@ TEST_F(MemoryTest, ArmSTRH_IncrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRH_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRH_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0 = 137u;
   registers.r1 = 8u;
-  ArmSTRH_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.r0);
   EXPECT_EQ(12u, registers.r1);
 
@@ -479,11 +537,11 @@ TEST_F(MemoryTest, ArmSTRH_IncrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSB) {
+TEST_F(MemoryTest, ArmSTRSB_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
-  ArmSTRSB(&registers, memory_, REGISTER_R0, 8u);
+  ArmSTRSB_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.r0_s);
 
   int8_t memory_contents;
@@ -497,13 +555,33 @@ TEST_F(MemoryTest, ArmSTRSB) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSB_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRSB_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0_s = -65;
+  registers.r1 = 16u;
+  ArmSTRSB_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(-65, registers.r0_s);
+  EXPECT_EQ(16u, registers.r1);
+
+  int8_t memory_contents;
+  ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
+  EXPECT_EQ(-65, memory_contents);
+
+  ASSERT_TRUE(Store8S(memory_, 8u, 0u));
+  registers.r0_s = 0u;
+  registers.r1 = 0u;
+
+  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRSB_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 12u;
-  ArmSTRSB_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRSB_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -519,13 +597,12 @@ TEST_F(MemoryTest, ArmSTRSB_DecrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSB_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRSB_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 8u;
-  ArmSTRSB_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                4u);
+  ArmSTRSB_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(4u, registers.r1);
 
@@ -541,13 +618,12 @@ TEST_F(MemoryTest, ArmSTRSB_DecrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSB_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRSB_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 4u;
-  ArmSTRSB_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRSB_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -563,13 +639,12 @@ TEST_F(MemoryTest, ArmSTRSB_IncrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSB_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRSB_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 8u;
-  ArmSTRSB_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                4u);
+  ArmSTRSB_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(12u, registers.r1);
 
@@ -585,11 +660,11 @@ TEST_F(MemoryTest, ArmSTRSB_IncrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSH) {
+TEST_F(MemoryTest, ArmSTRSH_IB) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
-  ArmSTRSH(&registers, memory_, REGISTER_R0, 8u);
+  ArmSTRSH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.r0_s);
 
   int16_t memory_contents;
@@ -600,13 +675,29 @@ TEST_F(MemoryTest, ArmSTRSH) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSH_DecrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRSH_DB) {
+  auto registers = CreateArmGeneralPurposeRegisters();
+
+  registers.r0_s = -65;
+  registers.r1 = 16u;
+  ArmSTRSH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
+  EXPECT_EQ(-65, registers.r0_s);
+  EXPECT_EQ(16u, registers.r1);
+
+  int16_t memory_contents;
+  ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
+  EXPECT_EQ(-65, memory_contents);
+
+  ASSERT_TRUE(Store16SLE(memory_, 8u, 0u));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
+TEST_F(MemoryTest, ArmSTRSH_DBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 12u;
-  ArmSTRSH_DecrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRSH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -622,13 +713,12 @@ TEST_F(MemoryTest, ArmSTRSH_DecrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSH_DecrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRSH_DAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 8u;
-  ArmSTRSH_DecrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                4u);
+  ArmSTRSH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(4u, registers.r1);
 
@@ -644,13 +734,12 @@ TEST_F(MemoryTest, ArmSTRSH_DecrementPostIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSH_IncrementPreIndexed) {
+TEST_F(MemoryTest, ArmSTRSH_IBW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 4u;
-  ArmSTRSH_IncrementPreIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                               4u);
+  ArmSTRSH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(8u, registers.r1);
 
@@ -666,13 +755,12 @@ TEST_F(MemoryTest, ArmSTRSH_IncrementPreIndexed) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
-TEST_F(MemoryTest, ArmSTRSH_IncrementPostIndexed) {
+TEST_F(MemoryTest, ArmSTRSH_IAW) {
   auto registers = CreateArmGeneralPurposeRegisters();
 
   registers.r0_s = -65;
   registers.r1 = 8u;
-  ArmSTRSH_IncrementPostIndexed(&registers, memory_, REGISTER_R0, REGISTER_R1,
-                                4u);
+  ArmSTRSH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.r0_s);
   EXPECT_EQ(12u, registers.r1);
 
