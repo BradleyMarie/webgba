@@ -4,28 +4,9 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 #include "emulator/memory.h"
 
-static inline void ArmLDRH(ArmGeneralPurposeRegisters *registers,
-                           const Memory *memory, ArmRegisterIndex Rd,
-                           uint32_t address) {
-  uint16_t temp;
-  bool success = Load16LE(memory, address, &temp);
-  assert(success);
-  registers->gprs[Rd] = temp;
-}
-
-static inline void ArmLDRH_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  uint16_t temp;
-  bool success = Load16LE(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs[Rd] = temp;
-}
-
-static inline void ArmLDRH_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRH_DAW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
   uint16_t temp;
   bool success = Load16LE(memory, registers->gprs[Rn], &temp);
   assert(success);
@@ -33,9 +14,47 @@ static inline void ArmLDRH_DecrementPostIndexed(
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRH_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRH_DB(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint32_t offset) {
+  uint16_t temp;
+  bool success = Load16LE(memory, registers->gprs[Rn] - offset, &temp);
+  assert(success);
+  registers->gprs[Rd] = temp;
+}
+
+static inline void ArmLDRH_DBW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
+  uint16_t temp;
+  bool success = Load16LE(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs[Rd] = temp;
+}
+
+static inline void ArmLDRH_IAW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
+  uint16_t temp;
+  bool success = Load16LE(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs[Rd] = temp;
+  registers->gprs[Rn] += offset;
+}
+
+static inline void ArmLDRH_IB(ArmGeneralPurposeRegisters *registers,
+                              const Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint32_t offset) {
+  uint16_t temp;
+  bool success = Load16LE(memory, registers->gprs[Rn] + offset, &temp);
+  assert(success);
+  registers->gprs[Rd] = temp;
+}
+
+static inline void ArmLDRH_IBW(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
   registers->gprs[Rn] += offset;
   uint16_t temp;
   bool success = Load16LE(memory, registers->gprs[Rn], &temp);
@@ -43,38 +62,9 @@ static inline void ArmLDRH_IncrementPreIndexed(
   registers->gprs[Rd] = temp;
 }
 
-static inline void ArmLDRH_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  uint16_t temp;
-  bool success = Load16LE(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs[Rd] = temp;
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmLDRSB(ArmGeneralPurposeRegisters *registers,
-                            Memory *memory, const ArmRegisterIndex Rd,
-                            uint32_t address) {
-  int8_t temp;
-  bool success = Load8S(memory, address, &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-}
-
-static inline void ArmLDRSB_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  int8_t temp;
-  bool success = Load8S(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-}
-
-static inline void ArmLDRSB_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRSB_DAW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   int8_t temp;
   bool success = Load8S(memory, registers->gprs[Rn], &temp);
   assert(success);
@@ -82,9 +72,47 @@ static inline void ArmLDRSB_DecrementPostIndexed(
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRSB_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRSB_DB(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int8_t temp;
+  bool success = Load8S(memory, registers->gprs[Rn] - offset, &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSB_DBW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
+  int8_t temp;
+  bool success = Load8S(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSB_IAW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  int8_t temp;
+  bool success = Load8S(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+  registers->gprs[Rn] += offset;
+}
+
+static inline void ArmLDRSB_IB(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int8_t temp;
+  bool success = Load8S(memory, registers->gprs[Rn] + offset, &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSB_IBW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   registers->gprs[Rn] += offset;
   int8_t temp;
   bool success = Load8S(memory, registers->gprs[Rn], &temp);
@@ -92,38 +120,9 @@ static inline void ArmLDRSB_IncrementPreIndexed(
   registers->gprs_s[Rd] = temp;
 }
 
-static inline void ArmLDRSB_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  int8_t temp;
-  bool success = Load8S(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmLDRSH(ArmGeneralPurposeRegisters *registers,
-                            const Memory *memory, ArmRegisterIndex Rd,
-                            uint32_t address) {
-  int16_t temp;
-  bool success = Load16SLE(memory, address, &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-}
-
-static inline void ArmLDRSH_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  int16_t temp;
-  bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-}
-
-static inline void ArmLDRSH_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRSH_DAW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   int16_t temp;
   bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
   assert(success);
@@ -131,9 +130,47 @@ static inline void ArmLDRSH_DecrementPostIndexed(
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRSH_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmLDRSH_DB(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int16_t temp;
+  bool success = Load16SLE(memory, registers->gprs[Rn] - offset, &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSH_DBW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
+  int16_t temp;
+  bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSH_IAW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  int16_t temp;
+  bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+  registers->gprs[Rn] += offset;
+}
+
+static inline void ArmLDRSH_IB(ArmGeneralPurposeRegisters *registers,
+                               const Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int16_t temp;
+  bool success = Load16SLE(memory, registers->gprs[Rn] + offset, &temp);
+  assert(success);
+  registers->gprs_s[Rd] = temp;
+}
+
+static inline void ArmLDRSH_IBW(ArmGeneralPurposeRegisters *registers,
+                                const Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   registers->gprs[Rn] += offset;
   int16_t temp;
   bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
@@ -141,146 +178,160 @@ static inline void ArmLDRSH_IncrementPreIndexed(
   registers->gprs_s[Rd] = temp;
 }
 
-static inline void ArmLDRSH_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, const Memory *memory,
-    ArmRegisterIndex Rd, ArmRegisterIndex Rn, uint_fast8_t offset) {
-  int16_t temp;
-  bool success = Load16SLE(memory, registers->gprs[Rn], &temp);
-  assert(success);
-  registers->gprs_s[Rd] = temp;
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmSTRH(const ArmGeneralPurposeRegisters *registers,
-                           Memory *memory, ArmRegisterIndex Rd,
-                           uint32_t address) {
-  uint16_t temp = registers->gprs[Rd];
-  bool success = Store16LE(memory, address, temp);
-  assert(success);
-}
-
-static inline void ArmSTRH_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  uint16_t temp = registers->gprs[Rd];
-  bool success = Store16LE(memory, registers->gprs[Rn], temp);
-  assert(success);
-}
-
-static inline void ArmSTRH_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRH_DAW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
   uint16_t temp = registers->gprs[Rd];
   bool success = Store16LE(memory, registers->gprs[Rn], temp);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRH_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRH_DB(const ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint32_t offset) {
+  uint16_t temp = registers->gprs[Rd];
+  bool success = Store16LE(memory, registers->gprs[Rn] - offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRH_DBW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
+  uint16_t temp = registers->gprs[Rd];
+  bool success = Store16LE(memory, registers->gprs[Rn], temp);
+  assert(success);
+}
+
+static inline void ArmSTRH_IAW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
+  uint16_t temp = registers->gprs[Rd];
+  bool success = Store16LE(memory, registers->gprs[Rn], temp);
+  assert(success);
+  registers->gprs[Rn] += offset;
+}
+
+static inline void ArmSTRH_IB(const ArmGeneralPurposeRegisters *registers,
+                              Memory *memory, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rn, uint32_t offset) {
+  uint16_t temp = registers->gprs[Rd];
+  bool success = Store16LE(memory, registers->gprs[Rn] + offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRH_IBW(ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint_fast8_t offset) {
   registers->gprs[Rn] += offset;
   uint16_t temp = registers->gprs[Rd];
   bool success = Store16LE(memory, registers->gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRH_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  uint16_t temp = registers->gprs[Rd];
-  bool success = Store16LE(memory, registers->gprs[Rn], temp);
-  assert(success);
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmSTRSB(const ArmGeneralPurposeRegisters *registers,
-                            Memory *memory, ArmRegisterIndex Rd,
-                            uint32_t address) {
-  int8_t temp = registers->gprs_s[Rd];
-  bool success = Store8S(memory, address, temp);
-  assert(success);
-}
-
-static inline void ArmSTRSB_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  int8_t temp = registers->gprs_s[Rd];
-  bool success = Store8S(memory, registers->gprs[Rn], temp);
-  assert(success);
-}
-
-static inline void ArmSTRSB_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRSB_DAW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   int8_t temp = registers->gprs_s[Rd];
   bool success = Store8S(memory, registers->gprs[Rn], temp);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRSB_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRSB_DB(const ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int8_t temp = registers->gprs_s[Rd];
+  bool success = Store8S(memory, registers->gprs[Rn] - offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRSB_DBW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
+  int8_t temp = registers->gprs_s[Rd];
+  bool success = Store8S(memory, registers->gprs[Rn], temp);
+  assert(success);
+}
+
+static inline void ArmSTRSB_IAW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  int8_t temp = registers->gprs_s[Rd];
+  bool success = Store8S(memory, registers->gprs[Rn], temp);
+  assert(success);
+  registers->gprs[Rn] += offset;
+}
+
+static inline void ArmSTRSB_IB(const ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int8_t temp = registers->gprs_s[Rd];
+  bool success = Store8S(memory, registers->gprs[Rn] + offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRSB_IBW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   registers->gprs[Rn] += offset;
   int8_t temp = registers->gprs_s[Rd];
   bool success = Store8S(memory, registers->gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRSB_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  int8_t temp = registers->gprs_s[Rd];
-  bool success = Store8S(memory, registers->gprs[Rn], temp);
-  assert(success);
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmSTRSH(const ArmGeneralPurposeRegisters *registers,
-                            Memory *memory, ArmRegisterIndex Rd,
-                            uint32_t address) {
-  int16_t temp = registers->gprs_s[Rd];
-  bool success = Store16SLE(memory, address, temp);
-  assert(success);
-}
-
-static inline void ArmSTRSH_DecrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] -= offset;
-  int16_t temp = registers->gprs_s[Rd];
-  bool success = Store16SLE(memory, registers->gprs[Rn], temp);
-  assert(success);
-}
-
-static inline void ArmSTRSH_DecrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRSH_DAW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   int16_t temp = registers->gprs_s[Rd];
   bool success = Store16SLE(memory, registers->gprs[Rn], temp);
   assert(success);
   registers->gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRSH_IncrementPreIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
-  registers->gprs[Rn] += offset;
+static inline void ArmSTRSH_DB(const ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int16_t temp = registers->gprs_s[Rd];
+  bool success = Store16SLE(memory, registers->gprs[Rn] - offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRSH_DBW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] -= offset;
   int16_t temp = registers->gprs_s[Rd];
   bool success = Store16SLE(memory, registers->gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRSH_IncrementPostIndexed(
-    ArmGeneralPurposeRegisters *registers, Memory *memory, ArmRegisterIndex Rd,
-    ArmRegisterIndex Rn, uint_fast8_t offset) {
+static inline void ArmSTRSH_IAW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
   int16_t temp = registers->gprs_s[Rd];
   bool success = Store16SLE(memory, registers->gprs[Rn], temp);
   assert(success);
   registers->gprs[Rn] += offset;
+}
+
+static inline void ArmSTRSH_IB(const ArmGeneralPurposeRegisters *registers,
+                               Memory *memory, ArmRegisterIndex Rd,
+                               ArmRegisterIndex Rn, uint32_t offset) {
+  int16_t temp = registers->gprs_s[Rd];
+  bool success = Store16SLE(memory, registers->gprs[Rn] + offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRSH_IBW(ArmGeneralPurposeRegisters *registers,
+                                Memory *memory, ArmRegisterIndex Rd,
+                                ArmRegisterIndex Rn, uint_fast8_t offset) {
+  registers->gprs[Rn] += offset;
+  int16_t temp = registers->gprs_s[Rd];
+  bool success = Store16SLE(memory, registers->gprs[Rn], temp);
+  assert(success);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SIGNED_DATA_TRANSFER_
