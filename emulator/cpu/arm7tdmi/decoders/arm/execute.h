@@ -281,6 +281,50 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       modified_pc =
           !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
       break;
+    case ARM_OPCODE_LDMSDA:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSDA(registers, memory, rn, register_list);
+      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      break;
+    case ARM_OPCODE_LDMSDA_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSDAW(registers, memory, rn, register_list);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_LDMSDB:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSDB(registers, memory, rn, register_list);
+      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      break;
+    case ARM_OPCODE_LDMSDB_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSDBW(registers, memory, rn, register_list);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_LDMSIA:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSIA(registers, memory, rn, register_list);
+      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      break;
+    case ARM_OPCODE_LDMSIA_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSIAW(registers, memory, rn, register_list);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_LDMSIB:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSIB(registers, memory, rn, register_list);
+      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      break;
+    case ARM_OPCODE_LDMSIB_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmLDMSIBW(registers, memory, rn, register_list);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
+      break;
     case ARM_OPCODE_LDR_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
@@ -967,6 +1011,46 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
     case ARM_OPCODE_STMIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       ArmSTMIBW(&registers->current.user.gprs, memory, rn, register_list);
+      modified_pc = (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_STMSDA:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSDA(registers, memory, rn, register_list);
+      modified_pc = false;
+      break;
+    case ARM_OPCODE_STMSDA_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSDAW(registers, memory, rn, register_list);
+      modified_pc = (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_STMSDB:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSDB(registers, memory, rn, register_list);
+      modified_pc = false;
+      break;
+    case ARM_OPCODE_STMSDB_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSDBW(registers, memory, rn, register_list);
+      modified_pc = (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_STMSIA:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSIA(registers, memory, rn, register_list);
+      modified_pc = false;
+      break;
+    case ARM_OPCODE_STMSIA_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSIAW(registers, memory, rn, register_list);
+      modified_pc = (rn == REGISTER_R15);
+      break;
+    case ARM_OPCODE_STMSIB:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSIB(registers, memory, rn, register_list);
+      modified_pc = false;
+      break;
+    case ARM_OPCODE_STMSIB_W:
+      ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
+      ArmSTMSIBW(registers, memory, rn, register_list);
       modified_pc = (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_STR_DAW:

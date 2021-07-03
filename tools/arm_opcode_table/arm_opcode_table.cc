@@ -323,17 +323,21 @@ std::string MatchesDataProcessing(const std::bitset<32>& instruction) {
 }
 
 std::string MatchesBlockDataTransfer(const std::bitset<32>& instruction) {
-  if (instruction[22] != 0 || instruction[25] != 0 || instruction[26] != 0 ||
-      instruction[27] != 1) {
+  if (instruction[25] != 0 || instruction[26] != 0 || instruction[27] != 1) {
     return std::string();
   }
 
   bool l = instruction[20];
   bool w = instruction[21];
+  bool s = instruction[22];
   bool u = instruction[23];
   bool p = instruction[24];
 
   std::string opcode = l ? "LDM" : "STM";
+  if (s) {
+    opcode += 'S';
+  }
+
   opcode += u ? "I" : "D";
   opcode += p ? "B" : "A";
   if (w) {

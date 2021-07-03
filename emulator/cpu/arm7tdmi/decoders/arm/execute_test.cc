@@ -522,6 +522,22 @@ TEST_F(ExecuteTest, LDMIB_W) {
   EXPECT_TRUE(RunInstruction("0x0700BFE9"));  // ldmib pc!, {r0-r2}
 }
 
+TEST_F(ExecuteTest, LDMSDA) {}
+
+TEST_F(ExecuteTest, LDMSDA_W) {}
+
+TEST_F(ExecuteTest, LDMSDB) {}
+
+TEST_F(ExecuteTest, LDMSDB_W) {}
+
+TEST_F(ExecuteTest, LDMSIA) {}
+
+TEST_F(ExecuteTest, LDMSIA_W) {}
+
+TEST_F(ExecuteTest, LDMSIB) {}
+
+TEST_F(ExecuteTest, LDMSIB_W) {}
+
 TEST_F(ExecuteTest, LDR_DAW) {}
 
 TEST_F(ExecuteTest, LDR_DAW_I12) {}
@@ -1077,6 +1093,22 @@ TEST_F(ExecuteTest, STMIA_W) {}
 TEST_F(ExecuteTest, STMIB) {}
 
 TEST_F(ExecuteTest, STMIB_W) {}
+
+TEST_F(ExecuteTest, STMSDA) {}
+
+TEST_F(ExecuteTest, STMSDA_W) {}
+
+TEST_F(ExecuteTest, STMSDB) {}
+
+TEST_F(ExecuteTest, STMSDB_W) {}
+
+TEST_F(ExecuteTest, STMSIA) {}
+
+TEST_F(ExecuteTest, STMSIA_W) {}
+
+TEST_F(ExecuteTest, STMSIB) {}
+
+TEST_F(ExecuteTest, STMSIB_W) {}
 
 TEST_F(ExecuteTest, STR_DAW) {}
 
