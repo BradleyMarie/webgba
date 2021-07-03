@@ -45,15 +45,15 @@ std::string MatchesMultiplyLong(const std::bitset<32>& instruction) {
   std::string opcode;
   if (u) {
     if (a) {
-      opcode = "UMLAL";
-    } else {
-      opcode = "UMULL";
-    }
-  } else {
-    if (a) {
       opcode = "SMLAL";
     } else {
       opcode = "SMULL";
+    }
+  } else {
+    if (a) {
+      opcode = "UMLAL";
+    } else {
+      opcode = "UMULL";
     }
   }
 

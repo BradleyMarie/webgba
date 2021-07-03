@@ -182,28 +182,28 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmCMN(&registers->current.user, rn, operand2);
-      modified_pc = (rd == REGISTER_R15);
+      modified_pc = false;
       break;
     case ARM_OPCODE_CMN_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmCMN(&registers->current.user, rn, operand2);
-      modified_pc = (rd == REGISTER_R15);
+      modified_pc = false;
       break;
     case ARM_OPCODE_CMP:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmCMP(&registers->current.user, rn, operand2);
-      modified_pc = (rd == REGISTER_R15);
+      modified_pc = false;
       break;
     case ARM_OPCODE_CMP_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmCMP(&registers->current.user, rn, operand2);
-      modified_pc = (rd == REGISTER_R15);
+      modified_pc = false;
       break;
     case ARM_OPCODE_EOR:
       ArmOperandDataProcessingOperand2(next_instruction,
@@ -1259,28 +1259,28 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmTEQ(&registers->current.user, rd, rn, operand2);
+      ArmTEQ(&registers->current.user, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_TEQ_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmTEQ(&registers->current.user, rd, rn, operand2);
+      ArmTEQ(&registers->current.user, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_TST:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmTST(&registers->current.user, rd, rn, operand2);
+      ArmTST(&registers->current.user, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_TST_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmTST(&registers->current.user, rd, rn, operand2);
+      ArmTST(&registers->current.user, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_UMLAL:
