@@ -601,17 +601,50 @@ TEST_F(ExecuteTest, MRC) {
   // NOP
 }
 
-TEST_F(ExecuteTest, MRS_CPSR) {}
+TEST_F(ExecuteTest, MRS_CPSR) {
+  EXPECT_FALSE(RunInstruction("0x00000FE1"));  // mrs r0, cpsr
+  EXPECT_EQ(registers_.current.user.cpsr.value,
+            registers_.current.user.gprs.r0);
+}
 
-TEST_F(ExecuteTest, MRS_SPSR) {}
+TEST_F(ExecuteTest, MRS_SPSR) {
+  EXPECT_FALSE(RunInstruction("0x00004FE1"));  // mrs r0, spsr
+  EXPECT_EQ(registers_.current.spsr.value, registers_.current.user.gprs.r0);
+}
 
-TEST_F(ExecuteTest, MSR_CPSR) {}
+TEST_F(ExecuteTest, MSR_CPSR) {
+  ArmProgramStatusRegister status;
+  status.value = registers_.current.user.cpsr.value;
+  status.mode = MODE_FIQ;
+  registers_.current.user.gprs.r0 = status.value;
+  EXPECT_FALSE(RunInstruction("0x00F02FE1"));  // msr cpsr_cxsf, r0
+  EXPECT_EQ(status.value, registers_.current.user.cpsr.value);
+}
 
-TEST_F(ExecuteTest, MSR_CPSR_I8) {}
+TEST_F(ExecuteTest, MSR_CPSR_I8) {
+  EXPECT_FALSE(RunInstruction("0xFFF428E3"));  // msr cpsr_f, #0xFF000000
+  EXPECT_TRUE(registers_.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers_.current.user.cpsr.carry);
+  EXPECT_TRUE(registers_.current.user.cpsr.zero);
+  EXPECT_TRUE(registers_.current.user.cpsr.negative);
+}
 
-TEST_F(ExecuteTest, MSR_SPSR) {}
+TEST_F(ExecuteTest, MSR_SPSR) {
+  ArmProgramStatusRegister status;
+  status.value = registers_.current.user.cpsr.value;
+  status.mode = MODE_FIQ;
+  registers_.current.user.gprs.r0 = status.value;
+  EXPECT_FALSE(RunInstruction("0x00F06FE1"));  // msr spsr_cxsf, r0
+  EXPECT_EQ(status.value, registers_.current.spsr.value);
+}
 
-TEST_F(ExecuteTest, MSR_SPSR_I8) {}
+TEST_F(ExecuteTest, MSR_SPSR_I8) {
+  EXPECT_FALSE(RunInstruction("0xFFF468E3"));  // msr spsr_f, #0xFF000000
+  EXPECT_TRUE(registers_.current.spsr.overflow);
+  EXPECT_TRUE(registers_.current.spsr.carry);
+  EXPECT_TRUE(registers_.current.spsr.zero);
+  EXPECT_TRUE(registers_.current.spsr.negative);
+}
 
 TEST_F(ExecuteTest, MUL) {
   registers_.current.user.gprs.r0 = 0x2u;
