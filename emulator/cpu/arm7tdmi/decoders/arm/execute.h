@@ -245,7 +245,8 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
     case ARM_OPCODE_LDMDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       ArmLDMDAW(&registers->current.user.gprs, memory, rn, register_list);
-      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -255,7 +256,8 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
     case ARM_OPCODE_LDMDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       ArmLDMDBW(&registers->current.user.gprs, memory, rn, register_list);
-      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -265,7 +267,8 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
     case ARM_OPCODE_LDMIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       ArmLDMIAW(&registers->current.user.gprs, memory, rn, register_list);
-      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -275,7 +278,8 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
     case ARM_OPCODE_LDMIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       ArmLDMIBW(&registers->current.user.gprs, memory, rn, register_list);
-      modified_pc = !!((register_list >> REGISTER_R15) & 0x1u);
+      modified_pc =
+          !!((register_list >> REGISTER_R15) & 0x1u) || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDR_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
