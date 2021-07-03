@@ -567,8 +567,8 @@ static inline ArmOpcode ArmDecodeOpcode(uint32_t instruction) {
       202u, 202u, 202u, 202u,
   };
 
-  uint_fast16_t opcode_index_low = (instruction << 24u) >> 28u;
-  uint_fast16_t opcode_index_hi = (instruction << 4u) >> 24u;
+  uint_fast16_t opcode_index_low = (instruction >> 4u) & 0xF;
+  uint_fast16_t opcode_index_hi = (instruction >> 16u) & 0xFF0u;
   uint_fast16_t opcode_index = opcode_index_low | opcode_index_hi;
   assert(opcode_index < 4096);
 
