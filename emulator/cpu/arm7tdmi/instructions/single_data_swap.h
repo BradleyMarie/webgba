@@ -2,16 +2,16 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
-#include "emulator/memory.h"
+#include "emulator/cpu/arm7tdmi/memory.h"
 
 static inline void ArmSWP(ArmGeneralPurposeRegisters *registers, Memory *memory,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,
                           ArmRegisterIndex Rn) {
   uint32_t temp;
-  bool success = Load32LE(memory, registers->gprs[Rn], &temp);
+  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &temp);
   assert(success);
 
-  success = Store32LE(memory, registers->gprs[Rn], registers->gprs[Rm]);
+  success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rm]);
   assert(success);
 
   registers->gprs[Rd] = temp;

@@ -2,7 +2,7 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTMUCTIONS_BLOCK_DATA_TRANSFER_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
-#include "emulator/memory.h"
+#include "emulator/cpu/arm7tdmi/memory.h"
 
 void ArmLDMDA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list);

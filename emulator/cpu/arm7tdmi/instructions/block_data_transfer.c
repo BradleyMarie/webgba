@@ -11,7 +11,7 @@ void ArmLDMDA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success = Load32LE(memory, address, &registers->gprs[index]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -26,7 +26,7 @@ void ArmLDMDB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success = Load32LE(memory, address, &registers->gprs[index]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[index]);
       assert(success);
     }
   }
@@ -39,7 +39,7 @@ void ArmLDMDAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success = Load32LE(memory, address, &registers->gprs[index]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -55,7 +55,7 @@ void ArmLDMDBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success = Load32LE(memory, address, &registers->gprs[index]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[index]);
       assert(success);
     }
   }
@@ -68,7 +68,7 @@ void ArmLDMIA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   uint32_t address = registers->gprs[Rn];
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = Load32LE(memory, address, &registers->gprs[i]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -82,7 +82,7 @@ void ArmLDMIB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = Load32LE(memory, address, &registers->gprs[i]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
       assert(success);
     }
   }
@@ -94,7 +94,7 @@ void ArmLDMIAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   uint32_t address = registers->gprs[Rn];
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = Load32LE(memory, address, &registers->gprs[i]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -109,7 +109,7 @@ void ArmLDMIBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = Load32LE(memory, address, &registers->gprs[i]);
+      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
       assert(success);
     }
   }
@@ -136,8 +136,8 @@ void ArmLDMSDA(ArmAllRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[index]);
+      bool success = ArmLoad32LE(memory, address,
+                                 &registers->current.user.gprs.gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -171,8 +171,8 @@ void ArmLDMSDB(ArmAllRegisters *registers, const Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[index]);
+      bool success = ArmLoad32LE(memory, address,
+                                 &registers->current.user.gprs.gprs[index]);
       assert(success);
     }
   }
@@ -204,8 +204,8 @@ void ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[index]);
+      bool success = ArmLoad32LE(memory, address,
+                                 &registers->current.user.gprs.gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -240,8 +240,8 @@ void ArmLDMSDBW(ArmAllRegisters *registers, const Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[index]);
+      bool success = ArmLoad32LE(memory, address,
+                                 &registers->current.user.gprs.gprs[index]);
       assert(success);
     }
   }
@@ -274,7 +274,7 @@ void ArmLDMSIA(ArmAllRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -308,7 +308,7 @@ void ArmLDMSIB(ArmAllRegisters *registers, const Memory *memory,
     if (register_list & (1u << i)) {
       address += 4u;
       bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
@@ -340,7 +340,7 @@ void ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -375,7 +375,7 @@ void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
     if (register_list & (1u << i)) {
       address += 4u;
       bool success =
-          Load32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
@@ -395,7 +395,7 @@ void ArmSTMDA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success = Store32LE(memory, address, registers->gprs[index]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -410,7 +410,7 @@ void ArmSTMDB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success = Store32LE(memory, address, registers->gprs[index]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[index]);
       assert(success);
     }
   }
@@ -423,7 +423,7 @@ void ArmSTMDAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success = Store32LE(memory, address, registers->gprs[index]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -439,7 +439,7 @@ void ArmSTMDBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success = Store32LE(memory, address, registers->gprs[index]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[index]);
       assert(success);
     }
   }
@@ -452,7 +452,7 @@ void ArmSTMIA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
   uint32_t address = registers->gprs[Rn];
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = Store32LE(memory, address, registers->gprs[i]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -466,7 +466,7 @@ void ArmSTMIB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = Store32LE(memory, address, registers->gprs[i]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
       assert(success);
     }
   }
@@ -478,7 +478,7 @@ void ArmSTMIAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
   uint32_t address = registers->gprs[Rn];
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = Store32LE(memory, address, registers->gprs[i]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -493,7 +493,7 @@ void ArmSTMIBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = Store32LE(memory, address, registers->gprs[i]);
+      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
       assert(success);
     }
   }
@@ -525,7 +525,7 @@ void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success = Store32LE(
+      bool success = ArmStore32LE(
           memory, address, registers_to_read->current.user.gprs.gprs[index]);
       assert(success);
       address -= 4u;
@@ -559,7 +559,7 @@ void ArmSTMSDB(const ArmAllRegisters *registers, Memory *memory,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success = Store32LE(
+      bool success = ArmStore32LE(
           memory, address, registers_to_read->current.user.gprs.gprs[index]);
       assert(success);
     }
@@ -585,8 +585,8 @@ void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   for (uint32_t i = 0u; i < 16u; i++) {
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
-      bool success =
-          Store32LE(memory, address, registers->current.user.gprs.gprs[index]);
+      bool success = ArmStore32LE(memory, address,
+                                  registers->current.user.gprs.gprs[index]);
       assert(success);
       address -= 4u;
     }
@@ -618,8 +618,8 @@ void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     uint32_t index = 15u - i;
     if (register_list & (1u << index)) {
       address -= 4u;
-      bool success =
-          Store32LE(memory, address, registers->current.user.gprs.gprs[index]);
+      bool success = ArmStore32LE(memory, address,
+                                  registers->current.user.gprs.gprs[index]);
       assert(success);
     }
   }
@@ -654,8 +654,8 @@ void ArmSTMSIA(const ArmAllRegisters *registers, Memory *memory,
 
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = Store32LE(memory, address,
-                               registers_to_read->current.user.gprs.gprs[i]);
+      bool success = ArmStore32LE(memory, address,
+                                  registers_to_read->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -687,8 +687,8 @@ void ArmSTMSIB(const ArmAllRegisters *registers, Memory *memory,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = Store32LE(memory, address,
-                               registers_to_read->current.user.gprs.gprs[i]);
+      bool success = ArmStore32LE(memory, address,
+                                  registers_to_read->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
@@ -713,7 +713,7 @@ void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   for (uint32_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       bool success =
-          Store32LE(memory, address, registers->current.user.gprs.gprs[i]);
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
@@ -745,7 +745,7 @@ void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     if (register_list & (1u << i)) {
       address += 4u;
       bool success =
-          Store32LE(memory, address, registers->current.user.gprs.gprs[i]);
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
