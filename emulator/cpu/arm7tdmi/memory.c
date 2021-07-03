@@ -25,10 +25,17 @@ static inline void RotateDataByAddress(uint32_t address, uint32_t *value) {
   }
 }
 
-bool ArmLoad32LE(const Memory *memory, uint32_t address, uint32_t *value) {
+bool ArmLoad32LEWithRotation(const Memory *memory, uint32_t address,
+                             uint32_t *value) {
   uint32_t masked_address = address & (~3u);
   bool result = Load32LE(memory, masked_address, value);
   RotateDataByAddress(address, value);
+  return result;
+}
+
+bool ArmLoad32LE(const Memory *memory, uint32_t address, uint32_t *value) {
+  uint32_t masked_address = address & (~3u);
+  bool result = Load32LE(memory, masked_address, value);
   return result;
 }
 
@@ -39,10 +46,17 @@ bool ArmLoad16LE(const Memory *memory, uint32_t address, uint16_t *value) {
   return result;
 }
 
-bool ArmLoad32SLE(const Memory *memory, uint32_t address, int32_t *value) {
+bool ArmLoad32SLEWithRotation(const Memory *memory, uint32_t address,
+                              int32_t *value) {
   uint32_t masked_address = address & (~3u);
   bool result = Load32SLE(memory, masked_address, value);
   RotateDataByAddress(address, (uint32_t *)value);
+  return result;
+}
+
+bool ArmLoad32SLE(const Memory *memory, uint32_t address, int32_t *value) {
+  uint32_t masked_address = address & (~3u);
+  bool result = Load32SLE(memory, masked_address, value);
   return result;
 }
 
