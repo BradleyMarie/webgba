@@ -507,10 +507,11 @@ int main(int argc, char* argv[]) {
   }
   std::cout << "  };" << std::endl << std::endl;
 
-  std::cout << "  uint_fast16_t opcode_index_low = (instruction << 24u) >> 28u;"
+  std::cout << "  uint_fast16_t opcode_index_low = (instruction >> 4u) & 0xF;"
             << std::endl;
-  std::cout << "  uint_fast16_t opcode_index_hi = (instruction << 4u) >> 24u;"
-            << std::endl;
+  std::cout
+      << "  uint_fast16_t opcode_index_hi = (instruction >> 16u) & 0xFF0u;"
+      << std::endl;
   std::cout
       << "  uint_fast16_t opcode_index = opcode_index_low | opcode_index_hi;"
       << std::endl;
