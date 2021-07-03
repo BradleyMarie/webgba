@@ -382,21 +382,145 @@ TEST_F(ExecuteTest, LDC) {
   // NOP
 }
 
-TEST_F(ExecuteTest, LDMDA) {}
+TEST_F(ExecuteTest, LDMDA) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x308u;
+  EXPECT_FALSE(RunInstruction("0x070010E8"));  // ldmda r0, {r0-r2}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
 
-TEST_F(ExecuteTest, LDMDA_W) {}
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x308u;
+  EXPECT_TRUE(RunInstruction("0x038010E8"));  // ldmda r0, {r0, r1, pc}
+}
 
-TEST_F(ExecuteTest, LDMDB) {}
+TEST_F(ExecuteTest, LDMDA_W) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x308u;
+  EXPECT_FALSE(RunInstruction("0x0E0030E8"));  // ldmda r0!, {r1-r3}
+  EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
+  EXPECT_EQ(1u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r3);
 
-TEST_F(ExecuteTest, LDMDB_W) {}
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x308u;
+  EXPECT_TRUE(RunInstruction("0x038010E8"));  // ldmda r0!, {r1, r2, pc}
 
-TEST_F(ExecuteTest, LDMIA) {}
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0x07003FE8"));  // ldmda pc!, {r0-r2}
+}
 
-TEST_F(ExecuteTest, LDMIA_W) {}
+TEST_F(ExecuteTest, LDMDB) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x30Cu;
+  EXPECT_FALSE(RunInstruction("0x070010E9"));  // ldmdb r0, {r0-r2}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
 
-TEST_F(ExecuteTest, LDMIB) {}
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x30Cu;
+  EXPECT_TRUE(RunInstruction("0x038010E9"));  // ldmdb r0, {r0, r1, pc}
+}
 
-TEST_F(ExecuteTest, LDMIB_W) {}
+TEST_F(ExecuteTest, LDMDB_W) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x30Cu;
+  EXPECT_FALSE(RunInstruction("0x0E0030E9"));  // ldmdb r0!, {r1-r3}
+  EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(1u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r3);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x30Cu;
+  EXPECT_TRUE(RunInstruction("0x068030E9"));  // ldmdb r0!, {r1, r2, pc}
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0x07003FE9"));  // ldmdb pc!, {r0-r2}
+}
+
+TEST_F(ExecuteTest, LDMIA) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_FALSE(RunInstruction("0x070090E8"));  // ldmia r0, {r0-r2}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_TRUE(RunInstruction("0x038010E9"));  // ldmia r0, {r0, r1, pc}
+}
+
+TEST_F(ExecuteTest, LDMIA_W) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_FALSE(RunInstruction("0x0E00B0E8"));  // ldmia r0!, {r1-r3}
+  EXPECT_EQ(0x30Cu, registers_.current.user.gprs.r0);
+  EXPECT_EQ(1u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r3);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_TRUE(RunInstruction("0x0680B0E8"));  // ldmia r0!, {r1, r2, pc}
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0x0700BFE8"));  // ldmia pc!, {r0-r2}
+}
+
+TEST_F(ExecuteTest, LDMIB) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_FALSE(RunInstruction("0x070090E9"));  // ldmib r0, {r0-r2}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_TRUE(RunInstruction("0x038090E9"));  // ldmib r0, {r0, r1, pc}
+}
+
+TEST_F(ExecuteTest, LDMIB_W) {
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x304, 2u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x308, 3u));
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_FALSE(RunInstruction("0x0E00B0E9"));  // ldmib r0!, {r1-r3}
+  EXPECT_EQ(0x308u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(1u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r3);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_TRUE(RunInstruction("0x0680B0E9"));  // ldmib r0!, {r1, r2, pc}
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0x0700BFE9"));  // ldmib pc!, {r0-r2}
+}
 
 TEST_F(ExecuteTest, LDR_DAW) {}
 
