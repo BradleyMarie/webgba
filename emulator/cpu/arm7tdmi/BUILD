@@ -17,3 +17,22 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "memory",
+    hdrs = ["memory.h"],
+    srcs = ["memory.c"],
+    deps = [
+        "//emulator:memory",
+    ],
+    visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+)
+
+cc_test(
+    name = "memory_test",
+    srcs = ["memory_test.cc"],
+    deps = [
+        ":memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
