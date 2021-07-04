@@ -38,7 +38,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi/instructions:signed_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:single_data_swap",
         "//emulator/cpu/arm7tdmi/instructions:swi",
-        "//emulator:memory",
+        "//emulator/memory:memory",
     ],
 )
 

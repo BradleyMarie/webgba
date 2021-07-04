@@ -23,7 +23,7 @@ cc_library(
     hdrs = ["memory.h"],
     srcs = ["memory.c"],
     deps = [
-        "//emulator:memory",
+        "//emulator/memory:memory",
     ],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
 )

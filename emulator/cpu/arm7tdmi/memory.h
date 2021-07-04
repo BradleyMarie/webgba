@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_MEMORY_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_MEMORY_
 
-#include "emulator/memory.h"
+#include "emulator/memory/memory.h"
 
 bool ArmLoad32LEWithRotation(const Memory *memory, uint32_t address,
                              uint32_t *value);

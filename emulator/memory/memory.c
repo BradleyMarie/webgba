@@ -1,4 +1,4 @@
-#include "emulator/memory.h"
+#include "emulator/memory/memory.h"
 
 #include <stdlib.h>
 

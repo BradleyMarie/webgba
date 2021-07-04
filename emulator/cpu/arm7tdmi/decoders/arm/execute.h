@@ -18,7 +18,7 @@
 #include "emulator/cpu/arm7tdmi/instructions/signed_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/single_data_swap.h"
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
-#include "emulator/memory.h"
+#include "emulator/memory/memory.h"
 
 static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
                                          Memory* memory) {
