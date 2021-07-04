@@ -1310,29 +1310,195 @@ TEST_F(ExecuteTest, LDRH_IBW_I12) {
   EXPECT_TRUE(RunInstruction("0xB400FFE1"));  // ldrh r0, [pc, #4]!
 }
 
-TEST_F(ExecuteTest, LDRSB_DAW) {}
+TEST_F(ExecuteTest, LDRSB_DAW) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x300u;
+  registers_.current.user.gprs.r1 = 4u;
 
-TEST_F(ExecuteTest, LDRSB_DAW_I8) {}
+  EXPECT_FALSE(RunInstruction("0xD12010E0"));  // ldrsb r2, [r0], -r1
+  EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
 
-TEST_F(ExecuteTest, LDRSB_DB) {}
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_TRUE(RunInstruction("0xD1F010E0"));  // ldrsb pc, [r0], -r1
 
-TEST_F(ExecuteTest, LDRSB_DB_I8) {}
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD1001FE0"));  // ldrsb r0, [pc], -r1
+}
 
-TEST_F(ExecuteTest, LDRSB_DBW) {}
+TEST_F(ExecuteTest, LDRSB_DAW_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x300u;
 
-TEST_F(ExecuteTest, LDRSB_DBW_I8) {}
+  EXPECT_FALSE(RunInstruction("0xD42050E0"));  // ldrsb r2, [r0], #-4
+  EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
 
-TEST_F(ExecuteTest, LDRSB_IAW) {}
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_TRUE(RunInstruction("0xD4F050E0"));  // ldrsb pc, [r0], #-4
 
-TEST_F(ExecuteTest, LDRSB_IAW_I8) {}
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD4005FE0"));  // ldrsb r0, [pc], #-4
+}
 
-TEST_F(ExecuteTest, LDRSB_IB) {}
+TEST_F(ExecuteTest, LDRSB_DB) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x304u;
+  registers_.current.user.gprs.r1 = 4u;
 
-TEST_F(ExecuteTest, LDRSB_IB_I8) {}
+  EXPECT_FALSE(RunInstruction("0xD12010E1"));  // ldrsb r2, [r0, -r1]
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
 
-TEST_F(ExecuteTest, LDRSB_IBW) {}
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x304u;
+  EXPECT_TRUE(RunInstruction("0xD1F010E1"));  // ldrsb pc, [r0, -r1]
+}
 
-TEST_F(ExecuteTest, LDRSB_IBW_I8) {}
+TEST_F(ExecuteTest, LDRSB_DB_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x304u;
+
+  EXPECT_FALSE(RunInstruction("0xD42050E1"));  // ldrsb r2, [r0, #-4]
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x304u;
+  EXPECT_TRUE(RunInstruction("0xD4F050E1"));  // ldrsb pc, [r0, #-4]
+}
+
+TEST_F(ExecuteTest, LDRSB_DBW) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x304u;
+  registers_.current.user.gprs.r1 = 4u;
+
+  EXPECT_FALSE(RunInstruction("0xD12030E1"));  // ldrsb r2, [r0, -r1]!
+  EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x304u;
+  EXPECT_TRUE(RunInstruction("0xD1F030E1"));  // ldrsb pc, [r0, -r1]!
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD1003FE1"));  // ldrsb r0, [pc, -r1]!
+}
+
+TEST_F(ExecuteTest, LDRSB_DBW_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x304u;
+
+  EXPECT_FALSE(RunInstruction("0xD42070E1"));  // ldrsb r2, [r0, #-4]!
+  EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x304u;
+  EXPECT_TRUE(RunInstruction("0xD4F070E1"));  // ldrsb pc, [r0, #-4]!
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD4007FE1"));  // ldrsb r0, [pc, #-4]!
+}
+
+TEST_F(ExecuteTest, LDRSB_IAW) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x300u;
+  registers_.current.user.gprs.r1 = 4u;
+
+  EXPECT_FALSE(RunInstruction("0xD12090E0"));  // ldrsb r2, [r0], r1
+  EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x304u;
+  EXPECT_TRUE(RunInstruction("0xD1F090E0"));  // ldrsb pc, [r0], r1
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD1009FE0"));  // ldrsb r0, [pc], r1
+}
+
+TEST_F(ExecuteTest, LDRSB_IAW_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x300u;
+
+  EXPECT_FALSE(RunInstruction("0xD420D0E0"));  // ldrsb r2, [r0], #4
+  EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x300u;
+  EXPECT_TRUE(RunInstruction("0xD4F0D0E0"));  // ldrsb pc, [r0], #4
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD400DFE0"));  // ldrsb r0, [pc], #4
+}
+
+TEST_F(ExecuteTest, LDRSB_IB) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x2FC;
+  registers_.current.user.gprs.r1 = 4u;
+
+  EXPECT_FALSE(RunInstruction("0xD12090E1"));  // ldrsb r2, [r0, r1]
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x2FC;
+  EXPECT_TRUE(RunInstruction("0xD1F090E1"));  // ldrsb pc, [r0, r1]
+}
+
+TEST_F(ExecuteTest, LDRSB_IB_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x2FC;
+
+  EXPECT_FALSE(RunInstruction("0xD420D0E1"));  // ldrsb r2, [r0, #4]
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  registers_.current.user.gprs.r0 = 0x2FC;
+  EXPECT_TRUE(RunInstruction("0xD4F0D0E1"));  // ldrsb pc, [r0, #4]
+}
+
+TEST_F(ExecuteTest, LDRSB_IBW) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  registers_.current.user.gprs.r1 = 4u;
+
+  EXPECT_FALSE(RunInstruction("0xD120B0E1"));  // ldrsb r2, [r0, r1]!
+  EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_TRUE(RunInstruction("0xD1F0B0E1"));  // ldrsb pc, [r0, r1]!
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD100BFE1"));  // ldrsb r0, [pc, r1]!
+}
+
+TEST_F(ExecuteTest, LDRSB_IBW_I12) {
+  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  registers_.current.user.gprs.r0 = 0x2FCu;
+
+  EXPECT_FALSE(RunInstruction("0xD420F0E1"));  // ldrsb r2, [r0, #4]!
+  EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(-1, registers_.current.user.gprs.r2_s);
+
+  // Modifies PC
+  uint32_t pc = registers_.current.user.gprs.pc;
+  registers_.current.user.gprs.r0 = 0x2FCu;
+  EXPECT_TRUE(RunInstruction("0xD4F0F0E1"));  // ldrsb pc, [r0, #4]!
+
+  registers_.current.user.gprs.pc = pc + 4u;
+  EXPECT_TRUE(RunInstruction("0xD400FFE1"));  // ldrsb r0, [pc, #4]!
+}
 
 TEST_F(ExecuteTest, LDRSH_DAW) {}
 
