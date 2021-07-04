@@ -6,11 +6,11 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 static inline void ArmMCR(ArmAllRegisters *registers) {
-  // NOP
+  ArmExceptionUND(registers);
 }
 
 static inline void ArmMRC(ArmAllRegisters *registers) {
-  // NOP
+  ArmExceptionUND(registers);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_COPROCESSOR_REGISTER_TRANSFER_

@@ -308,7 +308,8 @@ TEST_F(ExecuteTest, BX) {
 }
 
 TEST_F(ExecuteTest, CDP) {
-  // NOP
+  EXPECT_TRUE(RunInstruction("0x83C52AEE"));  // cdp p5, 2, c12, c10, c3, 4
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
 }
 
 TEST_F(ExecuteTest, CMN) {
@@ -379,7 +380,8 @@ TEST_F(ExecuteTest, EORS_I32) {
 }
 
 TEST_F(ExecuteTest, LDC) {
-  // NOP
+  EXPECT_TRUE(RunInstruction("0x001694ED"));  // ldc p6, cr1, [r4]
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
 }
 
 TEST_F(ExecuteTest, LDMDA) {
@@ -1761,7 +1763,8 @@ TEST_F(ExecuteTest, LDRT_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, MCR) {
-  // NOP
+  EXPECT_TRUE(RunInstruction("0xDC7E27EE"));  // mcr p14, 1, r7, c7, c12, 6
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
 }
 
 TEST_F(ExecuteTest, MLA) {
@@ -1824,7 +1827,8 @@ TEST_F(ExecuteTest, MOVS_I32) {
 }
 
 TEST_F(ExecuteTest, MRC) {
-  // NOP
+  EXPECT_TRUE(RunInstruction("0x724FB0EE"));  // mrc p15, 5, r4, c0, c2, 3
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
 }
 
 TEST_F(ExecuteTest, MRS_CPSR) {
@@ -2161,7 +2165,8 @@ TEST_F(ExecuteTest, SMULLS) {
 }
 
 TEST_F(ExecuteTest, STC) {
-  // NOP
+  EXPECT_TRUE(RunInstruction("0x01888CED"));  // stc p8, cr8, [r12, #4]
+  EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
 }
 
 TEST_F(ExecuteTest, STMDA) {

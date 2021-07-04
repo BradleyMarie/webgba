@@ -175,7 +175,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_CDP:
       ArmCDP(registers);
-      modified_pc = false;
+      modified_pc = true;
       break;
     case ARM_OPCODE_CMN:
       ArmOperandDataProcessingOperand2(next_instruction,
@@ -235,7 +235,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_LDC:
       ArmLDC(registers);
-      modified_pc = false;
+      modified_pc = true;
       break;
     case ARM_OPCODE_LDMDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -719,7 +719,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_MCR:
       ArmMCR(registers);
-      modified_pc = false;
+      modified_pc = true;
       break;
     case ARM_OPCODE_MLA:
       ArmOperandMultiplyAccumulate(next_instruction, &rd, &rm, &rs, &rn);
@@ -761,7 +761,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_MRC:
       ArmMRC(registers);
-      modified_pc = false;
+      modified_pc = true;
       break;
     case ARM_OPCODE_MRS_CPSR:
       ArmOperandMoveFromStatusRegister(next_instruction, &rd);
@@ -971,7 +971,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_STC:
       ArmSTC(registers);
-      modified_pc = false;
+      modified_pc = true;
       break;
     case ARM_OPCODE_STMDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);

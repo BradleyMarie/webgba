@@ -57,16 +57,43 @@ cc_library(
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
 )
 
+cc_test(
+    name = "coprocessor_data_operation_test",
+    srcs = ["coprocessor_data_operation_test.cc"],
+    deps = [
+        ":coprocessor_data_operation",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "coprocessor_data_transfer",
     hdrs = ["coprocessor_data_transfer.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
 )
 
+cc_test(
+    name = "coprocessor_data_transfer_test",
+    srcs = ["coprocessor_data_transfer_test.cc"],
+    deps = [
+        ":coprocessor_data_transfer",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "coprocessor_register_transfer",
     hdrs = ["coprocessor_register_transfer.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "coprocessor_register_transfer_test",
+    srcs = ["coprocessor_register_transfer_test.cc"],
+    deps = [
+        ":coprocessor_register_transfer",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
