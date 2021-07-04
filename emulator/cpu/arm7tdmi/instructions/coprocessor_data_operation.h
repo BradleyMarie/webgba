@@ -6,7 +6,7 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 static inline void ArmCDP(ArmAllRegisters *registers) {
-  // NOP
+  ArmExceptionUND(registers);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_COPROCESSOR_DATA_OPERATION_
