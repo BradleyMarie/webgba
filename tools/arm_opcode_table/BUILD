@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = ["//emulator/cpu/arm7tdmi/decoders/arm:__subpackages__"])
 
