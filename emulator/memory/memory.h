@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_MEMORY_
-#define _WEBGBA_EMULATOR_MEMORY_
+#ifndef _WEBGBA_EMULATOR_MEMORY_MEMORY_
+#define _WEBGBA_EMULATOR_MEMORY_MEMORY_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -42,4 +42,4 @@ bool Store8S(Memory *memory, uint32_t address, int8_t value);
 
 void MemoryFree(Memory *memory);
 
-#endif  // _WEBGBA_EMULATOR_MEMORY_
+#endif  // _WEBGBA_EMULATOR_MEMORY_MEMORY_
