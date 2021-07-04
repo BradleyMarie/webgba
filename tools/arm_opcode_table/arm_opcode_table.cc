@@ -215,7 +215,7 @@ std::string MatchesSingleDataTransfer(const std::bitset<32>& instruction) {
     opcode += u ? "_IAW" : "_DAW";
   }
 
-  if (i) {
+  if (!i) {
     opcode += "_@12";
   }
 
