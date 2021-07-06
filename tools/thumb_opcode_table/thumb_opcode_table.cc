@@ -28,6 +28,8 @@ std::string MatchesConditionalBranch(const std::bitset<16>& instruction) {
     return std::string();
   }
 
+  bool backwards_branch = instruction[7];
+
   std::bitset<2> cond;
   cond[0] = instruction[8];
   cond[1] = instruction[9];
@@ -40,7 +42,16 @@ std::string MatchesConditionalBranch(const std::bitset<16>& instruction) {
       return std::string();
   }
 
-  return "B_COND";
+  std::string opcode;
+  if (backwards_branch) {
+    opcode = "B_REV";
+  } else {
+    opcode = "B_FWD";
+  }
+
+  opcode += "_COND";
+
+  return opcode;
 }
 
 std::string MatchesUnconditionalBranch(const std::bitset<16>& instruction) {
@@ -52,20 +63,31 @@ std::string MatchesUnconditionalBranch(const std::bitset<16>& instruction) {
   h[0] = instruction[11];
   h[1] = instruction[12];
 
+  bool backwards_branch = instruction[10];
+
+  std::string opcode;
   switch (h.to_ulong()) {
     case 0u:
-      return "B";
-    case 1u:
-      return "BL_HIGH";
-    case 2u:
-      return "BL_LOW";
-    case 3u:
+      opcode = "B";
       break;
+    case 1u:
+      opcode = "BL";
+      break;
+    case 2u:
+      return "BL";
+    case 3u:
+      return std::string();
     default:
       assert(false);
   }
 
-  return std::string();
+  if (backwards_branch) {
+    opcode += "_REV";
+  } else {
+    opcode += "_FWD";
+  }
+
+  return opcode;
 }
 
 std::string MatchesAddOrSubtractRegister(const std::bitset<16>& instruction) {
