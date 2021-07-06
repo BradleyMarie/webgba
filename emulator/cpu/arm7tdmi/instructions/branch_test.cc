@@ -2,20 +2,9 @@ extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/branch.h"
 }
 
-#include <strings.h>
+#include <cstring>
 
 #include "googletest/include/gtest/gtest.h"
-
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
-  return registers;
-}
-
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
-}
 
 ArmUserRegisters CreateArmUserRegisters() {
   ArmUserRegisters registers;
@@ -29,14 +18,27 @@ bool ArmUserRegistersAreZero(const ArmUserRegisters& regs) {
 }
 
 TEST(ArmB, Branch) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmUserRegisters();
 
-  registers.pc = 208u;
+  registers.gprs.pc = 208u;
   ArmB(&registers, 100);
-  EXPECT_EQ(608u, registers.pc);
+  EXPECT_EQ(608u, registers.gprs.pc);
 
-  registers.pc = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.gprs.pc = 0u;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+}
+
+TEST(ArmB, BranchThumb) {
+  auto registers = CreateArmUserRegisters();
+
+  registers.gprs.pc = 208u;
+  registers.cpsr.thumb = true;
+  ArmB(&registers, 100);
+  EXPECT_EQ(408u, registers.gprs.pc);
+
+  registers.gprs.pc = 0u;
+  registers.cpsr.thumb = false;
+  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
 }
 
 TEST(ArmBL, BranchLink) {
@@ -59,7 +61,7 @@ TEST(ArmBL, BranchLinkThumb) {
   registers.cpsr.thumb = true;
   ArmBL(&registers, 100);
   EXPECT_EQ(203u, registers.gprs.lr);
-  EXPECT_EQ(604u, registers.gprs.pc);
+  EXPECT_EQ(404u, registers.gprs.pc);
 
   registers.gprs.pc = 0u;
   registers.gprs.lr = 0u;
