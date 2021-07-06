@@ -132,7 +132,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_B:
       ArmOperandBranch(next_instruction, &branch_offset);
-      ArmB(&registers->current.user.gprs, branch_offset);
+      ArmB(&registers->current.user, branch_offset);
       modified_pc = true;
       break;
     case ARM_OPCODE_BIC:
