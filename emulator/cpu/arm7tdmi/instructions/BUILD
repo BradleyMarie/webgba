@@ -37,21 +37,6 @@ cc_test(
 )
 
 cc_library(
-    name = "branch",
-    hdrs = ["branch.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
-)
-
-cc_test(
-    name = "branch_test",
-    srcs = ["branch_test.cc"],
-    deps = [
-        ":branch",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "coprocessor_data_operation",
     hdrs = ["coprocessor_data_operation.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],

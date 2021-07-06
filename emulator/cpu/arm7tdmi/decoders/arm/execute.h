@@ -1,11 +1,11 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_EXECUTE_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_EXECUTE_
 
+#include "emulator/cpu/arm7tdmi/decoders/arm/branch.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/operand.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
-#include "emulator/cpu/arm7tdmi/instructions/branch.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/coprocessor_data_operation.h"
 #include "emulator/cpu/arm7tdmi/instructions/coprocessor_data_transfer.h"
@@ -132,7 +132,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_B:
       ArmOperandBranch(next_instruction, &branch_offset);
-      ArmB(&registers->current.user, branch_offset);
+      ArmB(&registers->current.user.gprs, branch_offset);
       modified_pc = true;
       break;
     case ARM_OPCODE_BIC:
@@ -165,7 +165,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
       break;
     case ARM_OPCODE_BL:
       ArmOperandBranch(next_instruction, &branch_offset);
-      ArmBL(&registers->current.user, branch_offset);
+      ArmBL(&registers->current.user.gprs, branch_offset);
       modified_pc = true;
       break;
     case ARM_OPCODE_BX:
