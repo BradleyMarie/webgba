@@ -1,0 +1,8 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(default_visibility = ["//emulator/cpu/arm7tdmi/decoders:__subpackages__"])
+
+cc_library(
+    name = "opcode",
+    hdrs = ["opcode.h"],
+)
