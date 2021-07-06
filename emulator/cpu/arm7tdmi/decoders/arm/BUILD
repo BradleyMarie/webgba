@@ -3,6 +3,21 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//emulator/cpu/arm7tdmi/decoders:__subpackages__"])
 
 cc_library(
+    name = "branch",
+    hdrs = ["branch.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "branch_test",
+    srcs = ["branch_test.cc"],
+    deps = [
+        ":branch",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "condition",
     hdrs = ["condition.h"],
     deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
@@ -21,11 +36,11 @@ cc_library(
     name = "execute",
     hdrs = ["execute.h"],
     deps = [
+        ":branch",
         ":condition",
         ":opcode",
         ":operand",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
-        "//emulator/cpu/arm7tdmi/instructions:branch",
         "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_operation",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_transfer",
