@@ -28,16 +28,15 @@ std::string MatchesConditionalBranch(const std::bitset<16>& instruction) {
     return std::string();
   }
 
-
   std::bitset<2> cond;
   cond[0] = instruction[8];
   cond[1] = instruction[9];
   cond[2] = instruction[10];
   cond[3] = instruction[11];
   switch (cond.to_ulong()) {
-    case 14u: // Always
+    case 14u:  // Always
       return std::string();
-    case 15u: // Never
+    case 15u:  // Never
       return std::string();
   }
 
@@ -57,9 +56,9 @@ std::string MatchesUnconditionalBranch(const std::bitset<16>& instruction) {
     case 0u:
       return "B";
     case 1u:
-      return "BL_HI";
+      return "BL_HIGH";
     case 2u:
-      return "BL_LO";
+      return "BL_LOW";
     case 3u:
       break;
     default:
@@ -304,7 +303,7 @@ std::string MatchesMovAddCmpAllRegs(const std::bitset<16>& instruction) {
       return std::string();
   }
 
-  opcode += "_ANY_REGISTER";
+  opcode += "_ANY";
 
   return opcode;
 }
