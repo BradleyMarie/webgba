@@ -2,6 +2,7 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_EXECUTE_
 
 #include "emulator/cpu/arm7tdmi/decoders/thumb/branch.h"
+#include "emulator/cpu/arm7tdmi/decoders/thumb/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/operand.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
@@ -86,7 +87,14 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = true;
       break;
     case THUMB_OPCODE_B_FWD_COND:
-      // TODO
+      ThumbOperandConditionalForwardBranch(next_instruction, &condition,
+                                           &branch_offset_32);
+      if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
+        ThumbB(&registers->current.user.gprs, branch_offset_32);
+        modified_pc = true;
+      } else {
+        modified_pc = false;
+      }
       break;
     case THUMB_OPCODE_B_REV:
       ThumbOperandReverseBranch(next_instruction, &branch_offset_32);
@@ -94,7 +102,14 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = true;
       break;
     case THUMB_OPCODE_B_REV_COND:
-      // TODO
+      ThumbOperandConditionalReverseBranch(next_instruction, &condition,
+                                           &branch_offset_32);
+      if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
+        ThumbB(&registers->current.user.gprs, branch_offset_32);
+        modified_pc = true;
+      } else {
+        modified_pc = false;
+      }
       break;
     case THUMB_OPCODE_BICS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
