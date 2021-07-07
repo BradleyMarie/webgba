@@ -7,7 +7,9 @@
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/data_processing.h"
+#include "emulator/cpu/arm7tdmi/instructions/load_store_register_byte.h"
 #include "emulator/cpu/arm7tdmi/instructions/multiply.h"
+#include "emulator/cpu/arm7tdmi/instructions/signed_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
 #include "emulator/memory/memory.h"
 
@@ -156,24 +158,64 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_LDR:
+      ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
+      ArmLDR_IB(&registers->current.user.gprs, memory, rd, rn,
+                registers->current.user.gprs.gprs[rm]);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDR_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDR_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDR_PC_OFFSET_I8:
+      ThumbOperandLoadPCRelative(next_instruction, &rd, &offset_16);
+      ArmLDR_IB(&registers->current.user.gprs, memory, rd, REGISTER_R15,
+                offset_16);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDR_SP_OFFSET_I8:
+      ThumbOperandLoadStoreSPRelative(next_instruction, &rd, &offset_16);
+      ArmLDR_IB(&registers->current.user.gprs, memory, rd, REGISTER_R13,
+                offset_16);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRB:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRB_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRB_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRB_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRH:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRH_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRH_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRH_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRSB:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRSB_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LDRSH:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmLDRSH_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LSLS:
       // TODO
@@ -211,7 +253,9 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_NEGS:
-      // TODO
+      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
+      ArmRSBS(registers, rd, rm, 0u);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_ORRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
@@ -245,18 +289,46 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_STR:
+      ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
+      ArmSTR_IB(&registers->current.user.gprs, memory, rd, rn,
+                registers->current.user.gprs.gprs[rm]);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STR_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmSTR_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STR_SP_OFFSET_I8:
+      ThumbOperandLoadStoreSPRelative(next_instruction, &rd, &offset_16);
+      ArmSTR_IB(&registers->current.user.gprs, memory, rd, REGISTER_R13,
+                offset_16);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STRB:
+      ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
+      ArmSTRB_IB(&registers->current.user.gprs, memory, rd, rn,
+                 registers->current.user.gprs.gprs[rm]);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STRB_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmSTRB_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STRH:
+      ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
+      ArmSTRH_IB(&registers->current.user.gprs, memory, rd, rn,
+                 registers->current.user.gprs.gprs[rm]);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_STRH_I5:
+      ThumbOperandLoadStoreImmediateOffset(next_instruction, &rd, &rn,
+                                           &offset_8);
+      ArmSTRH_IB(&registers->current.user.gprs, memory, rd, rn, offset_8);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_SUB_SP_I7:
       ThumbOperandAdjustStackPointer(next_instruction, &immediate_16);
