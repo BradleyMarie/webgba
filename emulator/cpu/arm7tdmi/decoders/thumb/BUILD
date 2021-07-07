@@ -17,6 +17,33 @@ cc_test(
     ],
 )
 
+
+
+cc_library(
+    name = "execute",
+    hdrs = ["execute.h"],
+    deps = [
+        ":branch",
+        ":opcode",
+        ":operand",
+        "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
+        "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
+        "//emulator/cpu/arm7tdmi/instructions:data_processing",
+        "//emulator/cpu/arm7tdmi/instructions:multiply",
+        "//emulator/cpu/arm7tdmi/instructions:swi",
+        "//emulator/memory:memory",
+    ],
+)
+
+cc_test(
+    name = "execute_test",
+    srcs = ["execute_test.cc"],
+    deps = [
+        ":execute",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "opcode",
     hdrs = ["opcode.h"],

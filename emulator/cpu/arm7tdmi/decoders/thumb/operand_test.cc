@@ -6,6 +6,12 @@ extern "C" {
 
 #include "googletest/include/gtest/gtest.h"
 
+ArmUserRegisters CreateArmUserRegisters() {
+  ArmUserRegisters registers;
+  memset(&registers, 0, sizeof(ArmUserRegisters));
+  return registers;
+}
+
 TEST(ThumbShiftByImmediate, Compute) {
   uint16_t instruction = 0x0148u;  // lsls r0, r1, #5
   ArmRegisterIndex rd, rm;

@@ -44,7 +44,7 @@ static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
   bool shifter_carry_out, control, flags;
 
   bool modified_pc;
-  uint_fast8_t opcode = ArmDecodeOpcode(next_instruction);
+  ArmOpcode opcode = ArmDecodeOpcode(next_instruction);
   switch (opcode) {
     case ARM_OPCODE_ADC:
       ArmOperandDataProcessingOperand2(next_instruction,
