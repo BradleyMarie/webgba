@@ -292,7 +292,7 @@ std::string MatchesAddOrSubStackImmediate7(const std::bitset<16>& instruction) {
   if (sub) {
     opcode += "SUB_SP_I7";
   } else {
-    opcode += "ADD_PC_I7";
+    opcode += "ADD_SP_I7";
   }
 
   return opcode;

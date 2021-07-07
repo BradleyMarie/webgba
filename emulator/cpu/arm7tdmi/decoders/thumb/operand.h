@@ -89,8 +89,8 @@ static inline void ThumbOperandLoadStoreSPRelative(uint16_t instruction,
 
 static inline void ThumbOperandAddToSPOrPC(uint16_t instruction,
                                            ArmRegisterIndex *Rd,
-                                           uint_fast16_t *offset) {
-  ThumbOperandLoadPCRelative(instruction, Rd, offset);
+                                           uint_fast16_t *immediate) {
+  ThumbOperandLoadPCRelative(instruction, Rd, immediate);
 }
 
 static inline void ThumbOperandAdjustStackPointer(uint16_t instruction,
@@ -145,7 +145,7 @@ static inline void ThumbOperandReverseBranchLink(uint16_t instruction,
 }
 
 static inline void ThumbOperandBranchLink(uint16_t instruction,
-                                          uint_fast32_t *offset) {
+                                          uint_fast16_t *offset) {
   *offset = (instruction & 0x7FFu) << 1u;
 }
 
