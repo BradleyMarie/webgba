@@ -110,3 +110,138 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
 };
 
 std::vector<char> ExecuteTest::memory_space_(1024u, 0);
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADCS) {
+  registers_.current.user.gprs.r0 = 1u;
+  registers_.current.user.cpsr.carry = true;
+  RunInstruction("0x4041"); // adcs r0, r0, r0
+  EXPECT_EQ(3u, registers_.current.user.gprs.r0);
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_ANY) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP_I7) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I3) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ANDS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ASRS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ASRS_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_B_FWD) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_B_FWD_COND) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_B_REV) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_B_REV_COND) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_BICS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_BL) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_BL_FWD) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_BL_REV) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_BX) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_CMN) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_CMP) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_CMP_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_CMP_ANY) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_EORS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDMIA) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_PC_OFFSET_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_SP_OFFSET_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRB) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRB_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRH) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRH_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRSB) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRSH) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LSLS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LSLS_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LSRS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LSRS_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_MOV_ANY) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_MOVS_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_MULS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_MVNS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_NEGS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ORRS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_POP) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_PUSH) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_RORS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SBCS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STMIA) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STR) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STR_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STR_SP_OFFSET_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STRB) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STRB_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STRH) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_STRH_I5) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SUB_SP_I7) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SUBS) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SUBS_I3) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SUBS_I8) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_SWI) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_TST) {}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_UNDEF) {}
