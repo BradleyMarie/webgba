@@ -114,23 +114,53 @@ std::vector<char> ExecuteTest::memory_space_(1024u, 0);
 TEST_F(ExecuteTest, THUMB_OPCODE_ADCS) {
   registers_.current.user.gprs.r0 = 1u;
   registers_.current.user.cpsr.carry = true;
-  RunInstruction("0x4041"); // adcs r0, r0, r0
+  EXPECT_FALSE(RunInstruction("0x4041"));  // adcs r0, r0, r0
   EXPECT_EQ(3u, registers_.current.user.gprs.r0);
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADD_ANY) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_ANY) {
+  registers_.current.user.gprs.r9 = 1u;
+  registers_.current.user.gprs.r10 = 1u;
+  EXPECT_FALSE(RunInstruction("0xD144"));  // add r9, r10
+  EXPECT_EQ(2u, registers_.current.user.gprs.r9);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC) {
+  EXPECT_FALSE(RunInstruction("0xFFA7"));  // add r7, pc, #1020
+  EXPECT_EQ(1284u, registers_.current.user.gprs.r7);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP) {
+  EXPECT_FALSE(RunInstruction("0xFFAF"));  // add r7, sp, #1020
+  EXPECT_EQ(1532u, registers_.current.user.gprs.r7);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP_I7) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_SP_I7) {
+  EXPECT_FALSE(RunInstruction("0x7FB0"));  // add sp, #508
+  EXPECT_EQ(1020u, registers_.current.user.gprs.sp);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADDS) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS) {
+  registers_.current.user.gprs.r5 = 0xFFFFFFFFu;
+  registers_.current.user.gprs.r6 = 0x3u;
+  EXPECT_FALSE(RunInstruction("0x7719"));  // adds r7, r6, r5
+  EXPECT_EQ(2u, registers_.current.user.gprs.r7);
+  EXPECT_TRUE(registers_.current.user.cpsr.carry);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I3) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I3) {
+  registers_.current.user.gprs.r6 = 0xFFFFFFFFu;
+  EXPECT_FALSE(RunInstruction("0xF71C"));  // adds r7, r6, #3
+  EXPECT_EQ(2u, registers_.current.user.gprs.r7);
+  EXPECT_TRUE(registers_.current.user.cpsr.carry);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I8) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_ADDS_I8) {
+  registers_.current.user.gprs.r7 = 0xFFFFFFFFu;
+  EXPECT_FALSE(RunInstruction("0xFF37"));  // adds r7, #255
+  EXPECT_EQ(254u, registers_.current.user.gprs.r7);
+  EXPECT_TRUE(registers_.current.user.cpsr.carry);
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_ANDS) {}
 
