@@ -407,6 +407,22 @@ TEST(ThumbRORS, Zero) {
   ArmUserRegistersAreZero(registers);
 }
 
+TEST(ThumbRORS, ThirtyOne) {
+  auto registers = CreateArmUserRegisters();
+  registers.gprs.r0 = 0xF000000Fu;
+  registers.gprs.r1 = 31u;
+  ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
+  EXPECT_EQ(31u, registers.gprs.r1);
+  EXPECT_EQ(0xE000001Fu, registers.gprs.r0);
+  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_FALSE(registers.cpsr.zero);
+
+  registers.gprs.r0 = 0u;
+  registers.gprs.r1 = 0u;
+  ArmUserRegistersAreZero(registers);
+}
+
 TEST(ThumbRORS, ThirtyTwo) {
   auto registers = CreateArmUserRegisters();
   registers.gprs.r0 = 0xF000000Fu;
