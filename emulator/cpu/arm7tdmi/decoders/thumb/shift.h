@@ -20,7 +20,7 @@ static inline void ThumbASRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->cpsr.carry =
         (registers->gprs.gprs[Rm] >> (shift_amount - 1u)) & 0x1u;
     // Technically this triggers implementation defined behavior
-    registers->gprs.gprs_s[Rd] >>= registers->gprs.gprs_s[Rm] >> shift_amount;
+    registers->gprs.gprs_s[Rd] = registers->gprs.gprs_s[Rm] >> shift_amount;
   }
 
   registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
