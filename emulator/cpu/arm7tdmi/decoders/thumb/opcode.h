@@ -145,7 +145,7 @@ static inline ThumbOpcode ThumbDecodeOpcode(uint16_t instruction) {
       64u, 64u, 64u, 64u,
   };
 
-  uint_fast8_t opcode_index = instruction >> 6u;
+  uint_fast16_t opcode_index = instruction >> 6u;
   assert(opcode_index <= 1024);
 
   return (ThumbOpcode)opcode_table[opcode_index];

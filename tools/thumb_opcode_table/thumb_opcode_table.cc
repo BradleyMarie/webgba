@@ -594,7 +594,7 @@ int main(int argc, char* argv[]) {
   }
   std::cout << "  };" << std::endl << std::endl;
 
-  std::cout << "  uint_fast8_t opcode_index = instruction >> 6u;" << std::endl;
+  std::cout << "  uint_fast16_t opcode_index = instruction >> 6u;" << std::endl;
   std::cout << "  assert(opcode_index <= 1024);" << std::endl << std::endl;
 
   std::cout << "  return (ThumbOpcode)opcode_table[opcode_index];" << std::endl;
