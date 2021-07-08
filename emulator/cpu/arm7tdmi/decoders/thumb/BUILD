@@ -40,6 +40,7 @@ cc_library(
         ":condition",
         ":opcode",
         ":operand",
+        ":shift",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
         "//emulator/cpu/arm7tdmi/instructions:data_processing",
@@ -76,6 +77,21 @@ cc_test(
     srcs = ["operand_test.cc"],
     deps = [
         ":operand",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "shift",
+    hdrs = ["shift.h"],
+    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+)
+
+cc_test(
+    name = "shift_test",
+    srcs = ["shift_test.cc"],
+    deps = [
+        ":shift",
         "@com_google_googletest//:gtest_main",
     ],
 )

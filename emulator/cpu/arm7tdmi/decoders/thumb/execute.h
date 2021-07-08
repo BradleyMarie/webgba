@@ -5,6 +5,7 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/operand.h"
+#include "emulator/cpu/arm7tdmi/decoders/thumb/shift.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/data_processing.h"
@@ -76,10 +77,13 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_ASRS:
-      // TODO
+      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
+      ThumbASRS_R(&registers->current.user, rd, rm);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_ASRS_I5:
-      // TODO
+      ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
+      ThumbASRS_I(&registers->current.user, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_B_FWD:
       ThumbOperandForwardBranch(next_instruction, &branch_offset_32);
@@ -233,16 +237,22 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_LSLS:
-      // TODO
+      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
+      ThumbLSLS_R(&registers->current.user, rd, rm);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LSLS_I5:
-      // TODO
+      ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
+      ThumbLSLS_I(&registers->current.user, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_LSRS:
-      // TODO
+      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
+      ThumbLSRS_R(&registers->current.user, rd, rm);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_LSRS_I5:
-      // TODO
+      ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
+      ThumbLSRS_I(&registers->current.user, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_MOV_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
@@ -291,7 +301,9 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_RORS:
-      // TODO
+      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
+      ThumbRORS(&registers->current.user, rd, rm);
+      modified_pc = false;
       break;
     case THUMB_OPCODE_SBCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
