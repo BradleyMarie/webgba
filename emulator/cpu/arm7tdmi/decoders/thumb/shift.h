@@ -128,13 +128,12 @@ static inline void ThumbRORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
   shift_amount &= 0x1Fu;
   if (shift_amount == 0) {
     registers->cpsr.carry = (registers->gprs.gprs[Rd] >> 31) & 0x1u;
-    registers->gprs.gprs[Rd] = 0u;
   } else {
     registers->cpsr.carry =
-        (registers->gprs.gprs[Rm] >> (shift_amount - 1u)) & 0x1u;
+        (registers->gprs.gprs[Rd] >> (shift_amount - 1u)) & 0x1u;
     registers->gprs.gprs[Rd] =
-        (registers->gprs.gprs[Rm] >> shift_amount) |
-        (registers->gprs.gprs[Rm] << (32u - shift_amount));
+        (registers->gprs.gprs[Rd] >> shift_amount) |
+        (registers->gprs.gprs[Rd] << (32u - shift_amount));
   }
 
   registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
