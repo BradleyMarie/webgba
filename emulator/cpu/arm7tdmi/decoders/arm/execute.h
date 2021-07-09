@@ -31,9 +31,9 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
 
   ArmRegisterIndex rd_msw, rd_lsw, rd, rn, rm, rs;
   uint32_t operand2, offset_32;
-  uint_fast8_t offset_8;
-  int_fast32_t branch_offset;
+  uint_fast32_t branch_offset;
   uint_fast16_t register_list, offset_16;
+  uint_fast8_t offset_8;
   bool shifter_carry_out, control, flags;
 
   bool modified_pc;
@@ -123,8 +123,13 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
       ArmANDS(registers, rd, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
-    case ARM_OPCODE_B:
-      ArmOperandBranch(next_instruction, &branch_offset);
+    case ARM_OPCODE_B_FWD:
+      ArmOperandBranchForward(next_instruction, &branch_offset);
+      ArmB(&registers->current.user.gprs, branch_offset);
+      modified_pc = true;
+      break;
+    case ARM_OPCODE_B_REV:
+      ArmOperandBranchReverse(next_instruction, &branch_offset);
       ArmB(&registers->current.user.gprs, branch_offset);
       modified_pc = true;
       break;
@@ -156,8 +161,13 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
       ArmBICS(registers, rd, rn, operand2, shifter_carry_out);
       modified_pc = (rd == REGISTER_R15);
       break;
-    case ARM_OPCODE_BL:
-      ArmOperandBranch(next_instruction, &branch_offset);
+    case ARM_OPCODE_BL_FWD:
+      ArmOperandBranchForward(next_instruction, &branch_offset);
+      ArmBL(&registers->current.user.gprs, branch_offset);
+      modified_pc = true;
+      break;
+    case ARM_OPCODE_BL_REV:
+      ArmOperandBranchReverse(next_instruction, &branch_offset);
       ArmBL(&registers->current.user.gprs, branch_offset);
       modified_pc = true;
       break;

@@ -353,8 +353,14 @@ std::string MatchesBranch(const std::bitset<32>& instruction) {
   }
 
   bool l = instruction[24];
+  bool reverse = instruction[23];
 
   std::string opcode = l ? "BL" : "B";
+  if (reverse) {
+    opcode += "_REV";
+  } else {
+    opcode += "_FWD";
+  }
 
   return opcode;
 }

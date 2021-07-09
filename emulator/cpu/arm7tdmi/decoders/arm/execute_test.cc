@@ -253,9 +253,14 @@ TEST_F(ExecuteTest, ANDS_I32) {
   EXPECT_TRUE(RunInstruction("0xFFF010E2"));  // ands r15, r0, #0xFF
 }
 
-TEST_F(ExecuteTest, B) {
+TEST_F(ExecuteTest, B_FWD) {
   EXPECT_TRUE(RunInstruction("0x3E0000EA"));  // b #0x100
   EXPECT_EQ(0x208u, registers_.current.user.gprs.pc);
+}
+
+TEST_F(ExecuteTest, B_REV) {
+  EXPECT_TRUE(RunInstruction("0xFDFFFFEA"));  // b #-4
+  EXPECT_EQ(0x104u, registers_.current.user.gprs.pc);
 }
 
 TEST_F(ExecuteTest, BIC) {
@@ -298,9 +303,15 @@ TEST_F(ExecuteTest, BICS_I32) {
   EXPECT_TRUE(RunInstruction("0xFFF0D0E3"));  // bics r15, r0, #0xFF
 }
 
-TEST_F(ExecuteTest, BL) {
+TEST_F(ExecuteTest, BL_FWD) {
   EXPECT_TRUE(RunInstruction("0x3E0000EB"));  // bl #0x100
   EXPECT_EQ(0x208u, registers_.current.user.gprs.pc);
+  EXPECT_EQ(0x104u, registers_.current.user.gprs.lr);
+}
+
+TEST_F(ExecuteTest, BL_REV) {
+  EXPECT_TRUE(RunInstruction("0xFDFFFFEB"));  // bl #-4
+  EXPECT_EQ(0x104u, registers_.current.user.gprs.pc);
   EXPECT_EQ(0x104u, registers_.current.user.gprs.lr);
 }
 
