@@ -526,7 +526,26 @@ TEST_F(ExecuteTest, THUMB_OPCODE_SBCS) {
   EXPECT_TRUE(registers_.current.user.cpsr.negative);
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STMIA) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STMIA) {
+  registers_.current.user.gprs.r1 = 2u;
+  registers_.current.user.gprs.r2 = 3u;
+  registers_.current.user.gprs.r3 = 4u;
+  registers_.current.user.gprs.r4 = 5u;
+  registers_.current.user.gprs.r5 = 6u;
+  registers_.current.user.gprs.r6 = 7u;
+  registers_.current.user.gprs.r7 = 8u;
+  registers_.current.user.gprs.r0 = 0x1DCu;
+  EXPECT_FALSE(RunInstruction("0xFFC0"));  // stmia r0!, {r0-r7}
+  EXPECT_EQ(registers_.current.user.gprs.r0, 0x1FCu);
+  EXPECT_EQ(0x1DCu, Load32(0x1DCu));
+  EXPECT_EQ(2u, Load32(0x1E0u));
+  EXPECT_EQ(3u, Load32(0x1E4u));
+  EXPECT_EQ(4u, Load32(0x1E8u));
+  EXPECT_EQ(5u, Load32(0x1ECu));
+  EXPECT_EQ(6u, Load32(0x1F0u));
+  EXPECT_EQ(7u, Load32(0x1F4u));
+  EXPECT_EQ(8u, Load32(0x1F8u));
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STR) {}
 
