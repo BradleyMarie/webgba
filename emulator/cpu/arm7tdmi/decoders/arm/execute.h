@@ -20,16 +20,9 @@
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
 #include "emulator/memory/memory.h"
 
-static inline bool ArmInstructionExecute(ArmAllRegisters* registers,
+static inline bool ArmInstructionExecute(uint32_t next_instruction,
+                                         ArmAllRegisters* registers,
                                          Memory* memory) {
-  static const uint32_t arm_instruction_pc_offset = 8u;
-  uint32_t next_instruction_address =
-      registers->current.user.gprs.pc - arm_instruction_pc_offset;
-
-  uint32_t next_instruction;
-  bool success = Load32LE(memory, next_instruction_address, &next_instruction);
-  assert(success);
-
   bool should_execute = ArmInstructionShouldExecute(
       registers->current.user.cpsr, next_instruction);
   if (!should_execute) {

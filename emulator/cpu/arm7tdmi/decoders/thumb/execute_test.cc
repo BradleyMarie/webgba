@@ -126,7 +126,7 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     }
 
     assert(instruction_hex.size() == 4u);
-    uint16_t instruction;
+    uint16_t instruction = 0u;
     for (size_t i = 0u; i < instruction_hex.size(); i += 2u) {
       std::string hex_byte;
       hex_byte += instruction_hex[i];

@@ -83,8 +83,8 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
 
   // Assumes little-endian hex string
   bool RunInstruction(std::string instruction_hex) {
-    StoreInstruction(instruction_hex);
-    bool result = ArmInstructionExecute(&registers_, memory_);
+    uint32_t next_instruction = ToInstruction(instruction_hex);
+    bool result = ArmInstructionExecute(next_instruction, &registers_, memory_);
     if (result) {
       registers_.current.user.gprs.pc += 8u;
     } else {
@@ -100,19 +100,22 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   Memory *memory_;
 
  private:
-  void StoreInstruction(std::string instruction_hex) {
+  uint32_t ToInstruction(std::string instruction_hex) {
     if (instruction_hex[0u] == '0' && instruction_hex[1u] == 'x') {
       instruction_hex.erase(0u, 2u);
     }
 
-    assert(instruction_hex.size() % 2u == 0u);
+    assert(instruction_hex.size() == 8u);
+    uint32_t instruction = 0u;
     for (size_t i = 0u; i < instruction_hex.size(); i += 2u) {
       std::string hex_byte;
       hex_byte += instruction_hex[i];
       hex_byte += instruction_hex[i + 1u];
-      unsigned long byte = std::stoul(hex_byte, nullptr, 16u);
-      EXPECT_TRUE(Store8(nullptr, instruction_end_++, (uint8_t)byte));
+      uint32_t byte = std::stoul(hex_byte, nullptr, 16u);
+      instruction += byte << (i * 4u);
     }
+
+    return instruction;
   }
 };
 
