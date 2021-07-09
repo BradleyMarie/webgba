@@ -173,7 +173,11 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_LDMIA:
       ThumbOperandLoadStoreMultiple(next_instruction, &rd, &register_list);
-      ArmLDMIAW(&registers->current.user.gprs, memory, rd, register_list);
+      if (register_list & (1u << rd)) {
+        ArmLDMIA(&registers->current.user.gprs, memory, rd, register_list);
+      } else {
+        ArmLDMIAW(&registers->current.user.gprs, memory, rd, register_list);
+      }
       modified_pc = false;
       break;
     case THUMB_OPCODE_LDR:
@@ -290,8 +294,8 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_POP:
       ThumbOperandPopRegisterList(next_instruction, &register_list);
-      ArmLDMIA(&registers->current.user.gprs, memory, REGISTER_R13,
-               register_list);
+      ArmLDMIAW(&registers->current.user.gprs, memory, REGISTER_R13,
+                register_list);
       modified_pc = register_list & (1u << REGISTER_R15);
       break;
     case THUMB_OPCODE_PUSH:
