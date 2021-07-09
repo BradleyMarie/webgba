@@ -26,6 +26,12 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   void TearDown() override { MemoryFree(memory_); }
 
  protected:
+  static uint32_t Load32(uint32_t address) {
+    uint32_t result;
+    EXPECT_TRUE(Load32LE(nullptr, address, &result));
+    return result;
+  }
+
   static bool Load32LE(const void *context, uint32_t address, uint32_t *value) {
     if (address + sizeof(uint32_t) - 1 >= memory_space_.size()) {
       return false;
@@ -50,6 +56,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     }
     *value = memory_space_[address];
     return true;
+  }
+
+  static void Store32(uint32_t address, uint32_t value) {
+    EXPECT_TRUE(Store32LE(nullptr, address, value));
   }
 
   static bool Store32LE(void *context, uint32_t address, uint32_t value) {
@@ -391,9 +401,72 @@ TEST_F(ExecuteTest, THUMB_OPCODE_ORRS) {
   EXPECT_TRUE(registers_.current.user.cpsr.negative);
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_POP) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_POP) {
+  Store32(0x1DCu, 1u);
+  Store32(0x1E0u, 2u);
+  Store32(0x1E4u, 3u);
+  Store32(0x1E8u, 4u);
+  Store32(0x1ECu, 5u);
+  Store32(0x1F0u, 6u);
+  Store32(0x1F4u, 7u);
+  Store32(0x1F8u, 8u);
+  registers_.current.user.gprs.sp = 0x1DCu;
+  EXPECT_FALSE(RunInstruction("0xFFBC"));  // pop {r0-r7}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(4u, registers_.current.user.gprs.r3);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r4);
+  EXPECT_EQ(6u, registers_.current.user.gprs.r5);
+  EXPECT_EQ(7u, registers_.current.user.gprs.r6);
+  EXPECT_EQ(8u, registers_.current.user.gprs.r7);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_PUSH) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_POP_PC) {
+  Store32(0x1DCu, 1u);
+  Store32(0x1E0u, 2u);
+  Store32(0x1E4u, 3u);
+  Store32(0x1E8u, 4u);
+  Store32(0x1ECu, 5u);
+  Store32(0x1F0u, 6u);
+  Store32(0x1F4u, 7u);
+  Store32(0x1F8u, 8u);
+  Store32(0x1FCu, 9u);
+  registers_.current.user.gprs.sp = 0x1DCu;
+  EXPECT_TRUE(RunInstruction("0xFFBD"));  // pop {r0-r7, pc}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(4u, registers_.current.user.gprs.r3);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r4);
+  EXPECT_EQ(6u, registers_.current.user.gprs.r5);
+  EXPECT_EQ(7u, registers_.current.user.gprs.r6);
+  EXPECT_EQ(8u, registers_.current.user.gprs.r7);
+  EXPECT_EQ(9u, registers_.current.user.gprs.r15);
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_PUSH) {
+  registers_.current.user.gprs.r0 = 1u;
+  registers_.current.user.gprs.r1 = 2u;
+  registers_.current.user.gprs.r2 = 3u;
+  registers_.current.user.gprs.r3 = 4u;
+  registers_.current.user.gprs.r4 = 5u;
+  registers_.current.user.gprs.r5 = 6u;
+  registers_.current.user.gprs.r6 = 7u;
+  registers_.current.user.gprs.r7 = 8u;
+  registers_.current.user.gprs.lr = 9u;
+  EXPECT_FALSE(RunInstruction("0xFFB5"));  // push {r0-r7, lr}
+  EXPECT_EQ(registers_.current.user.gprs.sp, 0x1DCu);
+  EXPECT_EQ(1u, Load32(0x1DCu));
+  EXPECT_EQ(2u, Load32(0x1E0u));
+  EXPECT_EQ(3u, Load32(0x1E4u));
+  EXPECT_EQ(4u, Load32(0x1E8u));
+  EXPECT_EQ(5u, Load32(0x1ECu));
+  EXPECT_EQ(6u, Load32(0x1F0u));
+  EXPECT_EQ(7u, Load32(0x1F4u));
+  EXPECT_EQ(8u, Load32(0x1F8u));
+  EXPECT_EQ(9u, Load32(0x1FCu));
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_RORS) {
   registers_.current.user.gprs.r7 = 0xF000000Fu;

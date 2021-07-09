@@ -126,11 +126,18 @@ TEST(ThumbAdjustStackPointer, Compute) {
   EXPECT_EQ(508u, immediate);
 }
 
-TEST(ThumbPushPopRegisterList, Compute) {
+TEST(ThumbPushRegisterList, Compute) {
   uint16_t instruction = 0xB5FF;  // push {r0-r7, lr}
   uint_fast16_t register_list;
-  ThumbOperandPushPopRegisterList(instruction, &register_list);
+  ThumbOperandPushRegisterList(instruction, &register_list);
   EXPECT_EQ(0x40FFu, register_list);
+}
+
+TEST(ThumbPopRegisterList, Compute) {
+  uint16_t instruction = 0xBDFFu;  // pop {r0-r7, pc}
+  uint_fast16_t register_list;
+  ThumbOperandPopRegisterList(instruction, &register_list);
+  EXPECT_EQ(0x80FFu, register_list);
 }
 
 TEST(ThumbLoadStoreMultiple, Compute) {

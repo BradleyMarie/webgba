@@ -289,14 +289,14 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_POP:
-      ThumbOperandPushPopRegisterList(next_instruction, &register_list);
-      ArmLDMIA(&registers->current.user.gprs, memory, REGISTER_R14,
+      ThumbOperandPopRegisterList(next_instruction, &register_list);
+      ArmLDMIA(&registers->current.user.gprs, memory, REGISTER_R13,
                register_list);
-      modified_pc = false;
+      modified_pc = register_list & (1u << REGISTER_R15);
       break;
     case THUMB_OPCODE_PUSH:
-      ThumbOperandPushPopRegisterList(next_instruction, &register_list);
-      ArmSTMDBW(&registers->current.user.gprs, memory, REGISTER_R14,
+      ThumbOperandPushRegisterList(next_instruction, &register_list);
+      ArmSTMDBW(&registers->current.user.gprs, memory, REGISTER_R13,
                 register_list);
       modified_pc = false;
       break;
