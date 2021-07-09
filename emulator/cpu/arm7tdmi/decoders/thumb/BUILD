@@ -38,6 +38,7 @@ cc_library(
     deps = [
         ":branch_link",
         ":condition",
+        ":load",
         ":opcode",
         ":operand",
         ":shift",
@@ -58,6 +59,24 @@ cc_test(
     srcs = ["execute_test.cc"],
     deps = [
         ":execute",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "load",
+    hdrs = ["load.h"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator/cpu/arm7tdmi:memory"
+    ],
+)
+
+cc_test(
+    name = "load_test",
+    srcs = ["load_test.cc"],
+    deps = [
+        ":load",
         "@com_google_googletest//:gtest_main",
     ],
 )

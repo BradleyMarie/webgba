@@ -3,12 +3,13 @@
 
 #include "emulator/cpu/arm7tdmi/decoders/thumb/branch_link.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/condition.h"
+#include "emulator/cpu/arm7tdmi/decoders/thumb/load.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/operand.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/shift.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
-#include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch.h"
+#include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/data_processing.h"
 #include "emulator/cpu/arm7tdmi/instructions/load_store_register_byte.h"
 #include "emulator/cpu/arm7tdmi/instructions/multiply.h"
@@ -195,8 +196,7 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_LDR_PC_OFFSET_I8:
       ThumbOperandLoadPCRelative(next_instruction, &rd, &offset_16);
-      ArmLDR_IB(&registers->current.user.gprs, memory, rd, REGISTER_R15,
-                offset_16);
+      ThumbLDR_PC_IB(&registers->current.user.gprs, memory, rd, offset_16);
       modified_pc = false;
       break;
     case THUMB_OPCODE_LDR_SP_OFFSET_I8:
