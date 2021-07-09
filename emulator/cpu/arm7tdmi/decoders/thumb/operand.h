@@ -32,7 +32,7 @@ static inline void ThumbOperandAddSubtractImmediate(uint16_t instruction,
 
 static inline void ThumbOperandAddSubtractCompareMoveImmediate(
     uint16_t instruction, ArmRegisterIndex *Rd_Rn, uint_fast8_t *immediate) {
-  *Rd_Rn = (ArmRegisterIndex)((instruction >> 7u) & 0x7u);
+  *Rd_Rn = (ArmRegisterIndex)((instruction >> 8u) & 0x7u);
   *immediate = instruction & 0xFFu;
 }
 

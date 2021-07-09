@@ -71,12 +71,12 @@ std::string MatchesUnconditionalBranch(const std::bitset<16>& instruction) {
       opcode = "B";
       break;
     case 1u:
+      return std::string();
+    case 2u:
       opcode = "BL";
       break;
-    case 2u:
-      return "BL";
     case 3u:
-      return std::string();
+      return "BL";
     default:
       assert(false);
   }

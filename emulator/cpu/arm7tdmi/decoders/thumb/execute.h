@@ -364,8 +364,8 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_SUBS:
-      ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmSUBS(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
+      ThumbOperandAddSubtractRegister(next_instruction, &rd, &rn, &rm);
+      ArmSUBS(registers, rd, rn, registers->current.user.gprs.gprs[rm]);
       modified_pc = false;
       break;
     case THUMB_OPCODE_SUBS_I3:
