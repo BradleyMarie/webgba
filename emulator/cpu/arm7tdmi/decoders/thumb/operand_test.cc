@@ -91,11 +91,31 @@ TEST(ThumbLoadStoreRegisterOffset, Compute) {
   EXPECT_EQ(REGISTER_R2, rm);
 }
 
-TEST(ThumbLoadStoreImmediateOffset, Compute) {
+TEST(ThumbLoadStoreWordImmediateOffset, Compute) {
   uint16_t instruction = 0x6FC8;  // ldr r0, [r1, #124]
   ArmRegisterIndex rd, rn;
   uint_fast8_t offset;
-  ThumbOperandLoadStoreImmediateOffset(instruction, &rd, &rn, &offset);
+  ThumbOperandLoadStoreWordImmediateOffset(instruction, &rd, &rn, &offset);
+  EXPECT_EQ(REGISTER_R0, rd);
+  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(124u, offset);
+}
+
+TEST(ThumbLoadStoreHalfWordImmediateOffset, Compute) {
+  uint16_t instruction = 0x8FC8;  // ldrh r0, [r1, #62]
+  ArmRegisterIndex rd, rn;
+  uint_fast8_t offset;
+  ThumbOperandLoadStoreWordImmediateOffset(instruction, &rd, &rn, &offset);
+  EXPECT_EQ(REGISTER_R0, rd);
+  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(124u, offset);
+}
+
+TEST(ThumbLoadStoreBYteImmediateOffset, Compute) {
+  uint16_t instruction = 0x7FC8;  // ldrb r0, [r1, #31]
+  ArmRegisterIndex rd, rn;
+  uint_fast8_t offset;
+  ThumbOperandLoadStoreWordImmediateOffset(instruction, &rd, &rn, &offset);
   EXPECT_EQ(REGISTER_R0, rd);
   EXPECT_EQ(REGISTER_R1, rn);
   EXPECT_EQ(124u, offset);

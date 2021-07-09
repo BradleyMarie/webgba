@@ -41,6 +41,12 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static uint16_t Load16(uint32_t address) {
+    uint16_t result;
+    EXPECT_TRUE(Load16LE(nullptr, address, &result));
+    return result;
+  }
+
   static bool Load16LE(const void *context, uint32_t address, uint16_t *value) {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
@@ -48,6 +54,12 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     char *data = memory_space_.data() + address;
     *value = *reinterpret_cast<uint16_t *>(data);
     return true;
+  }
+
+  static uint8_t Load8(uint32_t address) {
+    uint8_t result;
+    EXPECT_TRUE(Load8(nullptr, address, &result));
+    return result;
   }
 
   static bool Load8(const void *context, uint32_t address, uint8_t *value) {
@@ -71,6 +83,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static void Store16(uint32_t address, uint16_t value) {
+    EXPECT_TRUE(Store16LE(nullptr, address, value));
+  }
+
   static bool Store16LE(void *context, uint32_t address, uint16_t value) {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
@@ -78,6 +94,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     char *data = memory_space_.data() + address;
     *reinterpret_cast<uint16_t *>(data) = value;
     return true;
+  }
+
+  static void Store8(uint32_t address, uint8_t value) {
+    EXPECT_TRUE(Store8(nullptr, address, value));
   }
 
   static bool Store8(void *context, uint32_t address, uint8_t value) {
@@ -119,7 +139,7 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   }
 };
 
-std::vector<char> ExecuteTest::memory_space_(1024u, 0);
+std::vector<char> ExecuteTest::memory_space_(2048u, 0);
 
 TEST_F(ExecuteTest, THUMB_OPCODE_ADCS) {
   registers_.current.user.gprs.r0 = 1u;
@@ -343,25 +363,73 @@ TEST_F(ExecuteTest, THUMB_OPCODE_LDMIAW) {
   EXPECT_EQ(0x1F8u, registers_.current.user.gprs.r7);
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDR) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR) {
+  Store32(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE59"));  // ldr r6, [r7, r7]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDR_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_I5) {
+  Store32(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x184u;
+  EXPECT_FALSE(RunInstruction("0xFE6F"));  // ldr r6, [r7, #124]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDR_PC_OFFSET_I8) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_PC_OFFSET_I8) {
+  Store32(0x504u, 1u);
+  EXPECT_FALSE(RunInstruction("0xFF4F"));  // ldr r7, [pc, #1020]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r7);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDR_SP_OFFSET_I8) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDR_SP_OFFSET_I8) {
+  Store32(0x5FCu, 1u);
+  EXPECT_FALSE(RunInstruction("0xFF9F"));  // ldr r7, [sp, #1020]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r7);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRB) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRB) {
+  Store8(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE5D"));  // ldrb r6, [r7, r7]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRB_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRB_I5) {
+  Store8(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x1E1u;
+  EXPECT_FALSE(RunInstruction("0xFE7F"));  // ldrb r6, [r7, #31]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRH) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRH) {
+  Store16(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE5B"));  // ldrh r6, [r7, r7]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRH_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRH_I5) {
+  Store16(0x200u, 1u);
+  registers_.current.user.gprs.r7 = 0x1C2u;
+  EXPECT_FALSE(RunInstruction("0xFE8F"));  // ldrh r6, [r7, #62]
+  EXPECT_EQ(1u, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRSB) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRSB) {
+  Store8(0x200u, 0xFFu);
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE57"));  // ldrsb r6, [r7, r7]
+  EXPECT_EQ(0xFFFFFFFFu, registers_.current.user.gprs.r6);
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDRSH) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDRSH) {
+  Store16(0x200u, 0xFFFFu);
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE5F"));  // ldrsh r6, [r7, r7]
+  EXPECT_EQ(0xFFFFFFFFu, registers_.current.user.gprs.r6);
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_LSLS) {
   registers_.current.user.gprs.r7 = 0xF000000Fu;
@@ -547,19 +615,53 @@ TEST_F(ExecuteTest, THUMB_OPCODE_STMIA) {
   EXPECT_EQ(8u, Load32(0x1F8u));
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STR) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STR) {
+  registers_.current.user.gprs.r7 = 0x100u;
+  registers_.current.user.gprs.r6 = 1u;
+  EXPECT_FALSE(RunInstruction("0xFE51"));  // str r6, [r7, r7]
+  EXPECT_EQ(1u, Load32(0x200u));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STR_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STR_I5) {
+  registers_.current.user.gprs.r7 = 0x184u;
+  registers_.current.user.gprs.r6 = 1u;
+  EXPECT_FALSE(RunInstruction("0xFE67"));  // str r6, [r7, #124]
+  EXPECT_EQ(1u, Load32(0x200u));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STR_SP_OFFSET_I8) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STR_SP_OFFSET_I8) {
+  registers_.current.user.gprs.r7 = 1u;
+  EXPECT_FALSE(RunInstruction("0xFF97"));  // str r7, [sp, #1020]
+  EXPECT_EQ(1u, Load32(0x5FCu));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STRB) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STRB) {
+  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE55"));  // strb r6, [r7, r7]
+  EXPECT_EQ(1u, Load8(0x200u));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STRB_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STRB_I5) {
+  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r7 = 0x1E1u;
+  EXPECT_FALSE(RunInstruction("0xFE77"));  // strb r6, [r7, #31]
+  EXPECT_EQ(1u, Load8(0x200u));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STRH) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STRH) {
+  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r7 = 0x100u;
+  EXPECT_FALSE(RunInstruction("0xFE53"));  // strh r6, [r7, r7]
+  EXPECT_EQ(1u, Load16(0x200u));
+}
 
-TEST_F(ExecuteTest, THUMB_OPCODE_STRH_I5) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_STRH_I5) {
+  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r7 = 0x1C2u;
+  EXPECT_FALSE(RunInstruction("0xFE87"));  // strh r6, [r7, #62]
+  EXPECT_EQ(1u, Load16(0x200u));
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_SUB_SP_I7) {
   registers_.current.user.gprs.r13 = 510u;
