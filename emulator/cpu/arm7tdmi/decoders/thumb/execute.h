@@ -8,6 +8,7 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/shift.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
+#include "emulator/cpu/arm7tdmi/instructions/branch.h"
 #include "emulator/cpu/arm7tdmi/instructions/data_processing.h"
 #include "emulator/cpu/arm7tdmi/instructions/load_store_register_byte.h"
 #include "emulator/cpu/arm7tdmi/instructions/multiply.h"
@@ -87,14 +88,14 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_B_FWD:
       ThumbOperandForwardBranch(next_instruction, &branch_offset_32);
-      ThumbB(&registers->current.user.gprs, branch_offset_32);
+      ArmB(&registers->current.user.gprs, branch_offset_32);
       modified_pc = true;
       break;
     case THUMB_OPCODE_B_FWD_COND:
       ThumbOperandConditionalForwardBranch(next_instruction, &condition,
                                            &branch_offset_32);
       if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
-        ThumbB(&registers->current.user.gprs, branch_offset_32);
+        ArmB(&registers->current.user.gprs, branch_offset_32);
         modified_pc = true;
       } else {
         modified_pc = false;
@@ -102,14 +103,14 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_B_REV:
       ThumbOperandReverseBranch(next_instruction, &branch_offset_32);
-      ThumbB(&registers->current.user.gprs, branch_offset_32);
+      ArmB(&registers->current.user.gprs, branch_offset_32);
       modified_pc = true;
       break;
     case THUMB_OPCODE_B_REV_COND:
       ThumbOperandConditionalReverseBranch(next_instruction, &condition,
                                            &branch_offset_32);
       if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
-        ThumbB(&registers->current.user.gprs, branch_offset_32);
+        ArmB(&registers->current.user.gprs, branch_offset_32);
         modified_pc = true;
       } else {
         modified_pc = false;

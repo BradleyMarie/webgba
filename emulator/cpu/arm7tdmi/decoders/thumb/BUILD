@@ -43,6 +43,7 @@ cc_library(
         ":shift",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
+        "//emulator/cpu/arm7tdmi/instructions:branch",
         "//emulator/cpu/arm7tdmi/instructions:data_processing",
         "//emulator/cpu/arm7tdmi/instructions:load_store_register_byte",
         "//emulator/cpu/arm7tdmi/instructions:multiply",

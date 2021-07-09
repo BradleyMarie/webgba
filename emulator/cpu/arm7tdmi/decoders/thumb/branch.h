@@ -5,11 +5,6 @@
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
-static inline void ThumbB(ArmGeneralPurposeRegisters *registers,
-                          uint_fast32_t offset) {
-  registers->pc += offset;
-}
-
 static inline void ThumbBL1(ArmGeneralPurposeRegisters *registers,
                             uint_fast32_t offset) {
   registers->lr = registers->pc + offset;

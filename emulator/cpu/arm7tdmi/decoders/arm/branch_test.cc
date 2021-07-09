@@ -17,17 +17,6 @@ bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
   return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
 }
 
-TEST(ArmB, Branch) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
-
-  registers.pc = 208u;
-  ArmB(&registers, 100u);
-  EXPECT_EQ(308u, registers.pc);
-
-  registers.pc = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
-}
-
 TEST(ArmBL, BranchLink) {
   auto registers = CreateArmGeneralPurposeRegistersRegisters();
 

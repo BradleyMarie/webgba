@@ -7,6 +7,7 @@
 #include "emulator/cpu/arm7tdmi/decoders/arm/operand.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
+#include "emulator/cpu/arm7tdmi/instructions/branch.h"
 #include "emulator/cpu/arm7tdmi/instructions/coprocessor_data_operation.h"
 #include "emulator/cpu/arm7tdmi/instructions/coprocessor_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/coprocessor_register_transfer.h"
