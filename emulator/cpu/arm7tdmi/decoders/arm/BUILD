@@ -42,6 +42,7 @@ cc_library(
         ":operand",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
+        "//emulator/cpu/arm7tdmi/instructions:branch",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_operation",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_register_transfer",
