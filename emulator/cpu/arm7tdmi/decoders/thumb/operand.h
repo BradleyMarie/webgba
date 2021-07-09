@@ -72,13 +72,28 @@ static inline void ThumbOperandLoadStoreRegisterOffset(uint16_t instruction,
   *Rm = (ArmRegisterIndex)((instruction >> 6u) & 0x7u);
 }
 
-static inline void ThumbOperandLoadStoreImmediateOffset(uint16_t instruction,
-                                                        ArmRegisterIndex *Rd,
-                                                        ArmRegisterIndex *Rn,
-                                                        uint_fast8_t *offset) {
+static inline void ThumbOperandLoadStoreWordImmediateOffset(
+    uint16_t instruction, ArmRegisterIndex *Rd, ArmRegisterIndex *Rn,
+    uint_fast8_t *offset) {
   *Rd = (ArmRegisterIndex)((instruction >> 0u) & 0x7u);
   *Rn = (ArmRegisterIndex)((instruction >> 3u) & 0x7u);
   *offset = ((instruction >> 6u) & 0x1Fu) * 4u;
+}
+
+static inline void ThumbOperandLoadStoreHalfWordImmediateOffset(
+    uint16_t instruction, ArmRegisterIndex *Rd, ArmRegisterIndex *Rn,
+    uint_fast8_t *offset) {
+  *Rd = (ArmRegisterIndex)((instruction >> 0u) & 0x7u);
+  *Rn = (ArmRegisterIndex)((instruction >> 3u) & 0x7u);
+  *offset = ((instruction >> 6u) & 0x1Fu) * 2u;
+}
+
+static inline void ThumbOperandLoadStoreByteImmediateOffset(
+    uint16_t instruction, ArmRegisterIndex *Rd, ArmRegisterIndex *Rn,
+    uint_fast8_t *offset) {
+  *Rd = (ArmRegisterIndex)((instruction >> 0u) & 0x7u);
+  *Rn = (ArmRegisterIndex)((instruction >> 3u) & 0x7u);
+  *offset = ((instruction >> 6u) & 0x1Fu);
 }
 
 static inline void ThumbOperandLoadStoreSPRelative(uint16_t instruction,
