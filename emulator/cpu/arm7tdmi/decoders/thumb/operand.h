@@ -98,9 +98,14 @@ static inline void ThumbOperandAdjustStackPointer(uint16_t instruction,
   *immediate = (instruction & 0x7Fu) * 4u;
 }
 
-static inline void ThumbOperandPushPopRegisterList(
-    uint16_t instruction, uint_fast16_t *register_list) {
+static inline void ThumbOperandPushRegisterList(uint16_t instruction,
+                                                uint_fast16_t *register_list) {
   *register_list = ((instruction & 0x100) << 6u) | (instruction & 0xFFu);
+}
+
+static inline void ThumbOperandPopRegisterList(uint16_t instruction,
+                                               uint_fast16_t *register_list) {
+  *register_list = ((instruction & 0x100) << 7u) | (instruction & 0xFFu);
 }
 
 static inline void ThumbOperandLoadStoreMultiple(uint16_t instruction,
