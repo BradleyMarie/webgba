@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_EXECUTE_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_EXECUTE_
 
-#include "emulator/cpu/arm7tdmi/decoders/arm/branch.h"
+#include "emulator/cpu/arm7tdmi/decoders/arm/branch_link.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/operand.h"
