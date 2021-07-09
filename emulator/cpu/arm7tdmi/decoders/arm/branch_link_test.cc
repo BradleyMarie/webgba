@@ -1,5 +1,5 @@
 extern "C" {
-#include "emulator/cpu/arm7tdmi/decoders/thumb/branch.h"
+#include "emulator/cpu/arm7tdmi/decoders/arm/branch_link.h"
 }
 
 #include <cstring>
@@ -17,27 +17,13 @@ bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
   return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
 }
 
-TEST(ThumbBL1, BranchLink1) {
+TEST(ArmBL, BranchLink) {
   auto registers = CreateArmGeneralPurposeRegistersRegisters();
 
   registers.pc = 208u;
-  ThumbBL1(&registers, 100);
-  EXPECT_EQ(308u, registers.lr);
-  EXPECT_EQ(208u, registers.pc);
-
-  registers.pc = 0u;
-  registers.lr = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
-}
-
-TEST(ThumbBL2, BranchLink2) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
-
-  registers.pc = 208u;
-  registers.lr = 308u;
-  ThumbBL2(&registers, 100);
-  EXPECT_EQ(207u, registers.lr);
-  EXPECT_EQ(408u, registers.pc);
+  ArmBL(&registers, 100u);
+  EXPECT_EQ(204u, registers.lr);
+  EXPECT_EQ(308u, registers.pc);
 
   registers.pc = 0u;
   registers.lr = 0u;
