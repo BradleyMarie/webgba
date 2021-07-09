@@ -302,7 +302,46 @@ TEST_F(ExecuteTest, THUMB_OPCODE_EORS) {
   EXPECT_TRUE(registers_.current.user.cpsr.negative);
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_LDMIA) {}
+TEST_F(ExecuteTest, THUMB_OPCODE_LDMIA) {
+  Store32(0x1DCu, 1u);
+  Store32(0x1E0u, 2u);
+  Store32(0x1E4u, 3u);
+  Store32(0x1E8u, 4u);
+  Store32(0x1ECu, 5u);
+  Store32(0x1F0u, 6u);
+  Store32(0x1F4u, 7u);
+  Store32(0x1F8u, 8u);
+  registers_.current.user.gprs.r0 = 0x1DCu;
+  EXPECT_FALSE(RunInstruction("0xFFC8"));  // ldmia r0, {r0-r7}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(4u, registers_.current.user.gprs.r3);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r4);
+  EXPECT_EQ(6u, registers_.current.user.gprs.r5);
+  EXPECT_EQ(7u, registers_.current.user.gprs.r6);
+  EXPECT_EQ(8u, registers_.current.user.gprs.r7);
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_LDMIAW) {
+  Store32(0x1DCu, 1u);
+  Store32(0x1E0u, 2u);
+  Store32(0x1E4u, 3u);
+  Store32(0x1E8u, 4u);
+  Store32(0x1ECu, 5u);
+  Store32(0x1F0u, 6u);
+  Store32(0x1F4u, 7u);
+  registers_.current.user.gprs.r7 = 0x1DCu;
+  EXPECT_FALSE(RunInstruction("0x7FCF"));  // ldmia r7!, {r0-r6}
+  EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers_.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(4u, registers_.current.user.gprs.r3);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r4);
+  EXPECT_EQ(6u, registers_.current.user.gprs.r5);
+  EXPECT_EQ(7u, registers_.current.user.gprs.r6);
+  EXPECT_EQ(0x1F8u, registers_.current.user.gprs.r7);
+}
 
 TEST_F(ExecuteTest, THUMB_OPCODE_LDR) {}
 
@@ -412,6 +451,7 @@ TEST_F(ExecuteTest, THUMB_OPCODE_POP) {
   Store32(0x1F8u, 8u);
   registers_.current.user.gprs.sp = 0x1DCu;
   EXPECT_FALSE(RunInstruction("0xFFBC"));  // pop {r0-r7}
+  EXPECT_EQ(0x1FCu, registers_.current.user.gprs.sp);
   EXPECT_EQ(1u, registers_.current.user.gprs.r0);
   EXPECT_EQ(2u, registers_.current.user.gprs.r1);
   EXPECT_EQ(3u, registers_.current.user.gprs.r2);
@@ -434,6 +474,7 @@ TEST_F(ExecuteTest, THUMB_OPCODE_POP_PC) {
   Store32(0x1FCu, 9u);
   registers_.current.user.gprs.sp = 0x1DCu;
   EXPECT_TRUE(RunInstruction("0xFFBD"));  // pop {r0-r7, pc}
+  EXPECT_EQ(0x200u, registers_.current.user.gprs.sp);
   EXPECT_EQ(1u, registers_.current.user.gprs.r0);
   EXPECT_EQ(2u, registers_.current.user.gprs.r1);
   EXPECT_EQ(3u, registers_.current.user.gprs.r2);
