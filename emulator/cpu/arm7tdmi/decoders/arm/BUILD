@@ -1,6 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
-package(default_visibility = ["//emulator/cpu/arm7tdmi/decoders:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 cc_library(
     name = "branch_link",
@@ -35,6 +35,7 @@ cc_test(
 cc_library(
     name = "execute",
     hdrs = ["execute.h"],
+    visibility = ["//emulator/cpu/arm7tdmi:__pkg__"],
     deps = [
         ":branch_link",
         ":condition",

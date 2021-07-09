@@ -19,6 +19,19 @@ cc_test(
 )
 
 cc_library(
+    name = "execute",
+    hdrs = ["execute.h"],
+    srcs = ["execute.c"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":arm7tdmi",
+        "//emulator/cpu/arm7tdmi/decoders/arm:execute",
+        "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
+        "//emulator/memory:memory",
+    ],
+)
+
+cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     srcs = ["memory.c"],
