@@ -6,16 +6,12 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 static inline void ArmB(ArmGeneralPurposeRegisters *registers,
-                        int_fast32_t offset) {
-  assert(-8388608 <= offset && offset <= 8388607);
-  offset = (int32_t)((uint32_t)offset << 2u);
+                        uint_fast32_t offset) {
   registers->pc += offset;
 }
 
 static inline void ArmBL(ArmGeneralPurposeRegisters *registers,
-                         int_fast32_t offset) {
-  assert(-8388608 <= offset && offset <= 8388607);
-  offset = (int32_t)((uint32_t)offset << 2u);
+                         uint_fast32_t offset) {
   registers->lr = registers->pc - 4u;
   registers->pc += offset;
 }

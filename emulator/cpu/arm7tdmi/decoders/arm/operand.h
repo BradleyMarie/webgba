@@ -290,12 +290,15 @@ static inline void ArmOperandRegisterAndRegisterList(
   *register_list = (uint16_t)instruction;
 }
 
-static inline void ArmOperandBranch(uint32_t instruction,
-                                    int_fast32_t *offset) {
-  uint32_t sign_bit = 1u << 23u;
-  instruction &= 0x00FFFFFFu;
-  *offset = (int32_t)((instruction ^ sign_bit) - sign_bit);
-  assert(-8388608 <= *offset && *offset <= 8388607);
+static inline void ArmOperandBranchForward(uint32_t instruction,
+                                           uint_fast32_t *offset) {
+  instruction <<= 8u;
+  *offset = instruction >> 6u;
+}
+
+static inline void ArmOperandBranchReverse(uint32_t instruction,
+                                           uint_fast32_t *offset) {
+  *offset = 0xFC000000u | (instruction << 2u);
 }
 
 static inline void ArmOperandMoveFromStatusRegister(uint32_t instruction,

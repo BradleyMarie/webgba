@@ -901,9 +901,16 @@ TEST(ArmOperandRegisterAndRegisterList, Compute) {
   EXPECT_EQ(0x400Du, register_list);
 }
 
-TEST(ArmOperandBranch, Compute) {
+TEST(ArmOperandBranchReverse, Compute) {
   uint32_t instruction = 0xEAF63269u;  // b #-2569812
-  int_fast32_t offset;
-  ArmOperandBranch(instruction, &offset);
-  EXPECT_EQ(-2569812, (offset << 2) + 8u);
+  uint_fast32_t offset;
+  ArmOperandBranchReverse(instruction, &offset);
+  EXPECT_EQ(0xFFD8C9ACu, offset + 8u);
+}
+
+TEST(ArmOperandBranchForward, Compute) {
+  uint32_t instruction = 0xEA09CD93;  // b #2569812
+  uint_fast32_t offset;
+  ArmOperandBranchForward(instruction, &offset);
+  EXPECT_EQ(2569812u, offset + 8u);
 }

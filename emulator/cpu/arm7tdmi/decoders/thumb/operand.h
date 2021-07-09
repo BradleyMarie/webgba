@@ -134,24 +134,26 @@ static inline void ThumbOperandConditionalForwardBranch(uint16_t instruction,
                                                         uint_fast8_t *condition,
                                                         uint_fast32_t *offset) {
   *condition = (ArmRegisterIndex)((instruction >> 8u) & 0xFu);
-  *offset = (instruction & 0xFFu) << 1u;
+  instruction <<= 8u;
+  *offset = instruction >> 7u;
 }
 
 static inline void ThumbOperandConditionalReverseBranch(uint16_t instruction,
                                                         uint_fast8_t *condition,
                                                         uint_fast32_t *offset) {
   *condition = (ArmRegisterIndex)((instruction >> 8u) & 0xFu);
-  *offset = 0xFFFFFE00u | ((instruction & 0xFFu) << 1u);
+  *offset = 0xFFFFFE00u | (instruction << 1u);
 }
 
 static inline void ThumbOperandForwardBranch(uint16_t instruction,
                                              uint_fast32_t *offset) {
-  *offset = (instruction & 0x7FFu) << 1u;
+  instruction <<= 5u;
+  *offset = instruction >> 4u;
 }
 
 static inline void ThumbOperandReverseBranch(uint16_t instruction,
                                              uint_fast32_t *offset) {
-  *offset = 0xFFFFF000u | ((instruction & 0x7FFu) << 1u);
+  *offset = 0xFFFFF000u | (instruction << 1u);
 }
 
 static inline void ThumbOperandForwardBranchLink(uint16_t instruction,
