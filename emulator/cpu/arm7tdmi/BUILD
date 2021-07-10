@@ -31,6 +31,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "execute_test",
+    srcs = ["execute_test.cc"],
+    deps = [
+        ":execute",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "memory",
     hdrs = ["memory.h"],
