@@ -94,9 +94,7 @@ class ExecuteTest : public testing::Test {
     }
   }
 
-  void Run(uint32_t num_steps) {
-    ArmCpuRun(&registers_, memory_, num_steps);
-  }
+  void Run(uint32_t num_steps) { ArmCpuRun(&registers_, memory_, num_steps); }
 
   static std::vector<char> memory_space_;
   size_t instruction_end_;
@@ -107,12 +105,31 @@ class ExecuteTest : public testing::Test {
 std::vector<char> ExecuteTest::memory_space_(1024u, 0);
 
 TEST_F(ExecuteTest, ArmGCD) {
-    AddInstruction("0x0F00A0E3");  // mov r0, #15
-    AddInstruction("0x0A10A0E3");  // mov r1, #10
-    AddInstruction("0x010050E1");  // cmp r0, r1
-    AddInstruction("0x010040C0");  // subgt r0, r0, r1
-    AddInstruction("0x001041B0");  // sublt r1, r1, r0
-    AddInstruction("0xFBFFFF1A");  // bne #-12
-    Run(20u);
-    EXPECT_EQ(5u, registers_.current.user.gprs.r0);
+  AddInstruction("0x0F00A0E3");  // mov r0, #15
+  AddInstruction("0x0A10A0E3");  // mov r1, #10
+  AddInstruction("0x010050E1");  // cmp r0, r1
+  AddInstruction("0x010040C0");  // subgt r0, r0, r1
+  AddInstruction("0x001041B0");  // sublt r1, r1, r0
+  AddInstruction("0xFBFFFF1A");  // bne #-12
+  Run(20u);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r0);
+}
+
+TEST_F(ExecuteTest, ThumbGCD) {
+  // ARM Instructions
+  AddInstruction("0x01E08FE2");  // add lr, pc, #1
+  AddInstruction("0x1EFF2FE1");  // bx lr
+
+  // Thumb Instructions
+  AddInstruction("0x0F20");  // movs r0, #15
+  AddInstruction("0x0A21");  // movs r1, #10
+  AddInstruction("0x8842");  // cmp r0, r1
+  AddInstruction("0x04D0");  // beq #12
+  AddInstruction("0x02DB");  // blt #8
+  AddInstruction("0x401A");  // subs r0, r0, r1
+  AddInstruction("0xFAE7");  // b #-8
+  AddInstruction("0x091A");  // subs r1, r1, r0
+  AddInstruction("0xF8E7");  // b #-12
+  Run(40u);
+  EXPECT_EQ(5u, registers_.current.user.gprs.r0);
 }
