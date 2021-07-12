@@ -44,6 +44,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":arm7tdmi",
+        ":exceptions",
         "//emulator/cpu/arm7tdmi/decoders/arm:execute",
         "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
         "//emulator/memory:memory",

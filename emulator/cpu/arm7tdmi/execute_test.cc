@@ -148,3 +148,23 @@ TEST_F(ExecuteTest, ModeSwitches) {
   Run(5u);
   EXPECT_EQ(255u, registers_.current.user.gprs.r7);
 }
+
+TEST_F(ExecuteTest, ArmPrefetchABT) {
+  AddInstruction("0xFFE4A0E3");  // mov lr, #0xFF000000
+  AddInstruction("0x1EFF2FE1");  // bx lr
+  Run(3u);
+
+  EXPECT_EQ(MODE_ABT, registers_.current.user.cpsr.mode);
+  EXPECT_EQ(0x14u, registers_.current.user.gprs.pc);
+  EXPECT_FALSE(registers_.current.spsr.thumb);
+}
+
+TEST_F(ExecuteTest, ThumbPrefetchABT) {
+  AddInstruction("0x1FE2A0E3");  // mov lr, #0xF0000001
+  AddInstruction("0x1EFF2FE1");  // bx lr
+  Run(3u);
+
+  EXPECT_EQ(MODE_ABT, registers_.current.user.cpsr.mode);
+  EXPECT_EQ(0x14u, registers_.current.user.gprs.pc);
+  EXPECT_TRUE(registers_.current.spsr.thumb);
+}

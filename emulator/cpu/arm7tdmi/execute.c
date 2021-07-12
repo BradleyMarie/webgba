@@ -2,6 +2,7 @@
 
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
+#include "emulator/cpu/arm7tdmi/exceptions.h"
 
 void ArmCpuStep(ArmAllRegisters* registers, Memory* memory) {
   const static uint8_t thumb_instruction_offset = 4u;
@@ -20,9 +21,13 @@ void ArmCpuStep(ArmAllRegisters* registers, Memory* memory) {
         registers->current.user.gprs.pc - thumb_instruction_offset;
     uint16_t next_instruction;
     bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
-    assert(success);
-
-    modified_pc = ThumbInstructionExecute(next_instruction, registers, memory);
+    if (!success) {
+      ArmExceptionPrefetchABT(registers);
+      modified_pc = true;
+    } else {
+      modified_pc =
+          ThumbInstructionExecute(next_instruction, registers, memory);
+    }
   } else {
     registers->current.user.gprs.pc &= 0xFFFFFFFCu;
 
@@ -30,9 +35,12 @@ void ArmCpuStep(ArmAllRegisters* registers, Memory* memory) {
         registers->current.user.gprs.pc - arm_instruction_offset;
     uint32_t next_instruction;
     bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
-    assert(success);
-
-    modified_pc = ArmInstructionExecute(next_instruction, registers, memory);
+    if (!success) {
+      ArmExceptionPrefetchABT(registers);
+      modified_pc = true;
+    } else {
+      modified_pc = ArmInstructionExecute(next_instruction, registers, memory);
+    }
   }
 
   registers->current.user.gprs.pc +=
