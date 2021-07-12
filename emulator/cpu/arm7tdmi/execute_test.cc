@@ -133,3 +133,18 @@ TEST_F(ExecuteTest, ThumbGCD) {
   Run(40u);
   EXPECT_EQ(5u, registers_.current.user.gprs.r0);
 }
+
+TEST_F(ExecuteTest, ModeSwitches) {
+  // ARM Instructions
+  AddInstruction("0x01E08FE2");  // add lr, pc, #1
+  AddInstruction("0x1EFF2FE1");  // bx lr
+
+  // Thumb Instructions
+  AddInstruction("0x00A0");  // add r0, pc, #0
+  AddInstruction("0x0047");  // bx r0
+
+  // Arm Instructions
+  AddInstruction("0xFF70A0E3");  // mov r7, #255
+  Run(5u);
+  EXPECT_EQ(255u, registers_.current.user.gprs.r7);
+}
