@@ -145,6 +145,7 @@ typedef struct {
   ArmAllRegisters registers;
   bool pending_irq;
   bool pending_fiq;
+  bool pending_rst;
 } ArmCpu;
 
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);

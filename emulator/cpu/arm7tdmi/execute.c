@@ -14,7 +14,12 @@ void ArmCpuStep(ArmCpu* cpu, Memory* memory) {
       {arm_instruction_offset, thumb_instruction_offset}};
 
   bool modified_pc;
-  if (cpu->pending_fiq && !cpu->registers.current.user.cpsr.fiq_disable) {
+  if (cpu->pending_rst) {
+    ArmExceptionRST(&cpu->registers);
+    cpu->pending_rst = false;
+    modified_pc = true;
+  } else if (cpu->pending_fiq &&
+             !cpu->registers.current.user.cpsr.fiq_disable) {
     ArmExceptionFIQ(&cpu->registers);
     modified_pc = true;
   } else if (cpu->pending_irq &&
