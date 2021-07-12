@@ -1,55 +1,116 @@
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
-static inline void ArmException(ArmAllRegisters* registers, unsigned mode) {
-  assert(mode == MODE_UND || mode == MODE_SVC || mode == MODE_ABT ||
-         mode == MODE_FIQ || mode == MODE_IRQ);
+static inline uint32_t ArmNextInstruction(ArmAllRegisters* registers) {
+  const static uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
+  return registers->current.user.gprs.pc -
+         next_instruction_pc_offset[registers->current.user.cpsr.thumb];
+}
+
+static inline uint32_t ArmCurrentInstruction(ArmAllRegisters* registers) {
+  const static uint_fast8_t current_instruction_pc_offset[2] = {8, 4};
+  return registers->current.user.gprs.pc -
+         current_instruction_pc_offset[registers->current.user.cpsr.thumb];
+}
+
+void ArmExceptionDataABT(ArmAllRegisters* registers) {
+  uint32_t aborted_instruction = ArmCurrentInstruction(registers);
 
   ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
   ArmProgramStatusRegister next_status = old_cpsr;
-  next_status.mode = mode;
+  next_status.mode = MODE_ABT;
   next_status.thumb = false;
   next_status.irq_disable = true;
   ArmLoadCPSR(registers, next_status);
 
-  const static uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
-  registers->current.user.gprs.r14 = registers->current.user.gprs.pc -
-                                     next_instruction_pc_offset[old_cpsr.thumb];
+  registers->current.user.gprs.r14 = aborted_instruction + 8u;
+  registers->current.user.gprs.pc = 0x10u;
   registers->current.spsr = old_cpsr;
 }
 
-void ArmExceptionDataABT(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_ABT);
-  registers->current.user.gprs.pc = 0x10u;
-}
-
 void ArmExceptionPrefetchABT(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_ABT);
+  uint32_t aborted_instruction = ArmCurrentInstruction(registers);
+
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_ABT;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
+  registers->current.user.gprs.r14 = aborted_instruction + 4u;
   registers->current.user.gprs.pc = 0xCu;
+  registers->current.spsr = old_cpsr;
 }
 
 void ArmExceptionFIQ(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_FIQ);
-  registers->current.user.cpsr.fiq_disable = true;
+  uint32_t next_instruction = ArmNextInstruction(registers);
+
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_FIQ;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  next_status.fiq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
+  registers->current.user.gprs.r14 = next_instruction + 4u;
   registers->current.user.gprs.pc = 0x1Cu;
+  registers->current.spsr = old_cpsr;
 }
 
 void ArmExceptionIRQ(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_IRQ);
+  uint32_t next_instruction = ArmNextInstruction(registers);
+
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_IRQ;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
+  registers->current.user.gprs.r14 = next_instruction + 4u;
   registers->current.user.gprs.pc = 0x18u;
+  registers->current.spsr = old_cpsr;
 }
 
 void ArmExceptionRST(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_SVC);
-  registers->current.user.cpsr.fiq_disable = true;
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_SVC;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  next_status.fiq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
   registers->current.user.gprs.pc = 0x0u;
 }
 
 void ArmExceptionSWI(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_SVC);
+  uint32_t next_instruction = ArmNextInstruction(registers);
+
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_SVC;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
+  registers->current.user.gprs.r14 = next_instruction;
   registers->current.user.gprs.pc = 0x8u;
+  registers->current.spsr = old_cpsr;
 }
 
 void ArmExceptionUND(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_UND);
+  uint32_t next_instruction = ArmNextInstruction(registers);
+
+  ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
+  ArmProgramStatusRegister next_status = old_cpsr;
+  next_status.mode = MODE_UND;
+  next_status.thumb = false;
+  next_status.irq_disable = true;
+  ArmLoadCPSR(registers, next_status);
+
+  registers->current.user.gprs.r14 = next_instruction;
   registers->current.user.gprs.pc = 0x4u;
+  registers->current.spsr = old_cpsr;
 }
