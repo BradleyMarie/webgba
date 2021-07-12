@@ -211,3 +211,13 @@ TEST_F(ExecuteTest, MaskedIRQ) {
   EXPECT_EQ(MODE_SVC, cpu_.registers.current.user.cpsr.mode);
   EXPECT_EQ(0x10Cu, cpu_.registers.current.user.gprs.pc);
 }
+
+TEST_F(ExecuteTest, RSTPreemptsAll) {
+  cpu_.pending_fiq = true;
+  cpu_.pending_irq = true;
+  cpu_.pending_rst = true;
+  Run(1u);
+
+  EXPECT_EQ(MODE_SVC, cpu_.registers.current.user.cpsr.mode);
+  EXPECT_EQ(0x8u, cpu_.registers.current.user.gprs.pc);
+}
