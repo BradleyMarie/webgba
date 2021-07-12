@@ -17,12 +17,37 @@ static inline void ArmException(ArmAllRegisters* registers, unsigned mode) {
   registers->current.spsr = old_cpsr;
 }
 
-void ArmExceptionUND(ArmAllRegisters* registers) {
-  ArmException(registers, MODE_UND);
-  registers->current.user.gprs.pc = 0x4;
+void ArmExceptionDataABT(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_ABT);
+  registers->current.user.gprs.pc = 0x10u;
+}
+
+void ArmExceptionPrefetchABT(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_ABT);
+  registers->current.user.gprs.pc = 0xCu;
+}
+
+void ArmExceptionFIQ(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_FIQ);
+  registers->current.user.gprs.pc = 0x1Cu;
+}
+
+void ArmExceptionIRQ(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_IRQ);
+  registers->current.user.gprs.pc = 0x18u;
+}
+
+void ArmExceptionRST(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_SVC);
+  registers->current.user.gprs.pc = 0x0u;
 }
 
 void ArmExceptionSWI(ArmAllRegisters* registers) {
   ArmException(registers, MODE_SVC);
-  registers->current.user.gprs.pc = 0x8;
+  registers->current.user.gprs.pc = 0x8u;
+}
+
+void ArmExceptionUND(ArmAllRegisters* registers) {
+  ArmException(registers, MODE_UND);
+  registers->current.user.gprs.pc = 0x4u;
 }

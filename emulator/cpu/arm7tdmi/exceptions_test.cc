@@ -3,7 +3,6 @@ extern "C" {
 }
 
 #include <cstring>
-
 #include <tuple>
 
 #include "googletest/include/gtest/gtest.h"
@@ -35,20 +34,20 @@ bool ArmPrivilegedRegistersAreZero(const ArmAllRegisters& regs) {
   return !memcmp(&zero.current, &regs.current, sizeof(ArmPrivilegedRegisters));
 }
 
-TEST(ArmExceptionUND, ArmMode) {
+TEST(ArmExceptionDataABT, ArmMode) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.pc = 108u;
-  registers.current.user.cpsr.mode = MODE_IRQ;
+  registers.current.user.cpsr.mode = MODE_UND;
   registers.current.user.gprs.r13 = 13u;
   registers.current.user.gprs.r14 = 14u;
   auto old_cpsr = registers.current.user.cpsr;
 
-  ArmExceptionUND(&registers);
+  ArmExceptionDataABT(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(4u, registers.current.user.gprs.pc);
-  EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
+  EXPECT_EQ(0x10u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
 
@@ -61,22 +60,242 @@ TEST(ArmExceptionUND, ArmMode) {
   EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
 }
 
-TEST(ArmExceptionUND, ThumbMode) {
+TEST(ArmExceptionDataABT, ThumbMode) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.pc = 104u;
-  registers.current.user.cpsr.mode = MODE_IRQ;
+  registers.current.user.cpsr.mode = MODE_UND;
   registers.current.user.cpsr.thumb = true;
   registers.current.user.gprs.r13 = 13u;
   registers.current.user.gprs.r14 = 14u;
   registers.current.spsr.zero = true;
   auto old_cpsr = registers.current.user.cpsr;
 
-  ArmExceptionUND(&registers);
+  ArmExceptionDataABT(&registers);
   EXPECT_EQ(102u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(4u, registers.current.user.gprs.pc);
-  EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
+  EXPECT_EQ(0x10u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  registers.current.spsr.thumb = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionPrefetchABT, ArmMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 108u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionPrefetchABT(&registers);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0xCu, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionPrefetchABT, ThumbMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 104u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.zero = true;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionPrefetchABT(&registers);
+  EXPECT_EQ(102u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0xCu, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  registers.current.spsr.thumb = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionFIQ, ArmMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 108u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionFIQ(&registers);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x1Cu, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionFIQ, ThumbMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 104u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.zero = true;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionFIQ(&registers);
+  EXPECT_EQ(102u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x1Cu, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  registers.current.spsr.thumb = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionIRQ, ArmMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 108u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionIRQ(&registers);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x18u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionIRQ, ThumbMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 104u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.zero = true;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionIRQ(&registers);
+  EXPECT_EQ(102u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x18u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  registers.current.spsr.thumb = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionRST, ArmMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 108u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionRST(&registers);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x0u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionRST, ThumbMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 104u;
+  registers.current.user.cpsr.mode = MODE_UND;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.zero = true;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionRST(&registers);
+  EXPECT_EQ(102u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(0x0u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
 
@@ -132,6 +351,61 @@ TEST(ArmExceptionSWI, ThumbMode) {
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(8u, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  registers.current.spsr.thumb = false;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionUND, ArmMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 108u;
+  registers.current.user.cpsr.mode = MODE_IRQ;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionUND(&registers);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
+  EXPECT_FALSE(registers.current.user.cpsr.thumb);
+  EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+
+  registers.current.user.gprs.r13 = 0u;
+  registers.current.user.gprs.r14 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.spsr.mode = 0u;
+  EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
+}
+
+TEST(ArmExceptionUND, ThumbMode) {
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.pc = 104u;
+  registers.current.user.cpsr.mode = MODE_IRQ;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.r13 = 13u;
+  registers.current.user.gprs.r14 = 14u;
+  registers.current.spsr.zero = true;
+  auto old_cpsr = registers.current.user.cpsr;
+
+  ArmExceptionUND(&registers);
+  EXPECT_EQ(102u, registers.current.user.gprs.r14);
+  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+  EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
 
