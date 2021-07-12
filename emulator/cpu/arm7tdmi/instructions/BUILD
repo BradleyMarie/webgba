@@ -54,7 +54,7 @@ cc_test(
 cc_library(
     name = "coprocessor_data_operation",
     hdrs = ["coprocessor_data_operation.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:exceptions"],
 )
 
 cc_test(
@@ -69,7 +69,7 @@ cc_test(
 cc_library(
     name = "coprocessor_data_transfer",
     hdrs = ["coprocessor_data_transfer.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:exceptions"],
 )
 
 cc_test(
@@ -84,7 +84,7 @@ cc_test(
 cc_library(
     name = "coprocessor_register_transfer",
     hdrs = ["coprocessor_register_transfer.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:exceptions"],
 )
 
 cc_test(
@@ -213,7 +213,7 @@ cc_test(
 cc_library(
     name = "swi",
     hdrs = ["swi.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:exceptions"],
 )
 
 cc_test(

@@ -43,6 +43,7 @@ cc_library(
         ":opcode",
         ":operand",
         ":shift",
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
         "//emulator/cpu/arm7tdmi/instructions:branch",
