@@ -141,6 +141,12 @@ typedef struct {
   ArmProgramStatusRegister banked_spsrs[6];
 } ArmAllRegisters;
 
+typedef struct {
+  ArmAllRegisters registers;
+  bool pending_irq;
+  bool pending_fiq;
+} ArmCpu;
+
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
