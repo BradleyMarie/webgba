@@ -268,8 +268,6 @@ TEST(ArmExceptionRST, ArmMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionRST(&registers);
-  EXPECT_EQ(104u, registers.current.user.gprs.r14);
-  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x0u, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
@@ -298,8 +296,6 @@ TEST(ArmExceptionRST, ThumbMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionRST(&registers);
-  EXPECT_EQ(102u, registers.current.user.gprs.r14);
-  EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x0u, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
