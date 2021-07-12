@@ -60,6 +60,12 @@ cc_test(
 )
 
 cc_library(
+    name = "flags",
+    hdrs = ["flags.h"],
+    visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+)
+
+cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     srcs = ["memory.c"],

@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/flags.h"
 
 static inline void ThumbASRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rm, uint_fast8_t shift_amount) {

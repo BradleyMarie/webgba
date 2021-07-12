@@ -106,7 +106,10 @@ cc_test(
 cc_library(
     name = "shift",
     hdrs = ["shift.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator/cpu/arm7tdmi:flags"
+    ],
 )
 
 cc_test(
