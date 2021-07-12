@@ -29,6 +29,7 @@ void ArmExceptionPrefetchABT(ArmAllRegisters* registers) {
 
 void ArmExceptionFIQ(ArmAllRegisters* registers) {
   ArmException(registers, MODE_FIQ);
+  registers->current.user.cpsr.fiq_disable = true;
   registers->current.user.gprs.pc = 0x1Cu;
 }
 
@@ -39,6 +40,7 @@ void ArmExceptionIRQ(ArmAllRegisters* registers) {
 
 void ArmExceptionRST(ArmAllRegisters* registers) {
   ArmException(registers, MODE_SVC);
+  registers->current.user.cpsr.fiq_disable = true;
   registers->current.user.gprs.pc = 0x0u;
 }
 
