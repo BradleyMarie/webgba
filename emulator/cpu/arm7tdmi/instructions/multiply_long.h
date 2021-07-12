@@ -2,6 +2,7 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_LONG_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/flags.h"
 
 static inline uint64_t ArmUMULL(ArmGeneralPurposeRegisters *registers,
                                 ArmRegisterIndex RdLo, ArmRegisterIndex RdHi,

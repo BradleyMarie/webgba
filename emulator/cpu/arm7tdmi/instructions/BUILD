@@ -99,7 +99,10 @@ cc_test(
 cc_library(
     name = "data_processing",
     hdrs = ["data_processing.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator/cpu/arm7tdmi:flags"
+    ],
 )
 
 cc_test(
@@ -147,7 +150,10 @@ cc_test(
 cc_library(
     name = "multiply",
     hdrs = ["multiply.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator/cpu/arm7tdmi:flags"
+    ],
 )
 
 cc_test(
@@ -162,7 +168,10 @@ cc_test(
 cc_library(
     name = "multiply_long",
     hdrs = ["multiply_long.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:arm7tdmi",
+        "//emulator/cpu/arm7tdmi:flags"
+    ],
 )
 
 cc_test(

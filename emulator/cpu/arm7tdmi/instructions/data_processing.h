@@ -2,6 +2,7 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_DATA_PROCESSING_
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/flags.h"
 
 static inline uint64_t ArmADC(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                               ArmRegisterIndex Rn, uint32_t operand2) {
