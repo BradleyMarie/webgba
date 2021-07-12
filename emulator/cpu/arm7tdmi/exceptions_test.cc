@@ -160,12 +160,14 @@ TEST(ArmExceptionFIQ, ArmMode) {
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
 
   registers.current.user.gprs.r13 = 0u;
   registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.mode = 0u;
   registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.user.cpsr.fiq_disable = 0u;
   registers.current.spsr.mode = 0u;
   EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
 }
@@ -188,12 +190,14 @@ TEST(ArmExceptionFIQ, ThumbMode) {
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
 
   registers.current.user.gprs.r13 = 0u;
   registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.mode = 0u;
   registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.user.cpsr.fiq_disable = 0u;
   registers.current.spsr.mode = 0u;
   registers.current.spsr.thumb = false;
   EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
@@ -270,12 +274,14 @@ TEST(ArmExceptionRST, ArmMode) {
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
 
   registers.current.user.gprs.r13 = 0u;
   registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.mode = 0u;
   registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.user.cpsr.fiq_disable = 0u;
   registers.current.spsr.mode = 0u;
   EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
 }
@@ -298,12 +304,14 @@ TEST(ArmExceptionRST, ThumbMode) {
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
+  EXPECT_TRUE(registers.current.user.cpsr.fiq_disable);
 
   registers.current.user.gprs.r13 = 0u;
   registers.current.user.gprs.r14 = 0u;
   registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.mode = 0u;
   registers.current.user.cpsr.irq_disable = 0u;
+  registers.current.user.cpsr.fiq_disable = 0u;
   registers.current.spsr.mode = 0u;
   registers.current.spsr.thumb = false;
   EXPECT_TRUE(ArmPrivilegedRegistersAreZero(registers));
