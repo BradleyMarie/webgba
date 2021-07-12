@@ -5,6 +5,7 @@
 #include "emulator/cpu/arm7tdmi/decoders/arm/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/operand.h"
+#include "emulator/cpu/arm7tdmi/exceptions.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch.h"

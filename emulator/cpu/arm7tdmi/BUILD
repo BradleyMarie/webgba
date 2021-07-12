@@ -19,6 +19,25 @@ cc_test(
 )
 
 cc_library(
+    name = "exceptions",
+    hdrs = ["exceptions.h"],
+    srcs = ["exceptions.c"],
+    visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+    deps = [
+        ":arm7tdmi",
+    ],
+)
+
+cc_test(
+    name = "exceptions_test",
+    srcs = ["exceptions_test.cc"],
+    deps = [
+        ":exceptions",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "execute",
     hdrs = ["execute.h"],
     srcs = ["execute.c"],

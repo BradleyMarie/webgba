@@ -7,6 +7,7 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/operand.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/shift.h"
+#include "emulator/cpu/arm7tdmi/exceptions.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch.h"
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
