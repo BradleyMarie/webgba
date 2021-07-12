@@ -7,27 +7,36 @@
 #define SVC_BANK_INDEX 3u
 #define ABT_BANK_INDEX 4u
 #define UND_BANK_INDEX 5u
+#define INVALID_BANK 255u
 
 static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
-  assert(MODE_USR <= mode && mode <= MODE_SYS);
+  assert(mode <= MODE_SYS);
   const static uint8_t bank_index[32] = {
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          0xFFu,          0xFFu,          0xFFu,
-      0xFFu, USR_BANK_INDEX, FIQ_BANK_INDEX, IRQ_BANK_INDEX, SVC_BANK_INDEX,
-      0xFFu, ABT_BANK_INDEX, 0xFFu,          0xFFu,          0xFFu,
-      0xFFu, 0xFFu,          UND_BANK_INDEX, 0xFFu,          0xFFu,
-      0xFFu, SYS_BANK_INDEX};
-  assert(bank_index[mode] != 0xFFu);
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
+      USR_BANK_INDEX, FIQ_BANK_INDEX, IRQ_BANK_INDEX, SVC_BANK_INDEX,
+      INVALID_BANK,   ABT_BANK_INDEX, INVALID_BANK,   INVALID_BANK,
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   UND_BANK_INDEX,
+      INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   SYS_BANK_INDEX};
   return bank_index[mode];
 }
 
-inline void ArmLoadCPSR(ArmAllRegisters* registers,
-                        ArmProgramStatusRegister cpsr) {
+void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr) {
   unsigned current_mode = registers->current.user.cpsr.mode;
+  uint_fast8_t current_bank_index = ArmModeToBankIndex(current_mode);
+  assert(current_bank_index != INVALID_BANK);
+
   unsigned next_mode = cpsr.mode;
-  if (current_mode != next_mode) {
-    uint_fast8_t current_bank_index = ArmModeToBankIndex(current_mode);
+  uint_fast8_t next_bank_index = ArmModeToBankIndex(next_mode);
+  if (next_bank_index == INVALID_BANK) {
+    next_bank_index = current_bank_index;
+    next_mode = current_mode;
+    cpsr.mode = current_mode;
+  }
+
+  if (current_bank_index != next_bank_index) {
     for (uint_fast8_t i = 0; i < 2; i++) {
       registers->banked_splrs[current_bank_index][i] =
           registers->current.user.gprs.gprs[REGISTER_R14 - i];
@@ -44,7 +53,6 @@ inline void ArmLoadCPSR(ArmAllRegisters* registers,
 
     registers->banked_spsrs[current_bank_index] = registers->current.spsr;
 
-    uint_fast8_t next_bank_index = ArmModeToBankIndex(next_mode);
     for (uint_fast8_t i = 0; i < 2; i++) {
       registers->current.user.gprs.gprs[REGISTER_R14 - i] =
           registers->banked_splrs[next_bank_index][i];
