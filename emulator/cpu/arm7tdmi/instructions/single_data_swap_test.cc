@@ -105,7 +105,8 @@ TEST_F(MemoryTest, ArmSWP) {
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 0xCAFEBABE;
-  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
+  EXPECT_TRUE(
+      ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0));
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r2);
@@ -129,7 +130,8 @@ TEST_F(MemoryTest, ArmSWPB) {
   ASSERT_TRUE(Store8(nullptr, 8u, 16u));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 32u;
-  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
+  EXPECT_TRUE(
+      ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0));
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r2);
