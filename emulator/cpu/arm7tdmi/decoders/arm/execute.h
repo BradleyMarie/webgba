@@ -1100,7 +1100,7 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
     case ARM_OPCODE_STMSDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmSTMSDBW(registers, memory, rn, register_list);
-      modified_pc = (rn == REGISTER_R15);
+      modified_pc = !load_store_success || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_STMSIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -1110,7 +1110,7 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
     case ARM_OPCODE_STMSIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmSTMSIAW(registers, memory, rn, register_list);
-      modified_pc = (rn == REGISTER_R15);
+      modified_pc = !load_store_success || (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_STMSIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
@@ -1404,13 +1404,13 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_SWP:
       ArmOperandSingleDataSwap(next_instruction, &rd, &rm, &rn);
-      ArmSWP(registers, memory, rd, rm, rn);
-      modified_pc = (rd == REGISTER_R15);
+      load_store_success = ArmSWP(registers, memory, rd, rm, rn);
+      modified_pc = !load_store_success || (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_SWPB:
       ArmOperandSingleDataSwap(next_instruction, &rd, &rm, &rn);
-      ArmSWPB(registers, memory, rd, rm, rn);
-      modified_pc = (rd == REGISTER_R15);
+      load_store_success = ArmSWPB(registers, memory, rd, rm, rn);
+      modified_pc = !load_store_success || (rd == REGISTER_R15);
       break;
     case ARM_OPCODE_TEQ:
       ArmOperandDataProcessingOperand2(next_instruction,
