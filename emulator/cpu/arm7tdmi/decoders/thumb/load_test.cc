@@ -104,7 +104,7 @@ TEST_F(MemoryTest, LoadAligned) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.pc = 48u;
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
-  ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
+  EXPECT_TRUE(ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u));
   EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
   EXPECT_EQ(48u, registers.current.user.gprs.pc);
 
@@ -117,7 +117,7 @@ TEST_F(MemoryTest, LoadUnaligned) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.pc = 50u;
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
-  ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
+  EXPECT_TRUE(ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u));
   EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
   EXPECT_EQ(50u, registers.current.user.gprs.pc);
 
