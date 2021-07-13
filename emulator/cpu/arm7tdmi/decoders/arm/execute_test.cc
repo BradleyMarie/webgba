@@ -15,6 +15,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     memory_ = MemoryAllocate(nullptr, Load32LE, Load16LE, Load8, Store32LE,
                              Store16LE, Store8, nullptr);
     ASSERT_NE(nullptr, memory_);
+    memory_fails_ =
+        MemoryAllocate(nullptr, Load32LEFails, Load16LEFails, Load8Fails,
+                       Store32LEFails, Store16LEFails, Store8Fails, nullptr);
+    ASSERT_NE(nullptr, memory_fails_);
 
     memset(&registers_, 0, sizeof(ArmAllRegisters));
     registers_.current.user.cpsr.mode = MODE_SVC;
@@ -26,7 +30,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     num_instructions_ = 0;
   }
 
-  void TearDown() override { MemoryFree(memory_); }
+  void TearDown() override {
+    MemoryFree(memory_);
+    MemoryFree(memory_fails_);
+  }
 
  protected:
   static bool Load32LE(const void *context, uint32_t address, uint32_t *value) {
@@ -38,6 +45,11 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Load32LEFails(const void *context, uint32_t address,
+                            uint32_t *value) {
+    return false;
+  }
+
   static bool Load16LE(const void *context, uint32_t address, uint16_t *value) {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
@@ -47,12 +59,22 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Load16LEFails(const void *context, uint32_t address,
+                            uint16_t *value) {
+    return false;
+  }
+
   static bool Load8(const void *context, uint32_t address, uint8_t *value) {
     if (address > memory_space_.size()) {
       return false;
     }
     *value = memory_space_[address];
     return true;
+  }
+
+  static bool Load8Fails(const void *context, uint32_t address,
+                         uint8_t *value) {
+    return false;
   }
 
   static bool Store32LE(void *context, uint32_t address, uint32_t value) {
@@ -64,6 +86,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Store32LEFails(void *context, uint32_t address, uint32_t value) {
+    return false;
+  }
+
   static bool Store16LE(void *context, uint32_t address, uint16_t value) {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
@@ -73,12 +99,25 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Store16LEFails(void *context, uint32_t address, uint16_t value) {
+    return false;
+  }
+
   static bool Store8(void *context, uint32_t address, uint8_t value) {
     if (address >= memory_space_.size()) {
       return false;
     }
     memory_space_[address] = value;
     return true;
+  }
+
+  static bool Store8Fails(void *context, uint32_t address, uint8_t value) {
+    return false;
+  }
+
+  bool ArmIsDataAbort(const ArmAllRegisters &regs) {
+    return regs.current.user.cpsr.mode == MODE_ABT &&
+           regs.current.user.gprs.pc == 0x10u;
   }
 
   // Assumes little-endian hex string
@@ -93,11 +132,20 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return result;
   }
 
+  // Assumes little-endian hex string
+  bool RunInstructionBadMemory(std::string instruction_hex) {
+    uint32_t next_instruction = ToInstruction(instruction_hex);
+    bool result =
+        ArmInstructionExecute(next_instruction, &registers_, memory_fails_);
+    return result;
+  }
+
   static std::vector<char> memory_space_;
   size_t instruction_end_;
   size_t num_instructions_;
   ArmAllRegisters registers_;
   Memory *memory_;
+  Memory *memory_fails_;
 
  private:
   uint32_t ToInstruction(std::string instruction_hex) {
@@ -3323,4 +3371,738 @@ TEST_F(ExecuteTest, UNDEF) {
   // This is techically a BKPT instruction which is not present in ARMv4
   EXPECT_TRUE(RunInstruction("0x700020E1"));
   EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
+}
+
+//
+// Data Abort Exceptions
+//
+
+TEST_F(ExecuteTest, LDMDA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x070010E8"));  // ldmda r0, {r0-r2}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMDA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0030E8"));  // ldmda r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMDB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x070010E9"));  // ldmdb r0, {r0-r2}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMDB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0030E9"));  // ldmdb r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMIA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x070090E8"));  // ldmia r0, {r0-r2}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMIA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00B0E8"));  // ldmia r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMIB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x070090E9"));  // ldmib r0, {r0-r2}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMIB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00B0E9"));  // ldmib r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSDA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0050E8"));  // ldmda r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSDA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0070E8"));  // ldmda r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSDB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0050E9"));  // ldmdb r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSDB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0070E9"));  // ldmdb r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSIA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00D0E8"));  // ldmia r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSIA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00F0E8"));  // ldmia r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSIB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00D0E9"));  // ldmib r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDMSIB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00F0E9"));  // ldmib r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012010E6"));  // ldr r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042010E4"));  // ldr r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012010E7"));  // ldr r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042010E5"));  // ldr r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012030E7"));  // ldr r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042030E5"));  // ldr r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012090E6"));  // ldr r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042090E4"));  // ldr r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012090E7"));  // ldr r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042090E5"));  // ldr r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120B0E7"));  // ldr r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDR_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420B0E5"));  // ldr r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012050E6"));  // ldrb r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042050E4"));  // ldrb r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012050E7"));  // ldrb r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042050E5"));  // ldrb r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012070E7"));  // ldrb r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042070E5"));  // ldrb r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120D0E6"));  // ldrb r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420D0E4"));  // ldrb r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120D0E7"));  // ldrb r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420D0E5"));  // ldrb r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120F0E7"));  // ldrb r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRB_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420F0E5"));  // ldrb r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRBT_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012070E6"));  // ldrbt r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRBT_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042070E4"));  // ldrbt r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRBT_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120F0E6"));  // ldrbt r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRBT_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420F0E4"));  // ldrbt r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12010E0"));  // ldrh r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42050E0"));  // ldrh r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12010E1"));  // ldrh r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42050E1"));  // ldrh r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12030E1"));  // ldrh r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42070E1"));  // ldrh r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12090E0"));  // ldrh r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420D0E0"));  // ldrh r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12090E1"));  // ldrh r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420D0E1"));  // ldrh r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB120B0E1"));  // ldrh r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRH_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420F0E1"));  // ldrh r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD12010E0"));  // ldrsb r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD42050E0"));  // ldrsb r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD12010E1"));  // ldrsb r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD42050E1"));  // ldrsb r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD12030E1"));  // ldrsb r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD42070E1"));  // ldrsb r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD12090E0"));  // ldrsb r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD420D0E0"));  // ldrsb r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD12090E1"));  // ldrsb r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD420D0E1"));  // ldrsb r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD120B0E1"));  // ldrsb r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSB_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xD420F0E1"));  // ldrsb r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF12010E0"));  // ldrsh r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF42050E0"));  // ldrsh r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF12010E1"));  // ldrsh r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF42050E1"));  // ldrsh r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF12030E1"));  // ldrsh r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF42070E1"));  // ldrsh r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF12090E0"));  // ldrsh r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF420D0E0"));  // ldrsh r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF12090E1"));  // ldrsh r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF420D0E1"));  // ldrsh r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF120B0E1"));  // ldrsh r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRSH_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xF420F0E1"));  // ldrsh r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRT_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012030E6"));  // ldrt r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRT_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042030E4"));  // ldrt r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRT_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120B0E6"));  // ldrt r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, LDRT_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420B0E4"));  // ldrt r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMDA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0000E8"));  // stmda r0, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMDA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0020E8"));  // stmda r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMDB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0000E9"));  // stmdb r0, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMDB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0020E9"));  // stmdb r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMIA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0080E8"));  // stmia r0, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMIA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00A0E8"));  // stmia r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMIB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0080E9"));  // stmib r0, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMIB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00A0E9"));  // stmib r0!, {r1-r3}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSDA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0040E8"));  // stmda r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSDA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0060E8"));  // stmda r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSDB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0040E9"));  // stmdb r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSDB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E0060E9"));  // stmdb r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSIA_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00C0E8"));  // stmia r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSIA_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00E0E8"));  // stmia r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSIB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00C0E9"));  // stmib r0, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STMSIB_W_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0E00E0E9"));  // stmib r0!, {r1-r3}^
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012000E6"));  // str r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042000E4"));  // str r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012000E7"));  // str r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042000E5"));  // str r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012020E7"));  // str r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042020E5"));  // str r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012080E6"));  // str r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042080E4"));  // str r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012080E7"));  // str r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042080E5"));  // str r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120A0E7"));  // str r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STR_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420A0E5"));  // str r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012040E6"));  // strb r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042040E4"));  // strb r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012040E7"));  // strb r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042040E5"));  // strb r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012060E7"));  // strb r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042060E5"));  // strb r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120C0E6"));  // strb r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420C0E4"));  // strb r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120C0E7"));  // strb r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420C0E5"));  // strb r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120E0E7"));  // strb r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRB_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420E0E5"));  // strb r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRBT_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012060E6"));  // strbt r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRBT_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042060E4"));  // strbt r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRBT_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0120E0E6"));  // strbt r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRBT_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420E0E4"));  // strbt r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12000E0"));  // strh r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42040E0"));  // strh r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12000E1"));  // strh r2, [r0, -r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42040E1"));  // strh r2, [r0, #-4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12020E1"));  // strh r2, [r0, -r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_DBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB42060E1"));  // strh r2, [r0, #-4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12080E0"));  // strh r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420C0E0"));  // strh r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB12080E1"));  // strh r2, [r0, r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IB_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420C0E1"));  // strh r2, [r0, #4]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IBW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB120A0E1"));  // strh r2, [r0, r1]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRH_IBW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xB420E0E1"));  // strh r2, [r0, #4]!
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRT_DAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012020E6"));  // strt r2, [r0], -r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRT_DAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x042020E4"));  // strt r2, [r0], #-4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRT_IAW_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x012080E6"));  // strt r2, [r0], r1
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, STRT_IAW_I12_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x0420A0E4"));  // strt r2, [r0], #4
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, SWP_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x900001E1"));  // swp r0, r0, [r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, SWPB_FAILS) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x900041E1"));  // swpb r0, r0, [r1]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
 }

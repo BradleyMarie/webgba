@@ -745,7 +745,6 @@ bool ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
       address += 4u;
@@ -786,7 +785,6 @@ bool ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
       address += 4u;
@@ -828,7 +826,6 @@ bool ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
       address += 4u;
@@ -869,7 +866,6 @@ bool ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
       address += 4u;
@@ -910,7 +906,6 @@ bool ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
     }
@@ -950,7 +945,6 @@ bool ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
       address += 4u;
@@ -993,7 +987,6 @@ bool ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       success =
           ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       if (!success) {
-        ArmExceptionDataABT(registers);
         break;
       }
     }
