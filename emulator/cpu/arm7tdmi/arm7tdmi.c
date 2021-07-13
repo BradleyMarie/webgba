@@ -1,10 +1,20 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
+#include <stdlib.h>
+
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
-void ArmCpuStep(ArmCpu* cpu, Memory* memory) {
+Arm7Tdmi* Arm7TdmiAllocate() {
+  Arm7Tdmi* cpu = (Arm7Tdmi*)calloc(1, sizeof(Arm7Tdmi));
+  if (cpu != NULL) {
+    cpu->registers.current.user.cpsr.mode = MODE_SVC;
+  }
+  return cpu;
+}
+
+void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
   const static uint8_t thumb_instruction_offset = 4u;
   const static uint8_t arm_instruction_offset = 8u;
   const static uint8_t thumb_instruction_size = 2u;
@@ -60,8 +70,10 @@ void ArmCpuStep(ArmCpu* cpu, Memory* memory) {
       next_pc_offset[modified_pc][cpu->registers.current.user.cpsr.thumb];
 }
 
-void ArmCpuRun(ArmCpu* cpu, Memory* memory, uint32_t num_steps) {
+void Arm7TdmiRun(Arm7Tdmi* cpu, Memory* memory, uint32_t num_steps) {
   for (uint32_t i = 0; i < num_steps; i++) {
-    ArmCpuStep(cpu, memory);
+    Arm7TdmiStep(cpu, memory);
   }
 }
+
+void Arm7TdmiFree(Arm7Tdmi* cpu) { free(cpu); }
