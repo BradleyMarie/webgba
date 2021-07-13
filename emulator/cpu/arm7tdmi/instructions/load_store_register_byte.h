@@ -6,51 +6,57 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline void ArmLDR_DAW(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
+static inline void ArmLDR_DAW(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
+                             &registers->current.user.gprs.gprs[Rd]);
   assert(success);
-  registers->gprs[Rn] -= offset;
+  registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmLDR_DB(ArmGeneralPurposeRegisters *registers,
-                             const Memory *memory, ArmRegisterIndex Rd,
-                             ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmLDR_DB(ArmAllRegisters *registers, const Memory *memory,
+                             ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                             uint32_t offset) {
   bool success =
-      ArmLoad32LE(memory, registers->gprs[Rn] - offset, &registers->gprs[Rd]);
+      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn] - offset,
+                  &registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmLDR_DBW(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] -= offset;
-  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
+static inline void ArmLDR_DBW(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] -= offset;
+  bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
+                             &registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmLDR_IAW(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
+static inline void ArmLDR_IAW(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
+                             &registers->current.user.gprs.gprs[Rd]);
   assert(success);
-  registers->gprs[Rn] += offset;
+  registers->current.user.gprs.gprs[Rn] += offset;
 }
 
-static inline void ArmLDR_IB(ArmGeneralPurposeRegisters *registers,
-                             const Memory *memory, ArmRegisterIndex Rd,
-                             ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmLDR_IB(ArmAllRegisters *registers, const Memory *memory,
+                             ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                             uint32_t offset) {
   bool success =
-      ArmLoad32LE(memory, registers->gprs[Rn] + offset, &registers->gprs[Rd]);
+      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn] + offset,
+                  &registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmLDR_IBW(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] += offset;
-  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &registers->gprs[Rd]);
+static inline void ArmLDR_IBW(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] += offset;
+  bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
+                             &registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
@@ -124,62 +130,64 @@ static inline void ArmLDRT_IB(ArmAllRegisters *registers, const Memory *memory,
   registers->current.user.gprs.gprs[Rd] = value;
 }
 
-static inline void ArmLDRB_DAW(ArmGeneralPurposeRegisters *registers,
-                               const Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_DAW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn], &temp);
+  bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
-  registers->gprs[Rn] -= offset;
+  registers->current.user.gprs.gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmLDRB_DB(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmLDRB_DB(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t offset) {
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn] - offset, &temp);
+  bool success =
+      Load8(memory, registers->current.user.gprs.gprs[Rn] - offset, &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_DBW(ArmGeneralPurposeRegisters *registers,
-                               const Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] -= offset;
+static inline void ArmLDRB_DBW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] -= offset;
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn], &temp);
+  bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_IAW(ArmGeneralPurposeRegisters *registers,
-                               const Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
+static inline void ArmLDRB_IAW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn], &temp);
+  bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
-  registers->gprs[Rn] += offset;
+  registers->current.user.gprs.gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rn] += offset;
 }
 
-static inline void ArmLDRB_IB(ArmGeneralPurposeRegisters *registers,
-                              const Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmLDRB_IB(ArmAllRegisters *registers, const Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t offset) {
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn] + offset, &temp);
+  bool success =
+      Load8(memory, registers->current.user.gprs.gprs[Rn] + offset, &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
-static inline void ArmLDRB_IBW(ArmGeneralPurposeRegisters *registers,
-                               const Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] += offset;
+static inline void ArmLDRB_IBW(ArmAllRegisters *registers, const Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] += offset;
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn], &temp);
+  bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
 static inline void ArmLDRBT_DAW(ArmAllRegisters *registers,
@@ -252,51 +260,57 @@ static inline void ArmLDRBT_IB(ArmAllRegisters *registers, const Memory *memory,
   registers->current.user.gprs.gprs[Rd] = value;
 }
 
-static inline void ArmSTR_DAW(ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  bool success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
+static inline void ArmSTR_DAW(ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
+                              registers->current.user.gprs.gprs[Rd]);
   assert(success);
-  registers->gprs[Rn] -= offset;
+  registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmSTR_DB(const ArmGeneralPurposeRegisters *registers,
-                             Memory *memory, ArmRegisterIndex Rd,
-                             ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmSTR_DB(const ArmAllRegisters *registers, Memory *memory,
+                             ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                             uint32_t offset) {
   bool success =
-      ArmStore32LE(memory, registers->gprs[Rn] - offset, registers->gprs[Rd]);
+      ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn] - offset,
+                   registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmSTR_DBW(ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] -= offset;
-  bool success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
+static inline void ArmSTR_DBW(ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] -= offset;
+  bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
+                              registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmSTR_IAW(ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  bool success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
+static inline void ArmSTR_IAW(ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
+                              registers->current.user.gprs.gprs[Rd]);
   assert(success);
-  registers->gprs[Rn] += offset;
+  registers->current.user.gprs.gprs[Rn] += offset;
 }
 
-static inline void ArmSTR_IB(const ArmGeneralPurposeRegisters *registers,
-                             Memory *memory, ArmRegisterIndex Rd,
-                             ArmRegisterIndex Rn, uint32_t offset) {
+static inline void ArmSTR_IB(const ArmAllRegisters *registers, Memory *memory,
+                             ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                             uint32_t offset) {
   bool success =
-      ArmStore32LE(memory, registers->gprs[Rn] + offset, registers->gprs[Rd]);
+      ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn] + offset,
+                   registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
-static inline void ArmSTR_IBW(ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] += offset;
-  bool success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rd]);
+static inline void ArmSTR_IBW(ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] += offset;
+  bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
+                              registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 
@@ -363,55 +377,57 @@ static inline void ArmSTRT_IAW(ArmAllRegisters *registers, Memory *memory,
   registers->current.user.gprs.gprs[Rn] += offset;
 }
 
-static inline void ArmSTRB_DAW(ArmGeneralPurposeRegisters *registers,
-                               Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn], temp);
+static inline void ArmSTRB_DAW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success = Store8(memory, registers->current.user.gprs.gprs[Rn], temp);
   assert(success);
-  registers->gprs[Rn] -= offset;
+  registers->current.user.gprs.gprs[Rn] -= offset;
 }
 
-static inline void ArmSTRB_DB(const ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint32_t offset) {
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn] - offset, temp);
-  assert(success);
-}
-
-static inline void ArmSTRB_DBW(ArmGeneralPurposeRegisters *registers,
-                               Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] -= offset;
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn], temp);
+static inline void ArmSTRB_DB(const ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t offset) {
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success =
+      Store8(memory, registers->current.user.gprs.gprs[Rn] - offset, temp);
   assert(success);
 }
 
-static inline void ArmSTRB_IAW(ArmGeneralPurposeRegisters *registers,
-                               Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn], temp);
-  assert(success);
-  registers->gprs[Rn] += offset;
-}
-
-static inline void ArmSTRB_IB(const ArmGeneralPurposeRegisters *registers,
-                              Memory *memory, ArmRegisterIndex Rd,
-                              ArmRegisterIndex Rn, uint32_t offset) {
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn] + offset, temp);
+static inline void ArmSTRB_DBW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] -= offset;
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success = Store8(memory, registers->current.user.gprs.gprs[Rn], temp);
   assert(success);
 }
 
-static inline void ArmSTRB_IBW(ArmGeneralPurposeRegisters *registers,
-                               Memory *memory, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rn, uint_fast16_t offset) {
-  registers->gprs[Rn] += offset;
-  uint8_t temp = registers->gprs[Rd];
-  bool success = Store8(memory, registers->gprs[Rn], temp);
+static inline void ArmSTRB_IAW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success = Store8(memory, registers->current.user.gprs.gprs[Rn], temp);
+  assert(success);
+  registers->current.user.gprs.gprs[Rn] += offset;
+}
+
+static inline void ArmSTRB_IB(const ArmAllRegisters *registers, Memory *memory,
+                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                              uint32_t offset) {
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success =
+      Store8(memory, registers->current.user.gprs.gprs[Rn] + offset, temp);
+  assert(success);
+}
+
+static inline void ArmSTRB_IBW(ArmAllRegisters *registers, Memory *memory,
+                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
+                               uint_fast16_t offset) {
+  registers->current.user.gprs.gprs[Rn] += offset;
+  uint8_t temp = registers->current.user.gprs.gprs[Rd];
+  bool success = Store8(memory, registers->current.user.gprs.gprs[Rn], temp);
   assert(success);
 }
 

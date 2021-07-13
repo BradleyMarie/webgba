@@ -89,39 +89,39 @@ class MemoryTest : public testing::Test {
 
 std::vector<char> MemoryTest::memory_space_(1024, 0);
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
+ArmAllRegisters CreateArmAllRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
   return registers;
 }
 
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters &regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
+bool ArmAllRegistersAreZero(const ArmAllRegisters &regs) {
+  auto zero = CreateArmAllRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 TEST_F(MemoryTest, LoadAligned) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
-  registers.pc = 48u;
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 48u;
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
   ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
-  EXPECT_EQ(0xAABBCCDDu, registers.r0);
-  EXPECT_EQ(48u, registers.pc);
+  EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
+  EXPECT_EQ(48u, registers.current.user.gprs.pc);
 
-  registers.pc = 0u;
-  registers.r0 = 0;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.gprs.r0 = 0;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST_F(MemoryTest, LoadUnaligned) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
-  registers.pc = 50u;
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 50u;
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
   ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
-  EXPECT_EQ(0xAABBCCDDu, registers.r0);
-  EXPECT_EQ(50u, registers.pc);
+  EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
+  EXPECT_EQ(50u, registers.current.user.gprs.pc);
 
-  registers.pc = 0u;
-  registers.r0 = 0;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.gprs.r0 = 0;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }

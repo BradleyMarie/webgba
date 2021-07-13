@@ -10,114 +10,124 @@ static inline uint_fast8_t PopCount(uint_fast16_t value) {
   return __builtin_popcount(value);
 }
 
-void ArmLDMDA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDA(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn] - PopCount(register_list) * 4u + 4u;
+  uint32_t address =
+      registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u + 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
 }
 
-void ArmLDMDB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDB(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn] - PopCount(register_list) * 4u;
+  uint32_t address =
+      registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
 }
 
-void ArmLDMDAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   uint_fast8_t size = PopCount(register_list) * 4u;
-  uint32_t address = registers->gprs[Rn] - size + 4u;
+  uint32_t address = registers->current.user.gprs.gprs[Rn] - size + 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
-  registers->gprs[Rn] -= size;
+  registers->current.user.gprs.gprs[Rn] -= size;
 }
 
-void ArmLDMDBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   uint_fast8_t size = PopCount(register_list) * 4u;
-  uint32_t address = registers->gprs[Rn] - size;
+  uint32_t address = registers->current.user.gprs.gprs[Rn] - size;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
-  registers->gprs[Rn] -= size;
+  registers->current.user.gprs.gprs[Rn] -= size;
 }
 
-void ArmLDMIA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIA(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
 }
 
-void ArmLDMIB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIB(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
 }
 
-void ArmLDMIAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
-  registers->gprs[Rn] = address;
+  registers->current.user.gprs.gprs[Rn] = address;
 }
 
-void ArmLDMIBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = ArmLoad32LE(memory, address, &registers->gprs[i]);
+      bool success =
+          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
-  registers->gprs[Rn] = address;
+  registers->current.user.gprs.gprs[Rn] = address;
 }
 
 void ArmLDMSDA(ArmAllRegisters *registers, const Memory *memory,
@@ -392,118 +402,128 @@ void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
   }
 }
 
-void ArmSTMDA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn] - PopCount(register_list) * 4u + 4u;
+  uint32_t address =
+      registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u + 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
 }
 
-void ArmSTMDB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn] - PopCount(register_list) * 4u;
+  uint32_t address =
+      registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
 }
 
-void ArmSTMDAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
-  assert(register_list <= UINT16_MAX);
-  uint_fast8_t size = PopCount(register_list) * 4u;
-  uint32_t address = registers->gprs[Rn] - size + 4u;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
-      assert(success);
-      address += 4u;
-    }
-  }
-  registers->gprs[Rn] -= size;
-}
-
-void ArmSTMDBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   uint_fast8_t size = PopCount(register_list) * 4u;
-  uint32_t address = registers->gprs[Rn] - size;
+  uint32_t address = registers->current.user.gprs.gprs[Rn] - size + 4u;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
-  registers->gprs[Rn] -= size;
+  registers->current.user.gprs.gprs[Rn] -= size;
 }
 
-void ArmSTMIA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint_fast8_t size = PopCount(register_list) * 4u;
+  uint32_t address = registers->current.user.gprs.gprs[Rn] - size;
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
       address += 4u;
     }
   }
+  registers->current.user.gprs.gprs[Rn] -= size;
 }
 
-void ArmSTMIB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      address += 4u;
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
+      address += 4u;
     }
   }
 }
 
-void ArmSTMIAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
-      assert(success);
       address += 4u;
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+      assert(success);
     }
   }
-  registers->gprs[Rn] = address;
 }
 
-void ArmSTMIBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
-  uint32_t address = registers->gprs[Rn];
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
+  for (uint_fast8_t i = 0u; i < 16u; i++) {
+    if (register_list & (1u << i)) {
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+      assert(success);
+      address += 4u;
+    }
+  }
+  registers->current.user.gprs.gprs[Rn] = address;
+}
+
+void ArmSTMIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
+  assert(register_list <= UINT16_MAX);
+  uint32_t address = registers->current.user.gprs.gprs[Rn];
   for (uint_fast8_t i = 0u; i < 16u; i++) {
     if (register_list & (1u << i)) {
       address += 4u;
-      bool success = ArmStore32LE(memory, address, registers->gprs[i]);
+      bool success =
+          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
       assert(success);
     }
   }
-  registers->gprs[Rn] = address;
+  registers->current.user.gprs.gprs[Rn] = address;
 }
 
-void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMSDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !is_usr_or_sys;
@@ -511,7 +531,7 @@ void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u + 4u;
 
-  const ArmAllRegisters *registers_to_read;
+  ArmAllRegisters *registers_to_read;
   ArmAllRegisters local_registers;
   ArmProgramStatusRegister old_status;
   if (modify_banked_registers) {
@@ -535,8 +555,8 @@ void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
   }
 }
 
-void ArmSTMSDB(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !is_usr_or_sys;
@@ -544,7 +564,7 @@ void ArmSTMSDB(const ArmAllRegisters *registers, Memory *memory,
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u;
 
-  const ArmAllRegisters *registers_to_read;
+  ArmAllRegisters *registers_to_read;
   ArmAllRegisters local_registers;
   ArmProgramStatusRegister old_status;
   if (modify_banked_registers) {
@@ -632,15 +652,15 @@ void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 }
 
-void ArmSTMSIA(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !is_usr_or_sys;
 
   uint32_t address = registers->current.user.gprs.gprs[Rn];
 
-  const ArmAllRegisters *registers_to_read;
+  ArmAllRegisters *registers_to_read;
   ArmAllRegisters local_registers;
   ArmProgramStatusRegister old_status;
   if (modify_banked_registers) {
@@ -664,15 +684,15 @@ void ArmSTMSIA(const ArmAllRegisters *registers, Memory *memory,
   }
 }
 
-void ArmSTMSIB(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list) {
+void ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !is_usr_or_sys;
 
   uint32_t address = registers->current.user.gprs.gprs[Rn];
 
-  const ArmAllRegisters *registers_to_read;
+  ArmAllRegisters *registers_to_read;
   ArmAllRegisters local_registers;
   ArmProgramStatusRegister old_status;
   if (modify_banked_registers) {

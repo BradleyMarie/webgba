@@ -2,20 +2,20 @@ extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/single_data_swap.h"
 }
 
-#include <strings.h>
+#include <cstring>
 #include <vector>
 
 #include "googletest/include/gtest/gtest.h"
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
+ArmAllRegisters CreateArmAllRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
   return registers;
 }
 
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters &regs) {
-  auto zero = CreateArmGeneralPurposeRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
+bool ArmAllRegistersAreZero(const ArmAllRegisters &regs) {
+  auto zero = CreateArmAllRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 class MemoryTest : public testing::Test {
@@ -100,49 +100,49 @@ class MemoryTest : public testing::Test {
 std::vector<char> MemoryTest::memory_space_(1024, 0);
 
 TEST_F(MemoryTest, ArmSWP) {
-  auto registers = CreateArmGeneralPurposeRegisters();
+  auto registers = CreateArmAllRegisters();
 
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
-  registers.r0 = 8u;
-  registers.r1 = 0xCAFEBABE;
+  registers.current.user.gprs.r0 = 8u;
+  registers.current.user.gprs.r1 = 0xCAFEBABE;
   ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
-  EXPECT_EQ(8u, registers.r0);
-  EXPECT_EQ(0xCAFEBABE, registers.r1);
-  EXPECT_EQ(0xDEADC0DE, registers.r2);
+  EXPECT_EQ(8u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
+  EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r2);
 
   uint32_t memory_contents;
   ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
   EXPECT_EQ(0xCAFEBABE, memory_contents);
 
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  registers.r2 = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.r2 = 0u;
 
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
 }
 
 TEST_F(MemoryTest, ArmSWPB) {
-  auto registers = CreateArmGeneralPurposeRegisters();
+  auto registers = CreateArmAllRegisters();
 
   ASSERT_TRUE(Store8(nullptr, 8u, 16u));
-  registers.r0 = 8u;
-  registers.r1 = 32u;
+  registers.current.user.gprs.r0 = 8u;
+  registers.current.user.gprs.r1 = 32u;
   ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
-  EXPECT_EQ(8u, registers.r0);
-  EXPECT_EQ(32u, registers.r1);
-  EXPECT_EQ(16u, registers.r2);
+  EXPECT_EQ(8u, registers.current.user.gprs.r0);
+  EXPECT_EQ(32u, registers.current.user.gprs.r1);
+  EXPECT_EQ(16u, registers.current.user.gprs.r2);
 
   uint8_t memory_contents;
   ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
   EXPECT_EQ(32u, memory_contents);
 
   ASSERT_TRUE(Store8(nullptr, 8u, 0u));
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  registers.r2 = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.r2 = 0u;
 
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
 }
