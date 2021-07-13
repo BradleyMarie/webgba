@@ -1,8 +1,10 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include <assert.h>
+
 #include "emulator/cpu/arm7tdmi/memory.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ArmSWP(ArmGeneralPurposeRegisters *registers, Memory *memory,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,

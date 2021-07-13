@@ -1,8 +1,8 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 #include "emulator/cpu/arm7tdmi/flags.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ArmMUL(ArmGeneralPurposeRegisters *registers,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,

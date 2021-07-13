@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MOVE_STATUS_REGISTER_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MOVE_STATUS_REGISTER_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ArmMRS_CPSR(ArmUserRegisters *registers,
                                ArmRegisterIndex Rd) {

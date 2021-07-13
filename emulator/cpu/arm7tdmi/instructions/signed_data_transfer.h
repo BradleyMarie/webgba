@@ -1,8 +1,10 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SIGNED_DATA_TRANSFER_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SIGNED_DATA_TRANSFER_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include <assert.h>
+
 #include "emulator/cpu/arm7tdmi/memory.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ArmLDRH_DAW(ArmGeneralPurposeRegisters *registers,
                                const Memory *memory, ArmRegisterIndex Rd,

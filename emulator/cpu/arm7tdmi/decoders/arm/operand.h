@@ -1,7 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERAND_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_OPERAND_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include <assert.h>
+
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ArmOperandMultiply(uint32_t instruction,
                                       ArmRegisterIndex *Rd,

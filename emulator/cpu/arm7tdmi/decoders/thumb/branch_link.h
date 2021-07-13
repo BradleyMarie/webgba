@@ -3,7 +3,7 @@
 
 #include <assert.h>
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ThumbBL1(ArmGeneralPurposeRegisters *registers,
                             uint_fast32_t offset) {
