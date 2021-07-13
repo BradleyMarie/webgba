@@ -4,28 +4,28 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-void ArmLDMDA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDA(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMDB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDB(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMDAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMDBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMIA(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIA(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMIB(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIB(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMIAW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmLDMIBW(ArmGeneralPurposeRegisters *registers, const Memory *memory,
+void ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list);
 
 void ArmLDMSDA(ArmAllRegisters *registers, const Memory *memory,
@@ -52,35 +52,35 @@ void ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
 void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list);
 
-void ArmSTMDA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list);
 
-void ArmSTMDB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list);
 
-void ArmSTMDAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMDBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMIA(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list);
 
-void ArmSTMIB(const ArmGeneralPurposeRegisters *registers, Memory *memory,
-              ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+              uint_fast16_t register_list);
 
-void ArmSTMIAW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMIBW(ArmGeneralPurposeRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMSDA(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMSDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMSDB(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
 void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
                 uint_fast16_t register_list);
@@ -88,11 +88,11 @@ void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
                 uint_fast16_t register_list);
 
-void ArmSTMSIA(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
-void ArmSTMSIB(const ArmAllRegisters *registers, Memory *memory,
-               ArmRegisterIndex Rn, uint_fast16_t register_list);
+void ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
+               uint_fast16_t register_list);
 
 void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
                 uint_fast16_t register_list);

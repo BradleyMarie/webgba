@@ -6,13 +6,14 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline void ThumbLDR_PC_IB(ArmGeneralPurposeRegisters *registers,
+static inline void ThumbLDR_PC_IB(ArmAllRegisters *registers,
                                   const Memory *memory, ArmRegisterIndex Rd,
                                   uint_fast16_t offset) {
-  assert((registers->pc & 1u) == 0u);
-  uint32_t base = registers->pc >> 2u;
+  assert((registers->current.user.gprs.pc & 1u) == 0u);
+  uint32_t base = registers->current.user.gprs.pc >> 2u;
   base <<= 2u;
-  bool success = ArmLoad32LE(memory, base + offset, &registers->gprs[Rd]);
+  bool success = ArmLoad32LE(memory, base + offset,
+                             &registers->current.user.gprs.gprs[Rd]);
   assert(success);
 }
 

@@ -6,30 +6,33 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline void ArmSWP(ArmGeneralPurposeRegisters *registers, Memory *memory,
+static inline void ArmSWP(ArmAllRegisters *registers, Memory *memory,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,
                           ArmRegisterIndex Rn) {
   uint32_t temp;
-  bool success = ArmLoad32LE(memory, registers->gprs[Rn], &temp);
+  bool success =
+      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
 
-  success = ArmStore32LE(memory, registers->gprs[Rn], registers->gprs[Rm]);
+  success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
+                         registers->current.user.gprs.gprs[Rm]);
   assert(success);
 
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
-static inline void ArmSWPB(ArmGeneralPurposeRegisters *registers,
-                           Memory *memory, ArmRegisterIndex Rd,
-                           ArmRegisterIndex Rm, ArmRegisterIndex Rn) {
+static inline void ArmSWPB(ArmAllRegisters *registers, Memory *memory,
+                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,
+                           ArmRegisterIndex Rn) {
   uint8_t temp;
-  bool success = Load8(memory, registers->gprs[Rn], &temp);
+  bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   assert(success);
 
-  success = Store8(memory, registers->gprs[Rn], (uint8_t)registers->gprs[Rm]);
+  success = Store8(memory, registers->current.user.gprs.gprs[Rn],
+                   (uint8_t)registers->current.user.gprs.gprs[Rm]);
   assert(success);
 
-  registers->gprs[Rd] = temp;
+  registers->current.user.gprs.gprs[Rd] = temp;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_
