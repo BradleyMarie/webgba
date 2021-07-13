@@ -1,5 +1,7 @@
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
 
+#include <assert.h>
+
 static inline bool ArmModeIsUsrOrSys(ArmProgramStatusRegister cpsr) {
   return cpsr.mode == MODE_USR || cpsr.mode == MODE_SYS;
 }

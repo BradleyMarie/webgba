@@ -5,7 +5,7 @@ package(default_visibility = ["//visibility:private"])
 cc_library(
     name = "branch_link",
     hdrs = ["branch_link.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:registers"],
 )
 
 cc_test(
@@ -20,7 +20,7 @@ cc_test(
 cc_library(
     name = "condition",
     hdrs = ["condition.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:registers"],
 )
 
 cc_test(
@@ -69,8 +69,8 @@ cc_library(
     name = "load",
     hdrs = ["load.h"],
     deps = [
-        "//emulator/cpu/arm7tdmi:arm7tdmi",
-        "//emulator/cpu/arm7tdmi:memory"
+        "//emulator/cpu/arm7tdmi:memory",
+        "//emulator/cpu/arm7tdmi:registers",
     ],
 )
 
@@ -91,7 +91,7 @@ cc_library(
 cc_library(
     name = "operand",
     hdrs = ["operand.h"],
-    deps = ["//emulator/cpu/arm7tdmi:arm7tdmi"],
+    deps = ["//emulator/cpu/arm7tdmi:registers"],
 )
 
 cc_test(
@@ -107,8 +107,8 @@ cc_library(
     name = "shift",
     hdrs = ["shift.h"],
     deps = [
-        "//emulator/cpu/arm7tdmi:arm7tdmi",
-        "//emulator/cpu/arm7tdmi:flags"
+        "//emulator/cpu/arm7tdmi:flags",
+        "//emulator/cpu/arm7tdmi:registers",
     ],
 )
 

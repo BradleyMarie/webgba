@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_OPERAND_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_OPERAND_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ThumbOperandShiftByImmediate(uint16_t instruction,
                                                 ArmRegisterIndex *Rd,

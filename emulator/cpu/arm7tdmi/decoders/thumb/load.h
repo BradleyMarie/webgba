@@ -1,8 +1,10 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_LOAD_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_LOAD_
 
-#include "emulator/cpu/arm7tdmi/arm7tdmi.h"
+#include <assert.h>
+
 #include "emulator/cpu/arm7tdmi/memory.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 static inline void ThumbLDR_PC_IB(ArmGeneralPurposeRegisters *registers,
                                   const Memory *memory, ArmRegisterIndex Rd,

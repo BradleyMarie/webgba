@@ -7,6 +7,13 @@ cc_library(
     hdrs = ["arm7tdmi.h"],
     srcs = ["arm7tdmi.c"],
     visibility = ["//visibility:public"],
+    deps = [
+        ":exceptions",
+        ":registers",
+        "//emulator/cpu/arm7tdmi/decoders/arm:execute",
+        "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
+        "//emulator/memory:memory",
+    ]
 )
 
 cc_test(
@@ -24,7 +31,7 @@ cc_library(
     srcs = ["exceptions.c"],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
     deps = [
-        ":arm7tdmi",
+        ":registers",
     ],
 )
 
@@ -33,29 +40,6 @@ cc_test(
     srcs = ["exceptions_test.cc"],
     deps = [
         ":exceptions",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "execute",
-    hdrs = ["execute.h"],
-    srcs = ["execute.c"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":arm7tdmi",
-        ":exceptions",
-        "//emulator/cpu/arm7tdmi/decoders/arm:execute",
-        "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
-        "//emulator/memory:memory",
-    ],
-)
-
-cc_test(
-    name = "execute_test",
-    srcs = ["execute_test.cc"],
-    deps = [
-        ":execute",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -81,6 +65,22 @@ cc_test(
     srcs = ["memory_test.cc"],
     deps = [
         ":memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "registers",
+    hdrs = ["registers.h"],
+    srcs = ["registers.c"],
+    visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+)
+
+cc_test(
+    name = "registers_test",
+    srcs = ["registers_test.cc"],
+    deps = [
+        ":registers",
         "@com_google_googletest//:gtest_main",
     ],
 )
