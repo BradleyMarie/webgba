@@ -15,6 +15,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     memory_ = MemoryAllocate(nullptr, Load32LE, Load16LE, Load8, Store32LE,
                              Store16LE, Store8, nullptr);
     ASSERT_NE(nullptr, memory_);
+    memory_fails_ =
+        MemoryAllocate(nullptr, Load32LEFails, Load16LEFails, Load8Fails,
+                       Store32LEFails, Store16LEFails, Store8Fails, nullptr);
+    ASSERT_NE(nullptr, memory_fails_);
 
     memset(&registers_, 0, sizeof(ArmAllRegisters));
     registers_.current.user.cpsr.mode = MODE_SVC;
@@ -23,7 +27,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     registers_.current.user.gprs.sp = 0x200;
   }
 
-  void TearDown() override { MemoryFree(memory_); }
+  void TearDown() override {
+    MemoryFree(memory_);
+    MemoryFree(memory_fails_);
+  }
 
  protected:
   static uint32_t Load32(uint32_t address) {
@@ -41,6 +48,11 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Load32LEFails(const void *context, uint32_t address,
+                            uint32_t *value) {
+    return false;
+  }
+
   static uint16_t Load16(uint32_t address) {
     uint16_t result = 0u;
     EXPECT_TRUE(Load16LE(nullptr, address, &result));
@@ -54,6 +66,11 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     char *data = memory_space_.data() + address;
     *value = *reinterpret_cast<uint16_t *>(data);
     return true;
+  }
+
+  static bool Load16LEFails(const void *context, uint32_t address,
+                            uint16_t *value) {
+    return false;
   }
 
   static uint8_t Load8(uint32_t address) {
@@ -70,6 +87,11 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Load8Fails(const void *context, uint32_t address,
+                         uint8_t *value) {
+    return false;
+  }
+
   static void Store32(uint32_t address, uint32_t value) {
     EXPECT_TRUE(Store32LE(nullptr, address, value));
   }
@@ -81,6 +103,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     char *data = memory_space_.data() + address;
     *reinterpret_cast<uint32_t *>(data) = value;
     return true;
+  }
+
+  static bool Store32LEFails(void *context, uint32_t address, uint32_t value) {
+    return false;
   }
 
   static void Store16(uint32_t address, uint16_t value) {
@@ -96,6 +122,10 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Store16LEFails(void *context, uint32_t address, uint16_t value) {
+    return false;
+  }
+
   static void Store8(uint32_t address, uint8_t value) {
     EXPECT_TRUE(Store8(nullptr, address, value));
   }
@@ -108,6 +138,15 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return true;
   }
 
+  static bool Store8Fails(void *context, uint32_t address, uint8_t value) {
+    return false;
+  }
+
+  bool ArmIsDataAbort(const ArmAllRegisters &regs) {
+    return regs.current.user.cpsr.mode == MODE_ABT &&
+           regs.current.user.gprs.pc == 0x10u;
+  }
+
   // Assumes little-endian hex string
   bool RunInstruction(std::string instruction_hex) {
     uint16_t instruction = ToInstruction(instruction_hex);
@@ -115,9 +154,17 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
     return result;
   }
 
+  // Assumes little-endian hex string
+  bool RunInstructionBadMemory(std::string instruction_hex) {
+    uint16_t instruction = ToInstruction(instruction_hex);
+    bool result = ThumbInstructionExecute(instruction, &registers_, memory_fails_);
+    return result;
+  }
+
   static std::vector<char> memory_space_;
   ArmAllRegisters registers_;
   Memory *memory_;
+  Memory *memory_fails_;
 
  private:
   uint16_t ToInstruction(std::string instruction_hex) {
@@ -707,4 +754,123 @@ TEST_F(ExecuteTest, THUMB_OPCODE_UNDEF) {
   // This is techically a BKPT instruction which is not present in ARMv4
   EXPECT_TRUE(RunInstruction("0x00BE"));
   EXPECT_EQ(MODE_UND, registers_.current.user.cpsr.mode);
+}
+
+//
+// Data Abort Exceptions
+//
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDMIA) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFFC8"));  // ldmia r0, {r0-r7}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDMIAW) {
+  EXPECT_TRUE(RunInstructionBadMemory("0x7FCF"));  // ldmia r7!, {r0-r6}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDR) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE59"));  // ldr r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDR_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE6F"));  // ldr r6, [r7, #124]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDR_PC_OFFSET_I8) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFF4F"));  // ldr r7, [pc, #1020]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDR_SP_OFFSET_I8) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFF9F"));  // ldr r7, [sp, #1020]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRB) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE5D"));  // ldrb r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRB_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE7F"));  // ldrb r6, [r7, #31]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRH) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE5B"));  // ldrh r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRH_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE8F"));  // ldrh r6, [r7, #62]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRSB) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE57"));  // ldrsb r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_LDRSH) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE5F"));  // ldrsh r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_POP) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFFBC"));  // pop {r0-r7}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_POP_PC) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFFBD"));  // pop {r0-r7, pc}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_PUSH) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFFB5"));  // push {r0-r7, lr}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STMIA) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFFC0"));  // stmia r0!, {r0-r7}
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STR) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE51"));  // str r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STR_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE67"));  // str r6, [r7, #124]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STR_SP_OFFSET_I8) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFF97"));  // str r7, [sp, #1020]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STRB) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE55"));  // strb r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STRB_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE77"));  // strb r6, [r7, #31]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STRH) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE53"));  // strh r6, [r7, r7]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_FAILS_STRH_I5) {
+  EXPECT_TRUE(RunInstructionBadMemory("0xFE87"));  // strh r6, [r7, #62]
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
 }

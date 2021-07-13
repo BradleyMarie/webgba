@@ -198,8 +198,8 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_LDR_PC_OFFSET_I8:
       ThumbOperandLoadPCRelative(next_instruction, &rd, &offset_16);
-      ThumbLDR_PC_IB(registers, memory, rd, offset_16);
-      modified_pc = false;
+      load_store_success = ThumbLDR_PC_IB(registers, memory, rd, offset_16);
+      modified_pc = !load_store_success;
       break;
     case THUMB_OPCODE_LDR_SP_OFFSET_I8:
       ThumbOperandLoadStoreSPRelative(next_instruction, &rd, &offset_16);
