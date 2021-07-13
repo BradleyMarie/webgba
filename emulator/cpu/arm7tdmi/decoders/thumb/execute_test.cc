@@ -27,7 +27,7 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
 
  protected:
   static uint32_t Load32(uint32_t address) {
-    uint32_t result;
+    uint32_t result = 0u;
     EXPECT_TRUE(Load32LE(nullptr, address, &result));
     return result;
   }
@@ -42,7 +42,7 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   }
 
   static uint16_t Load16(uint32_t address) {
-    uint16_t result;
+    uint16_t result = 0u;
     EXPECT_TRUE(Load16LE(nullptr, address, &result));
     return result;
   }
@@ -57,7 +57,7 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   }
 
   static uint8_t Load8(uint32_t address) {
-    uint8_t result;
+    uint8_t result = 0u;
     EXPECT_TRUE(Load8(nullptr, address, &result));
     return result;
   }

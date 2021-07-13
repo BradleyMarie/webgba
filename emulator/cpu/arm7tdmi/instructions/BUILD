@@ -7,6 +7,7 @@ cc_library(
     hdrs = ["block_data_transfer.h"],
     srcs = ["block_data_transfer.c"],
     deps = [
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
     ],
@@ -118,6 +119,7 @@ cc_library(
     name = "load_store_register_byte",
     hdrs = ["load_store_register_byte.h"],
     deps = [
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
     ],
@@ -187,6 +189,7 @@ cc_library(
     name = "signed_data_transfer",
     hdrs = ["signed_data_transfer.h"],
     deps = [
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
     ],
@@ -205,6 +208,7 @@ cc_library(
     name = "single_data_swap",
     hdrs = ["single_data_swap.h"],
     deps = [
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
     ],

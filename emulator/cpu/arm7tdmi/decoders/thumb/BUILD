@@ -69,6 +69,7 @@ cc_library(
     name = "load",
     hdrs = ["load.h"],
     deps = [
+        "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
     ],
