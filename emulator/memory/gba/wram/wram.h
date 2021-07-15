@@ -3,6 +3,6 @@
 
 #include "emulator/memory/memory.h"
 
-Memory* AllocateWRam();
+Memory* WRamAllocate();
 
 #endif  // _WEBGBA_EMULATOR_MEMORY_GBA_WRAM_

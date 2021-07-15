@@ -10,3 +10,12 @@ cc_library(
         "//emulator/memory:memory",
     ],
 )
+
+cc_test(
+    name = "wram_test",
+    srcs = ["wram_test.cc"],
+    deps = [
+        ":wram",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

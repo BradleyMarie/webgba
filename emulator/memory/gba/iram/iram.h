@@ -3,6 +3,6 @@
 
 #include "emulator/memory/memory.h"
 
-Memory* AllocateIRam();
+Memory* IRamAllocate();
 
 #endif  // _WEBGBA_EMULATOR_MEMORY_GBA_IRAM_

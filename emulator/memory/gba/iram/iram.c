@@ -71,7 +71,7 @@ bool IRamStore8Function(void *context, uint32_t address, uint8_t value) {
 
 void IRamFree(void *context) { free(context); }
 
-Memory *AllocateIRam() {
+Memory *IRamAllocate() {
   void *allocation = calloc(1, IRAM_SIZE);
   if (allocation == NULL) {
     return NULL;
