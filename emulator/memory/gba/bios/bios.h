@@ -3,6 +3,6 @@
 
 #include "emulator/memory/memory.h"
 
-Memory* AllocateGBABios();
+Memory* GBABiosAllocate();
 
 #endif  // _WEBGBA_EMULATOR_MEMORY_GBA_BIOS_

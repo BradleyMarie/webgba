@@ -58,7 +58,7 @@ bool WRamStore8Function(void *context, uint32_t address, uint8_t value) {
 
 void WRamFree(void *context) { free(context); }
 
-Memory *AllocateWRam() {
+Memory *WRamAllocate() {
   void *allocation = calloc(1, WRAM_SIZE);
   if (allocation == NULL) {
     return NULL;

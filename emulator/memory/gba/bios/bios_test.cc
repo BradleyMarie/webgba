@@ -7,7 +7,7 @@ extern "C" {
 class BiosTest : public testing::Test {
  public:
   void SetUp() override {
-    bios_ = AllocateGBABios();
+    bios_ = GBABiosAllocate();
     ASSERT_NE(nullptr, bios_);
   }
 

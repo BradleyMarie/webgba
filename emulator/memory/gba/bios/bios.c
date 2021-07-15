@@ -49,7 +49,7 @@ bool GBABiosStore8Function(void *context, uint32_t address, uint8_t value) {
   return false;
 }
 
-Memory *AllocateGBABios() {
+Memory *GBABiosAllocate() {
   Memory *result =
       MemoryAllocate(NULL, GBABiosLoad32LEFunction, GBABiosLoad16LEFunction,
                      GBABiosLoad8Function, GBABiosStore32LEFunction,
