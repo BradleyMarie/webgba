@@ -28,6 +28,8 @@ bool InterruptLineIsTriggered(const InterruptLine *interrupt_line) {
 }
 
 void InterruptLineFree(InterruptLine *interrupt_line) {
-  interrupt_line->free_context(interrupt_line->context);
+  if (interrupt_line->free_context) {
+    interrupt_line->free_context(interrupt_line->context);
+  }
   free(interrupt_line);
 }
