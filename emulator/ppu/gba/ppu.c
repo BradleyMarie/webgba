@@ -5,6 +5,8 @@
 
 #include "emulator/ppu/gba/types.h"
 
+#define REGISTERS_SIZE 88u
+
 struct _GbaPpu {
   GbaInterruptController *interrupt_controller;
   GbaPpuMemory memory;
@@ -196,6 +198,158 @@ bool PpuMemoryStore8Function(void *context, uint32_t address, uint8_t value) {
   return false;
 }
 
+bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
+                                     uint16_t *value) {
+  if (REGISTERS_SIZE < address + 2u) {
+    return false;
+  }
+
+  const GbaPpu *ppu = (const GbaPpu *)context;
+
+  assert((address & 0x1u) == 0u);
+  switch (address) {
+    case DISPCNT_OFFSET:
+      *value = ppu->registers.dispcnt;
+      return true;
+    case GREENSWP_OFFSET:
+      *value = ppu->registers.greenswp;
+      return true;
+    case DISPSTAT_OFFSET:
+      *value = ppu->registers.dispstat;
+      return true;
+    case VCOUNT_OFFSET:
+      *value = ppu->registers.vcount;
+      return true;
+    case BG0CNT_OFFSET:
+      *value = ppu->registers.bg0cnt;
+      return true;
+    case BG1CNT_OFFSET:
+      *value = ppu->registers.bg1cnt;
+      return true;
+    case BG2CNT_OFFSET:
+      *value = ppu->registers.bg2cnt;
+      return true;
+    case BG3CNT_OFFSET:
+      *value = ppu->registers.bg3cnt;
+      return true;
+    case WININ_OFFSET:
+      *value = ppu->registers.winin;
+      return true;
+    case WINOUT_OFFSET:
+      *value = ppu->registers.winout;
+      return true;
+    case BLDCNT_OFFSET:
+      *value = ppu->registers.bldcnt;
+      return true;
+  }
+
+  // Attempting to read a register that does not have read support. For these
+  // reads report success, but leave value unmodified.
+
+  return true;
+}
+
+bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
+                                     uint32_t *value) {
+  if (REGISTERS_SIZE < address + 4u) {
+    assert(false);
+  }
+
+  const GbaPpu *ppu = (const GbaPpu *)context;
+
+  assert((address & 0x3u) == 0u);
+  switch (address) {
+    case BG2X_OFFSET:
+      *value = ppu->registers.bg2x;
+      return true;
+    case BG2Y_OFFSET:
+      *value = ppu->registers.bg2y;
+      return true;
+    case BG3X_OFFSET:
+      *value = ppu->registers.bg3x;
+      return true;
+    case BG3Y_OFFSET:
+      *value = ppu->registers.bg3y;
+      return true;
+  }
+
+  // If low_success or high_success are false, we are attempting to read a
+  // register that does not have read support. In this case, ignore the error
+  // and leave that portion of the bits in value unmodified.
+
+  uint16_t low;
+  bool low_success = GbaPpuRegistersLoad16LEFunction(context, address, &low);
+  if (low_success) {
+    *value &= 0xFFFF0000;
+    *value |= low;
+  }
+
+  uint16_t high;
+  bool high_success =
+      GbaPpuRegistersLoad16LEFunction(context, address + 2u, &high);
+  if (high_success) {
+    *value &= 0x0000FFFF;
+    *value |= ((uint32_t)high) << 16u;
+  }
+
+  return true;
+}
+
+bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
+                                  uint8_t *value) {
+  if (REGISTERS_SIZE <= address) {
+    assert(false);
+  }
+
+  uint32_t read_address = address & 0xFFFFFFFEu;
+
+  uint16_t value16;
+  bool success =
+      GbaPpuRegistersLoad16LEFunction(context, read_address, &value16);
+  if (success) {
+    *value = (address == read_address) ? value16 : value16 >> 8u;
+  }
+
+  // If success is false, we are attempting to read a register that does not
+  // have read support. In this case, ignore the error and leave value
+  // unmodified.
+
+  return true;
+}
+
+bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
+                                      uint16_t value) {
+  if (REGISTERS_SIZE < address + 2u) {
+    assert(false);
+  }
+
+  // TODO
+
+  return true;
+}
+
+bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
+                                      uint32_t value) {
+  if (REGISTERS_SIZE < address + 4u) {
+    assert(false);
+  }
+
+  // TODO
+
+  return true;
+}
+
+bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
+                                   uint8_t value) {
+  if (REGISTERS_SIZE <= address) {
+    assert(false);
+  }
+
+  // TODO
+
+  return true;
+}
+
 void PpuMemoryFree(void *context) {
   GbaPpu *ppu = (GbaPpu *)context;
   GbaPpuFree(ppu);
@@ -209,7 +363,7 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
     return false;
   }
 
-  (*ppu)->reference_count = 4u;
+  (*ppu)->reference_count = 5u;
 
   *pram = MemoryAllocate(*ppu, PRamLoad32LEFunction, PRamLoad16LEFunction,
                          PRamLoad8Function, PRamStore32LEFunction,
@@ -241,7 +395,17 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
     return false;
   }
 
-  // TODO: Registers
+  *registers = MemoryAllocate(
+      *ppu, GbaPpuRegistersLoad32LEFunction, GbaPpuRegistersLoad16LEFunction,
+      GbaPpuRegistersLoad8Function, GbaPpuRegistersStore32LEFunction,
+      GbaPpuRegistersStore16LEFunction, PpuMemoryStore8Function, PpuMemoryFree);
+  if (*registers == NULL) {
+    MemoryFree(*oam);
+    MemoryFree(*vram);
+    MemoryFree(*pram);
+    free(*ppu);
+    return false;
+  }
 
   return true;
 }
