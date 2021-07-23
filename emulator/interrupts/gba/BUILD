@@ -10,3 +10,12 @@ cc_library(
         "//emulator/interrupts:interrupt_line",
     ],
 )
+
+cc_test(
+    name = "interrupt_controller_test",
+    srcs = ["interrupt_controller_test.cc"],
+    deps = [
+        ":interrupt_controller",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
