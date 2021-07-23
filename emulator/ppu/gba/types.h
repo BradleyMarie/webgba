@@ -1,11 +1,11 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_TYPES_
 #define _WEBGBA_EMULATOR_PPU_GBA_TYPES_
 
+#include <stdint.h>
+
 #define PRAM_SIZE 1024u
 #define VRAM_SIZE (96u * 1024u)
 #define OAM_SIZE 1024u
-
-#include <stdint.h>
 
 typedef struct {
   unsigned char pram[PRAM_SIZE];
@@ -13,9 +13,48 @@ typedef struct {
   unsigned char oam[OAM_SIZE];
 } GbaPpuMemory;
 
+#define DISPCNT_OFFSET  0x00u
+#define GREENSWP_OFFSET 0x02u 
+#define DISPSTAT_OFFSET 0x04u 
+#define VCOUNT_OFFSET   0x06u
+#define BG0CNT_OFFSET   0x08u
+#define BG1CNT_OFFSET   0x0Au
+#define BG2CNT_OFFSET   0x0Cu
+#define BG3CNT_OFFSET   0x0Eu
+#define BG0HOFS_OFFSET  0x10u
+#define BG0VOFS_OFFSET  0x12u
+#define BG1HOFS_OFFSET  0x14u
+#define BG1VOFS_OFFSET  0x16u
+#define BG2HOFS_OFFSET  0x18u
+#define BG2VOFS_OFFSET  0x1Au
+#define BG3HOFS_OFFSET  0x1Cu
+#define BG3VOFS_OFFSET  0x1Eu
+#define BG2PA_OFFSET    0x20u
+#define BG2PB_OFFSET    0x22u
+#define BG2PC_OFFSET    0x24u
+#define BG2PD_OFFSET    0x26u
+#define BG2X_OFFSET     0x28u
+#define BG2Y_OFFSET     0x2Cu
+#define BG3PA_OFFSET    0x30u
+#define BG3PB_OFFSET    0x32u
+#define BG3PC_OFFSET    0x34u
+#define BG3PD_OFFSET    0x36u
+#define BG3X_OFFSET     0x38u
+#define BG3Y_OFFSET     0x3Cu
+#define WIN0H_OFFSET    0x40u
+#define WIN1H_OFFSET    0x42u
+#define WIN0V_OFFSET    0x44u
+#define WIN1V_OFFSET    0x46u
+#define WININ_OFFSET    0x48u
+#define WINOUT_OFFSET   0x4Au
+#define MOSAIC_OFFSET   0x4Cu
+#define BLDCNT_OFFSET   0x50u
+#define BLDALPHA_OFFSET 0x52u 
+#define BLDY_OFFSET     0x54u  
+
 typedef struct {
   uint16_t dispcnt;
-  uint16_t unimplemented;
+  uint16_t greenswp;  // Unimplemented
   uint16_t dispstat;
   uint16_t vcount;
   uint16_t bg0cnt;
