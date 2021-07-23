@@ -16,17 +16,36 @@ class ExecuteTest : public testing::Test {
                              Store16LE, Store8, nullptr);
     ASSERT_NE(nullptr, memory_);
 
-    cpu_ = Arm7TdmiAllocate();
+    auto rst_line = InterruptLineAllocate(nullptr, Rst, nullptr);
+    ASSERT_NE(nullptr, rst_line);
+
+    auto fiq_line = InterruptLineAllocate(nullptr, Fiq, nullptr);
+    ASSERT_NE(nullptr, fiq_line);
+
+    auto irq_line = InterruptLineAllocate(nullptr, Irq, nullptr);
+    ASSERT_NE(nullptr, irq_line);
+
+    cpu_ = Arm7TdmiAllocate(rst_line, fiq_line, irq_line);
     ASSERT_NE(nullptr, cpu_);
+
     cpu_->registers.current.user.gprs.pc = 0x108u;
     cpu_->registers.current.user.gprs.sp = 0x200u;
     cpu_->registers.current.spsr.mode = MODE_USR;
+
+    rst = false;
+    fiq = false;
+    irq = false;
   }
 
   void TearDown() override {
     MemoryFree(memory_);
     Arm7TdmiFree(cpu_);
   }
+
+ private:
+  static bool Rst(const void *context) { return rst; };
+  static bool Fiq(const void *context) { return fiq; };
+  static bool Irq(const void *context) { return irq; };
 
  protected:
   static bool Load32LE(const void *context, uint32_t address, uint32_t *value) {
@@ -103,9 +122,16 @@ class ExecuteTest : public testing::Test {
   size_t instruction_end_;
   Arm7Tdmi *cpu_;
   Memory *memory_;
+
+  static bool rst;
+  static bool fiq;
+  static bool irq;
 };
 
 std::vector<char> ExecuteTest::memory_space_(1024u, 0);
+bool ExecuteTest::rst = false;
+bool ExecuteTest::fiq = false;
+bool ExecuteTest::irq = false;
 
 TEST_F(ExecuteTest, ArmGCD) {
   AddInstruction("0x0F00A0E3");  // mov r0, #15
@@ -173,7 +199,7 @@ TEST_F(ExecuteTest, ThumbPrefetchABT) {
 }
 
 TEST_F(ExecuteTest, DoFIQ) {
-  cpu_->pending_fiq = true;
+  fiq = true;
   Run(1u);
 
   EXPECT_EQ(MODE_FIQ, cpu_->registers.current.user.cpsr.mode);
@@ -181,7 +207,7 @@ TEST_F(ExecuteTest, DoFIQ) {
 }
 
 TEST_F(ExecuteTest, DoIRQ) {
-  cpu_->pending_irq = true;
+  irq = true;
   Run(1u);
 
   EXPECT_EQ(MODE_IRQ, cpu_->registers.current.user.cpsr.mode);
@@ -189,8 +215,8 @@ TEST_F(ExecuteTest, DoIRQ) {
 }
 
 TEST_F(ExecuteTest, FIQPreemptsIRQ) {
-  cpu_->pending_fiq = true;
-  cpu_->pending_irq = true;
+  fiq = true;
+  irq = true;
   Run(1u);
 
   EXPECT_EQ(MODE_FIQ, cpu_->registers.current.user.cpsr.mode);
@@ -199,7 +225,7 @@ TEST_F(ExecuteTest, FIQPreemptsIRQ) {
 
 TEST_F(ExecuteTest, MaskedFIQ) {
   cpu_->registers.current.user.cpsr.fiq_disable = true;
-  cpu_->pending_fiq = true;
+  fiq = true;
   Run(1u);
 
   EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);
@@ -208,7 +234,7 @@ TEST_F(ExecuteTest, MaskedFIQ) {
 
 TEST_F(ExecuteTest, MaskedIRQ) {
   cpu_->registers.current.user.cpsr.irq_disable = true;
-  cpu_->pending_irq = true;
+  irq = true;
   Run(1u);
 
   EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);
@@ -216,9 +242,9 @@ TEST_F(ExecuteTest, MaskedIRQ) {
 }
 
 TEST_F(ExecuteTest, RSTPreemptsAll) {
-  cpu_->pending_fiq = true;
-  cpu_->pending_irq = true;
-  cpu_->pending_rst = true;
+  fiq = true;
+  irq = true;
+  rst = true;
   Run(1u);
 
   EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);

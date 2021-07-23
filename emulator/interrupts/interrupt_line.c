@@ -3,14 +3,14 @@
 #include <stdlib.h>
 
 struct _InterruptLine {
-  InterruptLineIsTriggeredFunction is_triggered;
+  InterruptLineIsRaisedFunction is_triggered;
   InterruptLineContextFree free_context;
   void *context;
 };
 
-InterruptLine *InterruptLineAllocate(
-    void *context, InterruptLineIsTriggeredFunction is_triggered,
-    InterruptLineContextFree free_context) {
+InterruptLine *InterruptLineAllocate(void *context,
+                                     InterruptLineIsRaisedFunction is_triggered,
+                                     InterruptLineContextFree free_context) {
   InterruptLine *result = (InterruptLine *)malloc(sizeof(InterruptLine));
   if (result == NULL) {
     return NULL;
@@ -23,7 +23,7 @@ InterruptLine *InterruptLineAllocate(
   return result;
 }
 
-bool InterruptLineIsTriggered(const InterruptLine *interrupt_line) {
+bool InterruptLineIsRaised(const InterruptLine *interrupt_line) {
   return interrupt_line->is_triggered(interrupt_line->context);
 }
 

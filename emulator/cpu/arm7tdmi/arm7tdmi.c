@@ -6,10 +6,14 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
-Arm7Tdmi* Arm7TdmiAllocate() {
+Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
+                           InterruptLine* irq) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)calloc(1, sizeof(Arm7Tdmi));
   if (cpu != NULL) {
     cpu->registers.current.user.cpsr.mode = MODE_SVC;
+    cpu->rst = rst;
+    cpu->fiq = fiq;
+    cpu->irq = irq;
   }
   return cpu;
 }
@@ -24,16 +28,15 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
       {arm_instruction_offset, thumb_instruction_offset}};
 
   bool modified_pc;
-  if (cpu->pending_rst) {
+  if (InterruptLineIsRaised(cpu->rst)) {
     ArmExceptionRST(&cpu->registers);
-    cpu->pending_rst = false;
     modified_pc = true;
-  } else if (cpu->pending_fiq &&
-             !cpu->registers.current.user.cpsr.fiq_disable) {
+  } else if (!cpu->registers.current.user.cpsr.fiq_disable &&
+             InterruptLineIsRaised(cpu->fiq)) {
     ArmExceptionFIQ(&cpu->registers);
     modified_pc = true;
-  } else if (cpu->pending_irq &&
-             !cpu->registers.current.user.cpsr.irq_disable) {
+  } else if (!cpu->registers.current.user.cpsr.irq_disable &&
+             InterruptLineIsRaised(cpu->irq)) {
     ArmExceptionIRQ(&cpu->registers);
     modified_pc = true;
   } else if (cpu->registers.current.user.cpsr.thumb) {
@@ -76,4 +79,9 @@ void Arm7TdmiRun(Arm7Tdmi* cpu, Memory* memory, uint32_t num_steps) {
   }
 }
 
-void Arm7TdmiFree(Arm7Tdmi* cpu) { free(cpu); }
+void Arm7TdmiFree(Arm7Tdmi* cpu) {
+  InterruptLineFree(cpu->rst);
+  InterruptLineFree(cpu->fiq);
+  InterruptLineFree(cpu->irq);
+  free(cpu);
+}
