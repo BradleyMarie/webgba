@@ -40,7 +40,7 @@ struct _GBAInterruptController {
   uint16_t reference_count;
 };
 
-bool GbaIrqLineIsTriggeredFunction(const void *context) {
+bool GbaIrqLineIsRaisedFunction(const void *context) {
   const GBAInterruptController *controller =
       (const GBAInterruptController *)context;
   return controller->master_enabled.enabled &&
@@ -52,7 +52,7 @@ void GbaIrqLineFree(void *context) {
   GbaInterruptControllerRelease(controller);
 }
 
-bool GbaRstFiqLineIsTriggeredFunction(const void *context) { return false; }
+bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
 bool GbaInterruptControllerAllocate(
     GBAInterruptController **interrupt_controller, InterruptLine **rst_line,
@@ -65,23 +65,21 @@ bool GbaInterruptControllerAllocate(
 
   (*interrupt_controller)->reference_count = 1;
 
-  *rst_line =
-      InterruptLineAllocate(NULL, GbaRstFiqLineIsTriggeredFunction, NULL);
+  *rst_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
   if (*rst_line == NULL) {
     GbaInterruptControllerRelease(*interrupt_controller);
     return false;
   }
 
-  *fiq_line =
-      InterruptLineAllocate(NULL, GbaRstFiqLineIsTriggeredFunction, NULL);
+  *fiq_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
   if (*fiq_line == NULL) {
     InterruptLineFree(*rst_line);
     GbaInterruptControllerRelease(*interrupt_controller);
     return false;
   }
 
-  *irq_line = InterruptLineAllocate(
-      *interrupt_controller, GbaIrqLineIsTriggeredFunction, GbaIrqLineFree);
+  *irq_line = InterruptLineAllocate(*interrupt_controller,
+                                    GbaIrqLineIsRaisedFunction, GbaIrqLineFree);
   if (*irq_line == NULL) {
     InterruptLineFree(*fiq_line);
     InterruptLineFree(*rst_line);
