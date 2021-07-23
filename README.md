@@ -1,2 +1,2 @@
 # WebGBA
-A GameBoy Advance emulator that runs in your web browser (hopefully)
+A Game Boy Advance emulator that runs in your web browser (hopefully)
