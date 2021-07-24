@@ -17,8 +17,8 @@ struct _GbaPpu {
   uint16_t reference_count;
 };
 
-bool PRamLoad32LEFunction(const void *context, uint32_t address,
-                          uint32_t *value) {
+static bool PRamLoad32LEFunction(const void *context, uint32_t address,
+                                 uint32_t *value) {
   if (PRAM_SIZE < address + 4u) {
     return false;
   }
@@ -29,8 +29,8 @@ bool PRamLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool PRamLoad16LEFunction(const void *context, uint32_t address,
-                          uint16_t *value) {
+static bool PRamLoad16LEFunction(const void *context, uint32_t address,
+                                 uint16_t *value) {
   if (PRAM_SIZE < address + 2u) {
     return false;
   }
@@ -41,7 +41,8 @@ bool PRamLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool PRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
+static bool PRamLoad8Function(const void *context, uint32_t address,
+                              uint8_t *value) {
   if (PRAM_SIZE <= address) {
     return false;
   }
@@ -52,7 +53,8 @@ bool PRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-bool PRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool PRamStore32LEFunction(void *context, uint32_t address,
+                                  uint32_t value) {
   if (PRAM_SIZE < address + 4u) {
     return false;
   }
@@ -64,7 +66,8 @@ bool PRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
   return true;
 }
 
-bool PRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool PRamStore16LEFunction(void *context, uint32_t address,
+                                  uint16_t value) {
   if (PRAM_SIZE < address + 2u) {
     return false;
   }
@@ -76,8 +79,8 @@ bool PRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
   return true;
 }
 
-bool VRamLoad32LEFunction(const void *context, uint32_t address,
-                          uint32_t *value) {
+static bool VRamLoad32LEFunction(const void *context, uint32_t address,
+                                 uint32_t *value) {
   if (VRAM_SIZE < address + 4u) {
     return false;
   }
@@ -88,8 +91,8 @@ bool VRamLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool VRamLoad16LEFunction(const void *context, uint32_t address,
-                          uint16_t *value) {
+static bool VRamLoad16LEFunction(const void *context, uint32_t address,
+                                 uint16_t *value) {
   if (VRAM_SIZE < address + 2u) {
     return false;
   }
@@ -100,7 +103,8 @@ bool VRamLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool VRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
+static bool VRamLoad8Function(const void *context, uint32_t address,
+                              uint8_t *value) {
   if (VRAM_SIZE <= address) {
     return false;
   }
@@ -111,7 +115,8 @@ bool VRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-bool VRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool VRamStore32LEFunction(void *context, uint32_t address,
+                                  uint32_t value) {
   if (VRAM_SIZE < address + 4u) {
     return false;
   }
@@ -123,7 +128,8 @@ bool VRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
   return true;
 }
 
-bool VRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool VRamStore16LEFunction(void *context, uint32_t address,
+                                  uint16_t value) {
   if (VRAM_SIZE < address + 2u) {
     return false;
   }
@@ -135,8 +141,8 @@ bool VRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
   return true;
 }
 
-bool OamLoad32LEFunction(const void *context, uint32_t address,
-                         uint32_t *value) {
+static bool OamLoad32LEFunction(const void *context, uint32_t address,
+                                uint32_t *value) {
   if (OAM_SIZE < address + 4u) {
     return false;
   }
@@ -147,8 +153,8 @@ bool OamLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool OamLoad16LEFunction(const void *context, uint32_t address,
-                         uint16_t *value) {
+static bool OamLoad16LEFunction(const void *context, uint32_t address,
+                                uint16_t *value) {
   if (OAM_SIZE < address + 2u) {
     return false;
   }
@@ -159,7 +165,8 @@ bool OamLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool OamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
+static bool OamLoad8Function(const void *context, uint32_t address,
+                             uint8_t *value) {
   if (OAM_SIZE <= address) {
     return false;
   }
@@ -170,7 +177,8 @@ bool OamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-bool OamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool OamStore32LEFunction(void *context, uint32_t address,
+                                 uint32_t value) {
   if (OAM_SIZE < address + 4u) {
     return false;
   }
@@ -182,7 +190,8 @@ bool OamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
   return true;
 }
 
-bool OamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool OamStore16LEFunction(void *context, uint32_t address,
+                                 uint16_t value) {
   if (OAM_SIZE < address + 2u) {
     return false;
   }
@@ -194,12 +203,13 @@ bool OamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
   return true;
 }
 
-bool PpuMemoryStore8Function(void *context, uint32_t address, uint8_t value) {
+static bool PpuMemoryStore8Function(void *context, uint32_t address,
+                                    uint8_t value) {
   return false;
 }
 
-bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
-                                     uint16_t *value) {
+static bool GbaPpuRegistersLoad16LEFunction(const void *context,
+                                            uint32_t address, uint16_t *value) {
   assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
 
   const GbaPpu *ppu = (const GbaPpu *)context;
@@ -244,8 +254,8 @@ bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
   return false;
 }
 
-bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
-                                     uint32_t *value) {
+static bool GbaPpuRegistersLoad32LEFunction(const void *context,
+                                            uint32_t address, uint32_t *value) {
   assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
 
   uint16_t low_bits;
@@ -266,8 +276,8 @@ bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
-                                  uint8_t *value) {
+static bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
+                                         uint8_t *value) {
   assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
 
   uint32_t read_address = address & 0xFFFFFFFEu;
@@ -282,8 +292,8 @@ bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
   return success;
 }
 
-bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
-                                      uint16_t value) {
+static bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
+                                             uint16_t value) {
   assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
 
   // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
@@ -308,27 +318,9 @@ bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
   return true;
 }
 
-bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
-                                      uint32_t value) {
+static bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
+                                             uint32_t value) {
   assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
-
-  GbaPpu *ppu = (GbaPpu *)context;
-
-  assert((address & 0x3u) == 0u);
-  switch (address) {
-    case BG2X_OFFSET:
-      ppu->registers.bg2x = value;
-      return true;
-    case BG2Y_OFFSET:
-      ppu->registers.bg2y = value;
-      return true;
-    case BG3X_OFFSET:
-      ppu->registers.bg3x = value;
-      return true;
-    case BG3Y_OFFSET:
-      ppu->registers.bg3y = value;
-      return true;
-  }
 
   GbaPpuRegistersStore16LEFunction(context, address, value);
   GbaPpuRegistersStore16LEFunction(context, address + 2u, value >> 16u);
@@ -336,8 +328,8 @@ bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
   return true;
 }
 
-bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
-                                   uint8_t value) {
+static bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
+                                          uint8_t value) {
   assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
 
   GbaPpu *ppu = (GbaPpu *)context;
@@ -349,7 +341,7 @@ bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
     value16 |= value;
   } else {
     value16 &= 0x00FF;
-    value16 |= value << 16u;
+    value16 |= value << 8u;
   }
 
   GbaPpuRegistersStore16LEFunction(context, read_address, value16);
@@ -405,7 +397,8 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
   *registers = MemoryAllocate(
       *ppu, GbaPpuRegistersLoad32LEFunction, GbaPpuRegistersLoad16LEFunction,
       GbaPpuRegistersLoad8Function, GbaPpuRegistersStore32LEFunction,
-      GbaPpuRegistersStore16LEFunction, PpuMemoryStore8Function, PpuMemoryFree);
+      GbaPpuRegistersStore16LEFunction, GbaPpuRegistersStore8Function,
+      PpuMemoryFree);
   if (*registers == NULL) {
     MemoryFree(*oam);
     MemoryFree(*vram);
