@@ -4,13 +4,13 @@
 
 #define WRAM_SIZE (256u * 1024u)
 
-bool WRamLoad32LEFunction(const void *context, uint32_t address,
-                          uint32_t *value) {
+static bool WRamLoad32LEFunction(const void *context, uint32_t address,
+                                 uint32_t *value) {
   return false;
 }
 
-bool WRamLoad16LEFunction(const void *context, uint32_t address,
-                          uint16_t *value) {
+static bool WRamLoad16LEFunction(const void *context, uint32_t address,
+                                 uint16_t *value) {
   if (WRAM_SIZE < address + 2u) {
     return false;
   }
@@ -20,7 +20,8 @@ bool WRamLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool WRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
+static bool WRamLoad8Function(const void *context, uint32_t address,
+                              uint8_t *value) {
   if (WRAM_SIZE <= address) {
     return false;
   }
@@ -30,11 +31,13 @@ bool WRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-bool WRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool WRamStore32LEFunction(void *context, uint32_t address,
+                                  uint32_t value) {
   return false;
 }
 
-bool WRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool WRamStore16LEFunction(void *context, uint32_t address,
+                                  uint16_t value) {
   if (WRAM_SIZE < address + 2u) {
     return false;
   }
@@ -45,7 +48,7 @@ bool WRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
   return true;
 }
 
-bool WRamStore8Function(void *context, uint32_t address, uint8_t value) {
+static bool WRamStore8Function(void *context, uint32_t address, uint8_t value) {
   if (WRAM_SIZE <= address) {
     return false;
   }
@@ -56,7 +59,7 @@ bool WRamStore8Function(void *context, uint32_t address, uint8_t value) {
   return true;
 }
 
-void WRamFree(void *context) { free(context); }
+static void WRamFree(void *context) { free(context); }
 
 Memory *WRamAllocate() {
   void *allocation = calloc(1, WRAM_SIZE);

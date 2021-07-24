@@ -4,8 +4,8 @@
 
 #include "emulator/memory/gba/bios/bios_data.h"
 
-bool GBABiosLoad32LEFunction(const void *context, uint32_t address,
-                             uint32_t *value) {
+static bool GBABiosLoad32LEFunction(const void *context, uint32_t address,
+                                    uint32_t *value) {
   if (bios_size < address + 4u) {
     return false;
   }
@@ -15,8 +15,8 @@ bool GBABiosLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool GBABiosLoad16LEFunction(const void *context, uint32_t address,
-                             uint16_t *value) {
+static bool GBABiosLoad16LEFunction(const void *context, uint32_t address,
+                                    uint16_t *value) {
   if (bios_size < address + 2u) {
     return false;
   }
@@ -26,8 +26,8 @@ bool GBABiosLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool GBABiosLoad8Function(const void *context, uint32_t address,
-                          uint8_t *value) {
+static bool GBABiosLoad8Function(const void *context, uint32_t address,
+                                 uint8_t *value) {
   if (bios_size <= address) {
     return false;
   }
@@ -37,15 +37,18 @@ bool GBABiosLoad8Function(const void *context, uint32_t address,
   return true;
 }
 
-bool GBABiosStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool GBABiosStore32LEFunction(void *context, uint32_t address,
+                                     uint32_t value) {
   return false;
 }
 
-bool GBABiosStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool GBABiosStore16LEFunction(void *context, uint32_t address,
+                                     uint16_t value) {
   return false;
 }
 
-bool GBABiosStore8Function(void *context, uint32_t address, uint8_t value) {
+static bool GBABiosStore8Function(void *context, uint32_t address,
+                                  uint8_t value) {
   return false;
 }
 
