@@ -241,51 +241,26 @@ bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
       return true;
   }
 
-  // Attempting to read a register that does not have read support. For these
-  // reads report success, but leave value unmodified.
-
-  return true;
+  return false;
 }
 
 bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
                                      uint32_t *value) {
   assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
 
-  const GbaPpu *ppu = (const GbaPpu *)context;
-
-  assert((address & 0x3u) == 0u);
-  switch (address) {
-    case BG2X_OFFSET:
-      *value = ppu->registers.bg2x;
-      return true;
-    case BG2Y_OFFSET:
-      *value = ppu->registers.bg2y;
-      return true;
-    case BG3X_OFFSET:
-      *value = ppu->registers.bg3x;
-      return true;
-    case BG3Y_OFFSET:
-      *value = ppu->registers.bg3y;
-      return true;
+  uint16_t low_bits;
+  bool low = GbaPpuRegistersLoad16LEFunction(context, address, &low_bits);
+  if (!low) {
+    return false;
   }
 
-  // If low_success or high_success are false, we are attempting to read a
-  // register that does not have read support. In this case, ignore the error
-  // and leave that portion of the bits in value unmodified.
-
-  uint16_t low;
-  bool low_success = GbaPpuRegistersLoad16LEFunction(context, address, &low);
-  if (low_success) {
-    *value &= 0xFFFF0000;
-    *value |= low;
-  }
-
-  uint16_t high;
-  bool high_success =
-      GbaPpuRegistersLoad16LEFunction(context, address + 2u, &high);
-  if (high_success) {
-    *value &= 0x0000FFFF;
-    *value |= ((uint32_t)high) << 16u;
+  uint16_t high_bits;
+  bool high =
+      GbaPpuRegistersLoad16LEFunction(context, address + 2u, &high_bits);
+  if (high) {
+    *value |= (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
+  } else {
+    *value = 0u;
   }
 
   return true;
@@ -304,11 +279,7 @@ bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
     *value = (address == read_address) ? value16 : value16 >> 8u;
   }
 
-  // If success is false, we are attempting to read a register that does not
-  // have read support. In this case, ignore the error and leave value
-  // unmodified.
-
-  return true;
+  return success;
 }
 
 bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
