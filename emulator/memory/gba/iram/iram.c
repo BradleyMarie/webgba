@@ -4,8 +4,8 @@
 
 #define IRAM_SIZE (32u * 1024u)
 
-bool IRamLoad32LEFunction(const void *context, uint32_t address,
-                          uint32_t *value) {
+static bool IRamLoad32LEFunction(const void *context, uint32_t address,
+                                 uint32_t *value) {
   if (IRAM_SIZE < address + 4u) {
     return false;
   }
@@ -15,8 +15,8 @@ bool IRamLoad32LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool IRamLoad16LEFunction(const void *context, uint32_t address,
-                          uint16_t *value) {
+static bool IRamLoad16LEFunction(const void *context, uint32_t address,
+                                 uint16_t *value) {
   if (IRAM_SIZE < address + 2u) {
     return false;
   }
@@ -26,7 +26,8 @@ bool IRamLoad16LEFunction(const void *context, uint32_t address,
   return true;
 }
 
-bool IRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
+static bool IRamLoad8Function(const void *context, uint32_t address,
+                              uint8_t *value) {
   if (IRAM_SIZE <= address) {
     return false;
   }
@@ -36,7 +37,8 @@ bool IRamLoad8Function(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-bool IRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
+static bool IRamStore32LEFunction(void *context, uint32_t address,
+                                  uint32_t value) {
   if (IRAM_SIZE < address + 4u) {
     return false;
   }
@@ -47,7 +49,8 @@ bool IRamStore32LEFunction(void *context, uint32_t address, uint32_t value) {
   return true;
 }
 
-bool IRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
+static bool IRamStore16LEFunction(void *context, uint32_t address,
+                                  uint16_t value) {
   if (IRAM_SIZE < address + 2u) {
     return false;
   }
@@ -58,7 +61,7 @@ bool IRamStore16LEFunction(void *context, uint32_t address, uint16_t value) {
   return true;
 }
 
-bool IRamStore8Function(void *context, uint32_t address, uint8_t value) {
+static bool IRamStore8Function(void *context, uint32_t address, uint8_t value) {
   if (IRAM_SIZE <= address) {
     return false;
   }
@@ -69,7 +72,7 @@ bool IRamStore8Function(void *context, uint32_t address, uint8_t value) {
   return true;
 }
 
-void IRamFree(void *context) { free(context); }
+static void IRamFree(void *context) { free(context); }
 
 Memory *IRamAllocate() {
   void *allocation = calloc(1, IRAM_SIZE);
