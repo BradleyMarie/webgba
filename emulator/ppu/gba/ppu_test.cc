@@ -266,3 +266,40 @@ TEST_F(PpuTest, GbaPpuRegistersLoad8Fails) {
   uint8_t contents;
   EXPECT_FALSE(Load8(regs_, 0x4Eu, &contents));
 }
+
+TEST_F(PpuTest, GbaPpuRegistersStore16LEVCount) {
+  uint16_t contents;
+  EXPECT_TRUE(Store16LE(regs_, VCOUNT_OFFSET, 0xFFFFu));
+  EXPECT_TRUE(Load16LE(regs_, VCOUNT_OFFSET, &contents));
+  EXPECT_EQ(0u, contents);
+}
+
+TEST_F(PpuTest, GbaPpuRegistersStore16LEDispstat) {
+  uint16_t contents;
+  EXPECT_TRUE(Store16LE(regs_, DISPSTAT_OFFSET, 0xFFFFu));
+  EXPECT_TRUE(Load16LE(regs_, DISPSTAT_OFFSET, &contents));
+  EXPECT_EQ(0xFFF8u, contents);
+}
+
+TEST_F(PpuTest, GbaPpuRegistersStore16LE) {
+  uint16_t contents;
+  EXPECT_TRUE(Store16LE(regs_, WININ_OFFSET, 0xFFFFu));
+  EXPECT_TRUE(Load16LE(regs_, WININ_OFFSET, &contents));
+  EXPECT_EQ(0xFFFFu, contents);
+}
+
+TEST_F(PpuTest, GbaPpuRegistersStore8Aligned) {
+  uint16_t contents;
+  EXPECT_TRUE(Store16LE(regs_, WININ_OFFSET, 0x1122u));
+  EXPECT_TRUE(Store8(regs_, WININ_OFFSET, 0x33u));
+  EXPECT_TRUE(Load16LE(regs_, WININ_OFFSET, &contents));
+  EXPECT_EQ(0x1133u, contents);
+}
+
+TEST_F(PpuTest, GbaPpuRegistersStore8Unaligned) {
+  uint16_t contents;
+  EXPECT_TRUE(Store16LE(regs_, WININ_OFFSET, 0x1122u));
+  EXPECT_TRUE(Store8(regs_, WININ_OFFSET + 1u, 0x33u));
+  EXPECT_TRUE(Load16LE(regs_, WININ_OFFSET, &contents));
+  EXPECT_EQ(0x3322u, contents);
+}
