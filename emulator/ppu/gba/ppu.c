@@ -323,9 +323,19 @@ bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
     assert(false);
   }
 
+  // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
+  // register. In this case, ignore the write and leave the register unmodified.
+  if (address == VCOUNT_OFFSET) {
+    return true;
+  }
+
   GbaPpu *ppu = (GbaPpu *)context;
 
   assert((address & 0x1u) == 0u);
+
+  // If address equals DISPSTAT_OFFSET, and any of the lower 3 bits of value are
+  // set, we are attempting to modify read-only bits in the DISPSTAT register.
+  // In this case, ignore mask out those bits in value so they are not modified.
   if (address == DISPSTAT_OFFSET) {
     value &= 0xFFF8u;
   }
@@ -383,7 +393,7 @@ bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
     value16 |= value << 16u;
   }
 
-  GbaPpuRegistersStore16LEFunction(context, address, value16);
+  GbaPpuRegistersStore16LEFunction(context, read_address, value16);
 
   return true;
 }
