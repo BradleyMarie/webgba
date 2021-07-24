@@ -12,7 +12,7 @@ struct _GbaPpu {
   GbaPpuMemory memory;
   union {
     GbaPpuRegisters registers;
-    const uint16_t register_half_words[44];
+    uint16_t register_half_words[44];
   };
   uint16_t reference_count;
 };
@@ -323,7 +323,14 @@ bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
     assert(false);
   }
 
-  // TODO
+  GbaPpu *ppu = (GbaPpu *)context;
+
+  assert((address & 0x1u) == 0u);
+  if (address == DISPSTAT_OFFSET) {
+    value &= 0xFFF8u;
+  }
+
+  ppu->register_half_words[address >> 1u] = value;
 
   return true;
 }
@@ -334,7 +341,26 @@ bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
     assert(false);
   }
 
-  // TODO
+  GbaPpu *ppu = (GbaPpu *)context;
+
+  assert((address & 0x3u) == 0u);
+  switch (address) {
+    case BG2X_OFFSET:
+      ppu->registers.bg2x = value;
+      return true;
+    case BG2Y_OFFSET:
+      ppu->registers.bg2y = value;
+      return true;
+    case BG3X_OFFSET:
+      ppu->registers.bg3x = value;
+      return true;
+    case BG3Y_OFFSET:
+      ppu->registers.bg3y = value;
+      return true;
+  }
+
+  GbaPpuRegistersStore16LEFunction(context, address, value);
+  GbaPpuRegistersStore16LEFunction(context, address + 2u, value >> 16u);
 
   return true;
 }
@@ -345,7 +371,19 @@ bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
     assert(false);
   }
 
-  // TODO
+  GbaPpu *ppu = (GbaPpu *)context;
+
+  uint32_t read_address = address & 0xFFFFFFFEu;
+  uint16_t value16 = ppu->register_half_words[read_address >> 1u];
+  if (address == read_address) {
+    value16 &= 0xFF00;
+    value16 |= value;
+  } else {
+    value16 &= 0x00FF;
+    value16 |= value << 16u;
+  }
+
+  GbaPpuRegistersStore16LEFunction(context, address, value16);
 
   return true;
 }
