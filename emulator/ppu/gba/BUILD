@@ -14,6 +14,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "ppu_test",
+    srcs = ["ppu_test.cc"],
+    deps = [
+        ":ppu",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "types",
     hdrs = ["types.h"],

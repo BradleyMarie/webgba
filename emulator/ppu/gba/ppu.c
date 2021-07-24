@@ -455,6 +455,8 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
     return false;
   }
 
+  (*ppu)->interrupt_controller = interrupt_controller;
+
   return true;
 }
 
