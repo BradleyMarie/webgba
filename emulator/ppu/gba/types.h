@@ -14,8 +14,8 @@ typedef struct {
 } GbaPpuMemory;
 
 #define DISPCNT_OFFSET  0x00u
-#define GREENSWP_OFFSET 0x02u 
-#define DISPSTAT_OFFSET 0x04u 
+#define GREENSWP_OFFSET 0x02u
+#define DISPSTAT_OFFSET 0x04u
 #define VCOUNT_OFFSET   0x06u
 #define BG0CNT_OFFSET   0x08u
 #define BG1CNT_OFFSET   0x0Au
@@ -34,13 +34,17 @@ typedef struct {
 #define BG2PC_OFFSET    0x24u
 #define BG2PD_OFFSET    0x26u
 #define BG2X_OFFSET     0x28u
+#define BG2X_OFFSET_HI  0x2Au
 #define BG2Y_OFFSET     0x2Cu
+#define BG2Y_OFFSET_HI  0x2Eu
 #define BG3PA_OFFSET    0x30u
 #define BG3PB_OFFSET    0x32u
 #define BG3PC_OFFSET    0x34u
 #define BG3PD_OFFSET    0x36u
 #define BG3X_OFFSET     0x38u
+#define BG3X_OFFSET_HI  0x3Au
 #define BG3Y_OFFSET     0x3Cu
+#define BG3Y_OFFSET_HI  0x3Eu
 #define WIN0H_OFFSET    0x40u
 #define WIN1H_OFFSET    0x42u
 #define WIN0V_OFFSET    0x44u
@@ -49,8 +53,8 @@ typedef struct {
 #define WINOUT_OFFSET   0x4Au
 #define MOSAIC_OFFSET   0x4Cu
 #define BLDCNT_OFFSET   0x50u
-#define BLDALPHA_OFFSET 0x52u 
-#define BLDY_OFFSET     0x54u  
+#define BLDALPHA_OFFSET 0x52u
+#define BLDY_OFFSET     0x54u
 
 typedef struct {
   uint16_t dispcnt;
