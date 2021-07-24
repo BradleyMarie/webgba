@@ -200,9 +200,7 @@ bool PpuMemoryStore8Function(void *context, uint32_t address, uint8_t value) {
 
 bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
                                      uint16_t *value) {
-  if (REGISTERS_SIZE < address + 2u) {
-    return false;
-  }
+  assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
 
   const GbaPpu *ppu = (const GbaPpu *)context;
 
@@ -251,9 +249,7 @@ bool GbaPpuRegistersLoad16LEFunction(const void *context, uint32_t address,
 
 bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
                                      uint32_t *value) {
-  if (REGISTERS_SIZE < address + 4u) {
-    assert(false);
-  }
+  assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
 
   const GbaPpu *ppu = (const GbaPpu *)context;
 
@@ -297,9 +293,7 @@ bool GbaPpuRegistersLoad32LEFunction(const void *context, uint32_t address,
 
 bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
                                   uint8_t *value) {
-  if (REGISTERS_SIZE <= address) {
-    assert(false);
-  }
+  assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
 
   uint32_t read_address = address & 0xFFFFFFFEu;
 
@@ -319,9 +313,7 @@ bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
 
 bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
                                       uint16_t value) {
-  if (REGISTERS_SIZE < address + 2u) {
-    assert(false);
-  }
+  assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
 
   // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
   // register. In this case, ignore the write and leave the register unmodified.
@@ -347,9 +339,7 @@ bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
 
 bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
                                       uint32_t value) {
-  if (REGISTERS_SIZE < address + 4u) {
-    assert(false);
-  }
+  assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
 
   GbaPpu *ppu = (GbaPpu *)context;
 
@@ -377,9 +367,7 @@ bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
 
 bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
                                    uint8_t value) {
-  if (REGISTERS_SIZE <= address) {
-    assert(false);
-  }
+  assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
 
   GbaPpu *ppu = (GbaPpu *)context;
 
