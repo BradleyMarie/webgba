@@ -222,7 +222,11 @@ TEST_F(PpuTest, GbaPpuRegistersLoad16LE) {
         address == WININ_OFFSET || address == WINOUT_OFFSET ||
         address == BLDCNT_OFFSET) {
       EXPECT_TRUE(Load16LE(regs_, address, &contents));
-      EXPECT_EQ(0u, contents);
+      if (address == DISPCNT_OFFSET) {
+        EXPECT_EQ(0x80u, contents);
+      } else {
+        EXPECT_EQ(0u, contents);
+      }
     } else {
       EXPECT_FALSE(Load16LE(regs_, address, &contents));
     }

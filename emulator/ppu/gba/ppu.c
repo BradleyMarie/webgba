@@ -5,8 +5,6 @@
 
 #include "emulator/ppu/gba/types.h"
 
-#define REGISTERS_SIZE 88u
-
 struct _GbaPpu {
   GbaInterruptController *interrupt_controller;
   GbaPpuMemory memory;
@@ -210,20 +208,20 @@ static bool PpuMemoryStore8Function(void *context, uint32_t address,
 
 static bool GbaPpuRegistersLoad16LEFunction(const void *context,
                                             uint32_t address, uint16_t *value) {
-  assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
 
   const GbaPpu *ppu = (const GbaPpu *)context;
 
   assert((address & 0x1u) == 0u);
   switch (address) {
     case DISPCNT_OFFSET:
-      *value = ppu->registers.dispcnt;
+      *value = ppu->registers.dispcnt.value;
       return true;
     case GREENSWP_OFFSET:
       *value = ppu->registers.greenswp;
       return true;
     case DISPSTAT_OFFSET:
-      *value = ppu->registers.dispstat;
+      *value = ppu->registers.dispstat.value;
       return true;
     case VCOUNT_OFFSET:
       *value = ppu->registers.vcount;
@@ -256,7 +254,7 @@ static bool GbaPpuRegistersLoad16LEFunction(const void *context,
 
 static bool GbaPpuRegistersLoad32LEFunction(const void *context,
                                             uint32_t address, uint32_t *value) {
-  assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
 
   uint16_t low_bits;
   bool low = GbaPpuRegistersLoad16LEFunction(context, address, &low_bits);
@@ -278,7 +276,7 @@ static bool GbaPpuRegistersLoad32LEFunction(const void *context,
 
 static bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
                                          uint8_t *value) {
-  assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
 
   uint32_t read_address = address & 0xFFFFFFFEu;
 
@@ -294,7 +292,7 @@ static bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
 
 static bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
                                              uint16_t value) {
-  assert(address <= UINT32_MAX - 2u && address + 2u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
 
   // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
   // register. In this case, ignore the write and leave the register unmodified.
@@ -320,7 +318,7 @@ static bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
 
 static bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
                                              uint32_t value) {
-  assert(address <= UINT32_MAX - 4u && address + 4u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
 
   GbaPpuRegistersStore16LEFunction(context, address, value);
   GbaPpuRegistersStore16LEFunction(context, address + 2u, value >> 16u);
@@ -330,7 +328,7 @@ static bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
 
 static bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
                                           uint8_t value) {
-  assert(address <= UINT32_MAX - 1u && address + 1u <= REGISTERS_SIZE);
+  assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
 
   GbaPpu *ppu = (GbaPpu *)context;
 
@@ -408,6 +406,7 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
   }
 
   (*ppu)->interrupt_controller = interrupt_controller;
+  (*ppu)->registers.dispcnt.forced_blank = true;
 
   return true;
 }
