@@ -4,13 +4,7 @@
 #include <stdlib.h>
 #include <strings.h>
 
-typedef union {
-  struct {
-    bool enabled : 1;
-    unsigned unused : 15;
-  };
-  uint16_t value;
-} GbaInterruptMasterEnableRegister;
+#define INTERRUPT_CONTROLLER_REGISTERS_SIZE 12u
 
 typedef union {
   struct {
@@ -28,23 +22,40 @@ typedef union {
     bool dma3 : 1;
     bool keypad : 1;
     bool cartridge : 1;
-    unsigned unused : 2;
+    unsigned char unused : 2;
   };
   uint16_t value;
 } GbaInterruptRegister;
 
+typedef union {
+  struct {
+    bool enabled : 1;
+    unsigned short unused : 15;
+  };
+  uint16_t value;
+} GbaInterruptMasterEnableRegister;
+
+typedef struct {
+  GbaInterruptRegister interrupt_enable;
+  GbaInterruptRegister interrupt_flags;
+  uint16_t waitcnt;
+  uint16_t unused0;
+  GbaInterruptMasterEnableRegister interrupt_master_enable;
+  uint16_t unused1;
+} GbaInterruptControllerRegisters;
+
 struct _GbaInterruptController {
-  GbaInterruptMasterEnableRegister master_enabled;
-  GbaInterruptRegister enabled;
-  GbaInterruptRegister flags;
+  GbaInterruptControllerRegisters interrupt_controller_registers;
   uint16_t reference_count;
 };
 
 bool GbaIrqLineIsRaisedFunction(const void *context) {
   const GbaInterruptController *controller =
       (const GbaInterruptController *)context;
-  return controller->master_enabled.enabled &&
-         controller->enabled.value & controller->flags.value;
+  return controller->interrupt_controller_registers.interrupt_master_enable
+             .enabled &&
+         controller->interrupt_controller_registers.interrupt_enable.value &
+             controller->interrupt_controller_registers.interrupt_flags.value;
 }
 
 void GbaIrqLineFree(void *context) {
@@ -55,8 +66,9 @@ void GbaIrqLineFree(void *context) {
 bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
 bool GbaInterruptControllerAllocate(
-    GbaInterruptController **interrupt_controller, InterruptLine **rst_line,
-    InterruptLine **fiq_line, InterruptLine **irq_line) {
+    GbaInterruptController **interrupt_controller, Memory **registers,
+    InterruptLine **rst_line, InterruptLine **fiq_line,
+    InterruptLine **irq_line) {
   *interrupt_controller =
       (GbaInterruptController *)calloc(1, sizeof(GbaInterruptController));
   if (*interrupt_controller == NULL) {
@@ -94,102 +106,122 @@ bool GbaInterruptControllerAllocate(
 
 uint16_t GbaInterruptControllerReadInterruptMasterEnable(
     GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->master_enabled.value;
+  return interrupt_controller->interrupt_controller_registers
+      .interrupt_master_enable.value;
 }
 
 void GbaInterruptControllerWriteInterruptMasterEnable(
     GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->master_enabled.value = value & 0x1u;
+  interrupt_controller->interrupt_controller_registers.interrupt_master_enable
+      .value = value & 0x1u;
 }
 
 uint16_t GbaInterruptControllerReadInterruptEnable(
     GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->enabled.value;
+  return interrupt_controller->interrupt_controller_registers.interrupt_enable
+      .value;
 }
 
 void GbaInterruptControllerWriteInterruptEnable(
     GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->enabled.value = value;
+  interrupt_controller->interrupt_controller_registers.interrupt_enable.value =
+      value;
 }
 
 uint16_t GbaInterruptControllerReadInterruptRequestFlags(
     GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->flags.value;
+  return interrupt_controller->interrupt_controller_registers.interrupt_flags
+      .value;
 }
 
 void GbaInterruptControllerInterruptAcknowledge(
     GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->flags.value &= ~value;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.value &=
+      ~value;
 }
 
 void GbaInterruptControllerRaiseVBlankInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.vblank = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.vblank =
+      true;
 }
 
 void GbaInterruptControllerRaiseHBlankInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.hblank = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.hblank =
+      true;
 }
 
 void GbaInterruptControllerRaiseVBlankCountInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.vblank_count = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags
+      .vblank_count = true;
 }
 
 void GbaInterruptControllerRaiseTimer0Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.timer0 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.timer0 =
+      true;
 }
 
 void GbaInterruptControllerRaiseTimer1Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.timer1 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.timer1 =
+      true;
 }
 
 void GbaInterruptControllerRaiseTimer2Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.timer2 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.timer2 =
+      true;
 }
 
 void GbaInterruptControllerRaiseTimer3Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.timer3 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.timer3 =
+      true;
 }
 
 void GbaInterruptControllerRaiseSerialInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.serial = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.serial =
+      true;
 }
 
 void GbaInterruptControllerRaiseDma0Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.dma0 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.dma0 =
+      true;
 }
 
 void GbaInterruptControllerRaiseDma1Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.dma1 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.dma1 =
+      true;
 }
 
 void GbaInterruptControllerRaiseDma2Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.dma2 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.dma2 =
+      true;
 }
 
 void GbaInterruptControllerRaiseDma3Interrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.dma3 = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.dma3 =
+      true;
 }
 
 void GbaInterruptControllerRaiseKeypadInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.keypad = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags.keypad =
+      true;
 }
 
 void GbaInterruptControllerRaiseCartridgeInterrupt(
     GbaInterruptController *interrupt_controller) {
-  interrupt_controller->flags.cartridge = true;
+  interrupt_controller->interrupt_controller_registers.interrupt_flags
+      .cartridge = true;
 }
 
 void GbaInterruptControllerRetain(
@@ -206,3 +238,8 @@ void GbaInterruptControllerRelease(
     free(interrupt_controller);
   }
 }
+
+static_assert(sizeof(GbaInterruptControllerRegisters) ==
+                  INTERRUPT_CONTROLLER_REGISTERS_SIZE,
+              "sizeof(GbaInterruptControllerRegisters) != "
+              "INTERRUPT_CONTROLLER_REGISTERS_SIZE");

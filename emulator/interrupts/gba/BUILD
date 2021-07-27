@@ -8,6 +8,7 @@ cc_library(
     srcs = ["interrupt_controller.c"],
     deps = [
         "//emulator/interrupts:interrupt_line",
+        "//emulator/memory:memory",
     ],
 )
 
