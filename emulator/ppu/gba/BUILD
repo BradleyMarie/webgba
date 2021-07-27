@@ -6,6 +6,7 @@ cc_library(
     name = "ppu",
     hdrs = ["ppu.h"],
     srcs = ["ppu.c"],
+    linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":types",
