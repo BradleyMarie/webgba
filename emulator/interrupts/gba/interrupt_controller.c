@@ -158,15 +158,20 @@ static bool GbaInterruptControllerRegistersStore16LEFunction(void *context,
 
   assert((address & 0x1u) == 0u);
 
-  // If address equals IF_OFFSET, the write contains the bits to disable in
-  // the register and uses different logic than writes to other registers.
-  if (address == IF_OFFSET) {
-    interrupt_controller
-        ->interrupt_controller_register_half_words[address >> 1u] &= ~value;
-  } else {
-    interrupt_controller
-        ->interrupt_controller_register_half_words[address >> 1u] = value;
+  switch (address) {
+    case IF_OFFSET:
+      interrupt_controller
+          ->interrupt_controller_register_half_words[address >> 1u] &= ~value;
+      return true;
+    case IME_OFFSET:
+      interrupt_controller
+          ->interrupt_controller_register_half_words[address >> 1u] =
+          value & 1u;
+      return true;
   }
+
+  interrupt_controller
+      ->interrupt_controller_register_half_words[address >> 1u] = value;
 
   return true;
 }
@@ -279,42 +284,6 @@ bool GbaInterruptControllerAllocate(
   (*interrupt_controller)->reference_count += 1;
 
   return true;
-}
-
-uint16_t GbaInterruptControllerReadInterruptMasterEnable(
-    GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->interrupt_controller_registers
-      .interrupt_master_enable.value;
-}
-
-void GbaInterruptControllerWriteInterruptMasterEnable(
-    GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->interrupt_controller_registers.interrupt_master_enable
-      .value = value & 0x1u;
-}
-
-uint16_t GbaInterruptControllerReadInterruptEnable(
-    GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->interrupt_controller_registers.interrupt_enable
-      .value;
-}
-
-void GbaInterruptControllerWriteInterruptEnable(
-    GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->interrupt_controller_registers.interrupt_enable.value =
-      value;
-}
-
-uint16_t GbaInterruptControllerReadInterruptRequestFlags(
-    GbaInterruptController *interrupt_controller) {
-  return interrupt_controller->interrupt_controller_registers.interrupt_flags
-      .value;
-}
-
-void GbaInterruptControllerInterruptAcknowledge(
-    GbaInterruptController *interrupt_controller, uint16_t value) {
-  interrupt_controller->interrupt_controller_registers.interrupt_flags.value &=
-      ~value;
 }
 
 void GbaInterruptControllerRaiseVBlankInterrupt(
