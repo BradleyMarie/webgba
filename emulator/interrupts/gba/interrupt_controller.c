@@ -6,6 +6,11 @@
 
 #define INTERRUPT_CONTROLLER_REGISTERS_SIZE 12u
 
+#define IE_OFFSET 0u
+#define IF_OFFSET 2u
+#define WAITCNT_OFFSET 4u
+#define IME_OFFSET 8u
+
 typedef union {
   struct {
     bool vblank : 1;
@@ -45,7 +50,10 @@ typedef struct {
 } GbaInterruptControllerRegisters;
 
 struct _GbaInterruptController {
-  GbaInterruptControllerRegisters interrupt_controller_registers;
+  union {
+    GbaInterruptControllerRegisters interrupt_controller_registers;
+    uint16_t interrupt_controller_register_half_words[6];
+  };
   uint16_t reference_count;
 };
 
@@ -65,6 +73,156 @@ void GbaIrqLineFree(void *context) {
 
 bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
+static bool GbaInterruptControllerRegistersLoad16LEFunction(const void *context,
+                                                            uint32_t address,
+                                                            uint16_t *value) {
+  assert(address <= UINT32_MAX - 2u &&
+         address + 2u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  const GbaInterruptController *interrupt_controller =
+      (const GbaInterruptController *)context;
+
+  assert((address & 0x1u) == 0u);
+  switch (address) {
+    case IE_OFFSET:
+      *value = interrupt_controller->interrupt_controller_registers
+                   .interrupt_enable.value;
+      return true;
+    case IF_OFFSET:
+      *value = interrupt_controller->interrupt_controller_registers
+                   .interrupt_flags.value;
+      return true;
+    case WAITCNT_OFFSET:
+      *value = interrupt_controller->interrupt_controller_registers.waitcnt;
+      return true;
+    case IME_OFFSET:
+      *value = interrupt_controller->interrupt_controller_registers
+                   .interrupt_master_enable.value;
+      return true;
+  }
+
+  return false;
+}
+
+static bool GbaInterruptControllerRegistersLoad32LEFunction(const void *context,
+                                                            uint32_t address,
+                                                            uint32_t *value) {
+  assert(address <= UINT32_MAX - 4u &&
+         address + 4u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  uint16_t low_bits;
+  bool low = GbaInterruptControllerRegistersLoad16LEFunction(context, address,
+                                                             &low_bits);
+  if (!low) {
+    return false;
+  }
+
+  uint16_t high_bits;
+  bool high = GbaInterruptControllerRegistersLoad16LEFunction(
+      context, address + 2u, &high_bits);
+  if (high) {
+    *value |= (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
+  } else {
+    *value = 0u;
+  }
+
+  return true;
+}
+
+static bool GbaInterruptControllerRegistersLoad8Function(const void *context,
+                                                         uint32_t address,
+                                                         uint8_t *value) {
+  assert(address <= UINT32_MAX - 1u &&
+         address + 1u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  uint32_t read_address = address & 0xFFFFFFFEu;
+
+  uint16_t value16;
+  bool success = GbaInterruptControllerRegistersLoad16LEFunction(
+      context, read_address, &value16);
+  if (success) {
+    *value = (address == read_address) ? value16 : value16 >> 8u;
+  }
+
+  return success;
+}
+
+static bool GbaInterruptControllerRegistersStore16LEFunction(void *context,
+                                                             uint32_t address,
+                                                             uint16_t value) {
+  assert(address <= UINT32_MAX - 2u &&
+         address + 2u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  GbaInterruptController *interrupt_controller =
+      (GbaInterruptController *)context;
+
+  assert((address & 0x1u) == 0u);
+
+  // If address equals IF_OFFSET, the write contains the bits to disable in
+  // the register and uses different logic than writes to other registers.
+  if (address == IF_OFFSET) {
+    interrupt_controller
+        ->interrupt_controller_register_half_words[address >> 1u] &= ~value;
+  } else {
+    interrupt_controller
+        ->interrupt_controller_register_half_words[address >> 1u] = value;
+  }
+
+  return true;
+}
+
+static bool GbaInterruptControllerRegistersStore32LEFunction(void *context,
+                                                             uint32_t address,
+                                                             uint32_t value) {
+  assert(address <= UINT32_MAX - 4u &&
+         address + 4u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  GbaInterruptControllerRegistersStore16LEFunction(context, address, value);
+  GbaInterruptControllerRegistersStore16LEFunction(context, address + 2u,
+                                                   value >> 16u);
+
+  return true;
+}
+
+static bool GbaInterruptControllerRegistersStore8Function(void *context,
+                                                          uint32_t address,
+                                                          uint8_t value) {
+  assert(address <= UINT32_MAX - 1u &&
+         address + 1u <= INTERRUPT_CONTROLLER_REGISTERS_SIZE);
+
+  GbaInterruptController *interrupt_controller =
+      (GbaInterruptController *)context;
+
+  uint32_t read_address = address & 0xFFFFFFFEu;
+
+  uint16_t value16;
+  if (read_address == IF_OFFSET) {
+    value16 = (address == read_address) ? value : (uint16_t)value << 8u;
+  } else {
+    value16 =
+        interrupt_controller
+            ->interrupt_controller_register_half_words[read_address >> 1u];
+    if (address == read_address) {
+      value16 &= 0xFF00;
+      value16 |= value;
+    } else {
+      value16 &= 0x00FF;
+      value16 |= (uint16_t)value << 8u;
+    }
+  }
+
+  GbaInterruptControllerRegistersStore16LEFunction(context, read_address,
+                                                   value16);
+
+  return true;
+}
+
+void GbaInterruptControllerRegistersFree(void *context) {
+  GbaInterruptController *interrupt_controller =
+      (GbaInterruptController *)context;
+  GbaInterruptControllerRelease(interrupt_controller);
+}
+
 bool GbaInterruptControllerAllocate(
     GbaInterruptController **interrupt_controller, Memory **registers,
     InterruptLine **rst_line, InterruptLine **fiq_line,
@@ -77,8 +235,25 @@ bool GbaInterruptControllerAllocate(
 
   (*interrupt_controller)->reference_count = 1;
 
+  *registers = MemoryAllocate(*interrupt_controller,
+                              GbaInterruptControllerRegistersLoad32LEFunction,
+                              GbaInterruptControllerRegistersLoad16LEFunction,
+                              GbaInterruptControllerRegistersLoad8Function,
+                              GbaInterruptControllerRegistersStore32LEFunction,
+                              GbaInterruptControllerRegistersStore16LEFunction,
+                              GbaInterruptControllerRegistersStore8Function,
+                              GbaInterruptControllerRegistersFree);
+
+  if (*registers == NULL) {
+    GbaInterruptControllerRelease(*interrupt_controller);
+    return false;
+  }
+
+  (*interrupt_controller)->reference_count += 1;
+
   *rst_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
   if (*rst_line == NULL) {
+    MemoryFree(*registers);
     GbaInterruptControllerRelease(*interrupt_controller);
     return false;
   }
@@ -86,6 +261,7 @@ bool GbaInterruptControllerAllocate(
   *fiq_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
   if (*fiq_line == NULL) {
     InterruptLineFree(*rst_line);
+    MemoryFree(*registers);
     GbaInterruptControllerRelease(*interrupt_controller);
     return false;
   }
@@ -95,11 +271,12 @@ bool GbaInterruptControllerAllocate(
   if (*irq_line == NULL) {
     InterruptLineFree(*fiq_line);
     InterruptLineFree(*rst_line);
+    MemoryFree(*registers);
     GbaInterruptControllerRelease(*interrupt_controller);
     return false;
   }
 
-  GbaInterruptControllerRetain(*interrupt_controller);
+  (*interrupt_controller)->reference_count += 1;
 
   return true;
 }

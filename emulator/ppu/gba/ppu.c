@@ -339,7 +339,7 @@ static bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
     value16 |= value;
   } else {
     value16 &= 0x00FF;
-    value16 |= value << 8u;
+    value16 |= (uint16_t)value << 8u;
   }
 
   GbaPpuRegistersStore16LEFunction(context, read_address, value16);
