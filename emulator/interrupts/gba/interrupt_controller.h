@@ -13,24 +13,6 @@ bool GbaInterruptControllerAllocate(
     InterruptLine **rst_line, InterruptLine **fiq_line,
     InterruptLine **irq_line);
 
-uint16_t GbaInterruptControllerReadInterruptMasterEnable(
-    GbaInterruptController *interrupt_controller);
-
-void GbaInterruptControllerWriteInterruptMasterEnable(
-    GbaInterruptController *interrupt_controller, uint16_t value);
-
-uint16_t GbaInterruptControllerReadInterruptEnable(
-    GbaInterruptController *interrupt_controller);
-
-void GbaInterruptControllerWriteInterruptEnable(
-    GbaInterruptController *interrupt_controller, uint16_t value);
-
-uint16_t GbaInterruptControllerReadInterruptRequestFlags(
-    GbaInterruptController *interrupt_controller);
-
-void GbaInterruptControllerInterruptAcknowledge(
-    GbaInterruptController *interrupt_controller, uint16_t value);
-
 void GbaInterruptControllerRaiseVBlankInterrupt(
     GbaInterruptController *interrupt_controller);
 
