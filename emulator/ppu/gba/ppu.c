@@ -411,7 +411,10 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
   return true;
 }
 
-bool GbaPpuStep(GbaPpu *ppu, void *output) { return false; }
+void GbaPpuStep(GbaPpu *ppu, GLuint framebuffer,
+                PpuFrameDoneFunction done_function) {}
+
+void GbaPpuReloadContext(GbaPpu *ppu) {}
 
 void GbaPpuFree(GbaPpu *ppu) {
   assert(ppu->reference_count != 0u);
