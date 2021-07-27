@@ -4,12 +4,14 @@
 #include <stdint.h>
 
 #include "emulator/interrupts/interrupt_line.h"
+#include "emulator/memory/memory.h"
 
 typedef struct _GbaInterruptController GbaInterruptController;
 
 bool GbaInterruptControllerAllocate(
-    GbaInterruptController **interrupt_controller, InterruptLine **rst_line,
-    InterruptLine **fiq_line, InterruptLine **irq_line);
+    GbaInterruptController **interrupt_controller, Memory **registers,
+    InterruptLine **rst_line, InterruptLine **fiq_line,
+    InterruptLine **irq_line);
 
 uint16_t GbaInterruptControllerReadInterruptMasterEnable(
     GbaInterruptController *interrupt_controller);

@@ -55,7 +55,8 @@ extern "C" {
 class PpuTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaInterruptControllerAllocate(&ic_, &rst_, &fiq_, &irq_));
+    ASSERT_TRUE(
+        GbaInterruptControllerAllocate(&ic_, &ic_regs_, &rst_, &fiq_, &irq_));
     ASSERT_TRUE(GbaPpuAllocate(ic_, &ppu_, &pram_, &vram_, &oam_, &regs_));
   }
 
@@ -73,6 +74,7 @@ class PpuTest : public testing::Test {
 
  protected:
   GbaInterruptController *ic_;
+  Memory *ic_regs_;
   InterruptLine *rst_;
   InterruptLine *fiq_;
   InterruptLine *irq_;

@@ -7,8 +7,8 @@ extern "C" {
 class InterruptControllerTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaInterruptControllerAllocate(&interrupt_controller_, &rst_,
-                                               &fiq_, &irq_));
+    ASSERT_TRUE(GbaInterruptControllerAllocate(
+        &interrupt_controller_, &registers_, &rst_, &fiq_, &irq_));
   }
 
   void TearDown() override {
@@ -19,6 +19,7 @@ class InterruptControllerTest : public testing::Test {
   }
 
   GbaInterruptController *interrupt_controller_;
+  Memory *registers_;
   InterruptLine *rst_;
   InterruptLine *fiq_;
   InterruptLine *irq_;
