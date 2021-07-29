@@ -11,7 +11,7 @@ cc_library(
     deps = [
         ":types",
         "//emulator/memory:memory",
-        "//emulator/platform/gba:interrupt_controller",
+        "//emulator/platform/gba:platform",
     ],
 )
 

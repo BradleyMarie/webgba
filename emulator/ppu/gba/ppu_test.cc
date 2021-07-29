@@ -55,13 +55,13 @@ extern "C" {
 class PpuTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(
-        GbaInterruptControllerAllocate(&ic_, &ic_regs_, &rst_, &fiq_, &irq_));
-    ASSERT_TRUE(GbaPpuAllocate(ic_, &ppu_, &pram_, &vram_, &oam_, &regs_));
+    ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
+    ASSERT_TRUE(GbaPpuAllocate(plat_, &ppu_, &pram_, &vram_, &oam_, &regs_));
   }
 
   void TearDown() override {
-    GbaInterruptControllerRelease(ic_);
+    GbaPlatformRelease(plat_);
+    MemoryFree(plat_regs_);
     InterruptLineFree(rst_);
     InterruptLineFree(fiq_);
     InterruptLineFree(irq_);
@@ -73,8 +73,8 @@ class PpuTest : public testing::Test {
   }
 
  protected:
-  GbaInterruptController *ic_;
-  Memory *ic_regs_;
+  GbaPlatform *plat_;
+  Memory *plat_regs_;
   InterruptLine *rst_;
   InterruptLine *fiq_;
   InterruptLine *irq_;
