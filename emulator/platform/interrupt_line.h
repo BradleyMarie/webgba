@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_INTERRUPTS_INTERRUPT_LINE_
-#define _WEBGBA_EMULATOR_INTERRUPTS_INTERRUPT_LINE_
+#ifndef _WEBGBA_EMULATOR_PLATFORM_INTERRUPT_LINE_
+#define _WEBGBA_EMULATOR_PLATFORM_INTERRUPT_LINE_
 
 #include <stdbool.h>
 
@@ -15,4 +15,4 @@ bool InterruptLineIsRaised(const InterruptLine *interrupt_line);
 
 void InterruptLineFree(InterruptLine *interrupt_line);
 
-#endif  // _WEBGBA_EMULATOR_INTERRUPTS_INTERRUPT_LINE_
+#endif  // _WEBGBA_EMULATOR_PLATFORM_INTERRUPT_LINE_

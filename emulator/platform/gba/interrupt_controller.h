@@ -1,10 +1,10 @@
-#ifndef _WEBGBA_EMULATOR_INTERRUPTS_GBA_INTERRUPT_CONTROLLER_
-#define _WEBGBA_EMULATOR_INTERRUPTS_GBA_INTERRUPT_CONTROLLER_
+#ifndef _WEBGBA_EMULATOR_PLATFORM_GBA_INTERRUPT_CONTROLLER_
+#define _WEBGBA_EMULATOR_PLATFORM_GBA_INTERRUPT_CONTROLLER_
 
 #include <stdint.h>
 
-#include "emulator/interrupts/interrupt_line.h"
 #include "emulator/memory/memory.h"
+#include "emulator/platform/interrupt_line.h"
 
 typedef struct _GbaInterruptController GbaInterruptController;
 
@@ -60,4 +60,4 @@ void GbaInterruptControllerRetain(GbaInterruptController *interrupt_controller);
 void GbaInterruptControllerRelease(
     GbaInterruptController *interrupt_controller);
 
-#endif  // _WEBGBA_EMULATOR_INTERRUPTS_GBA_INTERRUPT_CONTROLLER_
+#endif  // _WEBGBA_EMULATOR_PLATFORM_GBA_INTERRUPT_CONTROLLER_

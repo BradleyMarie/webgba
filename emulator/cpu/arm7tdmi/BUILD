@@ -12,8 +12,8 @@ cc_library(
         ":registers",
         "//emulator/cpu/arm7tdmi/decoders/arm:execute",
         "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
-        "//emulator/interrupts:interrupt_line",
         "//emulator/memory:memory",
+        "//emulator/platform:interrupt_line",
     ]
 )
 

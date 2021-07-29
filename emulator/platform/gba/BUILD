@@ -7,8 +7,8 @@ cc_library(
     hdrs = ["interrupt_controller.h"],
     srcs = ["interrupt_controller.c"],
     deps = [
-        "//emulator/interrupts:interrupt_line",
         "//emulator/memory:memory",
+        "//emulator/platform:interrupt_line",
     ],
 )
 

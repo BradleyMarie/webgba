@@ -1,4 +1,4 @@
-#include "emulator/interrupts/gba/interrupt_controller.h"
+#include "emulator/platform/gba/interrupt_controller.h"
 
 #include <assert.h>
 #include <stdlib.h>

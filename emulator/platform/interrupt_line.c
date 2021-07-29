@@ -1,4 +1,4 @@
-#include "emulator/interrupts/interrupt_line.h"
+#include "emulator/platform/interrupt_line.h"
 
 #include <stdlib.h>
 

@@ -2,8 +2,8 @@
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_ARM7TDMI_
 
 #include "emulator/cpu/arm7tdmi/registers.h"
-#include "emulator/interrupts/interrupt_line.h"
 #include "emulator/memory/memory.h"
+#include "emulator/platform/interrupt_line.h"
 
 typedef struct {
   ArmAllRegisters registers;
