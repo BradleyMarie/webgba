@@ -6,7 +6,7 @@
 #include "emulator/ppu/gba/types.h"
 
 struct _GbaPpu {
-  GbaInterruptController *interrupt_controller;
+  GbaPlatform *platform;
   GbaPpuMemory memory;
   union {
     GbaPpuRegisters registers;
@@ -352,9 +352,8 @@ void PpuMemoryFree(void *context) {
   GbaPpuFree(ppu);
 }
 
-bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
-                    Memory **pram, Memory **vram, Memory **oam,
-                    Memory **registers) {
+bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **pram,
+                    Memory **vram, Memory **oam, Memory **registers) {
   *ppu = (GbaPpu *)calloc(1, sizeof(GbaPpu));
   if (*ppu == NULL) {
     return false;
@@ -405,7 +404,7 @@ bool GbaPpuAllocate(GbaInterruptController *interrupt_controller, GbaPpu **ppu,
     return false;
   }
 
-  (*ppu)->interrupt_controller = interrupt_controller;
+  (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
 
   return true;
@@ -420,7 +419,7 @@ void GbaPpuFree(GbaPpu *ppu) {
   assert(ppu->reference_count != 0u);
   ppu->reference_count -= 1u;
   if (ppu->reference_count == 0u) {
-    GbaInterruptControllerRelease(ppu->interrupt_controller);
+    GbaPlatformRelease(ppu->platform);
     free(ppu);
   }
 }

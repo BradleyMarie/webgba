@@ -1,5 +1,5 @@
 extern "C" {
-#include "emulator/platform/gba/interrupt_controller.h"
+#include "emulator/platform/gba/platform.h"
 }
 
 #include "googletest/include/gtest/gtest.h"
@@ -9,29 +9,29 @@ extern "C" {
 #define WAITCNT_OFFSET 4u
 #define IME_OFFSET 8u
 
-class InterruptControllerTest : public testing::Test {
+class PlatformTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaInterruptControllerAllocate(
-        &interrupt_controller_, &registers_, &rst_, &fiq_, &irq_));
+    ASSERT_TRUE(
+        GbaPlatformAllocate(&platform_, &registers_, &rst_, &fiq_, &irq_));
   }
 
   void TearDown() override {
-    GbaInterruptControllerRelease(interrupt_controller_);
+    GbaPlatformRelease(platform_);
     MemoryFree(registers_);
     InterruptLineFree(rst_);
     InterruptLineFree(fiq_);
     InterruptLineFree(irq_);
   }
 
-  GbaInterruptController *interrupt_controller_;
+  GbaPlatform *platform_;
   Memory *registers_;
   InterruptLine *rst_;
   InterruptLine *fiq_;
   InterruptLine *irq_;
 };
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptMasterEnable) {
+TEST_F(PlatformTest, GbaPlatformInterruptMasterEnable) {
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IME_OFFSET, &value));
   EXPECT_EQ(0u, value);
@@ -43,7 +43,7 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptMasterEnable) {
   EXPECT_EQ(0u, value);
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptEnable) {
+TEST_F(PlatformTest, GbaPlatformInterruptEnable) {
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IE_OFFSET, &value));
   EXPECT_EQ(0u, value);
@@ -55,24 +55,24 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptEnable) {
   EXPECT_EQ(0u, value);
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptAcknowledge) {
+TEST_F(PlatformTest, GbaPlatformInterruptAcknowledge) {
   EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 0xFFFFu));
 
-  GbaInterruptControllerRaiseVBlankInterrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseHBlankInterrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseVBlankCountInterrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseTimer0Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseTimer1Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseTimer2Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseTimer3Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseSerialInterrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseDma0Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseDma1Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseDma2Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseDma3Interrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseKeypadInterrupt(interrupt_controller_);
-  GbaInterruptControllerRaiseCartridgeInterrupt(interrupt_controller_);
+  GbaPlatformRaiseVBlankInterrupt(platform_);
+  GbaPlatformRaiseHBlankInterrupt(platform_);
+  GbaPlatformRaiseVBlankCountInterrupt(platform_);
+  GbaPlatformRaiseTimer0Interrupt(platform_);
+  GbaPlatformRaiseTimer1Interrupt(platform_);
+  GbaPlatformRaiseTimer2Interrupt(platform_);
+  GbaPlatformRaiseTimer3Interrupt(platform_);
+  GbaPlatformRaiseSerialInterrupt(platform_);
+  GbaPlatformRaiseDma0Interrupt(platform_);
+  GbaPlatformRaiseDma1Interrupt(platform_);
+  GbaPlatformRaiseDma2Interrupt(platform_);
+  GbaPlatformRaiseDma3Interrupt(platform_);
+  GbaPlatformRaiseKeypadInterrupt(platform_);
+  GbaPlatformRaiseCartridgeInterrupt(platform_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -84,8 +84,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerInterruptAcknowledge) {
   EXPECT_EQ(0x3FFDu, value);
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseVBlankInterrupt) {
-  GbaInterruptControllerRaiseVBlankInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankInterrupt) {
+  GbaPlatformRaiseVBlankInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -110,9 +110,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseVBlankInterrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseVBlankInterruptReverse) {
-  GbaInterruptControllerRaiseVBlankInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankInterruptReverse) {
+  GbaPlatformRaiseVBlankInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -137,8 +136,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseHBlankInterrupt) {
-  GbaInterruptControllerRaiseHBlankInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterrupt) {
+  GbaPlatformRaiseHBlankInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -163,9 +162,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseHBlankInterrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseHBlankInterruptReverse) {
-  GbaInterruptControllerRaiseHBlankInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterruptReverse) {
+  GbaPlatformRaiseHBlankInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -190,9 +188,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseVBlankCountInterrupt) {
-  GbaInterruptControllerRaiseVBlankCountInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterrupt) {
+  GbaPlatformRaiseVBlankCountInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -217,9 +214,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseVBlankCountInterruptReverse) {
-  GbaInterruptControllerRaiseVBlankCountInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterruptReverse) {
+  GbaPlatformRaiseVBlankCountInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -244,8 +240,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer0Interrupt) {
-  GbaInterruptControllerRaiseTimer0Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer0Interrupt) {
+  GbaPlatformRaiseTimer0Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -270,9 +266,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer0Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseTimer0InterruptReverse) {
-  GbaInterruptControllerRaiseTimer0Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptReverse) {
+  GbaPlatformRaiseTimer0Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -297,8 +292,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer1Interrupt) {
-  GbaInterruptControllerRaiseTimer1Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer1Interrupt) {
+  GbaPlatformRaiseTimer1Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -323,9 +318,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer1Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseTimer1InterruptReverse) {
-  GbaInterruptControllerRaiseTimer1Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptReverse) {
+  GbaPlatformRaiseTimer1Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -350,8 +344,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer2Interrupt) {
-  GbaInterruptControllerRaiseTimer2Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer2Interrupt) {
+  GbaPlatformRaiseTimer2Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -376,9 +370,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer2Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseTimer2InterruptReverse) {
-  GbaInterruptControllerRaiseTimer2Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptReverse) {
+  GbaPlatformRaiseTimer2Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -403,8 +396,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer3Interrupt) {
-  GbaInterruptControllerRaiseTimer3Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer3Interrupt) {
+  GbaPlatformRaiseTimer3Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -429,9 +422,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseTimer3Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseTimer3InterruptReverse) {
-  GbaInterruptControllerRaiseTimer3Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptReverse) {
+  GbaPlatformRaiseTimer3Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -456,8 +448,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseSerialInterrupt) {
-  GbaInterruptControllerRaiseSerialInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseSerialInterrupt) {
+  GbaPlatformRaiseSerialInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -482,9 +474,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseSerialInterrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseSerialInterruptReverse) {
-  GbaInterruptControllerRaiseSerialInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseSerialInterruptReverse) {
+  GbaPlatformRaiseSerialInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -509,8 +500,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma0Interrupt) {
-  GbaInterruptControllerRaiseDma0Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma0Interrupt) {
+  GbaPlatformRaiseDma0Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -535,9 +526,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma0Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseDma0InterruptReverse) {
-  GbaInterruptControllerRaiseDma0Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma0InterruptReverse) {
+  GbaPlatformRaiseDma0Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -562,8 +552,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma1Interrupt) {
-  GbaInterruptControllerRaiseDma1Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma1Interrupt) {
+  GbaPlatformRaiseDma1Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -588,9 +578,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma1Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseDma1InterruptReverse) {
-  GbaInterruptControllerRaiseDma1Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma1InterruptReverse) {
+  GbaPlatformRaiseDma1Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -615,8 +604,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma2Interrupt) {
-  GbaInterruptControllerRaiseDma2Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma2Interrupt) {
+  GbaPlatformRaiseDma2Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -641,9 +630,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma2Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseDma2InterruptReverse) {
-  GbaInterruptControllerRaiseDma2Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma2InterruptReverse) {
+  GbaPlatformRaiseDma2Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -668,8 +656,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma3Interrupt) {
-  GbaInterruptControllerRaiseDma3Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma3Interrupt) {
+  GbaPlatformRaiseDma3Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -694,9 +682,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseDma3Interrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseDma3InterruptReverse) {
-  GbaInterruptControllerRaiseDma3Interrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseDma3InterruptReverse) {
+  GbaPlatformRaiseDma3Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -721,8 +708,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseKeypadInterrupt) {
-  GbaInterruptControllerRaiseKeypadInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseKeypadInterrupt) {
+  GbaPlatformRaiseKeypadInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -747,9 +734,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseKeypadInterrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseKeypadInterruptReverse) {
-  GbaInterruptControllerRaiseKeypadInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseKeypadInterruptReverse) {
+  GbaPlatformRaiseKeypadInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -774,8 +760,8 @@ TEST_F(InterruptControllerTest,
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseCartridgeInterrupt) {
-  GbaInterruptControllerRaiseCartridgeInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterrupt) {
+  GbaPlatformRaiseCartridgeInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -800,9 +786,8 @@ TEST_F(InterruptControllerTest, GbaInterruptControllerRaiseCartridgeInterrupt) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
-TEST_F(InterruptControllerTest,
-       GbaInterruptControllerRaiseCartridgeInterruptReverse) {
-  GbaInterruptControllerRaiseCartridgeInterrupt(interrupt_controller_);
+TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptReverse) {
+  GbaPlatformRaiseCartridgeInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
