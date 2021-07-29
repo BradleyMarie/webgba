@@ -10,8 +10,8 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":types",
-        "//emulator/interrupts/gba:interrupt_controller",
         "//emulator/memory:memory",
+        "//emulator/platform/gba:interrupt_controller",
     ],
 )
 

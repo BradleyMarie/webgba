@@ -1,5 +1,5 @@
 extern "C" {
-#include "emulator/interrupts/gba/interrupt_controller.h"
+#include "emulator/platform/gba/interrupt_controller.h"
 }
 
 #include "googletest/include/gtest/gtest.h"
