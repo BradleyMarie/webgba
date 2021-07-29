@@ -28,6 +28,19 @@ void GbaPlatformRaiseDma3Interrupt(GbaPlatform *platform);
 void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform);
 void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform);
 
+// Waitstate Cycles
+uint_fast8_t GbaPlatformSramWaitStateCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom0FirstAccessWaitCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom0SecondAccessWaitCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom1FirstAccessWaitCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom1SecondAccessWaitCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom2FirstAccessWaitCycles(const GbaPlatform* platform);
+uint_fast8_t GbaPlatformRom2SecondAccessWaitCycles(const GbaPlatform* platform);
+
+// Rom Instruction Prefetching
+bool GbaPlatformRomPrefetch(const GbaPlatform* platform);
+
+// Reference Counting
 void GbaPlatformRetain(GbaPlatform *platform);
 void GbaPlatformRelease(GbaPlatform *platform);
 

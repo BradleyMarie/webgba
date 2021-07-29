@@ -40,10 +40,27 @@ typedef union {
   uint16_t value;
 } GbaInterruptMasterEnableRegister;
 
+typedef union {
+  struct {
+    unsigned char sram : 2;
+    unsigned char rom_0_first_access : 2;
+    bool rom_0_second_access : 1;
+    unsigned char rom_1_first_access : 2;
+    bool rom_1_second_access : 1;
+    unsigned char rom_2_first_access : 2;
+    bool rom_2_second_access : 1;
+    unsigned char phi_terminal_output : 2;  // Unimplemented
+    bool unused : 1;
+    bool gamepak_prefetch : 1;
+    bool gamepak_type : 1;  // Read Only
+  };
+  uint16_t value;
+} GbaWaitstateControlRegisters;
+
 typedef struct {
   GbaInterruptRegister interrupt_enable;
   GbaInterruptRegister interrupt_flags;
-  uint16_t waitcnt;
+  GbaWaitstateControlRegisters waitcnt;
   uint16_t unused0;
   GbaInterruptMasterEnableRegister interrupt_master_enable;
   uint16_t unused1;
@@ -51,18 +68,17 @@ typedef struct {
 
 struct _GbaPlatform {
   union {
-    GbaPlatformRegisters interrupt_controller_registers;
-    uint16_t interrupt_controller_register_half_words[6];
+    GbaPlatformRegisters low_registers;
+    uint16_t low_register_half_words[6];
   };
   uint16_t reference_count;
 };
 
 bool GbaIrqLineIsRaisedFunction(const void *context) {
   const GbaPlatform *controller = (const GbaPlatform *)context;
-  return controller->interrupt_controller_registers.interrupt_master_enable
-             .enabled &&
-         controller->interrupt_controller_registers.interrupt_enable.value &
-             controller->interrupt_controller_registers.interrupt_flags.value;
+  return controller->low_registers.interrupt_master_enable.enabled &&
+         controller->low_registers.interrupt_enable.value &
+             controller->low_registers.interrupt_flags.value;
 }
 
 void GbaIrqLineFree(void *context) {
@@ -83,17 +99,16 @@ static bool GbaPlatformRegistersLoad16LEFunction(const void *context,
   assert((address & 0x1u) == 0u);
   switch (address) {
     case IE_OFFSET:
-      *value = platform->interrupt_controller_registers.interrupt_enable.value;
+      *value = platform->low_registers.interrupt_enable.value;
       return true;
     case IF_OFFSET:
-      *value = platform->interrupt_controller_registers.interrupt_flags.value;
+      *value = platform->low_registers.interrupt_flags.value;
       return true;
     case WAITCNT_OFFSET:
-      *value = platform->interrupt_controller_registers.waitcnt;
+      *value = platform->low_registers.waitcnt.value;
       return true;
     case IME_OFFSET:
-      *value = platform->interrupt_controller_registers.interrupt_master_enable
-                   .value;
+      *value = platform->low_registers.interrupt_master_enable.value;
       return true;
   }
 
@@ -154,16 +169,17 @@ static bool GbaPlatformRegistersStore16LEFunction(void *context,
 
   switch (address) {
     case IF_OFFSET:
-      platform->interrupt_controller_register_half_words[address >> 1u] &=
-          ~value;
+      platform->low_register_half_words[address >> 1u] &= ~value;
+      return true;
+    case WAITCNT_OFFSET:
+      platform->low_register_half_words[address >> 1u] = value & 0x7FFFu;
       return true;
     case IME_OFFSET:
-      platform->interrupt_controller_register_half_words[address >> 1u] =
-          value & 1u;
+      platform->low_register_half_words[address >> 1u] = value & 1u;
       return true;
   }
 
-  platform->interrupt_controller_register_half_words[address >> 1u] = value;
+  platform->low_register_half_words[address >> 1u] = value;
 
   return true;
 }
@@ -193,8 +209,7 @@ static bool GbaPlatformRegistersStore8Function(void *context, uint32_t address,
   if (read_address == IF_OFFSET) {
     value16 = (address == read_address) ? value : (uint16_t)value << 8u;
   } else {
-    value16 =
-        platform->interrupt_controller_register_half_words[read_address >> 1u];
+    value16 = platform->low_register_half_words[read_address >> 1u];
     if (address == read_address) {
       value16 &= 0xFF00;
       value16 |= value;
@@ -269,59 +284,105 @@ bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
 }
 
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.vblank = true;
+  platform->low_registers.interrupt_flags.vblank = true;
 }
 
 void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.hblank = true;
+  platform->low_registers.interrupt_flags.hblank = true;
 }
 
 void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.vblank_count = true;
+  platform->low_registers.interrupt_flags.vblank_count = true;
 }
 
 void GbaPlatformRaiseTimer0Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.timer0 = true;
+  platform->low_registers.interrupt_flags.timer0 = true;
 }
 
 void GbaPlatformRaiseTimer1Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.timer1 = true;
+  platform->low_registers.interrupt_flags.timer1 = true;
 }
 
 void GbaPlatformRaiseTimer2Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.timer2 = true;
+  platform->low_registers.interrupt_flags.timer2 = true;
 }
 
 void GbaPlatformRaiseTimer3Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.timer3 = true;
+  platform->low_registers.interrupt_flags.timer3 = true;
 }
 
 void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.serial = true;
+  platform->low_registers.interrupt_flags.serial = true;
 }
 
 void GbaPlatformRaiseDma0Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.dma0 = true;
+  platform->low_registers.interrupt_flags.dma0 = true;
 }
 
 void GbaPlatformRaiseDma1Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.dma1 = true;
+  platform->low_registers.interrupt_flags.dma1 = true;
 }
 
 void GbaPlatformRaiseDma2Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.dma2 = true;
+  platform->low_registers.interrupt_flags.dma2 = true;
 }
 
 void GbaPlatformRaiseDma3Interrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.dma3 = true;
+  platform->low_registers.interrupt_flags.dma3 = true;
 }
 
 void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.keypad = true;
+  platform->low_registers.interrupt_flags.keypad = true;
 }
 
 void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
-  platform->interrupt_controller_registers.interrupt_flags.cartridge = true;
+  platform->low_registers.interrupt_flags.cartridge = true;
+}
+
+uint_fast8_t GbaPlatformSramWaitStateCycles(const GbaPlatform *platform) {
+  assert(platform->low_registers.waitcnt.sram < 4u);
+  static const uint_fast8_t values[4] = {4u, 3u, 2u, 8u};
+  return values[platform->low_registers.waitcnt.sram];
+}
+
+uint_fast8_t GbaPlatformRom0FirstAccessWaitCycles(const GbaPlatform *platform) {
+  assert(platform->low_registers.waitcnt.rom_0_first_access < 4u);
+  static const uint_fast8_t values[4] = {4u, 3u, 2u, 8u};
+  return values[platform->low_registers.waitcnt.rom_0_first_access];
+}
+
+uint_fast8_t GbaPlatformRom0SecondAccessWaitCycles(
+    const GbaPlatform *platform) {
+  static const uint_fast8_t values[2] = {2u, 1u};
+  return values[platform->low_registers.waitcnt.rom_0_second_access];
+}
+
+uint_fast8_t GbaPlatformRom1FirstAccessWaitCycles(const GbaPlatform *platform) {
+  assert(platform->low_registers.waitcnt.rom_1_first_access < 4u);
+  static const uint_fast8_t values[4] = {4u, 3u, 2u, 8u};
+  return values[platform->low_registers.waitcnt.rom_1_first_access];
+}
+
+uint_fast8_t GbaPlatformRom1SecondAccessWaitCycles(
+    const GbaPlatform *platform) {
+  static const uint_fast8_t values[2] = {4u, 1u};
+  return values[platform->low_registers.waitcnt.rom_1_second_access];
+}
+
+uint_fast8_t GbaPlatformRom2FirstAccessWaitCycles(const GbaPlatform *platform) {
+  assert(platform->low_registers.waitcnt.rom_2_first_access < 4u);
+  static const uint_fast8_t values[4] = {4u, 3u, 2u, 8u};
+  return values[platform->low_registers.waitcnt.rom_2_first_access];
+}
+
+uint_fast8_t GbaPlatformRom2SecondAccessWaitCycles(
+    const GbaPlatform *platform) {
+  static const uint_fast8_t values[2] = {8u, 1u};
+  return values[platform->low_registers.waitcnt.rom_2_second_access];
+}
+
+bool GbaPlatformRomPrefetch(const GbaPlatform *platform) {
+  return platform->low_registers.waitcnt.gamepak_prefetch;
 }
 
 void GbaPlatformRetain(GbaPlatform *platform) {
