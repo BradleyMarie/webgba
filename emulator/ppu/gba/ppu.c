@@ -407,6 +407,8 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **pram,
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
 
+  GbaPlatformRetain(platform);
+
   return true;
 }
 
