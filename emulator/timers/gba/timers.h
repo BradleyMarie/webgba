@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_SOUND_GBA_SOUND_
-#define _WEBGBA_EMULATOR_SOUND_GBA_SOUND_
+#ifndef _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_
+#define _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_
 
 #include "emulator/memory/memory.h"
 
@@ -11,4 +11,4 @@ void GbaTimersStep(GbaTimers *timers);
 
 void GbaTimersFree(GbaTimers *timers);
 
-#endif  // _WEBGBA_EMULATOR_SOUND_GBA_SOUND_
+#endif  // _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_
