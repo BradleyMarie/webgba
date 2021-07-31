@@ -8,9 +8,9 @@
 
 typedef struct _GbaPlatform GbaPlatform;
 
-bool GbaPlatformAllocate(GbaPlatform **platform, Memory **low_registers,
-                         Memory **high_registers, InterruptLine **rst_line,
-                         InterruptLine **fiq_line, InterruptLine **irq_line);
+bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
+                         InterruptLine **rst_line, InterruptLine **fiq_line,
+                         InterruptLine **irq_line);
 
 // Interrupt Controls
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
