@@ -811,3 +811,56 @@ TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
+
+TEST_F(PlatformTest, InternalMemoryControl) {
+  uint32_t imc_start = 0x4000800u - 0x4000200u;
+  uint32_t imc_spacing = 0x800u;
+  uint32_t num_imc = (0x5000000u - 0x4000800u) / imc_spacing;
+  for (uint32_t i = 0; i < num_imc; i++) {
+    uint32_t base_address = imc_start + i * imc_spacing;
+    EXPECT_TRUE(Store32LE(registers_, base_address, 0xAABBCCDDu));
+
+    uint32_t value32;
+    EXPECT_TRUE(Load32LE(registers_, base_address, &value32));
+    EXPECT_EQ(0xAABBCCDD, value32);
+
+    EXPECT_TRUE(Store32LE(registers_, base_address, 0u));
+    EXPECT_TRUE(Load32LE(registers_, base_address, &value32));
+    EXPECT_EQ(0u, value32);
+
+    EXPECT_TRUE(Store16LE(registers_, base_address, 0xAABBu));
+    EXPECT_TRUE(Store16LE(registers_, base_address + 2u, 0xCCDDu));
+
+    uint16_t value16;
+    EXPECT_TRUE(Load16LE(registers_, base_address, &value16));
+    EXPECT_EQ(0xAABBu, value16);
+    EXPECT_TRUE(Load16LE(registers_, base_address + 2u, &value16));
+    EXPECT_EQ(0xCCDDu, value16);
+
+    EXPECT_TRUE(Store32LE(registers_, base_address, 0u));
+    EXPECT_TRUE(Load32LE(registers_, base_address, &value32));
+    EXPECT_EQ(0u, value32);
+
+    EXPECT_TRUE(Store16LE(registers_, base_address, 0xAABBu));
+    EXPECT_TRUE(Store16LE(registers_, base_address + 2u, 0xCCDDu));
+
+    EXPECT_TRUE(Store8(registers_, base_address, 0xAAu));
+    EXPECT_TRUE(Store8(registers_, base_address + 1u, 0xBBu));
+    EXPECT_TRUE(Store8(registers_, base_address + 2u, 0xCCu));
+    EXPECT_TRUE(Store8(registers_, base_address + 3u, 0xDDu));
+
+    uint8_t value8;
+    EXPECT_TRUE(Load8(registers_, base_address, &value8));
+    EXPECT_EQ(0xAAu, value8);
+    EXPECT_TRUE(Load8(registers_, base_address + 1u, &value8));
+    EXPECT_EQ(0xBBu, value8);
+    EXPECT_TRUE(Load8(registers_, base_address + 2u, &value8));
+    EXPECT_EQ(0xCCu, value8);
+    EXPECT_TRUE(Load8(registers_, base_address + 3u, &value8));
+    EXPECT_EQ(0xDDu, value8);
+
+    EXPECT_FALSE(Load32LE(registers_, base_address + 4u, &value32));
+    EXPECT_FALSE(Load16LE(registers_, base_address + 4u, &value16));
+    EXPECT_FALSE(Load8(registers_, base_address + 4u, &value8));
+  }
+}

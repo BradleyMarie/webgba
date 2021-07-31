@@ -95,14 +95,14 @@ static void GbaIrqLineFree(void *context) {
 static bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
 static bool GbaPlatformRegisterIsMemoryControl(uint32_t address) {
-  address += 0x200u;
+  address += 0x200;
   return address % 0x800u < 4u;
 }
 
 static void GbaPlatformRegisterWriteMemoryControlByte(GbaPlatform *platform,
                                                       uint32_t address,
                                                       uint8_t value) {
-  switch ((address + 0x500) % 0x800) {
+  switch ((address + 0x200) % 0x800) {
     case 0u:
       platform->registers.memory_control.bytes[0] = value;
       break;
@@ -194,7 +194,7 @@ static bool GbaPlatformRegistersLoad32LEFunction(const void *context,
   bool high =
       GbaPlatformRegistersLoad16LEFunction(context, address + 2u, &high_bits);
   if (high) {
-    *value |= (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
+    *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
     *value = 0u;
   }
