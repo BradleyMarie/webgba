@@ -814,7 +814,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptReverse) {
 
 TEST_F(PlatformTest, InternalMemoryControl) {
   uint32_t imc_start = 0x4000800u - 0x4000200u;
-  uint32_t imc_spacing = 0x800u;
+  uint32_t imc_spacing = 0x10000u;
   uint32_t num_imc = (0x5000000u - 0x4000800u) / imc_spacing;
   for (uint32_t i = 0; i < num_imc; i++) {
     uint32_t base_address = imc_start + i * imc_spacing;
