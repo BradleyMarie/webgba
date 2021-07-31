@@ -1248,6 +1248,78 @@ TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptWakes) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformSramWaitStateCycles) {
+  EXPECT_EQ(4u, GbaPlatformSramWaitStateCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0001u));
+  EXPECT_EQ(3u, GbaPlatformSramWaitStateCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0002u));
+  EXPECT_EQ(2u, GbaPlatformSramWaitStateCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0003u));
+  EXPECT_EQ(8u, GbaPlatformSramWaitStateCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom0FirstAccessWaitCycles) {
+  EXPECT_EQ(4u, GbaPlatformRom0FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0004u));
+  EXPECT_EQ(3u, GbaPlatformRom0FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0008u));
+  EXPECT_EQ(2u, GbaPlatformRom0FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x000Cu));
+  EXPECT_EQ(8u, GbaPlatformRom0FirstAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom0SecondAccessWaitCycles) {
+  EXPECT_EQ(2u, GbaPlatformRom0SecondAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0010u));
+  EXPECT_EQ(1u, GbaPlatformRom0SecondAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom1FirstAccessWaitCycles) {
+  EXPECT_EQ(4u, GbaPlatformRom1FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0020u));
+  EXPECT_EQ(3u, GbaPlatformRom1FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0040u));
+  EXPECT_EQ(2u, GbaPlatformRom1FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0060u));
+  EXPECT_EQ(8u, GbaPlatformRom1FirstAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom1SecondAccessWaitCycles) {
+  EXPECT_EQ(4u, GbaPlatformRom1SecondAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0080u));
+  EXPECT_EQ(1u, GbaPlatformRom1SecondAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom2FirstAccessWaitCycles) {
+  EXPECT_EQ(4u, GbaPlatformRom2FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0100u));
+  EXPECT_EQ(3u, GbaPlatformRom2FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0200u));
+  EXPECT_EQ(2u, GbaPlatformRom2FirstAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0300u));
+  EXPECT_EQ(8u, GbaPlatformRom2FirstAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRom2SecondAccessWaitCycles) {
+  EXPECT_EQ(8u, GbaPlatformRom2SecondAccessWaitCycles(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x0400u));
+  EXPECT_EQ(1u, GbaPlatformRom2SecondAccessWaitCycles(platform_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRomPrefetch) {
+  EXPECT_FALSE(GbaPlatformRomPrefetch(platform_));
+  EXPECT_TRUE(Store16LE(registers_, WAITCNT_OFFSET, 0x4000u));
+  EXPECT_TRUE(GbaPlatformRomPrefetch(platform_));
+}
+
+TEST_F(PlatformTest, PostFlag) {
+  EXPECT_TRUE(Store8(registers_, POSTFLG_OFFSET, 0xDDu));
+
+  uint8_t value8;
+  EXPECT_TRUE(Load8(registers_, POSTFLG_OFFSET, &value8));
+  EXPECT_EQ(0xDDu, value8);
+}
+
 TEST_F(PlatformTest, InternalMemoryControl) {
   uint32_t imc_start = 0x4000800u - 0x4000200u;
   uint32_t imc_spacing = 0x10000u;
