@@ -480,10 +480,28 @@ void GbaPlatformRaiseDma3Interrupt(GbaPlatform *platform) {
 
 void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.keypad = true;
+  if (platform->power_state != GBA_POWER_STATE_RUN) {
+    const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
+    assert(platform->power_state < 3u);
+    if (platform->registers.interrupt_enable.value &
+        platform->registers.interrupt_flags.value &
+        masks[platform->power_state]) {
+      platform->power_state = GBA_POWER_STATE_RUN;
+    }
+  }
 }
 
 void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.cartridge = true;
+  if (platform->power_state != GBA_POWER_STATE_RUN) {
+    const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
+    assert(platform->power_state < 3u);
+    if (platform->registers.interrupt_enable.value &
+        platform->registers.interrupt_flags.value &
+        masks[platform->power_state]) {
+      platform->power_state = GBA_POWER_STATE_RUN;
+    }
+  }
 }
 
 uint_fast8_t GbaPlatformSramWaitStateCycles(const GbaPlatform *platform) {

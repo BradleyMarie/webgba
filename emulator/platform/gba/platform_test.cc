@@ -8,6 +8,8 @@ extern "C" {
 #define IF_OFFSET 2u
 #define WAITCNT_OFFSET 4u
 #define IME_OFFSET 8u
+#define POSTFLG_OFFSET 0x100u
+#define HALTCNT_OFFSET 0x101u
 
 class PlatformTest : public testing::Test {
  public:
@@ -136,6 +138,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseVBlankInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseVBlankInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(1u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterrupt) {
   GbaPlatformRaiseHBlankInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -177,6 +210,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(2u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 2u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 2u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseHBlankInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -240,6 +304,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 4u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseVBlankCountInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(4u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 4u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseTimer0Interrupt) {
   GbaPlatformRaiseTimer0Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -281,6 +376,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(8u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 8u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 8u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseTimer0Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -344,6 +470,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 16u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseTimer1Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(16u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 16u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseTimer2Interrupt) {
   GbaPlatformRaiseTimer2Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -385,6 +542,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(32u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 32u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 32u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseTimer2Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -448,6 +636,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 64u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseTimer3Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(64u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 64u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseSerialInterrupt) {
   GbaPlatformRaiseSerialInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -489,6 +708,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseSerialInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(128u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 128u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseSerialInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 128u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
+  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseSerialInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -552,6 +802,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma0InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseDma0InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 256u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseDma0Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(256u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 256u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseDma1Interrupt) {
   GbaPlatformRaiseDma1Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -593,6 +874,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma1InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(512u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 512u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseDma1InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 512u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseDma1Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -656,6 +968,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma2InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseDma2InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 1024u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseDma2Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(1024u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 1024u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseDma3Interrupt) {
   GbaPlatformRaiseDma3Interrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -697,6 +1040,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma3InterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(2048u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 2048u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseDma3InterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 2048u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
+  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseDma3Interrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -760,6 +1134,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseKeypadInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
 }
 
+TEST_F(PlatformTest, GbaPlatformRaiseKeypadInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 4096u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
+  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseKeypadInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(4096u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 4096u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
 TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterrupt) {
   GbaPlatformRaiseCartridgeInterrupt(platform_);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
@@ -801,6 +1206,37 @@ TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptReverse) {
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
+  EXPECT_EQ(8192u, value);
+
+  EXPECT_TRUE(Store16LE(registers_, IF_OFFSET, 8192u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptWakes) {
+  EXPECT_TRUE(Store16LE(registers_, IE_OFFSET, 8192u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store16LE(registers_, IME_OFFSET, 1u));
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
+  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+
+  GbaPlatformRaiseCartridgeInterrupt(platform_);
+  EXPECT_FALSE(InterruptLineIsRaised(rst_));
+  EXPECT_FALSE(InterruptLineIsRaised(fiq_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
