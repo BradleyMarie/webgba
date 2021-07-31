@@ -86,19 +86,19 @@ struct _GbaPlatform {
   uint16_t reference_count;
 };
 
-bool GbaIrqLineIsRaisedFunction(const void *context) {
+static bool GbaIrqLineIsRaisedFunction(const void *context) {
   const GbaPlatform *controller = (const GbaPlatform *)context;
   return controller->low_registers.interrupt_master_enable.enabled &&
          controller->low_registers.interrupt_enable.value &
              controller->low_registers.interrupt_flags.value;
 }
 
-void GbaIrqLineFree(void *context) {
+static void GbaIrqLineFree(void *context) {
   GbaPlatform *controller = (GbaPlatform *)context;
   GbaPlatformRelease(controller);
 }
 
-bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
+static bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
 static bool GbaPlatformLowRegistersLoad16LEFunction(const void *context,
                                                     uint32_t address,
@@ -449,8 +449,7 @@ bool GbaPlatformAllocate(GbaPlatform **platform, Memory **low_registers,
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.vblank = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -458,8 +457,7 @@ void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.hblank = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -467,8 +465,7 @@ void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.vblank_count = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -476,8 +473,7 @@ void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseTimer0Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.timer0 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -485,8 +481,7 @@ void GbaPlatformRaiseTimer0Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseTimer1Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.timer1 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -494,8 +489,7 @@ void GbaPlatformRaiseTimer1Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseTimer2Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.timer2 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -503,8 +497,7 @@ void GbaPlatformRaiseTimer2Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseTimer3Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.timer3 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -525,8 +518,7 @@ void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseDma0Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.dma0 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -534,8 +526,7 @@ void GbaPlatformRaiseDma0Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseDma1Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.dma1 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -543,8 +534,7 @@ void GbaPlatformRaiseDma1Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseDma2Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.dma2 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -552,8 +542,7 @@ void GbaPlatformRaiseDma2Interrupt(GbaPlatform *platform) {
 void GbaPlatformRaiseDma3Interrupt(GbaPlatform *platform) {
   platform->low_registers.interrupt_flags.dma3 = true;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
-      (platform->low_registers.interrupt_enable.value &
-       platform->low_registers.interrupt_flags.value)) {
+      GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
