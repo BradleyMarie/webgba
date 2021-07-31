@@ -2,6 +2,6 @@
 
 bool GbaSpuAllocate(GbaSpu **spu, Memory **registers) { return false; }
 
-void GbaSpuStep(GbaSpu *ppu) {}
+void GbaSpuStep(GbaSpu *spu) {}
 
-void GbaSpuFree(GbaSpu *ppu) {}
+void GbaSpuFree(GbaSpu *spu) {}
