@@ -164,7 +164,7 @@ static bool GbaSpuRegistersLoad32LE(const void *context, uint32_t address,
   uint16_t high_bits;
   bool high = GbaSpuRegistersLoad16LE(context, address + 2u, &high_bits);
   if (high) {
-    *value |= (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
+    *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
     *value = 0u;
   }
