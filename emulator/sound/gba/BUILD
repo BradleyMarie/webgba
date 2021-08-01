@@ -10,3 +10,12 @@ cc_library(
         "//emulator/memory:memory",
     ],
 )
+
+cc_test(
+    name = "sound_test",
+    srcs = ["sound_test.cc"],
+    deps = [
+        ":sound",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
