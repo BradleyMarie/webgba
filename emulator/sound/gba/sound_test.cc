@@ -63,9 +63,9 @@ TEST_F(SoundTest, GbaSpuRegistersLoad32LEUnusedHigh) {
 
 TEST_F(SoundTest, GbaSpuRegistersLoad32LE) {
   uint32_t contents;
-  EXPECT_TRUE(Store32LE(regs_, WAVE_RAM0_L_OFFSET, 0xFFFFFFFFu));
+  EXPECT_TRUE(Store32LE(regs_, WAVE_RAM0_L_OFFSET, 0x11223344u));
   EXPECT_TRUE(Load32LE(regs_, WAVE_RAM0_L_OFFSET, &contents));
-  EXPECT_EQ(0xFFFFFFFFu, contents);
+  EXPECT_EQ(0x11223344u, contents);
 }
 
 TEST_F(SoundTest, GbaSpuRegistersLoad8Aligned) {
@@ -90,13 +90,6 @@ TEST_F(SoundTest, GbaSpuRegistersLoad8Fails) {
 TEST_F(SoundTest, GbaSpuRegistersStore32LEFifoSucceeds) {
   EXPECT_TRUE(Store32LE(regs_, FIFO_A_OFFSET, 0xFFFFFFFFu));
   EXPECT_TRUE(Store32LE(regs_, FIFO_B_OFFSET, 0xFFFFFFFFu));
-}
-
-TEST_F(SoundTest, GbaSpuRegistersStore32LE) {
-  uint32_t contents;
-  EXPECT_TRUE(Store32LE(regs_, WAVE_RAM0_L_OFFSET, 0x11223344u));
-  EXPECT_TRUE(Load32LE(regs_, WAVE_RAM0_L_OFFSET, &contents));
-  EXPECT_EQ(0x11223344u, contents);
 }
 
 TEST_F(SoundTest, GbaSpuRegistersStore16LE) {
