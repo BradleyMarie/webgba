@@ -266,7 +266,7 @@ static bool GbaPpuRegistersLoad32LEFunction(const void *context,
   bool high =
       GbaPpuRegistersLoad16LEFunction(context, address + 2u, &high_bits);
   if (high) {
-    *value |= (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
+    *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
     *value = 0u;
   }
