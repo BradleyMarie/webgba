@@ -2,10 +2,12 @@
 #define _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_
 
 #include "emulator/memory/memory.h"
+#include "emulator/platform/gba/platform.h"
 
 typedef struct _GbaTimers GbaTimers;
 
-bool GbaTimersAllocate(GbaTimers **timers, Memory **registers);
+bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
+                       Memory **registers);
 
 void GbaTimersStep(GbaTimers *timers);
 
