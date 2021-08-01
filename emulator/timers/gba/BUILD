@@ -8,5 +8,6 @@ cc_library(
     srcs = ["timers.c"],
     deps = [
         "//emulator/memory:memory",
+        "//emulator/platform/gba:platform",
     ],
 )
