@@ -249,9 +249,9 @@ TEST_F(PpuTest, GbaPpuRegistersLoad32LEUnusedHigh) {
 
 TEST_F(PpuTest, GbaPpuRegistersLoad32LE) {
   uint32_t contents;
-  EXPECT_TRUE(Store32LE(regs_, WININ_OFFSET, 0xFFFFFFFFu));
+  EXPECT_TRUE(Store32LE(regs_, WININ_OFFSET, 0x11223344u));
   EXPECT_TRUE(Load32LE(regs_, WININ_OFFSET, &contents));
-  EXPECT_EQ(0xFFFFFFFFu, contents);
+  EXPECT_EQ(0x11223344u, contents);
 }
 
 TEST_F(PpuTest, GbaPpuRegistersLoad8Aligned) {
