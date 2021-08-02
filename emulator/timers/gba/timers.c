@@ -208,18 +208,16 @@ void GbaTimersStep(GbaTimers *timers) {
       timers->read.registers[i].tmcnt_l += 1;
       if (timers->read.registers[i].tmcnt_l == 0u) {
         overflowed = true;
+
+        timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
+        if (timers->read.registers[i].tmcnt_h.irq_enable) {
+          interrupt_functions[i](timers->platform);
+        }
       } else {
         overflowed = false;
       }
     } else {
       overflowed = false;
-    }
-
-    if (overflowed) {
-      timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
-      if (timers->read.registers[i].tmcnt_h.irq_enable) {
-        interrupt_functions[i](timers->platform);
-      }
     }
   }
 }
