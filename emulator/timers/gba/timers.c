@@ -3,15 +3,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define TM0CNT_L_OFFSET 0x00u
-#define TM0CNT_H_OFFSET 0x02u
-#define TM1CNT_L_OFFSET 0x04u
-#define TM1CNT_H_OFFSET 0x06u
-#define TM2CNT_L_OFFSET 0x08u
-#define TM2CNT_H_OFFSET 0x0Au
-#define TM3CNT_L_OFFSET 0x0Cu
-#define TM3CNT_H_OFFSET 0x0Eu
-
 #define GBA_TIMER_REGISTERS_SIZE 0x10u
 #define GBA_NUM_TIMERS 4u
 
