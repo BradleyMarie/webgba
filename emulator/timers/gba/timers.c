@@ -45,9 +45,52 @@ typedef union {
 struct _GbaTimers {
   GbaTimerRegisters read_registers;
   GbaTimerRegisters write_registers;
+  uint16_t timer_0_ticks;
+  uint16_t timer_1_ticks;
+  uint16_t timer_2_ticks;
+  uint16_t timer_3_ticks;
   GbaPlatform *platform;
   uint16_t reference_count;
 };
+
+static void UpdateTimersAfterWrite(GbaTimers *timers) {
+  // Check for newlty started timers
+  bool timer_0_started = timers->write_registers.tm0cnt_h.started &&
+                         !timers->read_registers.tm0cnt_h.started;
+  bool timer_1_started = timers->write_registers.tm1cnt_h.started &&
+                         !timers->read_registers.tm1cnt_h.started;
+  bool timer_2_started = timers->write_registers.tm2cnt_h.started &&
+                         !timers->read_registers.tm2cnt_h.started;
+  bool timer_3_started = timers->write_registers.tm3cnt_h.started &&
+                         !timers->read_registers.tm3cnt_h.started;
+
+  // Update read registers
+  timers->read_registers.tm0cnt_h = timers->write_registers.tm0cnt_h;
+  timers->read_registers.tm1cnt_h = timers->write_registers.tm1cnt_h;
+  timers->read_registers.tm2cnt_h = timers->write_registers.tm2cnt_h;
+  timers->read_registers.tm3cnt_h = timers->write_registers.tm3cnt_h;
+
+  // Update newly started timer counters
+  if (timer_0_started) {
+    timers->read_registers.tm0cnt_l = timers->write_registers.tm0cnt_l;
+    timers->timer_0_ticks = 0;
+  }
+
+  if (timer_1_started) {
+    timers->read_registers.tm1cnt_l = timers->write_registers.tm1cnt_l;
+    timers->timer_1_ticks = 0;
+  }
+
+  if (timer_2_started) {
+    timers->read_registers.tm2cnt_l = timers->write_registers.tm2cnt_l;
+    timers->timer_2_ticks = 0;
+  }
+
+  if (timer_3_started) {
+    timers->read_registers.tm3cnt_l = timers->write_registers.tm3cnt_l;
+    timers->timer_3_ticks = 0;
+  }
+}
 
 static bool GbaTimersRegistersLoad32LE(const void *context, uint32_t address,
                                        uint32_t *value) {
@@ -105,14 +148,7 @@ static bool GbaTimersRegistersStore32LE(void *context, uint32_t address,
   timers->write_registers.words[address >> 2u] = value;
 
   // Update read registers
-  timers->read_registers.tm0cnt_h.value =
-      timers->write_registers.tm0cnt_h.value;
-  timers->read_registers.tm1cnt_h.value =
-      timers->write_registers.tm1cnt_h.value;
-  timers->read_registers.tm2cnt_h.value =
-      timers->write_registers.tm2cnt_h.value;
-  timers->read_registers.tm3cnt_h.value =
-      timers->write_registers.tm3cnt_h.value;
+  UpdateTimersAfterWrite(timers);
 
   return true;
 }
@@ -130,14 +166,7 @@ static bool GbaTimersRegistersStore16LE(void *context, uint32_t address,
   timers->write_registers.half_words[address >> 1u] = value;
 
   // Update read registers
-  timers->read_registers.tm0cnt_h.value =
-      timers->write_registers.tm0cnt_h.value;
-  timers->read_registers.tm1cnt_h.value =
-      timers->write_registers.tm1cnt_h.value;
-  timers->read_registers.tm2cnt_h.value =
-      timers->write_registers.tm2cnt_h.value;
-  timers->read_registers.tm3cnt_h.value =
-      timers->write_registers.tm3cnt_h.value;
+  UpdateTimersAfterWrite(timers);
 
   return true;
 }
@@ -153,14 +182,7 @@ static bool GbaTimersRegistersStore8(void *context, uint32_t address,
   timers->write_registers.bytes[address] = value;
 
   // Update read registers
-  timers->read_registers.tm0cnt_h.value =
-      timers->write_registers.tm0cnt_h.value;
-  timers->read_registers.tm1cnt_h.value =
-      timers->write_registers.tm1cnt_h.value;
-  timers->read_registers.tm2cnt_h.value =
-      timers->write_registers.tm2cnt_h.value;
-  timers->read_registers.tm3cnt_h.value =
-      timers->write_registers.tm3cnt_h.value;
+  UpdateTimersAfterWrite(timers);
 
   return true;
 }
