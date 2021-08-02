@@ -18,7 +18,7 @@
 typedef union {
   struct {
     unsigned char prescalar : 2;
-    bool count_up_timing : 1;
+    bool cascade : 1;
     unsigned char unused0 : 3;
     bool irq_enable : 1;
     bool started : 1;
@@ -186,7 +186,52 @@ bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
   return true;
 }
 
-void GbaTimersStep(GbaTimers *timers) {}
+void GbaTimersStep(GbaTimers *timers) {
+  static const uint16_t tick_rates[4] = {1u, 64u, 256u, 1024u};
+  static const void (*interrupt_functions[4])(GbaPlatform *) = {
+      GbaPlatformRaiseTimer0Interrupt, GbaPlatformRaiseTimer1Interrupt,
+      GbaPlatformRaiseTimer2Interrupt, GbaPlatformRaiseTimer3Interrupt};
+
+  bool overflowed = false;
+  for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
+    if (!timers->read.registers[i].tmcnt_h.started) {
+      overflowed = false;
+      continue;
+    }
+
+    bool ticked;
+    if (timers->read.registers[i].tmcnt_h.cascade) {
+      ticked = overflowed;
+    } else {
+      uint16_t rate = tick_rates[timers->read.registers[i].tmcnt_h.prescalar];
+      timers->timer_ticks[i] += 1;
+      if (timers->timer_ticks[i] == rate) {
+        timers->timer_ticks[i] = 0u;
+        ticked = true;
+      } else {
+        ticked = false;
+      }
+    }
+
+    if (ticked) {
+      timers->read.registers[i].tmcnt_l += 1;
+      if (timers->read.registers[i].tmcnt_l == 0u) {
+        overflowed = true;
+      } else {
+        overflowed = false;
+      }
+    } else {
+      overflowed = false;
+    }
+
+    if (overflowed) {
+      timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
+      if (timers->read.registers[i].tmcnt_h.irq_enable) {
+        interrupt_functions[i](timers->platform);
+      }
+    }
+  }
+}
 
 void GbaTimersFree(GbaTimers *timers) {
   assert(timers->reference_count != 0u);
