@@ -11,3 +11,12 @@ cc_library(
         "//emulator/platform/gba:platform",
     ],
 )
+
+cc_test(
+    name = "timers_test",
+    srcs = ["timers_test.cc"],
+    deps = [
+        ":timers",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
