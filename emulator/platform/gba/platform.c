@@ -18,10 +18,7 @@ typedef union {
     bool vblank : 1;
     bool hblank : 1;
     bool vblank_count : 1;
-    bool timer0 : 1;
-    bool timer1 : 1;
-    bool timer2 : 1;
-    bool timer3 : 1;
+    unsigned char timers : 4;
     bool serial : 1;
     bool dma0 : 1;
     bool dma1 : 1;
@@ -401,32 +398,11 @@ void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
   }
 }
 
-void GbaPlatformRaiseTimer0Interrupt(GbaPlatform *platform) {
-  platform->registers.interrupt_flags.timer0 = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
-    platform->power_state = GBA_POWER_STATE_RUN;
-  }
-}
 
-void GbaPlatformRaiseTimer1Interrupt(GbaPlatform *platform) {
-  platform->registers.interrupt_flags.timer1 = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
-    platform->power_state = GBA_POWER_STATE_RUN;
-  }
-}
+void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer) {
+  assert(GBA_TIMER_0 <= timer && timer <= GBA_TIMER_3);
 
-void GbaPlatformRaiseTimer2Interrupt(GbaPlatform *platform) {
-  platform->registers.interrupt_flags.timer2 = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
-    platform->power_state = GBA_POWER_STATE_RUN;
-  }
-}
-
-void GbaPlatformRaiseTimer3Interrupt(GbaPlatform *platform) {
-  platform->registers.interrupt_flags.timer3 = true;
+  platform->registers.interrupt_flags.timers |= 1u << timer;
   if (platform->power_state == GBA_POWER_STATE_HALT &&
       GbaIrqLineIsRaisedFunction(platform)) {
     platform->power_state = GBA_POWER_STATE_RUN;

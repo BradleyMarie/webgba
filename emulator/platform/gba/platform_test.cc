@@ -64,10 +64,10 @@ TEST_F(PlatformTest, GbaPlatformInterruptAcknowledge) {
   GbaPlatformRaiseVBlankInterrupt(platform_);
   GbaPlatformRaiseHBlankInterrupt(platform_);
   GbaPlatformRaiseVBlankCountInterrupt(platform_);
-  GbaPlatformRaiseTimer0Interrupt(platform_);
-  GbaPlatformRaiseTimer1Interrupt(platform_);
-  GbaPlatformRaiseTimer2Interrupt(platform_);
-  GbaPlatformRaiseTimer3Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_0);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_1);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_2);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_3);
   GbaPlatformRaiseSerialInterrupt(platform_);
   GbaPlatformRaiseDma0Interrupt(platform_);
   GbaPlatformRaiseDma1Interrupt(platform_);
@@ -336,7 +336,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterruptWakes) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer0Interrupt) {
-  GbaPlatformRaiseTimer0Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_0);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -362,7 +362,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer0Interrupt) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptReverse) {
-  GbaPlatformRaiseTimer0Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_0);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -401,7 +401,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptWakes) {
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
   EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
 
-  GbaPlatformRaiseTimer0Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_0);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
@@ -419,7 +419,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptWakes) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer1Interrupt) {
-  GbaPlatformRaiseTimer1Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_1);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -445,7 +445,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer1Interrupt) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptReverse) {
-  GbaPlatformRaiseTimer1Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_1);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -484,7 +484,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptWakes) {
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
   EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
 
-  GbaPlatformRaiseTimer1Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_1);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
@@ -502,7 +502,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptWakes) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer2Interrupt) {
-  GbaPlatformRaiseTimer2Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_2);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -528,7 +528,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer2Interrupt) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptReverse) {
-  GbaPlatformRaiseTimer2Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_2);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -567,7 +567,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptWakes) {
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
   EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
 
-  GbaPlatformRaiseTimer2Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_2);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
@@ -585,7 +585,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptWakes) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer3Interrupt) {
-  GbaPlatformRaiseTimer3Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_3);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -611,7 +611,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer3Interrupt) {
 }
 
 TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptReverse) {
-  GbaPlatformRaiseTimer3Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_3);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_FALSE(InterruptLineIsRaised(irq_));
@@ -650,7 +650,7 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptWakes) {
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
   EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
 
-  GbaPlatformRaiseTimer3Interrupt(platform_);
+  GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_3);
   EXPECT_FALSE(InterruptLineIsRaised(rst_));
   EXPECT_FALSE(InterruptLineIsRaised(fiq_));
   EXPECT_TRUE(InterruptLineIsRaised(irq_));
