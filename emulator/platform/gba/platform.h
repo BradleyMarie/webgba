@@ -12,14 +12,18 @@ bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
                          InterruptLine **rst_line, InterruptLine **fiq_line,
                          InterruptLine **irq_line);
 
-// Interrupt Controls
+// Interrupts
+typedef enum {
+  GBA_TIMER_0 = 0u,
+  GBA_TIMER_1 = 1u,
+  GBA_TIMER_2 = 2u,
+  GBA_TIMER_3 = 3u
+} GbaTimerId;
+
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
 void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform);
 void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform);
-void GbaPlatformRaiseTimer0Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseTimer1Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseTimer2Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseTimer3Interrupt(GbaPlatform *platform);
+void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer);
 void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform);
 void GbaPlatformRaiseDma0Interrupt(GbaPlatform *platform);
 void GbaPlatformRaiseDma1Interrupt(GbaPlatform *platform);

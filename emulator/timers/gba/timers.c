@@ -179,9 +179,6 @@ bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
 
 void GbaTimersStep(GbaTimers *timers) {
   static const uint16_t tick_rates[4] = {1u, 64u, 256u, 1024u};
-  static const void (*interrupt_functions[4])(GbaPlatform *) = {
-      GbaPlatformRaiseTimer0Interrupt, GbaPlatformRaiseTimer1Interrupt,
-      GbaPlatformRaiseTimer2Interrupt, GbaPlatformRaiseTimer3Interrupt};
 
   bool overflowed = false;
   for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
@@ -207,12 +204,12 @@ void GbaTimersStep(GbaTimers *timers) {
     if (ticked) {
       timers->read.registers[i].tmcnt_l += 1;
       if (timers->read.registers[i].tmcnt_l == 0u) {
-        overflowed = true;
-
         timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
         if (timers->read.registers[i].tmcnt_h.irq_enable) {
-          interrupt_functions[i](timers->platform);
+          GbaPlatformRaiseTimerInterrupt(timers->platform, i);
         }
+
+        overflowed = true;
       } else {
         overflowed = false;
       }
