@@ -8,5 +8,6 @@ cc_library(
     srcs = ["dma.c"],
     deps = [
         "//emulator/memory:memory",
+        "//emulator/platform/gba:platform",
     ],
 )
