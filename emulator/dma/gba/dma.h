@@ -16,7 +16,7 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory);
 // Triggers
 void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount);
 void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit);
-void GbaDmaUnitSignalFifoRefresh();
+void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit);
 
 void GbaDmaUnitFree(GbaDmaUnit *dma_unit);
 

@@ -225,11 +225,38 @@ bool GbaDmaIsActive(const GbaDmaUnit *dma_unit) {
 
 void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {}
 
-void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount) {}
+void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount) {
+  for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
+    if (dma_unit->registers.units[i].control.enabled &&
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_HBLANK) {
+      dma_unit->active[i] = true;
+    }
+  }
 
-void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit) {}
+  if (dma_unit->registers.units[3].control.enabled &&
+      dma_unit->registers.units[3].control.start_timing == GBA_DMA_SPECIAL &&
+      vcount >= 2u && vcount < 162) {
+    dma_unit->active[3] = true;
+  }
+}
 
-void GbaDmaUnitSignalFifoRefresh() {}
+void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit) {
+  for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
+    if (dma_unit->registers.units[i].control.enabled &&
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_VBLANK) {
+      dma_unit->active[i] = true;
+    }
+  }
+}
+
+void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit) {
+  for (uint_fast8_t i = 1; i <= 2; i++) {
+    if (dma_unit->registers.units[i].control.enabled &&
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
+      dma_unit->active[i] = true;
+    }
+  }
+}
 
 void GbaDmaUnitFree(GbaDmaUnit *dma_unit) {
   assert(dma_unit->reference_count != 0u);
