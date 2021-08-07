@@ -58,18 +58,32 @@ typedef union {
 } GbaDmaUnitRegisters;
 
 struct _GbaDmaUnit {
+  unsigned active;
   GbaDmaUnitRegisters registers;
-  bool active[GBA_NUM_DMA_UNITS];
   GbaPlatform *platform;
   uint16_t reference_count;
 };
 
+static void GbaDmaUnitClearActive(GbaDmaUnit *dma_unit, uint_fast8_t index) {
+  assert(index < GBA_NUM_DMA_UNITS);
+  unsigned unset_bit_mask = ~(1u << index);
+  dma_unit->active &= unset_bit_mask;
+}
+
+static void GbaDmaUnitSetActiveBitTo(GbaDmaUnit *dma_unit, uint_fast8_t index,
+                                     bool value) {
+  assert(index < GBA_NUM_DMA_UNITS);
+  GbaDmaUnitClearActive(dma_unit, index);
+  dma_unit->active |= (unsigned)value << index;
+}
+
 static void GbaDmaUnitUpdateAfterWrite(GbaDmaUnit *dma_unit) {
+  assert(!dma_unit->active);
   for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
-    assert(!dma_unit->active[i]);
-    dma_unit->active[i] =
+    bool active =
         dma_unit->registers.units[i].control.enabled &&
         dma_unit->registers.units[i].control.start_timing == GBA_DMA_IMMEDIATE;
+    GbaDmaUnitSetActiveBitTo(dma_unit, i, active);
   }
 }
 
@@ -217,11 +231,7 @@ bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
   return true;
 }
 
-bool GbaDmaIsActive(const GbaDmaUnit *dma_unit) {
-  bool active = dma_unit->active[0] || dma_unit->active[1] ||
-                dma_unit->active[2] || dma_unit->active[3];
-  return active;
-}
+bool GbaDmaIsActive(const GbaDmaUnit *dma_unit) { return dma_unit->active; }
 
 void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {}
 
@@ -229,14 +239,14 @@ void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount) {
   for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
     if (dma_unit->registers.units[i].control.enabled &&
         dma_unit->registers.units[i].control.start_timing == GBA_DMA_HBLANK) {
-      dma_unit->active[i] = true;
+      GbaDmaUnitSetActiveBitTo(dma_unit, i, true);
     }
   }
 
   if (dma_unit->registers.units[3].control.enabled &&
       dma_unit->registers.units[3].control.start_timing == GBA_DMA_SPECIAL &&
       vcount >= 2u && vcount < 162) {
-    dma_unit->active[3] = true;
+    GbaDmaUnitSetActiveBitTo(dma_unit, 3, true);
   }
 }
 
@@ -244,7 +254,7 @@ void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit) {
   for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
     if (dma_unit->registers.units[i].control.enabled &&
         dma_unit->registers.units[i].control.start_timing == GBA_DMA_VBLANK) {
-      dma_unit->active[i] = true;
+      GbaDmaUnitSetActiveBitTo(dma_unit, i, true);
     }
   }
 }
@@ -253,7 +263,7 @@ void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit) {
   for (uint_fast8_t i = 1; i <= 2; i++) {
     if (dma_unit->registers.units[i].control.enabled &&
         dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
-      dma_unit->active[i] = true;
+      GbaDmaUnitSetActiveBitTo(dma_unit, i, true);
     }
   }
 }
