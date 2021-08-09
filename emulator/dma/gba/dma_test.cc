@@ -40,6 +40,16 @@ class DmaUnitTest : public testing::Test {
   void SetUp() override {
     ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
     ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &regs_));
+
+    for (char &c : memory_space_) {
+      c = 0;
+    }
+
+    memory_ =
+        MemoryAllocate(nullptr, Load32LEStatic, Load16LEStatic, Load8Static,
+                       Store32LEStatic, Store16LEStatic, Store8Static, nullptr);
+    ASSERT_NE(nullptr, memory_);
+
     ASSERT_TRUE(Store16LE(plat_regs_, IE_OFFSET, 0xFFFFu));
     ASSERT_TRUE(Store16LE(plat_regs_, IF_OFFSET, 0xFFFFu));
     ASSERT_TRUE(Store16LE(plat_regs_, IME_OFFSET, 0xFFFFu));
@@ -53,9 +63,93 @@ class DmaUnitTest : public testing::Test {
     InterruptLineFree(irq_);
     GbaDmaUnitFree(dma_unit_);
     MemoryFree(regs_);
+    MemoryFree(memory_);
   }
 
  protected:
+  static bool Load32LEStatic(const void *context, uint32_t address,
+                             uint32_t *value) {
+    if (address + sizeof(uint32_t) - 1 >= memory_space_.size()) {
+      return false;
+    }
+    char *data = memory_space_.data() + address;
+    *value = *reinterpret_cast<uint32_t *>(data);
+    return true;
+  }
+
+  static bool Load16LEStatic(const void *context, uint32_t address,
+                             uint16_t *value) {
+    if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
+      return false;
+    }
+    char *data = memory_space_.data() + address;
+    *value = *reinterpret_cast<uint16_t *>(data);
+    return true;
+  }
+
+  static bool Load8Static(const void *context, uint32_t address,
+                          uint8_t *value) {
+    if (address > memory_space_.size()) {
+      return false;
+    }
+    *value = memory_space_[address];
+    return true;
+  }
+
+  static bool Store32LEStatic(void *context, uint32_t address, uint32_t value) {
+    if (address + sizeof(uint32_t) - 1 >= memory_space_.size()) {
+      return false;
+    }
+    char *data = memory_space_.data() + address;
+    *reinterpret_cast<uint32_t *>(data) = value;
+    return true;
+  }
+
+  static bool Store16LEStatic(void *context, uint32_t address, uint16_t value) {
+    if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
+      return false;
+    }
+    char *data = memory_space_.data() + address;
+    *reinterpret_cast<uint16_t *>(data) = value;
+    return true;
+  }
+
+  static bool Store8Static(void *context, uint32_t address, uint8_t value) {
+    if (address >= memory_space_.size()) {
+      return false;
+    }
+    memory_space_[address] = value;
+    return true;
+  }
+
+  void EnableDma(uint_fast8_t index, uint32_t source, uint32_t dest,
+                 uint16_t transfer_count, bool transfer_words,
+                 uint_fast8_t src_addr_mode, uint_fast8_t dest_addr_mode,
+                 uint_fast8_t trigger, bool repeat, bool irq) {
+    uint32_t offset = index * 12u;
+    ASSERT_TRUE(Store32LE(regs_, DMA0SAD_OFFSET + offset, source));
+    ASSERT_TRUE(Store32LE(regs_, DMA0DAD_OFFSET + offset, dest));
+    ASSERT_TRUE(Store16LE(regs_, DMA0CNT_L_OFFSET + offset, transfer_count));
+
+    uint16_t control = 0x8000;
+    control |= dest_addr_mode << 5u;
+    control |= src_addr_mode << 7u;
+    control |= repeat << 9u;
+    control |= transfer_words << 10u;
+    control |= trigger << 12u;
+    control |= irq << 14u;
+
+    ASSERT_TRUE(Store16LE(regs_, DMA0CNT_H_OFFSET + offset, control));
+  }
+
+  void DmaDoSteps(uint32_t steps_to_do) {
+    while (steps_to_do != 0) {
+      GbaDmaUnitStep(dma_unit_, memory_);
+      steps_to_do -= 1;
+    }
+  }
+
+  static std::vector<char> memory_space_;
   GbaPlatform *plat_;
   Memory *plat_regs_;
   InterruptLine *rst_;
@@ -63,7 +157,10 @@ class DmaUnitTest : public testing::Test {
   InterruptLine *irq_;
   GbaDmaUnit *dma_unit_;
   Memory *regs_;
+  Memory *memory_;
 };
+
+std::vector<char> DmaUnitTest::memory_space_(1024u, 0);
 
 TEST_F(DmaUnitTest, GbaDmaUnitRegistersLoad16LE) {
   uint16_t contents;
@@ -267,4 +364,100 @@ TEST_F(DmaUnitTest, GbaDmaUnitRegistersLoad32LE) {
   // Out of Bounds
   EXPECT_TRUE(Store32LE(regs_, DMA3CNT_L_OFFSET + 4u, 0xAABBCCDDu));
   EXPECT_FALSE(Load32LE(regs_, DMA3CNT_L_OFFSET + 4u, &contents));
+}
+
+TEST_F(DmaUnitTest, DefaultUnitIsInactive) {
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+}
+
+TEST_F(DmaUnitTest, TestDmaIrq0) {
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EnableDma(/*index=*/0u, /*source=*/0u, /*dest=*/16u, /*transfer_count=*/1u,
+            /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t interrupt_flags;
+  EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
+  EXPECT_EQ(1u << 8u, interrupt_flags);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
+}
+
+TEST_F(DmaUnitTest, TestDmaIrq1) {
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EnableDma(/*index=*/1u, /*source=*/0u, /*dest=*/16u, /*transfer_count=*/1u,
+            /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t interrupt_flags;
+  EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
+  EXPECT_EQ(1u << 9u, interrupt_flags);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
+}
+
+TEST_F(DmaUnitTest, TestDmaIrq2) {
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EnableDma(/*index=*/2u, /*source=*/0u, /*dest=*/16u, /*transfer_count=*/1u,
+            /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t interrupt_flags;
+  EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
+  EXPECT_EQ(1u << 10u, interrupt_flags);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
+}
+
+TEST_F(DmaUnitTest, TestDmaIrq3) {
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EnableDma(/*index=*/3u, /*source=*/0u, /*dest=*/16u, /*transfer_count=*/1u,
+            /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
+            /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+
+  uint16_t interrupt_flags;
+  EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
+  EXPECT_EQ(1u << 11u, interrupt_flags);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
 }
