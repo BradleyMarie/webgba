@@ -11,3 +11,12 @@ cc_library(
         "//emulator/platform/gba:platform",
     ],
 )
+
+cc_test(
+    name = "dma_test",
+    srcs = ["dma_test.cc"],
+    deps = [
+        ":dma",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

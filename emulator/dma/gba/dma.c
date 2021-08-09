@@ -165,21 +165,8 @@ static bool GbaDmaUnitRegistersLoad32LE(const void *context, uint32_t address,
                                         uint32_t *value) {
   assert((address & 0x3u) == 0u);
 
-  uint16_t low_bits;
-  bool low = GbaDmaUnitRegistersLoad16LE(context, address, &low_bits);
-  if (!low) {
-    return false;
-  }
-
-  uint16_t high_bits;
-  bool high = GbaDmaUnitRegistersLoad16LE(context, address + 2u, &high_bits);
-  if (high) {
-    *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
-  } else {
-    *value = 0u;
-  }
-
-  return true;
+  // It is not possible to do a 32-bit read from these registers
+  return false;
 }
 
 static bool GbaDmaUnitRegistersLoad8(const void *context, uint32_t address,
