@@ -10,7 +10,7 @@ bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
                         Memory **registers);
 
 // Step
-bool GbaDmaIsActive(const GbaDmaUnit *dma_unit);
+bool GbaDmaUnitIsActive(const GbaDmaUnit *dma_unit);
 void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory);
 
 // Triggers
