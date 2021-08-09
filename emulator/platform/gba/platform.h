@@ -13,6 +13,13 @@ bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
                          InterruptLine **irq_line);
 
 // Interrupts
+void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
+void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform);
+void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform);
+void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform);
+void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform);
+void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform);
+
 typedef enum {
   GBA_TIMER_0 = 0u,
   GBA_TIMER_1 = 1u,
@@ -20,17 +27,16 @@ typedef enum {
   GBA_TIMER_3 = 3u
 } GbaTimerId;
 
-void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
-void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform);
-void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform);
 void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer);
-void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform);
-void GbaPlatformRaiseDma0Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseDma1Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseDma2Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseDma3Interrupt(GbaPlatform *platform);
-void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform);
-void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform);
+
+typedef enum {
+  GBA_DMA_0 = 0u,
+  GBA_DMA_1 = 1u,
+  GBA_DMA_2 = 2u,
+  GBA_DMA_3 = 3u
+} GbaDmaId;
+
+void GbaPlatformRaiseDmaInterrupt(GbaPlatform *platform, GbaDmaId dma);
 
 // Waitstate Cycles
 uint_fast8_t GbaPlatformSramWaitStateCycles(const GbaPlatform *platform);
