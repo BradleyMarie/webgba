@@ -2,10 +2,12 @@
 #define _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_
 
 #include "emulator/memory/memory.h"
+#include "emulator/platform/gba/platform.h"
 
 typedef struct _GbaPeripherals GbaPeripherals;
 
-bool GbaPeripheralsAllocate(GbaPeripherals **peripherals, Memory **registers);
+bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
+                            Memory **registers);
 
 void GbaPeripheralsStep(GbaPeripherals *peripherals);
 
