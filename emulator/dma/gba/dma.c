@@ -334,6 +334,9 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
         }
         GbaDmaUnitReloadTransferSize(dma_unit, i);
       }
+      if (dma_unit->registers.units[i].control.irq_enable) {
+        GbaPlatformRaiseDmaInterrupt(dma_unit->platform, i);
+      }
     }
     break;
   }
