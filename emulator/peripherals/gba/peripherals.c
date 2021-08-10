@@ -23,6 +23,42 @@
 
 typedef union {
   struct {
+    bool a : 1;
+    bool b : 1;
+    bool select : 1;
+    bool start : 1;
+    bool right : 1;
+    bool left : 1;
+    bool up : 1;
+    bool down : 1;
+    bool r : 1;
+    bool l : 1;
+    unsigned char unused : 6;
+  };
+  uint16_t value;
+} KeyInput;
+
+typedef union {
+  struct {
+    bool a : 1;
+    bool b : 1;
+    bool select : 1;
+    bool start : 1;
+    bool right : 1;
+    bool left : 1;
+    bool up : 1;
+    bool down : 1;
+    bool r : 1;
+    bool l : 1;
+    unsigned char unused : 4;
+    bool irq_enable : 1;
+    bool irq_condition : 1;
+  };
+  uint16_t value;
+} KeyControl;
+
+typedef union {
+  struct {
     uint16_t siomulti0;
     uint16_t siomulti1;
     uint16_t siomulti2;
@@ -30,8 +66,8 @@ typedef union {
     uint16_t siocnt;
     uint16_t siomlt_send;
     uint32_t unused0;
-    uint16_t keyinput;
-    uint16_t keycnt;
+    KeyInput keyinput;
+    KeyControl keycnt;
     uint16_t rcnt;
     uint16_t unused1[5];
     uint16_t joycnt;
@@ -78,10 +114,10 @@ static bool GbaPeripheralsRegistersLoad16LE(const void *context,
       *value = peripherals->registers.siomlt_send;
       return true;
     case KEYINPUT_OFFSET:
-      *value = peripherals->registers.keyinput;
+      *value = peripherals->registers.keyinput.value;
       return true;
     case KEYCNT_OFFSET:
-      *value = peripherals->registers.keycnt;
+      *value = peripherals->registers.keycnt.value;
       return true;
     case RCNT_OFFSET:
       *value = peripherals->registers.rcnt;
@@ -183,17 +219,109 @@ static bool GbaPeripheralsRegistersStore8(void *context, uint32_t address,
   return true;
 }
 
-void GbaPeripheralsMemoryFree(void *context) {
+static void GbaPeripheralsMaybeSendKeypadInterrupt(
+    const GbaPeripherals *peripherals) {
+  if (!peripherals->registers.keycnt.irq_enable) {
+    return;
+  }
+
+  static const uint16_t field_mask = 0x01FF;
+  uint16_t input = peripherals->registers.keyinput.value & field_mask;
+  uint16_t control = peripherals->registers.keycnt.value & field_mask;
+  if (peripherals->registers.keycnt.irq_condition) {
+    if (input == control) {
+      GbaPlatformRaiseKeypadInterrupt(peripherals->platform);
+    }
+  } else {
+    if (input & control) {
+      GbaPlatformRaiseKeypadInterrupt(peripherals->platform);
+    }
+  }
+}
+
+static void GbaGamePadToggleUp(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.up = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleDown(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.down = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleLeft(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.left = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleRight(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.right = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleA(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.a = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleB(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.b = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleL(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.l = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleR(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.r = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleStart(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.start = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaGamePadToggleSelect(void *context, bool pressed) {
+  GbaPeripherals *peripherals = (GbaPeripherals *)context;
+  peripherals->registers.keyinput.select = pressed;
+  GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
+}
+
+static void GbaPeripheralsMemoryFree(void *context) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
   GbaPeripheralsFree(peripherals);
 }
 
 bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
-                            Memory **registers) {
+                            GamePad **gamepad, Memory **registers) {
   *peripherals = (GbaPeripherals *)calloc(1, sizeof(GbaPeripherals));
   if (*peripherals == NULL) {
     return false;
   }
+
+  *gamepad = GamepadAllocate(
+      *peripherals, GbaGamePadToggleUp, GbaGamePadToggleDown,
+      GbaGamePadToggleLeft, GbaGamePadToggleRight, GbaGamePadToggleA,
+      GbaGamePadToggleB, GbaGamePadToggleL, GbaGamePadToggleR,
+      GbaGamePadToggleStart, GbaGamePadToggleSelect, GbaPeripheralsMemoryFree);
+  if (*gamepad == NULL) {
+    free(*peripherals);
+    return false;
+  }
+
+  (*peripherals)->reference_count = 3u;
 
   *registers = MemoryAllocate(
       *peripherals, GbaPeripheralsRegistersLoad32LE,
@@ -201,12 +329,12 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
       GbaPeripheralsRegistersStore32LE, GbaPeripheralsRegistersStore16LE,
       GbaPeripheralsRegistersStore8, GbaPeripheralsMemoryFree);
   if (*registers == NULL) {
+    GamePadFree(*gamepad);
     free(*peripherals);
     return false;
   }
 
   (*peripherals)->platform = platform;
-  (*peripherals)->reference_count = 2u;
 
   GbaPlatformRetain(platform);
 
