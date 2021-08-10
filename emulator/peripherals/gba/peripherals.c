@@ -14,9 +14,12 @@
 #define KEYINPUT_OFFSET 0x10u
 #define KEYCNT_OFFSET 0x12u
 #define RCNT_OFFSET 0x14u
+#define IR_OFFSET 0x16u
 #define JOYCNT_OFFSET 0x20u
-#define JOY_RECV_OFFSET 0x30u
-#define JOY_TRANS_OFFSET 0x34u
+#define JOY_RECV_L_OFFSET 0x30u
+#define JOY_RECV_H_OFFSET 0x32u
+#define JOY_TRANS_L_OFFSET 0x34u
+#define JOY_TRANS_H_OFFSET 0x36u
 #define JOYSTAT_OFFSET 0x38u
 
 #define GBA_PERIPHERALS_REGISTERS_SIZE 0x3Cu
@@ -69,11 +72,18 @@ typedef union {
     KeyInput keyinput;
     KeyControl keycnt;
     uint16_t rcnt;
-    uint16_t unused1[5];
+    uint16_t ir;
+    uint16_t unused1[4];
     uint16_t joycnt;
     uint16_t unused3[7];
-    uint32_t joy_recv;
-    uint32_t joy_trans;
+    union {
+      uint16_t joy_recv_half[2];
+      uint32_t joy_recv;
+    };
+    union {
+      uint16_t joy_trans_half[2];
+      uint32_t joy_trans;
+    };
     uint16_t joystat;
     uint16_t unused4;
   };
@@ -96,16 +106,16 @@ static bool GbaPeripheralsRegistersLoad16LE(const void *context,
 
   switch (address) {
     case SIOMULTI0_OFFSET:
-      *value = peripherals->registers.siomulti0;
+      *value = 0u;
       return true;
     case SIOMULTI1_OFFSET:
-      *value = peripherals->registers.siomulti1;
+      *value = 0u;
       return true;
     case SIOMULTI2_OFFSET:
-      *value = peripherals->registers.siomulti2;
+      *value = 0u;
       return true;
     case SIOMULTI3_OFFSET:
-      *value = peripherals->registers.siomulti3;
+      *value = 0u;
       return true;
     case SIOCNT_OFFSET:
       *value = peripherals->registers.siocnt;
@@ -122,17 +132,26 @@ static bool GbaPeripheralsRegistersLoad16LE(const void *context,
     case RCNT_OFFSET:
       *value = peripherals->registers.rcnt;
       return true;
+    case IR_OFFSET:
+      *value = 0u;
+      return true;
     case JOYCNT_OFFSET:
       *value = peripherals->registers.joycnt;
       return true;
-    case JOY_RECV_OFFSET:
-      *value = peripherals->registers.joy_recv;
+    case JOY_RECV_L_OFFSET:
+      *value = 0u;
       return true;
-    case JOY_TRANS_OFFSET:
-      *value = peripherals->registers.joy_trans;
+    case JOY_RECV_H_OFFSET:
+      *value = 0u;
+      return true;
+    case JOY_TRANS_L_OFFSET:
+      *value = peripherals->registers.joy_trans_half[0];
+      return true;
+    case JOY_TRANS_H_OFFSET:
+      *value = peripherals->registers.joy_trans_half[1];
       return true;
     case JOYSTAT_OFFSET:
-      *value = peripherals->registers.joystat;
+      *value = 0u;
       return true;
   }
 
@@ -204,17 +223,12 @@ static bool GbaPeripheralsRegistersStore8(void *context, uint32_t address,
                                           uint8_t value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
 
-  uint32_t read_address = address & 0xFFFFFFFEu;
-  uint16_t value16 = peripherals->registers.half_words[read_address >> 1u];
-  if (address == read_address) {
-    value16 &= 0xFF00;
-    value16 |= value;
-  } else {
-    value16 &= 0x00FF;
-    value16 |= (uint16_t)value << 8u;
+  if (address >= GBA_PERIPHERALS_REGISTERS_SIZE || address == KEYINPUT_OFFSET ||
+      address == KEYINPUT_OFFSET + 1u) {
+    return true;
   }
 
-  GbaPeripheralsRegistersStore16LE(context, read_address, value16);
+  peripherals->registers.bytes[address] = value;
 
   return true;
 }
