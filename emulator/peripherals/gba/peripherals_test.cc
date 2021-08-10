@@ -89,10 +89,12 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad16LE) {
   // In Bounds
   EXPECT_TRUE(Store16LE(regs_, KEYINPUT_OFFSET, 0x1122u));
   EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(0x03FFu, contents);
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x1122u));
   EXPECT_TRUE(Load16LE(regs_, KEYCNT_OFFSET, &contents));
   EXPECT_EQ(0x1122u, contents);
+  EXPECT_TRUE(Load16LE(regs_, RCNT_OFFSET, &contents));
+  EXPECT_EQ(0x8000u, contents);
   EXPECT_TRUE(Store16LE(regs_, RCNT_OFFSET, 0x1122u));
   EXPECT_TRUE(Load16LE(regs_, RCNT_OFFSET, &contents));
   EXPECT_EQ(0x1122u, contents);
@@ -181,16 +183,20 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad8) {
   // In Bounds
   EXPECT_TRUE(Store8(regs_, KEYINPUT_OFFSET, 0x22u));
   EXPECT_TRUE(Load8(regs_, KEYINPUT_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(0xFFu, contents);
   EXPECT_TRUE(Store8(regs_, KEYINPUT_OFFSET + 1u, 0x22u));
   EXPECT_TRUE(Load8(regs_, KEYINPUT_OFFSET + 1u, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(0x03u, contents);
   EXPECT_TRUE(Store8(regs_, KEYCNT_OFFSET, 0x11u));
   EXPECT_TRUE(Load8(regs_, KEYCNT_OFFSET, &contents));
   EXPECT_EQ(0x11u, contents);
   EXPECT_TRUE(Store8(regs_, KEYCNT_OFFSET + 1u, 0x22u));
   EXPECT_TRUE(Load8(regs_, KEYCNT_OFFSET + 1u, &contents));
   EXPECT_EQ(0x22u, contents);
+  EXPECT_TRUE(Load8(regs_, RCNT_OFFSET, &contents));
+  EXPECT_EQ(0x00u, contents);
+  EXPECT_TRUE(Load8(regs_, RCNT_OFFSET + 1u, &contents));
+  EXPECT_EQ(0x80u, contents);
   EXPECT_TRUE(Store8(regs_, RCNT_OFFSET, 0x11u));
   EXPECT_TRUE(Load8(regs_, RCNT_OFFSET, &contents));
   EXPECT_EQ(0x11u, contents);
@@ -276,7 +282,9 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad32LE) {
   // In Bounds
   EXPECT_TRUE(Store32LE(regs_, KEYINPUT_OFFSET, 0x11223344u));
   EXPECT_TRUE(Load32LE(regs_, KEYINPUT_OFFSET, &contents));
-  EXPECT_EQ(0x11220000u, contents);
+  EXPECT_EQ(0x112203FFu, contents);
+  EXPECT_TRUE(Load32LE(regs_, RCNT_OFFSET, &contents));
+  EXPECT_EQ(0x00008000u, contents);
   EXPECT_TRUE(Store32LE(regs_, RCNT_OFFSET, 0x11223344u));
   EXPECT_TRUE(Load32LE(regs_, RCNT_OFFSET, &contents));
   EXPECT_EQ(0x00003344u, contents);
@@ -308,4 +316,114 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad32LE) {
   // Out of Bounds
   EXPECT_TRUE(Store32LE(regs_, JOYSTAT_OFFSET + 4u, 0x11223344u));
   EXPECT_FALSE(Load32LE(regs_, JOYSTAT_OFFSET + 4u, &contents));
+}
+
+TEST_F(PeripheralsTest, GamePadInterruptDisabled) {
+  GamePadToggleSelect(gamepad_, true);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PeripheralsTest, GamePadInterruptOrA) {
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x4003u));
+  GamePadToggleSelect(gamepad_, true);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleSelect(gamepad_, false);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleA(gamepad_, true);
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PeripheralsTest, GamePadInterruptOrB) {
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x4003u));
+  GamePadToggleSelect(gamepad_, true);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleB(gamepad_, true);
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PeripheralsTest, GamePadInterruptAnd) {
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0xC003u));
+  GamePadToggleSelect(gamepad_, true);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleSelect(gamepad_, false);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleA(gamepad_, true);
+  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  GamePadToggleB(gamepad_, true);
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  GamePadToggleSelect(gamepad_, true);
+  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+}
+
+TEST_F(PeripheralsTest, GamePadUp) {
+  GamePadToggleUp(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03BF, value);
+}
+
+TEST_F(PeripheralsTest, GamePadDown) {
+  GamePadToggleDown(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x037F, value);
+}
+
+TEST_F(PeripheralsTest, GamePadLeft) {
+  GamePadToggleLeft(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03DF, value);
+}
+
+TEST_F(PeripheralsTest, GamePadRight) {
+  GamePadToggleRight(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03EF, value);
+}
+
+TEST_F(PeripheralsTest, GamePadA) {
+  GamePadToggleA(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03FE, value);
+}
+
+TEST_F(PeripheralsTest, GamePadB) {
+  GamePadToggleB(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03FD, value);
+}
+
+TEST_F(PeripheralsTest, GamePadL) {
+  GamePadToggleL(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x01FF, value);
+}
+
+TEST_F(PeripheralsTest, GamePadR) {
+  GamePadToggleR(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x02FF, value);
+}
+
+TEST_F(PeripheralsTest, GamePadStart) {
+  GamePadToggleStart(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03F7, value);
+}
+
+TEST_F(PeripheralsTest, GamePadSelect) {
+  GamePadToggleSelect(gamepad_, true);
+  uint16_t value;
+  EXPECT_TRUE(Load16LE(regs_, KEYINPUT_OFFSET, &value));
+  EXPECT_EQ(0x03FB, value);
 }
