@@ -10,8 +10,6 @@ typedef struct _GbaPeripherals GbaPeripherals;
 bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
                             GamePad **gamepad, Memory **registers);
 
-void GbaPeripheralsStep(GbaPeripherals *peripherals);
-
 void GbaPeripheralsFree(GbaPeripherals *peripherals);
 
 #endif  // _WEBGBA_EMULATOR_TIMERS_GBA_TIMERS_

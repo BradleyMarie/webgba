@@ -12,3 +12,12 @@ cc_library(
         "//emulator/platform/gba:platform",
     ],
 )
+
+cc_test(
+    name = "peripherals_test",
+    srcs = ["peripherals_test.cc"],
+    deps = [
+        ":peripherals",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
