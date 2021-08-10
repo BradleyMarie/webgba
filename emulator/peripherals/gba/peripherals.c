@@ -311,7 +311,7 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
     return false;
   }
 
-  *gamepad = GamepadAllocate(
+  *gamepad = GamePadAllocate(
       *peripherals, GbaGamePadToggleUp, GbaGamePadToggleDown,
       GbaGamePadToggleLeft, GbaGamePadToggleRight, GbaGamePadToggleA,
       GbaGamePadToggleB, GbaGamePadToggleL, GbaGamePadToggleR,
@@ -340,8 +340,6 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
 
   return true;
 }
-
-void GbaPeripheralsStep(GbaPeripherals *peripherals) {}
 
 void GbaPeripheralsFree(GbaPeripherals *peripherals) {
   assert(peripherals->reference_count != 0u);
