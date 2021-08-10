@@ -8,6 +8,7 @@ cc_library(
     srcs = ["peripherals.c"],
     deps = [
         "//emulator/memory:memory",
+        "//emulator/peripherals:gamepad",
         "//emulator/platform/gba:platform",
     ],
 )
