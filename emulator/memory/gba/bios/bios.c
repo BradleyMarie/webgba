@@ -10,6 +10,8 @@ static bool GBABiosLoad32LEFunction(const void *context, uint32_t address,
     return false;
   }
 
+  // TODO: Read Protect Bios Memory
+
   const unsigned char *first_byte = bios_data + address;
   *value = *(const uint32_t *)(const void *)first_byte;
   return true;
@@ -21,6 +23,8 @@ static bool GBABiosLoad16LEFunction(const void *context, uint32_t address,
     return false;
   }
 
+  // TODO: Read Protect Bios Memory
+
   const unsigned char *first_byte = bios_data + address;
   *value = *(const uint16_t *)(const void *)first_byte;
   return true;
@@ -31,6 +35,8 @@ static bool GBABiosLoad8Function(const void *context, uint32_t address,
   if (bios_size <= address) {
     return false;
   }
+
+  // TODO: Read Protect Bios Memory
 
   const unsigned char *first_byte = bios_data + address;
   *value = *(const uint8_t *)(const void *)first_byte;
