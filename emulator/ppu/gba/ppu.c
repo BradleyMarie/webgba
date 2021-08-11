@@ -15,6 +15,8 @@ struct _GbaPpu {
   uint16_t reference_count;
 };
 
+// TODO: Mirror memory
+
 static bool PRamLoad32LEFunction(const void *context, uint32_t address,
                                  uint32_t *value) {
   if (PRAM_SIZE < address + 4u) {
@@ -203,6 +205,7 @@ static bool OamStore16LEFunction(void *context, uint32_t address,
 
 static bool PpuMemoryStore8Function(void *context, uint32_t address,
                                     uint8_t value) {
+  // TODO: Implement
   return false;
 }
 

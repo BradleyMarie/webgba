@@ -4,6 +4,8 @@
 
 #define IRAM_SIZE (32u * 1024u)
 
+// TODO: Mirror memory
+
 static bool IRamLoad32LEFunction(const void *context, uint32_t address,
                                  uint32_t *value) {
   if (IRAM_SIZE < address + 4u) {

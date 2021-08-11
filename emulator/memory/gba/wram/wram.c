@@ -4,6 +4,8 @@
 
 #define WRAM_SIZE (256u * 1024u)
 
+// TODO: Mirror memory
+
 static bool WRamLoad32LEFunction(const void *context, uint32_t address,
                                  uint32_t *value) {
   return false;
