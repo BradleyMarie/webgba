@@ -3,7 +3,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "emulator/ppu/gba/oam/oam.h"
+#include "emulator/ppu/gba/palette/palette.h"
 #include "emulator/ppu/gba/types.h"
+#include "emulator/ppu/gba/vram/vram.h"
 
 struct _GbaPpu {
   GbaPlatform *platform;
@@ -12,205 +15,10 @@ struct _GbaPpu {
     GbaPpuRegisters registers;
     uint16_t register_half_words[44];
   };
-  uint16_t reference_count;
 };
 
-// TODO: Mirror memory
-
-static bool PRamLoad32LEFunction(const void *context, uint32_t address,
-                                 uint32_t *value) {
-  if (PRAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.pram + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool PRamLoad16LEFunction(const void *context, uint32_t address,
-                                 uint16_t *value) {
-  if (PRAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.pram + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool PRamLoad8Function(const void *context, uint32_t address,
-                              uint8_t *value) {
-  if (PRAM_SIZE <= address) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.pram + address;
-  *value = *(const uint8_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool PRamStore32LEFunction(void *context, uint32_t address,
-                                  uint32_t value) {
-  if (PRAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.pram + address;
-  uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool PRamStore16LEFunction(void *context, uint32_t address,
-                                  uint16_t value) {
-  if (PRAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.pram + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool VRamLoad32LEFunction(const void *context, uint32_t address,
-                                 uint32_t *value) {
-  if (VRAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.vram + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool VRamLoad16LEFunction(const void *context, uint32_t address,
-                                 uint16_t *value) {
-  if (VRAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.vram + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool VRamLoad8Function(const void *context, uint32_t address,
-                              uint8_t *value) {
-  if (VRAM_SIZE <= address) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.vram + address;
-  *value = *(const uint8_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool VRamStore32LEFunction(void *context, uint32_t address,
-                                  uint32_t value) {
-  if (VRAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.vram + address;
-  uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool VRamStore16LEFunction(void *context, uint32_t address,
-                                  uint16_t value) {
-  if (VRAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.vram + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool OamLoad32LEFunction(const void *context, uint32_t address,
-                                uint32_t *value) {
-  if (OAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.oam + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool OamLoad16LEFunction(const void *context, uint32_t address,
-                                uint16_t *value) {
-  if (OAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.oam + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool OamLoad8Function(const void *context, uint32_t address,
-                             uint8_t *value) {
-  if (OAM_SIZE <= address) {
-    return false;
-  }
-
-  const GbaPpu *ppu = (const GbaPpu *)context;
-  const unsigned char *first_byte = ppu->memory.oam + address;
-  *value = *(const uint8_t *)(const void *)first_byte;
-  return true;
-}
-
-static bool OamStore32LEFunction(void *context, uint32_t address,
-                                 uint32_t value) {
-  if (OAM_SIZE < address + 4u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.oam + address;
-  uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool OamStore16LEFunction(void *context, uint32_t address,
-                                 uint16_t value) {
-  if (OAM_SIZE < address + 2u) {
-    return false;
-  }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-  unsigned char *first_byte = ppu->memory.oam + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value;
-  return true;
-}
-
-static bool PpuMemoryStore8Function(void *context, uint32_t address,
-                                    uint8_t value) {
-  // TODO: Implement
-  return false;
-}
-
-static bool GbaPpuRegistersLoad16LEFunction(const void *context,
-                                            uint32_t address, uint16_t *value) {
+static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
+                                  uint16_t *value) {
   assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
 
   const GbaPpu *ppu = (const GbaPpu *)context;
@@ -255,19 +63,18 @@ static bool GbaPpuRegistersLoad16LEFunction(const void *context,
   return false;
 }
 
-static bool GbaPpuRegistersLoad32LEFunction(const void *context,
-                                            uint32_t address, uint32_t *value) {
+static bool GbaPpuRegistersLoad32(const void *context, uint32_t address,
+                                  uint32_t *value) {
   assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
 
   uint16_t low_bits;
-  bool low = GbaPpuRegistersLoad16LEFunction(context, address, &low_bits);
+  bool low = GbaPpuRegistersLoad16(context, address, &low_bits);
   if (!low) {
     return false;
   }
 
   uint16_t high_bits;
-  bool high =
-      GbaPpuRegistersLoad16LEFunction(context, address + 2u, &high_bits);
+  bool high = GbaPpuRegistersLoad16(context, address + 2u, &high_bits);
   if (high) {
     *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
@@ -277,15 +84,14 @@ static bool GbaPpuRegistersLoad32LEFunction(const void *context,
   return true;
 }
 
-static bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
-                                         uint8_t *value) {
+static bool GbaPpuRegistersLoad(const void *context, uint32_t address,
+                                uint8_t *value) {
   assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
 
   uint32_t read_address = address & 0xFFFFFFFEu;
 
   uint16_t value16;
-  bool success =
-      GbaPpuRegistersLoad16LEFunction(context, read_address, &value16);
+  bool success = GbaPpuRegistersLoad16(context, read_address, &value16);
   if (success) {
     *value = (address == read_address) ? value16 : value16 >> 8u;
   }
@@ -293,8 +99,8 @@ static bool GbaPpuRegistersLoad8Function(const void *context, uint32_t address,
   return success;
 }
 
-static bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
-                                             uint16_t value) {
+static bool GbaPpuRegistersStore16(void *context, uint32_t address,
+                                   uint16_t value) {
   assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
 
   // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
@@ -319,18 +125,18 @@ static bool GbaPpuRegistersStore16LEFunction(void *context, uint32_t address,
   return true;
 }
 
-static bool GbaPpuRegistersStore32LEFunction(void *context, uint32_t address,
-                                             uint32_t value) {
+static bool GbaPpuRegistersStore32(void *context, uint32_t address,
+                                   uint32_t value) {
   assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
 
-  GbaPpuRegistersStore16LEFunction(context, address, value);
-  GbaPpuRegistersStore16LEFunction(context, address + 2u, value >> 16u);
+  GbaPpuRegistersStore16(context, address, value);
+  GbaPpuRegistersStore16(context, address + 2u, value >> 16u);
 
   return true;
 }
 
-static bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
-                                          uint8_t value) {
+static bool GbaPpuRegistersStore(void *context, uint32_t address,
+                                 uint8_t value) {
   assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
 
   GbaPpu *ppu = (GbaPpu *)context;
@@ -345,70 +151,62 @@ static bool GbaPpuRegistersStore8Function(void *context, uint32_t address,
     value16 |= (uint16_t)value << 8u;
   }
 
-  GbaPpuRegistersStore16LEFunction(context, read_address, value16);
+  GbaPpuRegistersStore16(context, read_address, value16);
 
   return true;
 }
 
-void PpuMemoryFree(void *context) {
+void GbaPpuRegistersFree(void *context) {
   GbaPpu *ppu = (GbaPpu *)context;
   GbaPpuFree(ppu);
 }
 
-bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **pram,
+bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
                     Memory **vram, Memory **oam, Memory **registers) {
   *ppu = (GbaPpu *)calloc(1, sizeof(GbaPpu));
   if (*ppu == NULL) {
     return false;
   }
 
-  (*ppu)->reference_count = 5u;
+  (*ppu)->memory.free_address = *ppu;
+  (*ppu)->memory.reference_count = 1u;
 
-  *pram = MemoryAllocate(*ppu, PRamLoad32LEFunction, PRamLoad16LEFunction,
-                         PRamLoad8Function, PRamStore32LEFunction,
-                         PRamStore16LEFunction, PpuMemoryStore8Function,
-                         PpuMemoryFree);
-  if (*pram == NULL) {
+  *palette = PaletteAllocate(&(*ppu)->memory);
+  if (*palette == NULL) {
     free(*ppu);
     return false;
   }
 
-  *vram = MemoryAllocate(*ppu, VRamLoad32LEFunction, VRamLoad16LEFunction,
-                         VRamLoad8Function, VRamStore32LEFunction,
-                         VRamStore16LEFunction, PpuMemoryStore8Function,
-                         PpuMemoryFree);
+  *vram = VRamAllocate(&(*ppu)->memory);
   if (*vram == NULL) {
-    MemoryFree(*pram);
+    MemoryFree(*palette);
     free(*ppu);
     return false;
   }
 
-  *oam = MemoryAllocate(*ppu, OamLoad32LEFunction, OamLoad16LEFunction,
-                        OamLoad8Function, OamStore32LEFunction,
-                        OamStore16LEFunction, PpuMemoryStore8Function,
-                        PpuMemoryFree);
+  *oam = PaletteAllocate(&(*ppu)->memory);
   if (*oam == NULL) {
     MemoryFree(*vram);
-    MemoryFree(*pram);
+    MemoryFree(*palette);
     free(*ppu);
     return false;
   }
 
-  *registers = MemoryAllocate(
-      *ppu, GbaPpuRegistersLoad32LEFunction, GbaPpuRegistersLoad16LEFunction,
-      GbaPpuRegistersLoad8Function, GbaPpuRegistersStore32LEFunction,
-      GbaPpuRegistersStore16LEFunction, GbaPpuRegistersStore8Function,
-      PpuMemoryFree);
+  *registers = MemoryAllocate(*ppu, GbaPpuRegistersLoad32,
+                              GbaPpuRegistersLoad16, GbaPpuRegistersLoad,
+                              GbaPpuRegistersStore32, GbaPpuRegistersStore16,
+                              GbaPpuRegistersStore, GbaPpuRegistersFree);
   if (*registers == NULL) {
     MemoryFree(*oam);
     MemoryFree(*vram);
-    MemoryFree(*pram);
+    MemoryFree(*palette);
     free(*ppu);
     return false;
   }
 
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
+  (*ppu)->memory.reference_count += 1u;
 
   GbaPlatformRetain(platform);
 
@@ -421,9 +219,9 @@ void GbaPpuStep(GbaPpu *ppu, GLuint framebuffer,
 void GbaPpuReloadContext(GbaPpu *ppu) {}
 
 void GbaPpuFree(GbaPpu *ppu) {
-  assert(ppu->reference_count != 0u);
-  ppu->reference_count -= 1u;
-  if (ppu->reference_count == 0u) {
+  assert(ppu->memory.reference_count != 0u);
+  ppu->memory.reference_count -= 1u;
+  if (ppu->memory.reference_count == 0u) {
     GbaPlatformRelease(ppu->platform);
     free(ppu);
   }

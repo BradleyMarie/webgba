@@ -5,14 +5,19 @@
 #include <stdalign.h>
 #include <stdint.h>
 
-#define PRAM_SIZE 1024u
+#define PALETTE_SIZE 1024u
 #define VRAM_SIZE (96u * 1024u)
+#define VRAM_BG_SIZE (64u * 1024u)
+#define VRAM_OBJ_SIZE (32u * 1024u)
+#define VRAM_BANK_SIZE (128u * 1024u)
 #define OAM_SIZE 1024u
 
 typedef struct {
-  alignas(unsigned) unsigned char pram[PRAM_SIZE];
+  alignas(unsigned) unsigned char palette[PALETTE_SIZE];
   alignas(unsigned) unsigned char vram[VRAM_SIZE];
   alignas(unsigned) unsigned char oam[OAM_SIZE];
+  void* free_address;
+  uint16_t reference_count;
 } GbaPpuMemory;
 
 #define GBA_PPU_REGISTERS_SIZE 88u

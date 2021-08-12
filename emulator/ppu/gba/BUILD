@@ -12,6 +12,9 @@ cc_library(
         ":types",
         "//emulator/memory:memory",
         "//emulator/platform/gba:platform",
+        "//emulator/ppu/gba/oam:oam",
+        "//emulator/ppu/gba/palette:palette",
+        "//emulator/ppu/gba/vram:vram",
     ],
 )
 
