@@ -21,10 +21,6 @@ static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
                                   uint16_t *value) {
   assert((address & 0x1u) == 0u);
 
-  if (address >= GBA_PPU_REGISTERS_SIZE) {
-    return false;
-  }
-
   const GbaPpu *ppu = (const GbaPpu *)context;
 
   switch (address) {
