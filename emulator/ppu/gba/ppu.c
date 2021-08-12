@@ -19,11 +19,14 @@ struct _GbaPpu {
 
 static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
                                   uint16_t *value) {
-  assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
+  assert((address & 0x1u) == 0u);
+
+  if (address >= GBA_PPU_REGISTERS_SIZE) {
+    return false;
+  }
 
   const GbaPpu *ppu = (const GbaPpu *)context;
 
-  assert((address & 0x1u) == 0u);
   switch (address) {
     case DISPCNT_OFFSET:
       *value = ppu->registers.dispcnt.value;
@@ -65,7 +68,7 @@ static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
 
 static bool GbaPpuRegistersLoad32(const void *context, uint32_t address,
                                   uint32_t *value) {
-  assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
+  assert((address & 0x3u) == 0u);
 
   uint16_t low_bits;
   bool low = GbaPpuRegistersLoad16(context, address, &low_bits);
@@ -84,10 +87,8 @@ static bool GbaPpuRegistersLoad32(const void *context, uint32_t address,
   return true;
 }
 
-static bool GbaPpuRegistersLoad(const void *context, uint32_t address,
-                                uint8_t *value) {
-  assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
-
+static bool GbaPpuRegistersLoad8(const void *context, uint32_t address,
+                                 uint8_t *value) {
   uint32_t read_address = address & 0xFFFFFFFEu;
 
   uint16_t value16;
@@ -101,17 +102,19 @@ static bool GbaPpuRegistersLoad(const void *context, uint32_t address,
 
 static bool GbaPpuRegistersStore16(void *context, uint32_t address,
                                    uint16_t value) {
-  assert(address <= UINT32_MAX - 2u && address + 2u <= GBA_PPU_REGISTERS_SIZE);
+  assert((address & 0x1u) == 0u);
+
+  if (address >= GBA_PPU_REGISTERS_SIZE) {
+    return false;
+  }
+
+  GbaPpu *ppu = (GbaPpu *)context;
 
   // If address equals VCOUNT_OFFSET, we are attempting to write to a read-only
   // register. In this case, ignore the write and leave the register unmodified.
   if (address == VCOUNT_OFFSET) {
     return true;
   }
-
-  GbaPpu *ppu = (GbaPpu *)context;
-
-  assert((address & 0x1u) == 0u);
 
   // If address equals DISPSTAT_OFFSET, and any of the lower 3 bits of value are
   // set, we are attempting to modify read-only bits in the DISPSTAT register.
@@ -127,18 +130,13 @@ static bool GbaPpuRegistersStore16(void *context, uint32_t address,
 
 static bool GbaPpuRegistersStore32(void *context, uint32_t address,
                                    uint32_t value) {
-  assert(address <= UINT32_MAX - 4u && address + 4u <= GBA_PPU_REGISTERS_SIZE);
-
   GbaPpuRegistersStore16(context, address, value);
   GbaPpuRegistersStore16(context, address + 2u, value >> 16u);
-
   return true;
 }
 
-static bool GbaPpuRegistersStore(void *context, uint32_t address,
-                                 uint8_t value) {
-  assert(address <= UINT32_MAX - 1u && address + 1u <= GBA_PPU_REGISTERS_SIZE);
-
+static bool GbaPpuRegistersStore8(void *context, uint32_t address,
+                                  uint8_t value) {
   GbaPpu *ppu = (GbaPpu *)context;
 
   uint32_t read_address = address & 0xFFFFFFFEu;
@@ -193,9 +191,9 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   }
 
   *registers = MemoryAllocate(*ppu, GbaPpuRegistersLoad32,
-                              GbaPpuRegistersLoad16, GbaPpuRegistersLoad,
+                              GbaPpuRegistersLoad16, GbaPpuRegistersLoad8,
                               GbaPpuRegistersStore32, GbaPpuRegistersStore16,
-                              GbaPpuRegistersStore, GbaPpuRegistersFree);
+                              GbaPpuRegistersStore8, GbaPpuRegistersFree);
   if (*registers == NULL) {
     MemoryFree(*oam);
     MemoryFree(*vram);

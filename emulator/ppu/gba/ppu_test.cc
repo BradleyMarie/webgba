@@ -105,13 +105,13 @@ TEST_F(PpuTest, GbaPpuRegistersLoad16LE) {
 
 TEST_F(PpuTest, GbaPpuRegistersLoad32LEUnusedLow) {
   uint32_t contents;
-  EXPECT_FALSE(Load32LE(regs_, 0x4Eu, &contents));
+  EXPECT_FALSE(Load32LE(regs_, 0x58u, &contents));
 }
 
 TEST_F(PpuTest, GbaPpuRegistersLoad32LEUnusedHigh) {
   uint32_t contents = 0xFFFFFFFFu;
-  EXPECT_TRUE(Store16LE(regs_, WINOUT_OFFSET, 16u));
-  EXPECT_TRUE(Load32LE(regs_, WINOUT_OFFSET, &contents));
+  EXPECT_TRUE(Store16LE(regs_, BLDCNT_OFFSET, 16u));
+  EXPECT_TRUE(Load32LE(regs_, BLDCNT_OFFSET, &contents));
   EXPECT_EQ(0u, contents);
 }
 
