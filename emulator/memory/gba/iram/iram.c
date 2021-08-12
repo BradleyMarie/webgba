@@ -3,15 +3,11 @@
 #include <stdlib.h>
 
 #define IRAM_SIZE (32u * 1024u)
-
-// TODO: Mirror memory
+#define IRAM_ADDRESS_MASK 0x07FFFu
 
 static bool IRamLoad32LEFunction(const void *context, uint32_t address,
                                  uint32_t *value) {
-  if (IRAM_SIZE < address + 4u) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   const unsigned char *first_byte = (const unsigned char *)context + address;
   *value = *(const uint32_t *)(const void *)first_byte;
   return true;
@@ -19,10 +15,7 @@ static bool IRamLoad32LEFunction(const void *context, uint32_t address,
 
 static bool IRamLoad16LEFunction(const void *context, uint32_t address,
                                  uint16_t *value) {
-  if (IRAM_SIZE < address + 2u) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   const unsigned char *first_byte = (const unsigned char *)context + address;
   *value = *(const uint16_t *)(const void *)first_byte;
   return true;
@@ -30,10 +23,7 @@ static bool IRamLoad16LEFunction(const void *context, uint32_t address,
 
 static bool IRamLoad8Function(const void *context, uint32_t address,
                               uint8_t *value) {
-  if (IRAM_SIZE <= address) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   const unsigned char *first_byte = (const unsigned char *)context + address;
   *value = *(const uint8_t *)(const void *)first_byte;
   return true;
@@ -41,10 +31,7 @@ static bool IRamLoad8Function(const void *context, uint32_t address,
 
 static bool IRamStore32LEFunction(void *context, uint32_t address,
                                   uint32_t value) {
-  if (IRAM_SIZE < address + 4u) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   unsigned char *first_byte = (unsigned char *)context + address;
   uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
   *memory_cell = value;
@@ -53,10 +40,7 @@ static bool IRamStore32LEFunction(void *context, uint32_t address,
 
 static bool IRamStore16LEFunction(void *context, uint32_t address,
                                   uint16_t value) {
-  if (IRAM_SIZE < address + 2u) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   unsigned char *first_byte = (unsigned char *)context + address;
   uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
   *memory_cell = value;
@@ -64,10 +48,7 @@ static bool IRamStore16LEFunction(void *context, uint32_t address,
 }
 
 static bool IRamStore8Function(void *context, uint32_t address, uint8_t value) {
-  if (IRAM_SIZE <= address) {
-    return false;
-  }
-
+  address &= IRAM_ADDRESS_MASK;
   unsigned char *first_byte = (unsigned char *)context + address;
   uint8_t *memory_cell = (uint8_t *)(void *)first_byte;
   *memory_cell = value;
