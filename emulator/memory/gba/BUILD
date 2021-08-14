@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//emulator/memory/gba/bad:bad",
         "//emulator/memory/gba/bios:bios",
+        "//emulator/memory/gba/io:io",
         "//emulator/memory/gba/iram:iram",
         "//emulator/memory/gba/wram:wram",
     ],
