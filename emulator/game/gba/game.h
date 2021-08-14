@@ -15,6 +15,6 @@ typedef enum {
 } SaveStorageType;
 
 bool GbaGameLoad(const char *rom_data, uint32_t rom_size,
-                 SaveStorageType **save_storage_type, Memory **game_rom);
+                 SaveStorageType *save_storage_type, Memory **game_rom);
 
 #endif  // _WEBGBA_EMULATOR_GAME_GBA_GAME_

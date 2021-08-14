@@ -70,7 +70,7 @@ void GbaGameFree(void *context) {
 }
 
 bool GbaGameLoad(const char *rom_data, uint32_t rom_size,
-                 SaveStorageType **save_storage_type, Memory **game_rom) {
+                 SaveStorageType *save_storage_type, Memory **game_rom) {
   if (rom_size > 0x1000000u) {
     // Roms larger than 32MB are not supported
     return false;
