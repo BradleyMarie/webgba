@@ -6,6 +6,7 @@ cc_library(
     name = "gba",
     hdrs = ["gba.h"],
     srcs = ["gba.c"],
+    linkopts = ["-lGL"],
     deps = [
         "//emulator/cpu/arm7tdmi:arm7tdmi",
         "//emulator/dma/gba:dma",
