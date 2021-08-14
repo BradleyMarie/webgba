@@ -11,6 +11,7 @@ Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
   Arm7Tdmi* cpu = (Arm7Tdmi*)calloc(1, sizeof(Arm7Tdmi));
   if (cpu != NULL) {
     cpu->registers.current.user.cpsr.mode = MODE_SVC;
+    cpu->registers.current.user.gprs.pc = 8u;
     cpu->rst = rst;
     cpu->fiq = fiq;
     cpu->irq = irq;
