@@ -260,61 +260,111 @@ static void GbaPeripheralsMaybeSendKeypadInterrupt(
 
 static void GbaGamePadToggleUp(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.up = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.up == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.up = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleDown(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.down = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.down == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.down = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleLeft(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.left = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.left == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.left = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleRight(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.right = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.right == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.right = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleA(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.a = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.a == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.a = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleB(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.b = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.b == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.b = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleL(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.l = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.l == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.l = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleR(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.r = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.r == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.r = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleStart(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.start = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.start == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.start = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
 static void GbaGamePadToggleSelect(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-  peripherals->registers.keyinput.select = !pressed;
+  pressed = !pressed;
+  if (peripherals->registers.keyinput.select == pressed) {
+    return;
+  }
+
+  peripherals->registers.keyinput.select = pressed;
   GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
 }
 
