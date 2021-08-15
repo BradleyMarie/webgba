@@ -65,13 +65,14 @@ static void UpdateVariables() {
   }
 }
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 static void compile_program(void) {
   prog = glCreateProgram();
   GLuint vert = glCreateShader(GL_VERTEX_SHADER);
   GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
 
-  glShaderSource(vert, sizeof(vertex_shader), vertex_shader, 0);
-  glShaderSource(frag, sizeof(fragment_shader), fragment_shader, 0);
+  glShaderSource(vert, ARRAY_SIZE(vertex_shader), vertex_shader, 0);
+  glShaderSource(frag, ARRAY_SIZE(fragment_shader), fragment_shader, 0);
   glCompileShader(vert);
   glCompileShader(frag);
 
@@ -267,7 +268,9 @@ void retro_run() {
 static bool retro_init_hw_context() {
   memset(&hw_render, 0, sizeof(struct retro_hw_render_callback));
 
-  hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
+  hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+  hw_render.version_major = 3;
+  hw_render.version_minor = 1;
   hw_render.context_reset = ContextReset;
   hw_render.context_destroy = ContextDestroy;
   hw_render.depth = true;
@@ -291,7 +294,9 @@ bool retro_load_game(const struct retro_game_info *info) {
   UpdateVariables();
 
   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-  environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+  if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
+    return false;
+  }
 
   if (!retro_init_hw_context()) {
     return false;
