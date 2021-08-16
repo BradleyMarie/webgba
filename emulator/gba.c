@@ -173,8 +173,19 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   return true;
 }
 
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint framebuffer,
-                     GbaFrameDoneFunction done_function) {
+void GbaEmulatorFree(GbaEmulator *emulator) {
+  GbaPlatformRelease(emulator->platform);
+  Arm7TdmiFree(emulator->cpu);
+  MemoryFree(emulator->memory);
+  GbaDmaUnitFree(emulator->dma);
+  GbaPpuFree(emulator->ppu);
+  GbaSpuFree(emulator->spu);
+  GbaTimersFree(emulator->timers);
+  GbaPeripheralsFree(emulator->peripherals);
+  free(emulator);
+}
+
+void GbaEmulatorStep(GbaEmulator *emulator) {
   GbaPowerState power_state = GbaPlatformPowerState(emulator->platform);
   if (power_state == GBA_POWER_STATE_STOP) {
     return;
@@ -188,19 +199,24 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint framebuffer,
     }
   }
 
-  GbaPpuStep(emulator->ppu, framebuffer, done_function);
+  GbaPpuStep(emulator->ppu);
   GbaSpuStep(emulator->spu);
   GbaTimersStep(emulator->timers);
 }
 
-void GbaEmulatorFree(GbaEmulator *emulator) {
-  GbaPlatformRelease(emulator->platform);
-  Arm7TdmiFree(emulator->cpu);
-  MemoryFree(emulator->memory);
-  GbaDmaUnitFree(emulator->dma);
-  GbaPpuFree(emulator->ppu);
-  GbaSpuFree(emulator->spu);
-  GbaTimersFree(emulator->timers);
-  GbaPeripheralsFree(emulator->peripherals);
-  free(emulator);
+void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer) {
+  GbaPpuSetRenderOutput(emulator->ppu, framebuffer);
+}
+
+void GbaEmulatorSetRenderScale(GbaEmulator *emulator, uint8_t scale_factor) {
+  GbaPpuSetRenderScale(emulator->ppu, scale_factor);
+}
+
+void GbaEmulatorSetRenderDoneCallback(
+    GbaEmulator *emulator, GbaEmulatorRenderDoneFunction frame_done) {
+  GbaPpuSetRenderDoneCallback(emulator->ppu, frame_done);
+}
+
+void GbaEmulatorReloadContext(GbaEmulator *emulator) {
+  GbaPpuReloadContext(emulator->ppu);
 }

@@ -11,11 +11,18 @@ typedef struct _GbaEmulator GbaEmulator;
 // TODO: Make ROMs reloadable without tearing down emulator.
 bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad);
+void GbaEmulatorFree(GbaEmulator *emulator);
 
-typedef void (*GbaFrameDoneFunction)(unsigned width, unsigned height);
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint framebuffer,
-                     GbaFrameDoneFunction done_function);
+void GbaEmulatorStep(GbaEmulator *emulator);
 
-void GbaEmulatorFree(GbaEmulator *timers);
+// Render Output Management
+typedef void (*GbaEmulatorRenderDoneFunction)(uint32_t width, uint32_t height);
+void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer);
+void GbaEmulatorSetRenderScale(GbaEmulator *emulator, uint8_t scale_factor);
+void GbaEmulatorSetRenderDoneCallback(GbaEmulator *emulator,
+                                      GbaEmulatorRenderDoneFunction frame_done);
+
+// Context Loss Recovery
+void GbaEmulatorReloadContext(GbaEmulator *emulator);
 
 #endif  // _WEBGBA_EMULATOR_GBA_

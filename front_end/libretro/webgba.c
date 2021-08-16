@@ -17,31 +17,10 @@ static retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
-static unsigned width = BASE_WIDTH;
-static unsigned height = BASE_HEIGHT;
 
 static GbaEmulator *emulator;
 static GamePad *gamepad;
-
-static GLuint prog;
-static GLuint vbo;
-
-static const char *vertex_shader[] = {
-    "uniform mat4 uMVP;",     "attribute vec2 aVertex;",
-    "attribute vec4 aColor;", "varying vec4 color;",
-    "void main() {",          "  gl_Position = uMVP * vec4(aVertex, 0.0, 1.0);",
-    "  color = aColor;",      "}",
-};
-
-static const char *fragment_shader[] = {
-    "#ifdef GL_ES\n",
-    "precision mediump float;\n",
-    "#endif\n",
-    "varying vec4 color;",
-    "void main() {",
-    "  gl_FragColor = color;",
-    "}",
-};
+static uint8_t render_scale = 1u;
 
 static void UpdateVariables() {
   struct retro_variable var;
@@ -55,62 +34,12 @@ static void UpdateVariables() {
 
     pch = strtok(str, "x");
     if (pch != NULL) {
-      width = strtoul(pch, NULL, 0);
-    }
-
-    pch = strtok(NULL, "x");
-    if (pch != NULL) {
-      height = strtoul(pch, NULL, 0);
+      render_scale = strtoul(pch, NULL, 0) / BASE_WIDTH;
     }
   }
 }
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-static void compile_program(void) {
-  prog = glCreateProgram();
-  GLuint vert = glCreateShader(GL_VERTEX_SHADER);
-  GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
-
-  glShaderSource(vert, ARRAY_SIZE(vertex_shader), vertex_shader, 0);
-  glShaderSource(frag, ARRAY_SIZE(fragment_shader), fragment_shader, 0);
-  glCompileShader(vert);
-  glCompileShader(frag);
-
-  glAttachShader(prog, vert);
-  glAttachShader(prog, frag);
-  glLinkProgram(prog);
-  glDeleteShader(vert);
-  glDeleteShader(frag);
-}
-
-static void setup_vao(void) {
-  static const GLfloat vertex_data[] = {
-      -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0,
-      1.0,  1.0,  0.0, 1.0,  0.0,  1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0,
-  };
-
-  glUseProgram(prog);
-
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data,
-               GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glUseProgram(0);
-}
-
-static void ContextReset() {
-  compile_program();
-  setup_vao();
-}
-
-static void ContextDestroy() {
-  glDeleteBuffers(1, &vbo);
-  vbo = 0;
-  glDeleteProgram(prog);
-  prog = 0;
-}
+static void ContextReset() { GbaEmulatorReloadContext(emulator); }
 
 static void PollInput() {
   input_poll_cb();
@@ -135,6 +64,10 @@ static void PollInput() {
                                              RETRO_DEVICE_ID_JOYPAD_START));
   GamePadToggleSelect(gamepad, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0,
                                               RETRO_DEVICE_ID_JOYPAD_SELECT));
+}
+
+static void FrameDoneCallback(uint32_t width, uint32_t height) {
+  video_cb(RETRO_HW_FRAME_BUFFER_VALID, width, height, 0);
 }
 
 void retro_init() {}
@@ -185,7 +118,7 @@ void retro_set_environment(retro_environment_t cb) {
        "2880x1920|"
        "3120x2080|"
        "3360x2240|"
-       "3600x2400|"},
+       "3600x2400"},
       {NULL, NULL},
   };
 
@@ -204,7 +137,6 @@ void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 
-static uint64_t frame_count = 0;
 void retro_run() {
   PollInput();
 
@@ -213,56 +145,10 @@ void retro_run() {
     UpdateVariables();
   }
 
-  glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-
-  glClearColor(0.3, 0.4, 0.5, 1.0);
-  glViewport(0, 0, width, height);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-  glUseProgram(prog);
-
-  glEnable(GL_DEPTH_TEST);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  int vloc = glGetAttribLocation(prog, "aVertex");
-  glVertexAttribPointer(vloc, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
-  glEnableVertexAttribArray(vloc);
-  int cloc = glGetAttribLocation(prog, "aColor");
-  glVertexAttribPointer(cloc, 4, GL_FLOAT, GL_FALSE, 0,
-                        (void *)(8 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(cloc);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  int loc = glGetUniformLocation(prog, "uMVP");
-
-  float angle = frame_count / 100.0;
-  float cos_angle = cos(angle);
-  float sin_angle = sin(angle);
-
-  const GLfloat mvp[] = {
-      cos_angle, -sin_angle, 0, 0, sin_angle, cos_angle, 0, 0,
-      0,         0,          1, 0, 0,         0,         0, 1,
-  };
-  glUniformMatrix4fv(loc, 1, GL_FALSE, mvp);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  cos_angle *= 0.5;
-  sin_angle *= 0.5;
-  const GLfloat mvp2[] = {
-      cos_angle, -sin_angle, 0, 0.0, sin_angle, cos_angle, 0,   0.0,
-      0,         0,          1, 0,   0.4,       0.4,       0.2, 1,
-  };
-
-  glUniformMatrix4fv(loc, 1, GL_FALSE, mvp2);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glDisableVertexAttribArray(vloc);
-  glDisableVertexAttribArray(cloc);
-
-  glUseProgram(0);
-
-  frame_count++;
-
-  video_cb(RETRO_HW_FRAME_BUFFER_VALID, width, height, 0);
+  GbaEmulatorSetRenderOutput(emulator, hw_render.get_current_framebuffer());
+  GbaEmulatorSetRenderScale(emulator, render_scale);
+  GbaEmulatorSetRenderDoneCallback(emulator, FrameDoneCallback);
+  GbaEmulatorStep(emulator);
 }
 
 static bool retro_init_hw_context() {
@@ -272,7 +158,7 @@ static bool retro_init_hw_context() {
   hw_render.version_major = 3;
   hw_render.version_minor = 1;
   hw_render.context_reset = ContextReset;
-  hw_render.context_destroy = ContextDestroy;
+  hw_render.context_destroy = NULL;
   hw_render.depth = true;
   hw_render.stencil = true;
   hw_render.bottom_left_origin = true;

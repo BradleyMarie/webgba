@@ -21,4 +21,4 @@ class GbaEmulatorTest : public testing::Test {
   GamePad *gamepad_;
 };
 
-TEST_F(GbaEmulatorTest, EmptyTest) { GbaEmulatorStep(gba_, 0, nullptr); }
+TEST_F(GbaEmulatorTest, EmptyTest) { GbaEmulatorStep(gba_); }
