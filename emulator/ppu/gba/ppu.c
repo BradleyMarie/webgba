@@ -8,6 +8,9 @@
 #include "emulator/ppu/gba/types.h"
 #include "emulator/ppu/gba/vram/vram.h"
 
+#define GBA_SCREEN_WIDTH 240u
+#define GBA_SCREEN_HEIGHT 160u
+
 struct _GbaPpu {
   GbaPlatform *platform;
   GbaPpuMemory memory;
@@ -15,6 +18,16 @@ struct _GbaPpu {
     GbaPpuRegisters registers;
     uint16_t register_half_words[44];
   };
+
+  PpuRenderDoneFunction frame_done;
+  uint32_t width;
+  uint32_t height;
+
+  // Stand ins for a real implementation
+  GLuint framebuffer;
+  GLuint program;
+  GLuint vbo;
+  uint64_t frame_count;
 };
 
 static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
@@ -200,17 +213,14 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
 
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
+  (*ppu)->width = GBA_SCREEN_WIDTH;
+  (*ppu)->height = GBA_SCREEN_HEIGHT;
   (*ppu)->memory.reference_count += 1u;
 
   GbaPlatformRetain(platform);
 
   return true;
 }
-
-void GbaPpuStep(GbaPpu *ppu, GLuint framebuffer,
-                PpuFrameDoneFunction done_function) {}
-
-void GbaPpuReloadContext(GbaPpu *ppu) {}
 
 void GbaPpuFree(GbaPpu *ppu) {
   assert(ppu->memory.reference_count != 0u);
@@ -219,4 +229,131 @@ void GbaPpuFree(GbaPpu *ppu) {
     GbaPlatformRelease(ppu->platform);
     free(ppu);
   }
+}
+
+#include <math.h>
+void GbaPpuStep(GbaPpu *ppu) {
+  glBindFramebuffer(GL_FRAMEBUFFER, ppu->framebuffer);
+
+  glClearColor(0.3, 0.4, 0.5, 1.0);
+  glViewport(0, 0, ppu->width, ppu->height);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+  glUseProgram(ppu->program);
+
+  glEnable(GL_DEPTH_TEST);
+
+  glBindBuffer(GL_ARRAY_BUFFER, ppu->vbo);
+  int vloc = glGetAttribLocation(ppu->program, "aVertex");
+  glVertexAttribPointer(vloc, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+  glEnableVertexAttribArray(vloc);
+  int cloc = glGetAttribLocation(ppu->program, "aColor");
+  glVertexAttribPointer(cloc, 4, GL_FLOAT, GL_FALSE, 0,
+                        (void *)(8 * sizeof(GLfloat)));
+  glEnableVertexAttribArray(cloc);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  int loc = glGetUniformLocation(ppu->program, "uMVP");
+
+  float angle = ppu->frame_count / 100.0;
+  float cos_angle = cos(angle);
+  float sin_angle = sin(angle);
+
+  const GLfloat mvp[] = {
+      cos_angle, -sin_angle, 0, 0, sin_angle, cos_angle, 0, 0,
+      0,         0,          1, 0, 0,         0,         0, 1,
+  };
+  glUniformMatrix4fv(loc, 1, GL_FALSE, mvp);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  cos_angle *= 0.5;
+  sin_angle *= 0.5;
+  const GLfloat mvp2[] = {
+      cos_angle, -sin_angle, 0, 0.0, sin_angle, cos_angle, 0,   0.0,
+      0,         0,          1, 0,   0.4,       0.4,       0.2, 1,
+  };
+
+  glUniformMatrix4fv(loc, 1, GL_FALSE, mvp2);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glDisableVertexAttribArray(vloc);
+  glDisableVertexAttribArray(cloc);
+
+  glUseProgram(0);
+
+  ppu->frame_count++;
+
+  if (ppu->frame_done != NULL) {
+    ppu->frame_done(ppu->width, ppu->height);
+  }
+}
+
+void GbaPpuSetRenderOutput(GbaPpu *ppu, GLuint framebuffer) {
+  ppu->framebuffer = framebuffer;
+}
+
+void GbaPpuSetRenderScale(GbaPpu *ppu, uint8_t scale_factor) {
+  assert(scale_factor != 0);
+  ppu->width = GBA_SCREEN_WIDTH * scale_factor;
+  ppu->height = GBA_SCREEN_HEIGHT * scale_factor;
+}
+
+void GbaPpuSetRenderDoneCallback(GbaPpu *ppu,
+                                 PpuRenderDoneFunction frame_done) {
+  ppu->frame_done = frame_done;
+}
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+void GbaPpuReloadContext(GbaPpu *ppu) {
+  static const char *vertex_shader[] = {
+      "uniform mat4 uMVP;",
+      "attribute vec2 aVertex;",
+      "attribute vec4 aColor;",
+      "varying vec4 color;",
+      "void main() {",
+      "  gl_Position = uMVP * vec4(aVertex, 0.0, 1.0);",
+      "  color = aColor;",
+      "}",
+  };
+
+  static const char *fragment_shader[] = {
+      "#ifdef GL_ES\n",
+      "precision mediump float;\n",
+      "#endif\n",
+      "varying vec4 color;",
+      "void main() {",
+      "  gl_FragColor = color;",
+      "}",
+  };
+
+  // Compile Program
+  ppu->program = glCreateProgram();
+  GLuint vert = glCreateShader(GL_VERTEX_SHADER);
+  GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
+
+  glShaderSource(vert, ARRAY_SIZE(vertex_shader), vertex_shader, 0);
+  glShaderSource(frag, ARRAY_SIZE(fragment_shader), fragment_shader, 0);
+  glCompileShader(vert);
+  glCompileShader(frag);
+
+  glAttachShader(ppu->program, vert);
+  glAttachShader(ppu->program, frag);
+  glLinkProgram(ppu->program);
+  glDeleteShader(vert);
+  glDeleteShader(frag);
+
+  // Setup VAO
+  static const GLfloat vertex_data[] = {
+      -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0,
+      1.0,  1.0,  0.0, 1.0,  0.0,  1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+  };
+
+  glUseProgram(ppu->program);
+
+  glGenBuffers(1, &ppu->vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, ppu->vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data,
+               GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glUseProgram(0);
 }
