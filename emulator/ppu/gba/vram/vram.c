@@ -18,38 +18,34 @@ static inline uint32_t VRamComputeByteStoreAddress(uint32_t address) {
 }
 
 static bool VRamLoad32LE(const void *context, uint32_t address,
-                            uint32_t *value) {
+                         uint32_t *value) {
   assert((address & 0x3u) == 0u);
 
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  const unsigned char *first_byte = ppu_memory->vram + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.words[address >> 2u];
 
   return true;
 }
 
 static bool VRamLoad16LE(const void *context, uint32_t address,
-                            uint16_t *value) {
+                         uint16_t *value) {
   assert((address & 0x1u) == 0u);
 
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  const unsigned char *first_byte = ppu_memory->vram + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.half_words[address >> 1u];
 
   return true;
 }
 
-static bool VRamLoad8(const void *context, uint32_t address,
-                         uint8_t *value) {
+static bool VRamLoad8(const void *context, uint32_t address, uint8_t *value) {
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
-  
+
   address = VRamComputeAddress(address);
-  const unsigned char *first_byte = ppu_memory->vram + address;
-  *value = *(const uint8_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.bytes[address];
 
   return true;
 }
@@ -60,9 +56,7 @@ static bool VRamStore32LE(void *context, uint32_t address, uint32_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  unsigned char *first_byte = ppu_memory->vram + address;
-  uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
-  *memory_cell = value;
+  ppu_memory->palette.words[address >> 2u] = value;
 
   return true;
 }
@@ -73,9 +67,7 @@ static bool VRamStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  unsigned char *first_byte = ppu_memory->vram + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value;
+  ppu_memory->palette.half_words[address >> 1u] = value;
 
   return true;
 }
@@ -89,9 +81,7 @@ static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
   }
 
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  unsigned char *first_byte = ppu_memory->vram + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value16;
+  ppu_memory->palette.half_words[address >> 1u] = value16;
 
   return true;
 }
@@ -106,9 +96,9 @@ static void VRamFree(void *context) {
 }
 
 Memory *VRamAllocate(GbaPpuMemory *ppu_memory) {
-  Memory *result = MemoryAllocate(ppu_memory, VRamLoad32LE, VRamLoad16LE,
-                                  VRamLoad8, VRamStore32LE,
-                                  VRamStore16LE, VRamStore8, VRamFree);
+  Memory *result =
+      MemoryAllocate(ppu_memory, VRamLoad32LE, VRamLoad16LE, VRamLoad8,
+                     VRamStore32LE, VRamStore16LE, VRamStore8, VRamFree);
   if (result == NULL) {
     return NULL;
   }

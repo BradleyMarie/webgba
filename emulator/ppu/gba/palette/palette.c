@@ -13,8 +13,7 @@ static bool PaletteLoad32LE(const void *context, uint32_t address,
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  const unsigned char *first_byte = ppu_memory->palette + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.words[address >> 2u];
 
   return true;
 }
@@ -26,8 +25,7 @@ static bool PaletteLoad16LE(const void *context, uint32_t address,
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  const unsigned char *first_byte = ppu_memory->palette + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.half_words[address >> 1u];
 
   return true;
 }
@@ -37,8 +35,7 @@ static bool PaletteLoad8(const void *context, uint32_t address,
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  const unsigned char *first_byte = ppu_memory->palette + address;
-  *value = *(const uint8_t *)(const void *)first_byte;
+  *value = ppu_memory->palette.bytes[address];
 
   return true;
 }
@@ -49,9 +46,7 @@ static bool PaletteStore32LE(void *context, uint32_t address, uint32_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  unsigned char *first_byte = ppu_memory->palette + address;
-  uint32_t *memory_cell = (uint32_t *)(void *)first_byte;
-  *memory_cell = value;
+  ppu_memory->palette.words[address >> 2u] = value;
 
   return true;
 }
@@ -62,9 +57,7 @@ static bool PaletteStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  unsigned char *first_byte = ppu_memory->palette + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value;
+  ppu_memory->palette.half_words[address >> 1u] = value;
 
   return true;
 }
@@ -74,9 +67,7 @@ static bool PaletteStore8(void *context, uint32_t address, uint8_t value) {
 
   address &= PALETTE_BYTE_ADDRESS_MASK;
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  unsigned char *first_byte = ppu_memory->palette + address;
-  uint16_t *memory_cell = (uint16_t *)(void *)first_byte;
-  *memory_cell = value16;
+  ppu_memory->palette.half_words[address >> 1u] = value16;
 
   return true;
 }
