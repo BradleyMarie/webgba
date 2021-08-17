@@ -8,23 +8,22 @@
 #include "emulator/ppu/gba/types.h"
 #include "emulator/ppu/gba/vram/vram.h"
 
-#define GBA_SCREEN_WIDTH 240u
-#define GBA_SCREEN_HEIGHT 160u
-
 struct _GbaPpu {
   GbaPlatform *platform;
   GbaPpuMemory memory;
+  GbaPpuFrameBuffer framebuffer;
   union {
     GbaPpuRegisters registers;
     uint16_t register_half_words[44];
   };
+  GbaPpuInternalRegisters internal_registers;
 
   PpuRenderDoneFunction frame_done;
   uint32_t width;
   uint32_t height;
 
   // Stand ins for a real implementation
-  GLuint framebuffer;
+  GLuint fbo;
   GLuint program;
   GLuint vbo;
   uint64_t frame_count;
@@ -50,16 +49,16 @@ static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
       *value = ppu->registers.vcount;
       return true;
     case BG0CNT_OFFSET:
-      *value = ppu->registers.bg0cnt;
+      *value = ppu->registers.bg0cnt.value;
       return true;
     case BG1CNT_OFFSET:
-      *value = ppu->registers.bg1cnt;
+      *value = ppu->registers.bg1cnt.value;
       return true;
     case BG2CNT_OFFSET:
-      *value = ppu->registers.bg2cnt;
+      *value = ppu->registers.bg2cnt.value;
       return true;
     case BG3CNT_OFFSET:
-      *value = ppu->registers.bg3cnt;
+      *value = ppu->registers.bg3cnt.value;
       return true;
     case WININ_OFFSET:
       *value = ppu->registers.winin;
@@ -133,6 +132,19 @@ static bool GbaPpuRegistersStore16(void *context, uint32_t address,
   }
 
   ppu->register_half_words[address >> 1u] = value;
+
+  switch (address) {
+    case BG2X_OFFSET:
+    case BG2X_OFFSET_HI:
+      ppu->internal_registers.bg2_x_row_start = ppu->registers.bg2x;
+      ppu->internal_registers.bg2_x = ppu->registers.bg2x;
+      break;
+    case BG2Y_OFFSET:
+    case BG2Y_OFFSET_HI:
+      ppu->internal_registers.bg2_y_row_start = ppu->registers.bg2y;
+      ppu->internal_registers.bg2_y = ppu->registers.bg2y;
+      break;
+  }
 
   return true;
 }
@@ -233,7 +245,7 @@ void GbaPpuFree(GbaPpu *ppu) {
 
 #include <math.h>
 void GbaPpuStep(GbaPpu *ppu) {
-  glBindFramebuffer(GL_FRAMEBUFFER, ppu->framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, ppu->fbo);
 
   glClearColor(0.3, 0.4, 0.5, 1.0);
   glViewport(0, 0, ppu->width, ppu->height);
@@ -288,7 +300,7 @@ void GbaPpuStep(GbaPpu *ppu) {
 }
 
 void GbaPpuSetRenderOutput(GbaPpu *ppu, GLuint framebuffer) {
-  ppu->framebuffer = framebuffer;
+  ppu->fbo = framebuffer;
 }
 
 void GbaPpuSetRenderScale(GbaPpu *ppu, uint8_t scale_factor) {

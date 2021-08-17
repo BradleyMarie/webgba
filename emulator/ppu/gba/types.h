@@ -3,22 +3,62 @@
 
 #include <assert.h>
 #include <stdalign.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #define PALETTE_SIZE 1024u
+
+typedef union {
+  uint16_t colors[256u];
+  uint16_t palettes[16u][16u];
+} GbaPpuPaletteMemoryChunk;
+
+typedef union {
+  struct {
+    GbaPpuPaletteMemoryChunk bg;
+    GbaPpuPaletteMemoryChunk obj;
+  };
+  uint32_t words[PALETTE_SIZE >> 2u];
+  uint16_t half_words[PALETTE_SIZE >> 1u];
+  uint8_t bytes[PALETTE_SIZE];
+} GbaPpuPaletteMemory;
+
+static_assert(sizeof(GbaPpuPaletteMemory) == PALETTE_SIZE,
+              "sizeof(GbaPpuPaletteMemory) != PALETTE_SIZE");
+
+#define VRAM_PAGE_SIZE 0xA000u
 #define VRAM_SIZE (96u * 1024u)
+
+typedef union {
+  uint16_t paged_half_words[2u][VRAM_PAGE_SIZE >> 1u];
+  uint8_t paged_bytes[2u][VRAM_PAGE_SIZE];
+  uint32_t words[VRAM_SIZE >> 2u];
+  uint16_t half_words[VRAM_SIZE >> 1u];
+  uint8_t bytes[VRAM_SIZE];
+} GbaPpuVideoMemory;
+
+static_assert(sizeof(GbaPpuVideoMemory) == VRAM_SIZE,
+              "sizeof(GbaPpuVideoMemory) != VRAM_SIZE");
+
 #define VRAM_BG_SIZE (64u * 1024u)
 #define VRAM_OBJ_SIZE (32u * 1024u)
 #define VRAM_BANK_SIZE (128u * 1024u)
 #define OAM_SIZE 1024u
 
 typedef struct {
-  alignas(unsigned) unsigned char palette[PALETTE_SIZE];
-  alignas(unsigned) unsigned char vram[VRAM_SIZE];
+  GbaPpuPaletteMemory palette;
+  GbaPpuVideoMemory vram;
   alignas(unsigned) unsigned char oam[OAM_SIZE];
   void* free_address;
   uint16_t reference_count;
 } GbaPpuMemory;
+
+#define GBA_SCREEN_WIDTH 240u
+#define GBA_SCREEN_HEIGHT 160u
+
+typedef struct {
+  uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
+} GbaPpuFrameBuffer;
 
 #define GBA_PPU_REGISTERS_SIZE 88u
 
@@ -99,15 +139,39 @@ typedef union {
   uint16_t value;
 } DispStatRegister;
 
+typedef union {
+  struct {
+    unsigned char priority : 2;
+    unsigned char character_base_block : 2;
+    unsigned char unused : 2;
+    bool mosaic : 1;
+    bool palettes : 1;
+    unsigned char screen_base_block : 5;
+    bool wraparound : 1;
+    unsigned char screen_size : 2;
+  };
+  uint16_t value;
+} BgCntRegister;
+
+typedef union {
+  struct {
+    unsigned char bg_horiz : 4;
+    unsigned char bg_vert : 4;
+    unsigned char obj_horiz : 4;
+    unsigned char obj_vert : 4;
+  };
+  uint16_t value;
+} MosaicRegister;
+
 typedef struct {
   DispCntRegister dispcnt;
   uint16_t greenswp;  // Unimplemented
   DispStatRegister dispstat;
   uint16_t vcount;
-  uint16_t bg0cnt;
-  uint16_t bg1cnt;
-  uint16_t bg2cnt;
-  uint16_t bg3cnt;
+  BgCntRegister bg0cnt;
+  BgCntRegister bg1cnt;
+  BgCntRegister bg2cnt;
+  BgCntRegister bg3cnt;
   uint16_t bg0hofs;
   uint16_t bg0vofs;
   uint16_t bg1hofs;
@@ -134,7 +198,7 @@ typedef struct {
   uint16_t win1v;
   uint16_t winin;
   uint16_t winout;
-  uint16_t mosaic;
+  MosaicRegister mosaic;
   uint16_t unused0;
   uint16_t bldcnt;
   uint16_t bldalpha;
@@ -144,5 +208,12 @@ typedef struct {
 
 static_assert(sizeof(GbaPpuRegisters) == GBA_PPU_REGISTERS_SIZE,
               "sizeof(GbaPpuRegisters) != GBA_PPU_REGISTERS_SIZE");
+
+typedef struct {
+  int32_t bg2_x_row_start;
+  int32_t bg2_y_row_start;
+  int32_t bg2_x;
+  int32_t bg2_y;
+} GbaPpuInternalRegisters;
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_TYPES_
