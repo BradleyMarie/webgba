@@ -265,8 +265,8 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_MOV_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
-      ArmMOVS(registers, rd, registers->current.user.gprs.gprs[rm],
-              registers->current.user.cpsr.carry);
+      ArmMOV(&registers->current.user.gprs, rd,
+             registers->current.user.gprs.gprs[rm]);
       modified_pc = (rd == REGISTER_R15);
       break;
     case THUMB_OPCODE_MOVS_I8:

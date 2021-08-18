@@ -157,7 +157,8 @@ class ExecuteTest : public testing::TestWithParam<uint16_t> {
   // Assumes little-endian hex string
   bool RunInstructionBadMemory(std::string instruction_hex) {
     uint16_t instruction = ToInstruction(instruction_hex);
-    bool result = ThumbInstructionExecute(instruction, &registers_, memory_fails_);
+    bool result =
+        ThumbInstructionExecute(instruction, &registers_, memory_fails_);
     return result;
   }
 

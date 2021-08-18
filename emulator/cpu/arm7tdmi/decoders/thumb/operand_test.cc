@@ -59,11 +59,11 @@ TEST(ThumbDataProcessingRegister, Compute) {
 }
 
 TEST(ThumbSpecialDataProcessing, Compute) {
-  uint16_t instruction = 0x44C8;  // add r8, r8, r9
+  uint16_t instruction = 0x4657;  // mov r7, r10
   ArmRegisterIndex rd_rn, rm;
   ThumbOperandSpecialDataProcessing(instruction, &rd_rn, &rm);
-  EXPECT_EQ(REGISTER_R8, rd_rn);
-  EXPECT_EQ(REGISTER_R9, rm);
+  EXPECT_EQ(REGISTER_R7, rd_rn);
+  EXPECT_EQ(REGISTER_R10, rm);
 }
 
 TEST(ThumbBranchExchange, Compute) {
