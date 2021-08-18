@@ -29,6 +29,8 @@ cc_library(
     linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
+        ":bitmap",
+        ":copy_to_fbo",
         ":types",
         "//emulator/memory:memory",
         "//emulator/platform/gba:platform",

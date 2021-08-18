@@ -10,9 +10,8 @@ typedef struct {
   GLuint texture;
 } GbaPpuCopyToFboResources;
 
-void GbaPpuCopyFramebufferToFbo(const GbaPpuCopyToFboResources* resources,
-                                const GbaPpuFrameBuffer* framebuffer,
-                                GLuint fbo);
+void GbaPpuCopyToFbo(const GbaPpuCopyToFboResources* resources,
+                     const GbaPpuFrameBuffer* framebuffer, GLuint fbo);
 
 void GbaPpuCopyToFboReloadContext(GbaPpuCopyToFboResources* resources);
 
