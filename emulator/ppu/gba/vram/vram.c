@@ -24,7 +24,7 @@ static bool VRamLoad32LE(const void *context, uint32_t address,
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->palette.words[address >> 2u];
+  *value = ppu_memory->vram.words[address >> 2u];
 
   return true;
 }
@@ -36,7 +36,7 @@ static bool VRamLoad16LE(const void *context, uint32_t address,
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->palette.half_words[address >> 1u];
+  *value = ppu_memory->vram.half_words[address >> 1u];
 
   return true;
 }
@@ -45,7 +45,7 @@ static bool VRamLoad8(const void *context, uint32_t address, uint8_t *value) {
   const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->palette.bytes[address];
+  *value = ppu_memory->vram.bytes[address];
 
   return true;
 }
@@ -56,7 +56,7 @@ static bool VRamStore32LE(void *context, uint32_t address, uint32_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  ppu_memory->palette.words[address >> 2u] = value;
+  ppu_memory->vram.words[address >> 2u] = value;
 
   return true;
 }
@@ -67,7 +67,7 @@ static bool VRamStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
 
   address = VRamComputeAddress(address);
-  ppu_memory->palette.half_words[address >> 1u] = value;
+  ppu_memory->vram.half_words[address >> 1u] = value;
 
   return true;
 }
@@ -81,7 +81,7 @@ static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
   }
 
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  ppu_memory->palette.half_words[address >> 1u] = value16;
+  ppu_memory->vram.half_words[address >> 1u] = value16;
 
   return true;
 }
