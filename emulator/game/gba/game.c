@@ -15,7 +15,7 @@ static bool GbaGameLoad32LE(const void *context, uint32_t address,
 
   const GamePak *gamepak = (const GamePak *)context;
 
-  if (gamepak->size < address + 4u) {
+  if (address + 4u <= gamepak->size) {
     return false;
   }
 
@@ -30,7 +30,7 @@ static bool GbaGameLoad16LE(const void *context, uint32_t address,
 
   const GamePak *gamepak = (const GamePak *)context;
 
-  if (gamepak->size < address + 2u) {
+  if (address + 2u <= gamepak->size) {
     return false;
   }
 
@@ -43,7 +43,7 @@ static bool GbaGameLoad8(const void *context, uint32_t address,
                          uint8_t *value) {
   const GamePak *gamepak = (const GamePak *)context;
 
-  if (gamepak->size <= address) {
+  if (address <= gamepak->size) {
     return false;
   }
 
