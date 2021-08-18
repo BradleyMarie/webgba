@@ -226,6 +226,8 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
 
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
+  (*ppu)->registers.bg2pa = 0x100u;
+  (*ppu)->registers.bg2pd = 0x100u;
   (*ppu)->memory.reference_count += 1u;
 
   GbaPlatformRetain(platform);
@@ -271,7 +273,8 @@ void GbaPpuStep(GbaPpu *ppu) {
     return;
   }
 
-  if (cycle_position != GBA_PPU_CYCLES_PER_PIXEL - 1u) {
+  if (cycle_position != GBA_PPU_CYCLES_PER_PIXEL - 1u ||
+      x >= GBA_SCREEN_WIDTH || y >= GBA_SCREEN_HEIGHT) {
     return;
   }
 
