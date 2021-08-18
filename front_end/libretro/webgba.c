@@ -148,7 +148,9 @@ void retro_run() {
   GbaEmulatorSetRenderOutput(emulator, hw_render.get_current_framebuffer());
   GbaEmulatorSetRenderScale(emulator, render_scale);
   GbaEmulatorSetRenderDoneCallback(emulator, FrameDoneCallback);
-  GbaEmulatorStep(emulator);
+  for (uint32_t i = 0u; i < 280896u; i++) {
+    GbaEmulatorStep(emulator);
+  }
 }
 
 static bool retro_init_hw_context() {
