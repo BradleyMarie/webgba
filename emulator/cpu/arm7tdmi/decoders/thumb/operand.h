@@ -46,7 +46,7 @@ static inline void ThumbOperandDataProcessingRegister(uint16_t instruction,
 static inline void ThumbOperandSpecialDataProcessing(uint16_t instruction,
                                                      ArmRegisterIndex *Rd_Rn,
                                                      ArmRegisterIndex *Rm) {
-  *Rd_Rn = (ArmRegisterIndex)(((instruction >> 3u) & 0x8u) |
+  *Rd_Rn = (ArmRegisterIndex)(((instruction >> 4u) & 0x8u) |
                               ((instruction >> 0u) & 0x7u));
   *Rm = (ArmRegisterIndex)((instruction >> 3u) & 0xFu);
 }
