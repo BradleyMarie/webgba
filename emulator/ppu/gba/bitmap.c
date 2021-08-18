@@ -66,8 +66,6 @@ static void GbaPpuRenderBitmapPixel(
         color = memory->palette.bg.colors[color_index];
       }
     }
-
-    color &= 0x7FFFu;  // Mark as Opaque
   }
 
   framebuffer->pixels[y][x] = color;

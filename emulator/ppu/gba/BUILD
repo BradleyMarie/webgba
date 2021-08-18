@@ -13,6 +13,16 @@ cc_library(
 )
 
 cc_library(
+    name = "copy_to_fbo",
+    hdrs = ["copy_to_fbo.h"],
+    srcs = ["copy_to_fbo.c"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":types",
+    ],
+)
+
+cc_library(
     name = "ppu",
     hdrs = ["ppu.h"],
     srcs = ["ppu.c"],
