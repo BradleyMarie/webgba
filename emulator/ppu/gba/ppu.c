@@ -247,8 +247,14 @@ void GbaPpuStep(GbaPpu *ppu) {
   uint32_t cycle_position = ppu->cycle_count % GBA_PPU_CYCLES_PER_PIXEL;
   uint32_t pixel = ppu->cycle_count / GBA_PPU_CYCLES_PER_PIXEL;
   uint32_t x = pixel % GBA_PPU_PIXELS_PER_SCANLINE;
-  uint32_t y = pixel / GBA_PPU_ROWS_PER_REFRESH;
-  ppu->cycle_count += 1u;
+  uint32_t y = pixel / GBA_PPU_PIXELS_PER_SCANLINE;
+
+  if (x != GBA_PPU_PIXELS_PER_SCANLINE - 1 ||
+      y != GBA_PPU_ROWS_PER_REFRESH - 1) {
+    ppu->cycle_count += 1u;
+  } else {
+    ppu->cycle_count = 0u;
+  }
 
   if (cycle_position == 0u) {
     if (x == GBA_SCREEN_WIDTH && y < GBA_SCREEN_HEIGHT) {
@@ -288,14 +294,6 @@ void GbaPpuStep(GbaPpu *ppu) {
       GbaPpuRenderMode5Pixel(&ppu->memory, &ppu->registers,
                              &ppu->internal_registers, x, y, &ppu->framebuffer);
       break;
-    case 6u:
-    case 7u:
-      break;
-  }
-
-  if (x == GBA_PPU_PIXELS_PER_SCANLINE - 1 &&
-      y == GBA_PPU_ROWS_PER_REFRESH - 1) {
-    ppu->cycle_count = 0;
   }
 }
 
