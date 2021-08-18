@@ -2,9 +2,8 @@
 
 #include <stddef.h>
 
-void GbaPpuCopyFramebufferToFbo(const GbaPpuCopyToFboResources* resources,
-                                const GbaPpuFrameBuffer* framebuffer,
-                                GLuint fbo) {
+void GbaPpuCopyToFbo(const GbaPpuCopyToFboResources* resources,
+                     const GbaPpuFrameBuffer* framebuffer, GLuint fbo) {
   glTexSubImage2D(resources->texture, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                   /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                   /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
