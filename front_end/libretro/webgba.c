@@ -30,7 +30,7 @@ static void UpdateVariables() {
     char *pch;
     char str[100];
     strncpy(str, var.value, sizeof(str) - 1);
-    str[100] = '\0';
+    str[99] = '\0';
 
     pch = strtok(str, "x");
     if (pch != NULL) {
