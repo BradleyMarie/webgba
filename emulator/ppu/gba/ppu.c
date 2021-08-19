@@ -258,6 +258,8 @@ void GbaPpuStep(GbaPpu *ppu) {
     ppu->cycle_count = 0u;
   }
 
+  ppu->registers.vcount = y;
+
   if (cycle_position == 0u) {
     if (x == GBA_SCREEN_WIDTH && y < GBA_SCREEN_HEIGHT) {
       GbaPlatformRaiseHBlankInterrupt(ppu->platform);
