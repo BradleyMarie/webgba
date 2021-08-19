@@ -52,24 +52,24 @@ static void GbaPpuRenderBitmapPixel(
     uint32_t lookup_x = internal_registers->bg2_x >> 8u;
     uint32_t lookup_y = internal_registers->bg2_y >> 8u;
 
+    uint16_t gba_color;
     if (lookup_x >= frame_width || lookup_y >= frame_height) {
-      color = memory->palette.bg.colors[0];
+      gba_color = memory->palette.bg.colors[0];
     } else {
       uint32_t row_offset = lookup_y * frame_width;
       uint32_t column_offset = lookup_x;
       uint32_t pixel_offset = row_offset + column_offset;
 
-      uint16_t gba_color;
       if (frame_pixels_are_colors) {
         gba_color = memory->vram.paged_half_words[back_page][pixel_offset];
       } else {
         uint8_t color_index = memory->vram.paged_bytes[back_page][pixel_offset];
         gba_color = memory->palette.bg.colors[color_index];
       }
-      color = gba_color << 11u;
-      color |= (0x3E0u & gba_color) << 1u;
-      color |= (0x7C00u & gba_color) >> 9u;
     }
+    color = gba_color << 11u;
+    color |= (0x3E0u & gba_color) << 1u;
+    color |= (0x7C00u & gba_color) >> 9u;
   }
 
   framebuffer->pixels[y][x] = color;
