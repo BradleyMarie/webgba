@@ -122,7 +122,7 @@ Memory* IoMemoryAllocate(Memory* ppu, Memory* sound, Memory* dma, Memory* timer,
   io_memory->banks[0x02u] = ppu;
   io_memory->banks[0x03u] = ppu;
   io_memory->banks[0x04u] = ppu;
-  io_memory->banks[0x05u] = sound;
+  io_memory->banks[0x05u] = ppu;
   io_memory->banks[0x06u] = sound;
   io_memory->banks[0x07u] = sound;
   io_memory->banks[0x08u] = sound;
