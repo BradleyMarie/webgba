@@ -10,3 +10,13 @@ cc_library(
         "//emulator/memory:memory",
     ],
 )
+
+cc_test(
+    name = "io_test",
+    srcs = ["io_test.cc"],
+    deps = [
+        ":io",
+        "//emulator/memory:memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
