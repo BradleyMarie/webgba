@@ -1,24 +1,23 @@
-#include "emulator/ppu/gba/copy_to_fbo.h"
+#include "emulator/ppu/gba/screen.h"
 
 #include <stddef.h>
 
-void GbaPpuCopyToFbo(const GbaPpuCopyToFboResources* resources,
-                     const GbaPpuFrameBuffer* framebuffer, GLuint fbo) {
+void GbaPpuScreenCopyToFbo(const GbaPpuScreen* screen, GLuint fbo) {
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, resources->texture);
+  glBindTexture(GL_TEXTURE_2D, screen->texture);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                   /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                   /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-                  /*pixels=*/framebuffer->pixels);
+                  /*pixels=*/screen->pixels);
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glViewport(0, 0, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
-  glUseProgram(resources->program);
+  glUseProgram(screen->program);
   glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
-void GbaPpuCopyToFboReloadContext(GbaPpuCopyToFboResources* resources) {
-  resources->program = glCreateProgram();
+void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
+  screen->program = glCreateProgram();
 
   static const char* vertex_shader_source[9u] = {
       "#version 130\n",
@@ -35,34 +34,35 @@ void GbaPpuCopyToFboReloadContext(GbaPpuCopyToFboResources* resources) {
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 9u, vertex_shader_source, NULL);
   glCompileShader(vertex_shader);
-  glAttachShader(resources->program, vertex_shader);
+  glAttachShader(screen->program, vertex_shader);
   glDeleteShader(vertex_shader);
 
-  static const char* fragment_shader_source[6u] = {
+  static const char* fragment_shader_source[7u] = {
       "#version 130\n",
       "uniform sampler2D image;\n",
       "in vec2 texCoord;\n",
       "void main() {\n",
-      "  gl_FragColor = textureLod(image, texCoord, 0.0);\n",
+      "  vec4 color = textureLod(image, texCoord, 0.0);\n",
+      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n",
       "}\n",
   };
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 6u, fragment_shader_source, NULL);
+  glShaderSource(fragment_shader, 7u, fragment_shader_source, NULL);
   glCompileShader(fragment_shader);
-  glAttachShader(resources->program, fragment_shader);
+  glAttachShader(screen->program, fragment_shader);
   glDeleteShader(fragment_shader);
 
-  glLinkProgram(resources->program);
+  glLinkProgram(screen->program);
 
-  GLint texture_location = glGetUniformLocation(resources->program, "image");
+  GLint texture_location = glGetUniformLocation(screen->program, "image");
 
-  glUseProgram(resources->program);
+  glUseProgram(screen->program);
   glUniform1i(texture_location, 0);
   glUseProgram(0);
 
-  glGenTextures(1u, &resources->texture);
-  glBindTexture(GL_TEXTURE_2D, resources->texture);
+  glGenTextures(1u, &screen->texture);
+  glBindTexture(GL_TEXTURE_2D, screen->texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -75,7 +75,7 @@ void GbaPpuCopyToFboReloadContext(GbaPpuCopyToFboResources* resources) {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void GbaPpuCopyToFboDestroy(GbaPpuCopyToFboResources* resources) {
-  glDeleteProgram(resources->program);
-  glDeleteTextures(1u, &resources->texture);
+void GbaPpuScreenDestroy(GbaPpuScreen* screen) {
+  glDeleteProgram(screen->program);
+  glDeleteTextures(1u, &screen->texture);
 }
