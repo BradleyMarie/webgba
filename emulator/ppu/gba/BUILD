@@ -8,16 +8,7 @@ cc_library(
     srcs = ["bitmap.c"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
-        ":types",
-    ],
-)
-
-cc_library(
-    name = "copy_to_fbo",
-    hdrs = ["copy_to_fbo.h"],
-    srcs = ["copy_to_fbo.c"],
-    linkopts = ["-lGL"],
-    deps = [
+        ":screen",
         ":types",
     ],
 )
@@ -30,7 +21,7 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":bitmap",
-        ":copy_to_fbo",
+        ":screen",
         ":types",
         "//emulator/memory:memory",
         "//emulator/platform/gba:platform",
@@ -46,6 +37,16 @@ cc_test(
     deps = [
         ":ppu",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "screen",
+    hdrs = ["screen.h"],
+    srcs = ["screen.c"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":types",
     ],
 )
 

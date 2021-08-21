@@ -4,9 +4,9 @@
 #include <stdlib.h>
 
 #include "emulator/ppu/gba/bitmap.h"
-#include "emulator/ppu/gba/copy_to_fbo.h"
 #include "emulator/ppu/gba/oam/oam.h"
 #include "emulator/ppu/gba/palette/palette.h"
+#include "emulator/ppu/gba/screen.h"
 #include "emulator/ppu/gba/types.h"
 #include "emulator/ppu/gba/vram/vram.h"
 
@@ -17,13 +17,12 @@
 struct _GbaPpu {
   GbaPlatform *platform;
   GbaPpuMemory memory;
-  GbaPpuFrameBuffer framebuffer;
+  GbaPpuScreen screen;
   union {
     GbaPpuRegisters registers;
     uint16_t register_half_words[44];
   };
   GbaPpuInternalRegisters internal_registers;
-  GbaPpuCopyToFboResources copy_resources;
   GLuint fbo;
   bool hardware_render;
   PpuRenderDoneFunction frame_done;
@@ -240,7 +239,7 @@ void GbaPpuFree(GbaPpu *ppu) {
   ppu->memory.reference_count -= 1u;
   if (ppu->memory.reference_count == 0u) {
     GbaPlatformRelease(ppu->platform);
-    GbaPpuCopyToFboDestroy(&ppu->copy_resources);
+    GbaPpuScreenDestroy(&ppu->screen);
     free(ppu);
   }
 }
@@ -266,7 +265,7 @@ void GbaPpuStep(GbaPpu *ppu) {
     } else if (x == 0 && y == GBA_SCREEN_HEIGHT) {
       GbaPlatformRaiseVBlankCountInterrupt(ppu->platform);
       if (!ppu->hardware_render) {
-        GbaPpuCopyToFbo(&ppu->copy_resources, &ppu->framebuffer, ppu->fbo);
+        GbaPpuScreenCopyToFbo(&ppu->screen, ppu->fbo);
       }
       if (ppu->frame_done != NULL) {
         ppu->frame_done(GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
@@ -289,15 +288,15 @@ void GbaPpuStep(GbaPpu *ppu) {
       break;
     case 3u:
       GbaPpuRenderMode3Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->framebuffer);
+                             &ppu->internal_registers, x, y, &ppu->screen);
       break;
     case 4u:
       GbaPpuRenderMode4Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->framebuffer);
+                             &ppu->internal_registers, x, y, &ppu->screen);
       break;
     case 5u:
       GbaPpuRenderMode5Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->framebuffer);
+                             &ppu->internal_registers, x, y, &ppu->screen);
       break;
   }
 }
@@ -316,5 +315,5 @@ void GbaPpuSetRenderDoneCallback(GbaPpu *ppu,
 }
 
 void GbaPpuReloadContext(GbaPpu *ppu) {
-  GbaPpuCopyToFboReloadContext(&ppu->copy_resources);
+  GbaPpuScreenReloadContext(&ppu->screen);
 }
