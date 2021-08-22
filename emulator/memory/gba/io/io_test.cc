@@ -100,33 +100,29 @@ class IoMemoryTest : public testing::Test {
     expected_bank_ = expected_bank;
     expected_address_ = expected_address;
 
-    if (address % 4u == 0) {
-      expected32_ = value32;
-      uint32_t actual32;
+    expected32_ = value32;
+    uint32_t actual32;
 
-      expected_response_ = true;
-      EXPECT_TRUE(Load32LE(io_, address, &actual32));
-      EXPECT_EQ(expected32_, actual32);
-      EXPECT_TRUE(Store32LE(io_, address, value32));
+    expected_response_ = true;
+    EXPECT_TRUE(Load32LE(io_, address, &actual32));
+    EXPECT_EQ(expected32_, actual32);
+    EXPECT_TRUE(Store32LE(io_, address, value32));
 
-      expected_response_ = false;
-      EXPECT_FALSE(Load32LE(io_, address, &actual32));
-      EXPECT_FALSE(Store32LE(io_, address, value32));
-    }
+    expected_response_ = false;
+    EXPECT_FALSE(Load32LE(io_, address, &actual32));
+    EXPECT_FALSE(Store32LE(io_, address, value32));
 
-    if (address % 2u == 0) {
-      expected16_ = value16;
-      uint16_t actual16;
+    expected16_ = value16;
+    uint16_t actual16;
 
-      expected_response_ = true;
-      EXPECT_TRUE(Load16LE(io_, address, &actual16));
-      EXPECT_EQ(expected16_, actual16);
-      EXPECT_TRUE(Store16LE(io_, address, value16));
+    expected_response_ = true;
+    EXPECT_TRUE(Load16LE(io_, address, &actual16));
+    EXPECT_EQ(expected16_, actual16);
+    EXPECT_TRUE(Store16LE(io_, address, value16));
 
-      expected_response_ = false;
-      EXPECT_FALSE(Load16LE(io_, address, &actual16));
-      EXPECT_FALSE(Store16LE(io_, address, value16));
-    }
+    expected_response_ = false;
+    EXPECT_FALSE(Load16LE(io_, address, &actual16));
+    EXPECT_FALSE(Store16LE(io_, address, value16));
 
     expected8_ = value8;
     uint8_t actual8;
