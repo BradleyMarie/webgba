@@ -14,3 +14,13 @@ cc_library(
         "//emulator/memory/gba/wram:wram",
     ],
 )
+
+cc_test(
+    name = "memory_test",
+    srcs = ["memory_test.cc"],
+    deps = [
+        ":memory",
+        "//emulator/memory/gba/bios:bios_data",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
