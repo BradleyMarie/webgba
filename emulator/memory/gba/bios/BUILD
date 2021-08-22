@@ -5,7 +5,6 @@ package(default_visibility = ["//emulator/memory/gba:__subpackages__"])
 cc_library(
     name = "bios_data",
     hdrs = ["bios_data.h"],
-    visibility = ["//visibility:private"],
 )
 
 cc_library(
