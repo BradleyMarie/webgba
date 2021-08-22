@@ -185,3 +185,32 @@ TEST_F(GbaMemoryTest, BiosBank) {
     }
   }
 }
+
+TEST_F(GbaMemoryTest, WRam) {
+  for (uint32_t addr = 0x20000000u; addr < 0x03000000u; addr++) {
+    if (addr % 4u == 0u) {
+      uint32_t value;
+      EXPECT_TRUE(Store32LE(memory_, addr, addr));
+      EXPECT_TRUE(Load32LE(memory_, addr, &value));
+      EXPECT_EQ(addr, value);
+      EXPECT_TRUE(Load32LE(memory_, addr & 0x3FFFFu, &value));
+      EXPECT_EQ(addr, value);
+    }
+
+    if (addr % 2u == 0) {
+      uint16_t value;
+      EXPECT_TRUE(Store16LE(memory_, addr, (uint16_t)addr));
+      EXPECT_TRUE(Load16LE(memory_, addr, &value));
+      EXPECT_EQ((uint16_t)addr, value);
+      EXPECT_TRUE(Load16LE(memory_, addr & 0x3FFFFu, &value));
+      EXPECT_EQ((uint16_t)addr, value);
+    }
+
+    uint8_t value;
+    EXPECT_TRUE(Store8(memory_, addr, (uint8_t)addr));
+    EXPECT_TRUE(Load8(memory_, addr, &value));
+    EXPECT_EQ((uint8_t)addr, value);
+    EXPECT_TRUE(Load8(memory_, addr & 0x3FFFFu, &value));
+    EXPECT_EQ((uint8_t)addr, value);
+  }
+}
