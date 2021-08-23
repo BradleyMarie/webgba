@@ -315,3 +315,59 @@ TEST_F(GbaMemoryTest, VramBank) {
 TEST_F(GbaMemoryTest, OamBank) {
   TestIoRegisterAddress(&oam_, 0x7000000u, 0x8000000u);
 }
+
+TEST_F(GbaMemoryTest, GameBank) {
+  TestIoRegisterAddress(&game_, 0x08000000u, 0x0A000000u);
+  TestIoRegisterAddress(&game_, 0x0A000000u, 0x0C000000u);
+  TestIoRegisterAddress(&game_, 0x0C000000u, 0x0E000000u);
+}
+
+TEST_F(GbaMemoryTest, SramBank) {
+  TestIoRegisterAddress(&sram_, 0x0E000000u, 0x0F000000u);
+}
+
+TEST_F(GbaMemoryTest, BadBank) {
+  for (uint32_t addr = 0x0F000000u; addr < 0x10000000u; addr++) {
+    if (addr % 4u == 0u) {
+      uint32_t value;
+      EXPECT_TRUE(Store32LE(memory_, addr, addr));
+      EXPECT_TRUE(Load32LE(memory_, addr, &value));
+      EXPECT_EQ(0u, value);
+    }
+
+    if (addr % 2u == 0) {
+      uint16_t value;
+      EXPECT_TRUE(Store16LE(memory_, addr, (uint16_t)addr));
+      EXPECT_TRUE(Load16LE(memory_, addr, &value));
+      EXPECT_EQ(0u, value);
+    }
+
+    uint8_t value;
+    EXPECT_TRUE(Store8(memory_, addr, (uint8_t)addr));
+    EXPECT_TRUE(Load8(memory_, addr, &value));
+    EXPECT_EQ(0u, value);
+  }
+}
+
+TEST_F(GbaMemoryTest, RestOfAddressSpace) {
+  for (uint32_t addr = 0x10000000u; addr >= 0x10000000u; addr += 1021u) {
+    if (addr % 4u == 0u) {
+      uint32_t value;
+      EXPECT_TRUE(Store32LE(memory_, addr, addr));
+      EXPECT_TRUE(Load32LE(memory_, addr, &value));
+      EXPECT_EQ(0u, value);
+    }
+
+    if (addr % 2u == 0) {
+      uint16_t value;
+      EXPECT_TRUE(Store16LE(memory_, addr, (uint16_t)addr));
+      EXPECT_TRUE(Load16LE(memory_, addr, &value));
+      EXPECT_EQ(0u, value);
+    }
+
+    uint8_t value;
+    EXPECT_TRUE(Store8(memory_, addr, (uint8_t)addr));
+    EXPECT_TRUE(Load8(memory_, addr, &value));
+    EXPECT_EQ(0u, value);
+  }
+}
