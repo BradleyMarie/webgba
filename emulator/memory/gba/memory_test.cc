@@ -303,3 +303,15 @@ TEST_F(GbaMemoryTest, IoBank) {
   TestIoRegisterAddress(&peripheral_registers_, 0x4000120u, 0x4000200u);
   TestIoRegisterAddress(&platform_registers_, 0x4000200u, 0x5000000u);
 }
+
+TEST_F(GbaMemoryTest, ObjBank) {
+  TestIoRegisterAddress(&palette_, 0x5000000u, 0x6000000u);
+}
+
+TEST_F(GbaMemoryTest, VramBank) {
+  TestIoRegisterAddress(&vram_, 0x6000000u, 0x7000000u);
+}
+
+TEST_F(GbaMemoryTest, OamBank) {
+  TestIoRegisterAddress(&oam_, 0x7000000u, 0x8000000u);
+}
