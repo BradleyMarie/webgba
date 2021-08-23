@@ -105,6 +105,57 @@ class GbaMemoryTest : public testing::Test {
     return expected_response_;
   }
 
+  static void TestIoRegisterAddress(Memory** bank, uint32_t start,
+                                    uint32_t end) {
+    for (uint32_t addr = start; addr < end; addr++) {
+      expected_bank_ = bank;
+      expected_address_ = addr - start;
+
+      if (addr % 4u == 0u) {
+        expected32_ = addr;
+        expected_response_ = true;
+
+        uint32_t value;
+        EXPECT_TRUE(Store32LE(memory_, addr, expected32_));
+        EXPECT_TRUE(Load32LE(memory_, addr, &value));
+        EXPECT_EQ(expected32_, value);
+
+        expected_response_ = false;
+        EXPECT_TRUE(Store32LE(memory_, addr, expected32_));
+        EXPECT_TRUE(Load32LE(memory_, addr, &value));
+        EXPECT_EQ(0u, value);
+      }
+
+      if (addr % 2u == 0) {
+        expected16_ = (uint16_t)addr;
+        expected_response_ = true;
+
+        uint16_t value;
+        EXPECT_TRUE(Store16LE(memory_, addr, expected16_));
+        EXPECT_TRUE(Load16LE(memory_, addr, &value));
+        EXPECT_EQ(expected16_, value);
+
+        expected_response_ = false;
+        EXPECT_TRUE(Store16LE(memory_, addr, expected16_));
+        EXPECT_TRUE(Load16LE(memory_, addr, &value));
+        EXPECT_EQ(0u, value);
+      }
+
+      expected8_ = (uint8_t)addr;
+      expected_response_ = true;
+
+      uint8_t value;
+      EXPECT_TRUE(Store8(memory_, addr, expected8_));
+      EXPECT_TRUE(Load8(memory_, addr, &value));
+      EXPECT_EQ(expected8_, value);
+
+      expected_response_ = false;
+      EXPECT_TRUE(Store8(memory_, addr, expected8_));
+      EXPECT_TRUE(Load8(memory_, addr, &value));
+      EXPECT_EQ(0u, value);
+    }
+  }
+
  protected:
   static Memory* ppu_registers_;
   static Memory* sound_registers_;
@@ -186,14 +237,14 @@ TEST_F(GbaMemoryTest, BiosBank) {
   }
 }
 
-TEST_F(GbaMemoryTest, WRam) {
-  for (uint32_t addr = 0x20000000u; addr < 0x03000000u; addr++) {
+TEST_F(GbaMemoryTest, WRamBank) {
+  for (uint32_t addr = 0x2040000u; addr < 0x03000000u; addr++) {
     if (addr % 4u == 0u) {
       uint32_t value;
       EXPECT_TRUE(Store32LE(memory_, addr, addr));
       EXPECT_TRUE(Load32LE(memory_, addr, &value));
       EXPECT_EQ(addr, value);
-      EXPECT_TRUE(Load32LE(memory_, addr & 0x3FFFFu, &value));
+      EXPECT_TRUE(Load32LE(memory_, addr & 0x203FFFFu, &value));
       EXPECT_EQ(addr, value);
     }
 
@@ -202,7 +253,7 @@ TEST_F(GbaMemoryTest, WRam) {
       EXPECT_TRUE(Store16LE(memory_, addr, (uint16_t)addr));
       EXPECT_TRUE(Load16LE(memory_, addr, &value));
       EXPECT_EQ((uint16_t)addr, value);
-      EXPECT_TRUE(Load16LE(memory_, addr & 0x3FFFFu, &value));
+      EXPECT_TRUE(Load16LE(memory_, addr & 0x203FFFFu, &value));
       EXPECT_EQ((uint16_t)addr, value);
     }
 
@@ -210,19 +261,19 @@ TEST_F(GbaMemoryTest, WRam) {
     EXPECT_TRUE(Store8(memory_, addr, (uint8_t)addr));
     EXPECT_TRUE(Load8(memory_, addr, &value));
     EXPECT_EQ((uint8_t)addr, value);
-    EXPECT_TRUE(Load8(memory_, addr & 0x3FFFFu, &value));
+    EXPECT_TRUE(Load8(memory_, addr & 0x203FFFFu, &value));
     EXPECT_EQ((uint8_t)addr, value);
   }
 }
 
-TEST_F(GbaMemoryTest, IRam) {
-  for (uint32_t addr = 0x30000000u; addr < 0x04000000u; addr++) {
+TEST_F(GbaMemoryTest, IRamBank) {
+  for (uint32_t addr = 0x03000000u; addr < 0x04000000u; addr++) {
     if (addr % 4u == 0u) {
       uint32_t value;
       EXPECT_TRUE(Store32LE(memory_, addr, addr));
       EXPECT_TRUE(Load32LE(memory_, addr, &value));
       EXPECT_EQ(addr, value);
-      EXPECT_TRUE(Load32LE(memory_, addr & 0x7FFFu, &value));
+      EXPECT_TRUE(Load32LE(memory_, addr & 0x03007FFFu, &value));
       EXPECT_EQ(addr, value);
     }
 
@@ -231,7 +282,7 @@ TEST_F(GbaMemoryTest, IRam) {
       EXPECT_TRUE(Store16LE(memory_, addr, (uint16_t)addr));
       EXPECT_TRUE(Load16LE(memory_, addr, &value));
       EXPECT_EQ((uint16_t)addr, value);
-      EXPECT_TRUE(Load16LE(memory_, addr & 0x7FFFu, &value));
+      EXPECT_TRUE(Load16LE(memory_, addr & 0x03007FFFu, &value));
       EXPECT_EQ((uint16_t)addr, value);
     }
 
@@ -239,7 +290,16 @@ TEST_F(GbaMemoryTest, IRam) {
     EXPECT_TRUE(Store8(memory_, addr, (uint8_t)addr));
     EXPECT_TRUE(Load8(memory_, addr, &value));
     EXPECT_EQ((uint8_t)addr, value);
-    EXPECT_TRUE(Load8(memory_, addr & 0x7FFFu, &value));
+    EXPECT_TRUE(Load8(memory_, addr & 0x03007FFFu, &value));
     EXPECT_EQ((uint8_t)addr, value);
   }
+}
+
+TEST_F(GbaMemoryTest, IoBank) {
+  TestIoRegisterAddress(&ppu_registers_, 0x4000000u, 0x4000060u);
+  TestIoRegisterAddress(&sound_registers_, 0x40000060u, 0x40000B0u);
+  TestIoRegisterAddress(&dma_registers_, 0x40000B0u, 0x4000100u);
+  TestIoRegisterAddress(&timer_registers_, 0x4000100u, 0x4000120u);
+  TestIoRegisterAddress(&peripheral_registers_, 0x4000120u, 0x4000200u);
+  TestIoRegisterAddress(&platform_registers_, 0x4000200u, 0x5000000u);
 }
