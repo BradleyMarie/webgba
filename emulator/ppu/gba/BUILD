@@ -50,6 +50,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "screen_test",
+    srcs = ["screen_test.cc"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":screen",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "types",
     hdrs = ["types.h"],
