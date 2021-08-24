@@ -14,6 +14,20 @@ cc_library(
 )
 
 cc_library(
+    name = "object_set",
+    hdrs = ["object_set.h"],
+)
+
+cc_test(
+    name = "object_set_test",
+    srcs = ["object_set_test.cc"],
+    deps = [
+        ":object_set",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "ppu",
     hdrs = ["ppu.h"],
     srcs = ["ppu.c"],
