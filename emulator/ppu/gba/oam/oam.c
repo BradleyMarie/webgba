@@ -7,8 +7,8 @@
 
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
+  MemoryContextFree free_routine;
   void *free_address;
-  uint16_t *reference_count;
 } GbaPpuOam;
 
 static bool OamLoad32LE(const void *context, uint32_t address,
@@ -73,24 +73,20 @@ static bool OamStore8(void *context, uint32_t address, uint8_t value) {
 
 static void OamFree(void *context) {
   GbaPpuOam *oam = (GbaPpuOam *)context;
-  assert(*oam->reference_count != 0u);
-  *oam->reference_count -= 1u;
-  if (*oam->reference_count == 0u) {
-    free(oam->free_address);
-    free(oam);
-  }
+  oam->free_routine(oam->free_address);
+  free(oam);
 }
 
-Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory, void *free_address,
-                    uint16_t *reference_count) {
+Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
+                    MemoryContextFree free_routine, void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
   if (oam == NULL) {
     return NULL;
   }
 
   oam->memory = oam_memory;
+  oam->free_routine = free_routine;
   oam->free_address = free_address;
-  oam->reference_count = reference_count;
 
   Memory *result =
       MemoryAllocate(oam, OamLoad32LE, OamLoad16LE, OamLoad8, OamStore32LE,
@@ -99,8 +95,6 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory, void *free_address,
     free(oam);
     return NULL;
   }
-
-  *reference_count += 1u;
 
   return result;
 }

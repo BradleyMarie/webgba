@@ -8,8 +8,8 @@
 
 typedef struct {
   GbaPpuPaletteMemory *memory;
+  MemoryContextFree free_routine;
   void *free_address;
-  uint16_t *reference_count;
 } GbaPpuPalette;
 
 static bool PaletteLoad32LE(const void *context, uint32_t address,
@@ -80,24 +80,20 @@ static bool PaletteStore8(void *context, uint32_t address, uint8_t value) {
 
 static void PaletteFree(void *context) {
   GbaPpuPalette *palette = (GbaPpuPalette *)context;
-  assert(*palette->reference_count != 0u);
-  *palette->reference_count -= 1u;
-  if (*palette->reference_count == 0u) {
-    free(palette->free_address);
-    free(palette);
-  }
+  palette->free_routine(palette->free_address);
+  free(palette);
 }
 
-Memory *PaletteAllocate(GbaPpuPaletteMemory *palette_memory, void *free_address,
-                        uint16_t *reference_count) {
+Memory *PaletteAllocate(GbaPpuPaletteMemory *palette_memory,
+                        MemoryContextFree free_routine, void *free_address) {
   GbaPpuPalette *palette = (GbaPpuPalette *)malloc(sizeof(GbaPpuPalette));
   if (palette == NULL) {
     return NULL;
   }
 
   palette->memory = palette_memory;
+  palette->free_routine = free_routine;
   palette->free_address = free_address;
-  palette->reference_count = reference_count;
 
   Memory *result = MemoryAllocate(palette, PaletteLoad32LE, PaletteLoad16LE,
                                   PaletteLoad8, PaletteStore32LE,
@@ -106,8 +102,6 @@ Memory *PaletteAllocate(GbaPpuPaletteMemory *palette_memory, void *free_address,
     free(palette);
     return NULL;
   }
-
-  *reference_count += 1u;
 
   return result;
 }

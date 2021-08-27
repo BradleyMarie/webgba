@@ -12,16 +12,17 @@ class VRamTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&vram_memory_, 0, sizeof(GbaPpuVideoMemory));
-    memory_ = VRamAllocate(&vram_memory_, nullptr, &reference_count_);
+    memory_ = VRamAllocate(&vram_memory_, FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
   void TearDown() override { MemoryFree(memory_); }
 
+  static void FreeRoutine(void* context) { ASSERT_EQ(nullptr, context); }
+
  protected:
   GbaPpuVideoMemory vram_memory_;
-  Memory *memory_;
-  uint16_t reference_count_;
+  Memory* memory_;
 };
 
 TEST_F(VRamTest, LoadStore32BG) {

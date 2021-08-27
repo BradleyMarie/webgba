@@ -8,16 +8,17 @@ class PaletteTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&palette_memory_, 0, sizeof(GbaPpuPaletteMemory));
-    memory_ = PaletteAllocate(&palette_memory_, nullptr, &reference_count_);
+    memory_ = PaletteAllocate(&palette_memory_, FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
   void TearDown() override { MemoryFree(memory_); }
 
+  static void FreeRoutine(void* context) { ASSERT_EQ(nullptr, context); }
+
  protected:
   GbaPpuPaletteMemory palette_memory_;
-  uint16_t reference_count_;
-  Memory *memory_;
+  Memory* memory_;
 };
 
 TEST_F(PaletteTest, LoadStore32Succeeds) {
