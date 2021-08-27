@@ -18,6 +18,7 @@ cc_library(
 cc_test(
     name = "memory_test",
     srcs = ["memory_test.cc"],
+    shard_count = 13,
     deps = [
         ":memory",
         "//emulator/memory/gba/bios:bios_data",
