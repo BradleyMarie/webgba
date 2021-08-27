@@ -46,6 +46,7 @@ cc_library(
         ":registers",
         ":screen",
         "//emulator/memory:memory",
+        "//emulator/ppu/gba/io:io",
         "//emulator/platform/gba:platform",
         "//emulator/ppu/gba/oam:oam",
         "//emulator/ppu/gba/palette:palette",
@@ -65,6 +66,7 @@ cc_test(
 cc_library(
     name = "registers",
     hdrs = ["registers.h"],
+    visibility = ["//emulator/ppu:__subpackages__"],
 )
 
 cc_library(
