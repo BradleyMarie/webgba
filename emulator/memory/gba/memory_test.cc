@@ -316,9 +316,15 @@ TEST_F(GbaMemoryTest, OamBank) {
   TestIoRegisterAddress(&oam_, 0x7000000u, 0x8000000u);
 }
 
-TEST_F(GbaMemoryTest, GameBank) {
+TEST_F(GbaMemoryTest, GameBank0) {
   TestIoRegisterAddress(&game_, 0x08000000u, 0x0A000000u);
+}
+
+TEST_F(GbaMemoryTest, GameBank1) {
   TestIoRegisterAddress(&game_, 0x0A000000u, 0x0C000000u);
+}
+
+TEST_F(GbaMemoryTest, GameBank2) {
   TestIoRegisterAddress(&game_, 0x0C000000u, 0x0E000000u);
 }
 
