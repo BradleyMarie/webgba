@@ -1,8 +1,10 @@
 #include "emulator/ppu/gba/bitmap.h"
 
-#define GBA_MODE_5_FRAME_WIDTH 160u
-#define GBA_MODE_5_FRAME_HEIGHT 128u
-#define GBA_BACK_PAGE_OFFSET 0xA000u
+typedef enum {
+  GBA_PPU_MODE_3,
+  GBA_PPU_MODE_4,
+  GBA_PPU_MODE_5
+} GbaPpuBitmapMode;
 
 static bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
                                uint_fast8_t y, uint_fast8_t* mosaic_pixel_x,
@@ -26,12 +28,12 @@ static bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
   return true;
 }
 
-static void GbaPpuRenderBitmapPixel(
-    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
-    uint_fast8_t frame_width, uint_fast8_t frame_height,
-    bool frame_pixels_are_colors, bool back_page,
-    GbaPpuInternalRegisters* internal_registers, uint_fast8_t x, uint_fast8_t y,
-    GbaPpuScreen* screen) {
+static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
+                                    const GbaPpuRegisters* registers,
+                                    GbaPpuBitmapMode mode, bool back_page,
+                                    GbaPpuInternalRegisters* internal_registers,
+                                    uint_fast8_t x, uint_fast8_t y,
+                                    GbaPpuScreen* screen) {
   if (x == 0) {
     if (y == 0) {
       internal_registers->bg2_x_row_start = registers->bg2x;
@@ -49,20 +51,35 @@ static void GbaPpuRenderBitmapPixel(
     uint32_t lookup_y = internal_registers->bg2_y >> 8u;
 
     uint16_t color;
-    if (lookup_x >= frame_width || lookup_y >= frame_height) {
-      color = memory->palette.bg.colors[0];
-    } else {
-      uint32_t row_offset = lookup_y * frame_width;
-      uint32_t column_offset = lookup_x;
-      uint32_t pixel_offset = row_offset + column_offset;
-
-      if (frame_pixels_are_colors) {
-        color = memory->vram.paged_half_words[back_page][pixel_offset];
-      } else {
-        uint8_t color_index = memory->vram.paged_bytes[back_page][pixel_offset];
-        color = memory->palette.bg.colors[color_index];
-      }
-    }
+    uint8_t color_index;
+    switch (mode) {
+      case GBA_PPU_MODE_3:
+        if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
+            lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+          color = memory->palette.bg.large_palette[0u];
+        } else {
+          color = memory->vram.mode_3.bg.pixels[y][x];
+        }
+        break;
+      case GBA_PPU_MODE_4:
+        if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
+            lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+          color = memory->palette.bg.large_palette[0u];
+        } else {
+          color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
+          color = memory->palette.bg.large_palette[color_index];
+        }
+        break;
+      case GBA_PPU_MODE_5:
+        if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
+            lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
+          color = memory->palette.bg.large_palette[0u];
+        } else {
+          color_index = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
+          color = memory->palette.bg.large_palette[color_index];
+        }
+        break;
+    };
     GbaPpuScreenSetPixel(screen, x, y, color);
   }
 
@@ -80,10 +97,9 @@ void GbaPpuRenderMode3Pixel(const GbaPpuMemory* memory,
                             GbaPpuInternalRegisters* internal_registers,
                             uint_fast8_t x, uint_fast8_t y,
                             GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers, /*frame_width=*/GBA_SCREEN_WIDTH,
-                          /*frame_height=*/GBA_SCREEN_HEIGHT,
-                          /*frame_pixels_are_colors=*/true, /*back_page=*/false,
-                          internal_registers, x, y, screen);
+  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_3,
+                          /*back_page=*/false, internal_registers, x, y,
+                          screen);
 }
 
 void GbaPpuRenderMode4Pixel(const GbaPpuMemory* memory,
@@ -91,9 +107,7 @@ void GbaPpuRenderMode4Pixel(const GbaPpuMemory* memory,
                             GbaPpuInternalRegisters* internal_registers,
                             uint_fast8_t x, uint_fast8_t y,
                             GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers, /*frame_width=*/GBA_SCREEN_WIDTH,
-                          /*frame_height=*/GBA_SCREEN_HEIGHT,
-                          /*frame_pixels_are_colors=*/false,
+  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_4,
                           /*back_page=*/registers->dispcnt.page_select,
                           internal_registers, x, y, screen);
 }
@@ -103,10 +117,7 @@ void GbaPpuRenderMode5Pixel(const GbaPpuMemory* memory,
                             GbaPpuInternalRegisters* internal_registers,
                             uint_fast8_t x, uint_fast8_t y,
                             GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers,
-                          /*frame_width=*/GBA_MODE_5_FRAME_WIDTH,
-                          /*frame_height=*/GBA_MODE_5_FRAME_HEIGHT,
-                          /*frame_pixels_are_colors=*/true,
+  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_5,
                           /*back_page=*/registers->dispcnt.page_select,
                           internal_registers, x, y, screen);
 }

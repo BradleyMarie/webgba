@@ -4,6 +4,13 @@
 #include <stdlib.h>
 
 #define VRAM_ADDRESS_MASK 0x1FFFFu
+#define VRAM_BG_SIZE (64u * 1024u)
+
+typedef struct {
+  GbaPpuVideoMemory *memory;
+  void *free_address;
+  uint16_t *reference_count;
+} GbaPpuVRam;
 
 static inline uint32_t VRamComputeAddress(uint32_t address) {
   address &= VRAM_ADDRESS_MASK;
@@ -21,10 +28,10 @@ static bool VRamLoad32LE(const void *context, uint32_t address,
                          uint32_t *value) {
   assert((address & 0x3u) == 0u);
 
-  const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
+  const GbaPpuVRam *vram = (const GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->vram.words[address >> 2u];
+  *value = vram->memory->words[address >> 2u];
 
   return true;
 }
@@ -33,19 +40,19 @@ static bool VRamLoad16LE(const void *context, uint32_t address,
                          uint16_t *value) {
   assert((address & 0x1u) == 0u);
 
-  const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
+  const GbaPpuVRam *vram = (const GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->vram.half_words[address >> 1u];
+  *value = vram->memory->half_words[address >> 1u];
 
   return true;
 }
 
 static bool VRamLoad8(const void *context, uint32_t address, uint8_t *value) {
-  const GbaPpuMemory *ppu_memory = (const GbaPpuMemory *)context;
+  const GbaPpuVRam *vram = (const GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  *value = ppu_memory->vram.bytes[address];
+  *value = vram->memory->bytes[address];
 
   return true;
 }
@@ -53,10 +60,10 @@ static bool VRamLoad8(const void *context, uint32_t address, uint8_t *value) {
 static bool VRamStore32LE(void *context, uint32_t address, uint32_t value) {
   assert((address & 0x3u) == 0u);
 
-  GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
+  GbaPpuVRam *vram = (GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  ppu_memory->vram.words[address >> 2u] = value;
+  vram->memory->words[address >> 2u] = value;
 
   return true;
 }
@@ -64,16 +71,16 @@ static bool VRamStore32LE(void *context, uint32_t address, uint32_t value) {
 static bool VRamStore16LE(void *context, uint32_t address, uint16_t value) {
   assert((address & 0x1u) == 0u);
 
-  GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
+  GbaPpuVRam *vram = (GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  ppu_memory->vram.half_words[address >> 1u] = value;
+  vram->memory->half_words[address >> 1u] = value;
 
   return true;
 }
 
 static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
-  GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
+  GbaPpuVRam *vram = (GbaPpuVRam *)context;
 
   address = VRamComputeByteStoreAddress(address);
   if (address >= VRAM_BG_SIZE) {
@@ -81,29 +88,41 @@ static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
   }
 
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  ppu_memory->vram.half_words[address >> 1u] = value16;
+  vram->memory->half_words[address >> 1u] = value16;
 
   return true;
 }
 
 static void VRamFree(void *context) {
-  GbaPpuMemory *ppu_memory = (GbaPpuMemory *)context;
-  assert(ppu_memory->reference_count != 0u);
-  ppu_memory->reference_count -= 1u;
-  if (ppu_memory->reference_count == 0u) {
-    free(ppu_memory->free_address);
+  GbaPpuVRam *vram = (GbaPpuVRam *)context;
+  assert(*vram->reference_count != 0u);
+  *vram->reference_count -= 1u;
+  if (*vram->reference_count == 0u) {
+    free(vram->free_address);
+    free(vram);
   }
 }
 
-Memory *VRamAllocate(GbaPpuMemory *ppu_memory) {
-  Memory *result =
-      MemoryAllocate(ppu_memory, VRamLoad32LE, VRamLoad16LE, VRamLoad8,
-                     VRamStore32LE, VRamStore16LE, VRamStore8, VRamFree);
-  if (result == NULL) {
+Memory *VRamAllocate(GbaPpuVideoMemory *video_memory, void *free_address,
+                     uint16_t *reference_count) {
+  GbaPpuVRam *vram = (GbaPpuVRam *)malloc(sizeof(GbaPpuVRam));
+  if (vram == NULL) {
     return NULL;
   }
 
-  ppu_memory->reference_count += 1u;
+  vram->memory = video_memory;
+  vram->free_address = free_address;
+  vram->reference_count = reference_count;
+
+  Memory *result =
+      MemoryAllocate(vram, VRamLoad32LE, VRamLoad16LE, VRamLoad8, VRamStore32LE,
+                     VRamStore16LE, VRamStore8, VRamFree);
+  if (result == NULL) {
+    free(vram);
+    return NULL;
+  }
+
+  *reference_count += 1u;
 
   return result;
 }

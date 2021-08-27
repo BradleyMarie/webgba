@@ -4,19 +4,24 @@ extern "C" {
 
 #include "googletest/include/gtest/gtest.h"
 
+#define VRAM_BG_SIZE (64u * 1024u)
+#define VRAM_OBJ_SIZE (32u * 1024u)
+#define VRAM_BANK_SIZE (256u * 1024)
+
 class VRamTest : public testing::Test {
  public:
   void SetUp() override {
-    memset(&ppu_memory_, 0, sizeof(GbaPpuMemory));
-    memory_ = VRamAllocate(&ppu_memory_);
+    memset(&vram_memory_, 0, sizeof(GbaPpuVideoMemory));
+    memory_ = VRamAllocate(&vram_memory_, nullptr, &reference_count_);
     ASSERT_NE(nullptr, memory_);
   }
 
   void TearDown() override { MemoryFree(memory_); }
 
  protected:
-  GbaPpuMemory ppu_memory_;
+  GbaPpuVideoMemory vram_memory_;
   Memory *memory_;
+  uint16_t reference_count_;
 };
 
 TEST_F(VRamTest, LoadStore32BG) {

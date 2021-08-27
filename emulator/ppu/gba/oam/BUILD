@@ -8,7 +8,7 @@ cc_library(
     srcs = ["oam.c"],
     deps = [
         "//emulator/memory:memory",
-        "//emulator/ppu/gba:types",
+        "//emulator/ppu/gba:memory",
     ],
 )
 

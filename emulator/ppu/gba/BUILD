@@ -8,9 +8,16 @@ cc_library(
     srcs = ["bitmap.c"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
+        ":memory",
+        ":registers",
         ":screen",
-        ":types",
     ],
+)
+
+cc_library(
+    name = "memory",
+    hdrs = ["memory.h"],
+    visibility = ["//emulator/ppu:__subpackages__"],
 )
 
 cc_library(
@@ -35,8 +42,9 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":bitmap",
+        ":memory",
+        ":registers",
         ":screen",
-        ":types",
         "//emulator/memory:memory",
         "//emulator/platform/gba:platform",
         "//emulator/ppu/gba/oam:oam",
@@ -55,12 +63,18 @@ cc_test(
 )
 
 cc_library(
+    name = "registers",
+    hdrs = ["registers.h"],
+)
+
+cc_library(
     name = "screen",
     hdrs = ["screen.h"],
     srcs = ["screen.c"],
     linkopts = ["-lGL"],
     deps = [
-        ":types",
+        ":memory",
+        ":registers",
     ],
 )
 
@@ -72,10 +86,4 @@ cc_test(
         ":screen",
         "@com_google_googletest//:gtest_main",
     ],
-)
-
-cc_library(
-    name = "types",
-    hdrs = ["types.h"],
-    visibility = ["//emulator/ppu/gba:__subpackages__"],
 )

@@ -7,15 +7,16 @@ extern "C" {
 class PaletteTest : public testing::Test {
  public:
   void SetUp() override {
-    memset(&ppu_memory_, 0, sizeof(GbaPpuMemory));
-    memory_ = PaletteAllocate(&ppu_memory_);
+    memset(&palette_memory_, 0, sizeof(GbaPpuPaletteMemory));
+    memory_ = PaletteAllocate(&palette_memory_, nullptr, &reference_count_);
     ASSERT_NE(nullptr, memory_);
   }
 
   void TearDown() override { MemoryFree(memory_); }
 
  protected:
-  GbaPpuMemory ppu_memory_;
+  GbaPpuPaletteMemory palette_memory_;
+  uint16_t reference_count_;
   Memory *memory_;
 };
 
