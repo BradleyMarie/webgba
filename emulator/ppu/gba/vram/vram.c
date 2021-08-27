@@ -8,8 +8,8 @@
 
 typedef struct {
   GbaPpuVideoMemory *memory;
+  MemoryContextFree free_routine;
   void *free_address;
-  uint16_t *reference_count;
 } GbaPpuVRam;
 
 static inline uint32_t VRamComputeAddress(uint32_t address) {
@@ -95,24 +95,20 @@ static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
 
 static void VRamFree(void *context) {
   GbaPpuVRam *vram = (GbaPpuVRam *)context;
-  assert(*vram->reference_count != 0u);
-  *vram->reference_count -= 1u;
-  if (*vram->reference_count == 0u) {
-    free(vram->free_address);
-    free(vram);
-  }
+  vram->free_routine(vram->free_address);
+  free(vram);
 }
 
-Memory *VRamAllocate(GbaPpuVideoMemory *video_memory, void *free_address,
-                     uint16_t *reference_count) {
+Memory *VRamAllocate(GbaPpuVideoMemory *video_memory,
+                     MemoryContextFree free_routine, void *free_address) {
   GbaPpuVRam *vram = (GbaPpuVRam *)malloc(sizeof(GbaPpuVRam));
   if (vram == NULL) {
     return NULL;
   }
 
   vram->memory = video_memory;
+  vram->free_routine = free_routine;
   vram->free_address = free_address;
-  vram->reference_count = reference_count;
 
   Memory *result =
       MemoryAllocate(vram, VRamLoad32LE, VRamLoad16LE, VRamLoad8, VRamStore32LE,
@@ -121,8 +117,6 @@ Memory *VRamAllocate(GbaPpuVideoMemory *video_memory, void *free_address,
     free(vram);
     return NULL;
   }
-
-  *reference_count += 1u;
 
   return result;
 }

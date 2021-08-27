@@ -192,26 +192,32 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   (*ppu)->reference_count = 1u;
 
   *palette =
-      PaletteAllocate(&(*ppu)->memory.palette, *ppu, &(*ppu)->reference_count);
+      PaletteAllocate(&(*ppu)->memory.palette, GbaPpuRegistersFree, *ppu);
   if (*palette == NULL) {
     free(*ppu);
     return false;
   }
 
-  *vram = VRamAllocate(&(*ppu)->memory.vram, *ppu, &(*ppu)->reference_count);
+  (*ppu)->reference_count += 1u;
+
+  *vram = VRamAllocate(&(*ppu)->memory.vram, GbaPpuRegistersFree, *ppu);
   if (*vram == NULL) {
     MemoryFree(*palette);
     free(*ppu);
     return false;
   }
 
-  *oam = OamAllocate(&(*ppu)->memory.oam, *ppu, &(*ppu)->reference_count);
+  (*ppu)->reference_count += 1u;
+
+  *oam = OamAllocate(&(*ppu)->memory.oam, GbaPpuRegistersFree, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
     free(*ppu);
     return false;
   }
+
+  (*ppu)->reference_count += 1u;
 
   *registers = MemoryAllocate(*ppu, GbaPpuRegistersLoad32,
                               GbaPpuRegistersLoad16, GbaPpuRegistersLoad8,
@@ -225,11 +231,12 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
     return false;
   }
 
+  (*ppu)->reference_count += 1u;
+
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
   (*ppu)->registers.bg2pa = 0x100u;
   (*ppu)->registers.bg2pd = 0x100u;
-  (*ppu)->reference_count += 1u;
 
   GbaPlatformRetain(platform);
 

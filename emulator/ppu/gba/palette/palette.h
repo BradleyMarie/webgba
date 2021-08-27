@@ -4,7 +4,7 @@
 #include "emulator/memory/memory.h"
 #include "emulator/ppu/gba/memory.h"
 
-Memory* PaletteAllocate(GbaPpuPaletteMemory* palette_memory, void* free_address,
-                        uint16_t* reference_count);
+Memory* PaletteAllocate(GbaPpuPaletteMemory* palette_memory,
+                        MemoryContextFree free_routine, void* free_address);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_PALETTE_PALETTE_
