@@ -4,10 +4,11 @@
 #include <stdlib.h>
 
 #include "emulator/ppu/gba/bitmap.h"
+#include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
 #include "emulator/ppu/gba/palette/palette.h"
+#include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/screen.h"
-#include "emulator/ppu/gba/types.h"
 #include "emulator/ppu/gba/vram/vram.h"
 
 #define GBA_PPU_CYCLES_PER_PIXEL 4u
@@ -27,6 +28,7 @@ struct _GbaPpu {
   bool hardware_render;
   PpuRenderDoneFunction frame_done;
   uint32_t cycle_count;
+  uint16_t reference_count;
 };
 
 static bool GbaPpuRegistersLoad16(const void *context, uint32_t address,
@@ -187,23 +189,23 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
     return false;
   }
 
-  (*ppu)->memory.free_address = *ppu;
-  (*ppu)->memory.reference_count = 1u;
+  (*ppu)->reference_count = 1u;
 
-  *palette = PaletteAllocate(&(*ppu)->memory);
+  *palette =
+      PaletteAllocate(&(*ppu)->memory.palette, *ppu, &(*ppu)->reference_count);
   if (*palette == NULL) {
     free(*ppu);
     return false;
   }
 
-  *vram = VRamAllocate(&(*ppu)->memory);
+  *vram = VRamAllocate(&(*ppu)->memory.vram, *ppu, &(*ppu)->reference_count);
   if (*vram == NULL) {
     MemoryFree(*palette);
     free(*ppu);
     return false;
   }
 
-  *oam = PaletteAllocate(&(*ppu)->memory);
+  *oam = OamAllocate(&(*ppu)->memory.oam, *ppu, &(*ppu)->reference_count);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -227,7 +229,7 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   (*ppu)->registers.dispcnt.forced_blank = true;
   (*ppu)->registers.bg2pa = 0x100u;
   (*ppu)->registers.bg2pd = 0x100u;
-  (*ppu)->memory.reference_count += 1u;
+  (*ppu)->reference_count += 1u;
 
   GbaPlatformRetain(platform);
 
@@ -235,9 +237,9 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
 }
 
 void GbaPpuFree(GbaPpu *ppu) {
-  assert(ppu->memory.reference_count != 0u);
-  ppu->memory.reference_count -= 1u;
-  if (ppu->memory.reference_count == 0u) {
+  assert(ppu->reference_count != 0u);
+  ppu->reference_count -= 1u;
+  if (ppu->reference_count == 0u) {
     GbaPlatformRelease(ppu->platform);
     GbaPpuScreenDestroy(&ppu->screen);
     free(ppu);

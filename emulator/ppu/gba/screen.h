@@ -4,7 +4,11 @@
 #include <GLES2/gl2.h>
 #include <assert.h>
 
-#include "emulator/ppu/gba/types.h"
+#include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/registers.h"
+
+#define GBA_SCREEN_HEIGHT GBA_FULL_FRAME_HEIGHT
+#define GBA_SCREEN_WIDTH GBA_FULL_FRAME_WIDTH
 
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];

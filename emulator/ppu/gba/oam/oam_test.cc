@@ -7,16 +7,17 @@ extern "C" {
 class OamTest : public testing::Test {
  public:
   void SetUp() override {
-    memset(&ppu_memory_, 0, sizeof(GbaPpuMemory));
-    memory_ = OamAllocate(&ppu_memory_);
+    memset(&oam_memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
+    memory_ = OamAllocate(&oam_memory_, nullptr, &reference_count_);
     ASSERT_NE(nullptr, memory_);
   }
 
   void TearDown() override { MemoryFree(memory_); }
 
  protected:
-  GbaPpuMemory ppu_memory_;
+  GbaPpuObjectAttributeMemory oam_memory_;
   Memory *memory_;
+  uint16_t reference_count_;
 };
 
 TEST_F(OamTest, LoadStore32Succeeds) {
