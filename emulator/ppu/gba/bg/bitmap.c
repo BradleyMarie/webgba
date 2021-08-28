@@ -1,10 +1,10 @@
-#include "emulator/ppu/gba/bitmap.h"
+#include "emulator/ppu/gba/bg/bitmap.h"
 
 typedef enum {
-  GBA_PPU_MODE_3,
-  GBA_PPU_MODE_4,
-  GBA_PPU_MODE_5
-} GbaPpuBitmapMode;
+  GBA_PPU_BG2_MODE_3,
+  GBA_PPU_BG2_MODE_4,
+  GBA_PPU_BG2_MODE_5
+} GbaPpuBackground2BitmapMode;
 
 static bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
                                uint_fast8_t y, uint_fast8_t* mosaic_pixel_x,
@@ -28,12 +28,11 @@ static bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
   return true;
 }
 
-static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
-                                    const GbaPpuRegisters* registers,
-                                    GbaPpuBitmapMode mode, bool back_page,
-                                    GbaPpuInternalRegisters* internal_registers,
-                                    uint_fast8_t x, uint_fast8_t y,
-                                    GbaPpuScreen* screen) {
+static void GbaPpuBackground2BitmapPixel(
+    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
+    GbaPpuBackground2BitmapMode mode, bool back_page,
+    GbaPpuInternalRegisters* internal_registers, uint_fast8_t x, uint_fast8_t y,
+    GbaPpuScreen* screen) {
   if (x == 0) {
     if (y == 0) {
       internal_registers->bg2_x_row_start = registers->bg2x;
@@ -53,7 +52,7 @@ static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
     uint16_t color;
     uint8_t color_index;
     switch (mode) {
-      case GBA_PPU_MODE_3:
+      case GBA_PPU_BG2_MODE_3:
         if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
             lookup_y >= GBA_FULL_FRAME_HEIGHT) {
           color = memory->palette.bg.large_palette[0u];
@@ -61,7 +60,7 @@ static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
           color = memory->vram.mode_3.bg.pixels[y][x];
         }
         break;
-      case GBA_PPU_MODE_4:
+      case GBA_PPU_BG2_MODE_4:
         if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
             lookup_y >= GBA_FULL_FRAME_HEIGHT) {
           color = memory->palette.bg.large_palette[0u];
@@ -70,7 +69,7 @@ static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
           color = memory->palette.bg.large_palette[color_index];
         }
         break;
-      case GBA_PPU_MODE_5:
+      case GBA_PPU_BG2_MODE_5:
         if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
             lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
           color = memory->palette.bg.large_palette[0u];
@@ -92,32 +91,32 @@ static void GbaPpuRenderBitmapPixel(const GbaPpuMemory* memory,
   }
 }
 
-void GbaPpuRenderMode3Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y,
-                            GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_3,
-                          /*back_page=*/false, internal_registers, x, y,
-                          screen);
+void GbaPpuBackground2Mode3Pixel(const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuInternalRegisters* internal_registers,
+                                 uint_fast8_t x, uint_fast8_t y,
+                                 GbaPpuScreen* screen) {
+  GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_3,
+                               /*back_page=*/false, internal_registers, x, y,
+                               screen);
 }
 
-void GbaPpuRenderMode4Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y,
-                            GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_4,
-                          /*back_page=*/registers->dispcnt.page_select,
-                          internal_registers, x, y, screen);
+void GbaPpuBackground2Mode4Pixel(const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuInternalRegisters* internal_registers,
+                                 uint_fast8_t x, uint_fast8_t y,
+                                 GbaPpuScreen* screen) {
+  GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_4,
+                               /*back_page=*/registers->dispcnt.page_select,
+                               internal_registers, x, y, screen);
 }
 
-void GbaPpuRenderMode5Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y,
-                            GbaPpuScreen* screen) {
-  GbaPpuRenderBitmapPixel(memory, registers, GBA_PPU_MODE_5,
-                          /*back_page=*/registers->dispcnt.page_select,
-                          internal_registers, x, y, screen);
+void GbaPpuBackground2Mode5Pixel(const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuInternalRegisters* internal_registers,
+                                 uint_fast8_t x, uint_fast8_t y,
+                                 GbaPpuScreen* screen) {
+  GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_5,
+                               /*back_page=*/registers->dispcnt.page_select,
+                               internal_registers, x, y, screen);
 }

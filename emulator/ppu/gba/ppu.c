@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "emulator/ppu/gba/bitmap.h"
+#include "emulator/ppu/gba/bg/bitmap.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -44,18 +44,18 @@ static void GbaPpuStepMode2(GbaPpu *ppu, uint32_t x, uint32_t y) {
 }
 
 static void GbaPpuStepMode3(GbaPpu *ppu, uint32_t x, uint32_t y) {
-  GbaPpuRenderMode3Pixel(&ppu->memory, &ppu->registers,
-                         &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground2Mode3Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
 }
 
 static void GbaPpuStepMode4(GbaPpu *ppu, uint32_t x, uint32_t y) {
-  GbaPpuRenderMode4Pixel(&ppu->memory, &ppu->registers,
-                         &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground2Mode4Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
 }
 
 static void GbaPpuStepMode5(GbaPpu *ppu, uint32_t x, uint32_t y) {
-  GbaPpuRenderMode5Pixel(&ppu->memory, &ppu->registers,
-                         &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground2Mode5Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
 }
 
 static void GbaPpuStepNoOp(GbaPpu *ppu, uint32_t x, uint32_t y) {
