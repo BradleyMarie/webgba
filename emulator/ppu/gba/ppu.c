@@ -16,6 +16,8 @@
 #define GBA_PPU_PIXELS_PER_SCANLINE 308u
 #define GBA_PPU_ROWS_PER_REFRESH 228u
 
+typedef void (*GbaPpuStepRoutine)(GbaPpu *ppu, uint32_t x, uint32_t y);
+
 struct _GbaPpu {
   GbaPlatform *platform;
   GbaPpuMemory memory;
@@ -29,7 +31,38 @@ struct _GbaPpu {
   uint16_t reference_count;
 };
 
-void GbaPpuRelease(void *context) {
+static void GbaPpuStepMode0(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  // TODO: Implement
+}
+
+static void GbaPpuStepMode1(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  // TODO: Implement
+}
+
+static void GbaPpuStepMode2(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  // TODO: Implement
+}
+
+static void GbaPpuStepMode3(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  GbaPpuRenderMode3Pixel(&ppu->memory, &ppu->registers,
+                         &ppu->internal_registers, x, y, &ppu->screen);
+}
+
+static void GbaPpuStepMode4(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  GbaPpuRenderMode4Pixel(&ppu->memory, &ppu->registers,
+                         &ppu->internal_registers, x, y, &ppu->screen);
+}
+
+static void GbaPpuStepMode5(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  GbaPpuRenderMode5Pixel(&ppu->memory, &ppu->registers,
+                         &ppu->internal_registers, x, y, &ppu->screen);
+}
+
+static void GbaPpuStepNoOp(GbaPpu *ppu, uint32_t x, uint32_t y) {
+  // Do Nothing
+}
+
+static void GbaPpuRelease(void *context) {
   GbaPpu *ppu = (GbaPpu *)context;
   GbaPpuFree(ppu);
 }
@@ -92,17 +125,11 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   return true;
 }
 
-void GbaPpuFree(GbaPpu *ppu) {
-  assert(ppu->reference_count != 0u);
-  ppu->reference_count -= 1u;
-  if (ppu->reference_count == 0u) {
-    GbaPlatformRelease(ppu->platform);
-    GbaPpuScreenDestroy(&ppu->screen);
-    free(ppu);
-  }
-}
-
 void GbaPpuStep(GbaPpu *ppu) {
+  static const GbaPpuStepRoutine mode_step_routines[8u] = {
+      GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
+      GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
+
   uint32_t cycle_position = ppu->cycle_count % GBA_PPU_CYCLES_PER_PIXEL;
   uint32_t pixel = ppu->cycle_count / GBA_PPU_CYCLES_PER_PIXEL;
   uint32_t x = pixel % GBA_PPU_PIXELS_PER_SCANLINE;
@@ -137,25 +164,16 @@ void GbaPpuStep(GbaPpu *ppu) {
     return;
   }
 
-  switch (ppu->registers.dispcnt.mode) {
-    case 0u:
-      break;
-    case 1u:
-      break;
-    case 2u:
-      break;
-    case 3u:
-      GbaPpuRenderMode3Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->screen);
-      break;
-    case 4u:
-      GbaPpuRenderMode4Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->screen);
-      break;
-    case 5u:
-      GbaPpuRenderMode5Pixel(&ppu->memory, &ppu->registers,
-                             &ppu->internal_registers, x, y, &ppu->screen);
-      break;
+  mode_step_routines[ppu->registers.dispcnt.mode](ppu, x, y);
+}
+
+void GbaPpuFree(GbaPpu *ppu) {
+  assert(ppu->reference_count != 0u);
+  ppu->reference_count -= 1u;
+  if (ppu->reference_count == 0u) {
+    GbaPlatformRelease(ppu->platform);
+    GbaPpuScreenDestroy(&ppu->screen);
+    free(ppu);
   }
 }
 
