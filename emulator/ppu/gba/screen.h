@@ -10,31 +10,43 @@
 #define GBA_SCREEN_HEIGHT GBA_FULL_FRAME_HEIGHT
 #define GBA_SCREEN_WIDTH GBA_FULL_FRAME_WIDTH
 
+#define GBA_PPU_SCREEN_TRANSPARENT_PRIORITY 5u
+
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
+  uint8_t priorities[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
   GLuint program;
   GLuint texture;
 } GbaPpuScreen;
 
-static inline void GbaPpuScreenSetPixel(GbaPpuScreen* screen, uint_fast8_t x,
-                                        uint_fast8_t y, uint16_t value) {
+static inline void GbaPpuScreenDrawPixel(GbaPpuScreen* screen, uint_fast8_t x,
+                                         uint_fast8_t y, uint16_t value,
+                                         uint8_t priority) {
   assert(x < GBA_SCREEN_WIDTH);
   assert(y < GBA_SCREEN_HEIGHT);
-  screen->pixels[y][x] = value << 1u;
+  priority = UINT8_MAX - priority;
+  if (priority > screen->priorities[y][x]) {
+    screen->pixels[y][x] = value;
+    screen->priorities[y][x] = priority;
+  }
 }
 
 static inline void GbaPpuScreenCopyPixel(GbaPpuScreen* screen,
                                          uint_fast8_t src_x, uint_fast8_t src_y,
                                          uint_fast8_t dest_x,
-                                         uint_fast8_t dest_y) {
+                                         uint_fast8_t dest_y,
+                                         uint8_t priority) {
   assert(src_x < GBA_SCREEN_WIDTH);
   assert(src_y < GBA_SCREEN_HEIGHT);
   assert(dest_x < GBA_SCREEN_WIDTH);
   assert(dest_y < GBA_SCREEN_HEIGHT);
-  screen->pixels[dest_y][dest_x] = screen->pixels[src_y][src_x];
+  GbaPpuScreenDrawPixel(screen, dest_x, dest_y, screen->pixels[src_y][src_x],
+                        priority);
 }
 
-void GbaPpuScreenCopyToFbo(const GbaPpuScreen* screen, GLuint fbo);
+void GbaPpuScreenClear(GbaPpuScreen* screen);
+
+void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo);
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen);
 

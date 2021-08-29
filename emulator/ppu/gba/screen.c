@@ -1,8 +1,14 @@
 #include "emulator/ppu/gba/screen.h"
 
-#include <stddef.h>
+#include <string.h>
 
-void GbaPpuScreenCopyToFbo(const GbaPpuScreen* screen, GLuint fbo) {
+void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
+  for (uint_fast8_t y = 0u; y < GBA_SCREEN_HEIGHT; y++) {
+    for (uint_fast8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
+      screen->pixels[y][x] <<= 1u;
+    }
+  }
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, screen->texture);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
@@ -14,6 +20,11 @@ void GbaPpuScreenCopyToFbo(const GbaPpuScreen* screen, GLuint fbo) {
   glViewport(0, 0, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
   glUseProgram(screen->program);
   glDrawArrays(GL_TRIANGLES, 0, 3u);
+}
+
+void GbaPpuScreenClear(GbaPpuScreen* screen) {
+  memset(&screen->priorities, 0,
+         sizeof(uint8_t) * GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH);
 }
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
