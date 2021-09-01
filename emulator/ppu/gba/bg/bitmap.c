@@ -42,52 +42,49 @@ static void GbaPpuBackground2BitmapPixel(
     internal_registers->bg2_y = internal_registers->bg2_y_row_start;
   }
 
-  uint_fast8_t mosaic_pixel_x, mosaic_pixel_y;
-  if (GbaPpuBitmapMosaic(registers, x, y, &mosaic_pixel_x, &mosaic_pixel_y)) {
-    GbaPpuScreenCopyPixel(screen, mosaic_pixel_x, mosaic_pixel_y, x, y,
-                          registers->bg2cnt.priority);
-  } else {
-    uint32_t lookup_x = internal_registers->bg2_x >> 8u;
-    uint32_t lookup_y = internal_registers->bg2_y >> 8u;
-
-    uint16_t color;
-    uint8_t color_index;
-    uint8_t priority;
-    switch (mode) {
-      case GBA_PPU_BG2_MODE_3:
-        if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
-            lookup_y >= GBA_FULL_FRAME_HEIGHT) {
-          color = memory->palette.bg.large_palette[0u];
-          priority = registers->bg2cnt.priority;
-        } else {
-          color = memory->vram.mode_3.bg.pixels[y][x];
-        }
-        break;
-      case GBA_PPU_BG2_MODE_4:
-        if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
-            lookup_y >= GBA_FULL_FRAME_HEIGHT) {
-          color = memory->palette.bg.large_palette[0u];
-          priority = registers->bg2cnt.priority;
-        } else {
-          color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
-          color = memory->palette.bg.large_palette[color_index];
-        }
-        break;
-      case GBA_PPU_BG2_MODE_5:
-        if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
-            lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
-          color = memory->palette.bg.large_palette[0u];
-          priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
-        } else {
-          color_index = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
-          color = memory->palette.bg.large_palette[color_index];
-          priority = registers->bg2cnt.priority;
-        }
-        break;
-    };
-
-    GbaPpuScreenDrawPixel(screen, x, y, color, priority);
+  uint_fast8_t lookup_x, lookup_y;
+  if (!GbaPpuBitmapMosaic(registers, x, y, &lookup_x, &lookup_y)) {
+    lookup_x = internal_registers->bg2_x >> 8u;
+    lookup_y = internal_registers->bg2_y >> 8u;
   }
+
+  uint16_t color;
+  uint8_t color_index;
+  uint8_t priority;
+  switch (mode) {
+    case GBA_PPU_BG2_MODE_3:
+      if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
+          lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+        color = memory->palette.bg.large_palette[0u];
+        priority = registers->bg2cnt.priority;
+      } else {
+        color = memory->vram.mode_3.bg.pixels[y][x];
+      }
+      break;
+    case GBA_PPU_BG2_MODE_4:
+      if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
+          lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+        color = memory->palette.bg.large_palette[0u];
+        priority = registers->bg2cnt.priority;
+      } else {
+        color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
+        color = memory->palette.bg.large_palette[color_index];
+      }
+      break;
+    case GBA_PPU_BG2_MODE_5:
+      if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
+          lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
+        color = memory->palette.bg.large_palette[0u];
+        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
+      } else {
+        color_index = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
+        color = memory->palette.bg.large_palette[color_index];
+        priority = registers->bg2cnt.priority;
+      }
+      break;
+  };
+
+  GbaPpuScreenDrawPixel(screen, x, y, color, priority);
 
   internal_registers->bg2_x += registers->bg2pa;
   internal_registers->bg2_y += registers->bg2pc;

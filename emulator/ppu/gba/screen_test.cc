@@ -28,10 +28,3 @@ TEST_F(ScreenTest, DrawPixel) {
   EXPECT_EQ(0x0234u, screen_.pixels[50u][100u]);
   EXPECT_EQ(UINT8_MAX, screen_.priorities[50u][100u]);
 }
-
-TEST_F(ScreenTest, CopyPixel) {
-  GbaPpuScreenDrawPixel(&screen_, 100u, 50u, 0x0234u, 1u);
-  GbaPpuScreenCopyPixel(&screen_, 100u, 50u, 101u, 51u, 2u);
-  EXPECT_EQ(screen_.pixels[50u][100u], screen_.pixels[51u][101u]);
-  EXPECT_EQ(UINT8_MAX - 2u, screen_.priorities[51u][101u]);
-}
