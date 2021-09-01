@@ -56,19 +56,21 @@ static void GbaPpuBackground2BitmapPixel(
       if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
         color = memory->palette.bg.large_palette[0u];
-        priority = registers->bg2cnt.priority;
+        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
       } else {
         color = memory->vram.mode_3.bg.pixels[y][x];
+        priority = registers->bg2cnt.priority;
       }
       break;
     case GBA_PPU_BG2_MODE_4:
       if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
         color = memory->palette.bg.large_palette[0u];
-        priority = registers->bg2cnt.priority;
+        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
       } else {
         color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
         color = memory->palette.bg.large_palette[color_index];
+        priority = registers->bg2cnt.priority;
       }
       break;
     case GBA_PPU_BG2_MODE_5:
