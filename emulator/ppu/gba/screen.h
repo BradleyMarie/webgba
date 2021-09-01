@@ -31,19 +31,6 @@ static inline void GbaPpuScreenDrawPixel(GbaPpuScreen* screen, uint_fast8_t x,
   }
 }
 
-static inline void GbaPpuScreenCopyPixel(GbaPpuScreen* screen,
-                                         uint_fast8_t src_x, uint_fast8_t src_y,
-                                         uint_fast8_t dest_x,
-                                         uint_fast8_t dest_y,
-                                         uint8_t priority) {
-  assert(src_x < GBA_SCREEN_WIDTH);
-  assert(src_y < GBA_SCREEN_HEIGHT);
-  assert(dest_x < GBA_SCREEN_WIDTH);
-  assert(dest_y < GBA_SCREEN_HEIGHT);
-  GbaPpuScreenDrawPixel(screen, dest_x, dest_y, screen->pixels[src_y][src_x],
-                        priority);
-}
-
 void GbaPpuScreenClear(GbaPpuScreen* screen);
 
 void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo);
