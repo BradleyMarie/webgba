@@ -160,6 +160,7 @@ void GbaPpuStep(GbaPpu *ppu) {
       GbaPlatformRaiseHBlankInterrupt(ppu->platform);
     } else if (x == 0 && y == GBA_SCREEN_HEIGHT) {
       GbaPlatformRaiseVBlankCountInterrupt(ppu->platform);
+      GbaPpuScreenClear(&ppu->screen);
       if (!ppu->hardware_render) {
         GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
       }
