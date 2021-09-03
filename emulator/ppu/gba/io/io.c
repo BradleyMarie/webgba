@@ -73,16 +73,16 @@ static bool GbaPpuIoLoad16LE(const void *context, uint32_t address,
       *value = io->registers->vcount;
       return true;
     case BG0CNT_OFFSET:
-      *value = io->registers->bg0cnt.value;
+      *value = io->registers->bgcnt[0u].value;
       return true;
     case BG1CNT_OFFSET:
-      *value = io->registers->bg1cnt.value;
+      *value = io->registers->bgcnt[1u].value;
       return true;
     case BG2CNT_OFFSET:
-      *value = io->registers->bg2cnt.value;
+      *value = io->registers->bgcnt[2u].value;
       return true;
     case BG3CNT_OFFSET:
-      *value = io->registers->bg3cnt.value;
+      *value = io->registers->bgcnt[3u].value;
       return true;
     case WININ_OFFSET:
       *value = io->registers->winin;

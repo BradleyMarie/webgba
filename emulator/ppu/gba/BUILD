@@ -36,6 +36,7 @@ cc_library(
         "//emulator/ppu/gba/io:io",
         "//emulator/platform/gba:platform",
         "//emulator/ppu/gba/bg:bitmap",
+        "//emulator/ppu/gba/bg:linear",
         "//emulator/ppu/gba/oam:oam",
         "//emulator/ppu/gba/palette:palette",
         "//emulator/ppu/gba/vram:vram",

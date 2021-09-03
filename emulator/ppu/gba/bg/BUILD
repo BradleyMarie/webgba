@@ -13,3 +13,15 @@ cc_library(
         "//emulator/ppu/gba:screen",
     ],
 )
+
+cc_library(
+    name = "linear",
+    hdrs = ["linear.h"],
+    srcs = ["linear.c"],
+    deps = [
+        "//emulator/memory:memory",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+        "//emulator/ppu/gba:screen",
+    ],
+)

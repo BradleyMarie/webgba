@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "emulator/ppu/gba/bg/bitmap.h"
+#include "emulator/ppu/gba/bg/linear.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -32,11 +33,21 @@ struct _GbaPpu {
 };
 
 static void GbaPpuStepMode0(GbaPpu *ppu, uint32_t x, uint32_t y) {
-  // TODO: Implement
+  GbaPpuBackground0Mode0Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground1Mode0Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground2Mode0Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground3Mode0Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
 }
 
 static void GbaPpuStepMode1(GbaPpu *ppu, uint32_t x, uint32_t y) {
-  // TODO: Implement
+  GbaPpuBackground0Mode1Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
+  GbaPpuBackground1Mode1Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, x, y, &ppu->screen);
 }
 
 static void GbaPpuStepMode2(GbaPpu *ppu, uint32_t x, uint32_t y) {

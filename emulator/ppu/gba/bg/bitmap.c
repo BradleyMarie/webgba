@@ -9,7 +9,7 @@ typedef enum {
 static bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
                                uint_fast8_t y, uint_fast8_t* mosaic_pixel_x,
                                uint_fast8_t* mosaic_pixel_y) {
-  if (!registers->bg2cnt.mosaic) {
+  if (!registers->bgcnt[2u].mosaic) {
     return false;
   }
 
@@ -59,7 +59,7 @@ static void GbaPpuBackground2BitmapPixel(
         priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
       } else {
         color = memory->vram.mode_3.bg.pixels[y][x];
-        priority = registers->bg2cnt.priority;
+        priority = registers->bgcnt[2u].priority;
       }
       break;
     case GBA_PPU_BG2_MODE_4:
@@ -70,7 +70,7 @@ static void GbaPpuBackground2BitmapPixel(
       } else {
         color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
         color = memory->palette.bg.large_palette[color_index];
-        priority = registers->bg2cnt.priority;
+        priority = registers->bgcnt[2u].priority;
       }
       break;
     case GBA_PPU_BG2_MODE_5:
@@ -81,7 +81,7 @@ static void GbaPpuBackground2BitmapPixel(
       } else {
         color_index = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
         color = memory->palette.bg.large_palette[color_index];
-        priority = registers->bg2cnt.priority;
+        priority = registers->bgcnt[2u].priority;
       }
       break;
   };
