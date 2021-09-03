@@ -48,6 +48,14 @@ static void GbaPpuBackground2BitmapPixel(
     lookup_y = internal_registers->bg2_y >> 8u;
   }
 
+  internal_registers->bg2_x += registers->bg2pa;
+  internal_registers->bg2_y += registers->bg2pc;
+
+  if (x == GBA_SCREEN_WIDTH - 1u) {
+    internal_registers->bg2_x_row_start += registers->bg2pb;
+    internal_registers->bg2_y_row_start += registers->bg2pd;
+  }
+
   uint16_t color;
   uint8_t color_index;
   uint8_t priority;
@@ -57,7 +65,7 @@ static void GbaPpuBackground2BitmapPixel(
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
         return;
       } else {
-        color = memory->vram.mode_3.bg.pixels[y][x];
+        color = memory->vram.mode_3.bg.pixels[lookup_y][lookup_x];
         priority = registers->bgcnt[2u].priority;
       }
       break;
@@ -66,7 +74,8 @@ static void GbaPpuBackground2BitmapPixel(
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
         return;
       } else {
-        color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
+        color_index =
+            memory->vram.mode_4.bg.pages[back_page].pixels[lookup_y][lookup_x];
         color = memory->palette.bg.large_palette[color_index];
         priority = registers->bgcnt[2u].priority;
       }
@@ -76,21 +85,14 @@ static void GbaPpuBackground2BitmapPixel(
           lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
         return;
       } else {
-        color = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
+        color =
+            memory->vram.mode_5.bg.pages[back_page].pixels[lookup_y][lookup_x];
         priority = registers->bgcnt[2u].priority;
       }
       break;
   };
 
   GbaPpuScreenDrawPixel(screen, x, y, color, priority);
-
-  internal_registers->bg2_x += registers->bg2pa;
-  internal_registers->bg2_y += registers->bg2pc;
-
-  if (x == GBA_SCREEN_WIDTH - 1u) {
-    internal_registers->bg2_x_row_start += registers->bg2pb;
-    internal_registers->bg2_y_row_start += registers->bg2pd;
-  }
 }
 
 void GbaPpuBackground2Mode3Pixel(const GbaPpuMemory* memory,
