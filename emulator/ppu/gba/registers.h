@@ -45,7 +45,7 @@ typedef union {
     unsigned char tile_base_block : 2;
     unsigned char unused : 2;
     bool mosaic : 1;
-    bool palettes : 1;
+    bool large_palette : 1;
     unsigned char tile_map_base_block : 5;
     bool wraparound : 1;
     unsigned char size : 2;
