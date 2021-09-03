@@ -29,28 +29,61 @@ typedef union {
 static_assert(sizeof(GbaPpuPaletteMemory) == PALETTE_SIZE,
               "sizeof(GbaPpuPaletteMemory) != PALETTE_SIZE");
 
-typedef struct {
-  unsigned char first : 4;
-  unsigned char second : 4;
+typedef union {
+  struct {
+    unsigned char first : 4;
+    unsigned char second : 4;
+  };
+  uint8_t value;
 } STilePixelPair;
 
-#define GBA_TILE_WIDTH 8u
-#define GBA_TILE_HEIGHT 8u
+#define GBA_TILE_1D_SIZE 8u
 
 typedef struct {
-  STilePixelPair pixels[GBA_TILE_HEIGHT][GBA_TILE_WIDTH >> 1u];
+  STilePixelPair pixels[GBA_TILE_1D_SIZE][GBA_TILE_1D_SIZE >> 1u];
 } STile;
 
-typedef struct DTile {
-  unsigned char pixels[GBA_TILE_HEIGHT][GBA_TILE_WIDTH];
+typedef struct {
+  uint8_t pixels[GBA_TILE_1D_SIZE][GBA_TILE_1D_SIZE];
 } DTile;
 
-#define GBA_TILE_MODE_NUM_BACKGROUND_S_TILES 2048u
-#define GBA_TILE_MODE_NUM_BACKGROUND_D_TILES 1024u
+#define GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES 512u
+#define GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES 256u
 
 typedef union {
-  STile s_tiles[GBA_TILE_MODE_NUM_BACKGROUND_S_TILES];
-  DTile d_tiles[GBA_TILE_MODE_NUM_BACKGROUND_D_TILES];
+  STile s_tiles[GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES];
+  DTile d_tiles[GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES];
+} TileBlock;
+
+#define GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS 4u
+
+typedef struct {
+  TileBlock blocks[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS];
+} BackgroundTiles;
+
+typedef struct {
+  unsigned short index : 10;
+  bool h_flip : 1;
+  bool v_flip : 1;
+  unsigned char palette : 4;
+} TileMapEntry;
+
+#define GBA_TILE_MAP_BLOCK_1D_SIZE 32u
+#define GBA_TILE_MAP_BLOCK_1D_SIZE_PIXELS (GBA_TILE_MAP_BLOCK_1D_SIZE * GBA_TILE_1D_SIZE)
+
+typedef struct {
+  TileMapEntry entries[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE];
+} TileMapBlock;
+
+#define GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS 32u
+
+typedef struct {
+  TileMapBlock blocks[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
+} TileMap;
+
+typedef union {
+  BackgroundTiles tiles;
+  TileMap tile_map;
 } TileModeBackgroundMemory;
 
 #define GBA_TILE_MODE_NUM_OBJECT_S_TILES 1024u

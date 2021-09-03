@@ -42,16 +42,23 @@ typedef union {
 typedef union {
   struct {
     unsigned char priority : 2;
-    unsigned char character_base_block : 2;
+    unsigned char tile_base_block : 2;
     unsigned char unused : 2;
     bool mosaic : 1;
     bool palettes : 1;
-    unsigned char screen_base_block : 5;
+    unsigned char tile_map_base_block : 5;
     bool wraparound : 1;
-    unsigned char screen_size : 2;
+    unsigned char size : 2;
   };
   uint16_t value;
 } BgCntRegister;
+
+typedef struct {
+  unsigned short x : 9;
+  unsigned short unused0 : 7;
+  unsigned short y : 9;
+  unsigned short unused1 : 7;
+} BackgroundOffsetRegister;
 
 typedef union {
   struct {
@@ -71,18 +78,8 @@ typedef union {
     uint16_t greenswp;  // Unimplemented
     DispStatRegister dispstat;
     uint16_t vcount;
-    BgCntRegister bg0cnt;
-    BgCntRegister bg1cnt;
-    BgCntRegister bg2cnt;
-    BgCntRegister bg3cnt;
-    uint16_t bg0hofs;
-    uint16_t bg0vofs;
-    uint16_t bg1hofs;
-    uint16_t bg1vofs;
-    uint16_t bg2hofs;
-    uint16_t bg2vofs;
-    uint16_t bg3hofs;
-    uint16_t bg3vofs;
+    BgCntRegister bgcnt[4];
+    BackgroundOffsetRegister bg_offsets[4];
     uint16_t bg2pa;
     uint16_t bg2pb;
     uint16_t bg2pc;
