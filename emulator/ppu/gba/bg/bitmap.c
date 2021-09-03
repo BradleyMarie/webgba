@@ -72,7 +72,7 @@ static void GbaPpuBackground2BitmapPixel(
       }
       break;
     case GBA_PPU_BG2_MODE_5:
-      if (lookup_x >= GBA_REDUCED_FRAME_WIDTH &&
+      if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
           lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
         return;
       } else {
