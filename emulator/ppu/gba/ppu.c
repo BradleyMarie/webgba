@@ -176,6 +176,9 @@ void GbaPpuStep(GbaPpu *ppu) {
     return;
   }
 
+  GbaPpuScreenDrawPixel(&ppu->screen, x, y,
+                        ppu->memory.palette.bg.large_palette[0u],
+                        GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
   mode_step_routines[ppu->registers.dispcnt.mode](ppu, x, y);
 }
 
