@@ -79,8 +79,7 @@ static void GbaPpuBackground2BitmapPixel(
         color = memory->palette.bg.large_palette[0u];
         priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
       } else {
-        color_index = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
-        color = memory->palette.bg.large_palette[color_index];
+        color = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
         priority = registers->bgcnt[2u].priority;
       }
       break;
