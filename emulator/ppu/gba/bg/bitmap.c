@@ -55,8 +55,7 @@ static void GbaPpuBackground2BitmapPixel(
     case GBA_PPU_BG2_MODE_3:
       if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
-        color = memory->palette.bg.large_palette[0u];
-        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
+        return;
       } else {
         color = memory->vram.mode_3.bg.pixels[y][x];
         priority = registers->bgcnt[2u].priority;
@@ -65,8 +64,7 @@ static void GbaPpuBackground2BitmapPixel(
     case GBA_PPU_BG2_MODE_4:
       if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
           lookup_y >= GBA_FULL_FRAME_HEIGHT) {
-        color = memory->palette.bg.large_palette[0u];
-        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
+        return;
       } else {
         color_index = memory->vram.mode_4.bg.pages[back_page].pixels[y][x];
         color = memory->palette.bg.large_palette[color_index];
@@ -74,10 +72,9 @@ static void GbaPpuBackground2BitmapPixel(
       }
       break;
     case GBA_PPU_BG2_MODE_5:
-      if (lookup_x >= GBA_REDUCED_FRAME_WIDTH ||
-          lookup_y >= GBA_REDUCED_FRAME_HEIGHT) {
-        color = memory->palette.bg.large_palette[0u];
-        priority = GBA_PPU_SCREEN_TRANSPARENT_PRIORITY;
+      if (lookup_x < GBA_REDUCED_FRAME_WIDTH &&
+          lookup_y < GBA_REDUCED_FRAME_HEIGHT) {
+        return;
       } else {
         color = memory->vram.mode_5.bg.pages[back_page].pixels[y][x];
         priority = registers->bgcnt[2u].priority;
@@ -101,6 +98,10 @@ void GbaPpuBackground2Mode3Pixel(const GbaPpuMemory* memory,
                                  GbaPpuInternalRegisters* internal_registers,
                                  uint_fast8_t x, uint_fast8_t y,
                                  GbaPpuScreen* screen) {
+  if (!registers->dispcnt.bg2_enable) {
+    return;
+  }
+
   GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_3,
                                /*back_page=*/false, internal_registers, x, y,
                                screen);
@@ -111,6 +112,10 @@ void GbaPpuBackground2Mode4Pixel(const GbaPpuMemory* memory,
                                  GbaPpuInternalRegisters* internal_registers,
                                  uint_fast8_t x, uint_fast8_t y,
                                  GbaPpuScreen* screen) {
+  if (!registers->dispcnt.bg2_enable) {
+    return;
+  }
+
   GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_4,
                                /*back_page=*/registers->dispcnt.page_select,
                                internal_registers, x, y, screen);
@@ -121,6 +126,10 @@ void GbaPpuBackground2Mode5Pixel(const GbaPpuMemory* memory,
                                  GbaPpuInternalRegisters* internal_registers,
                                  uint_fast8_t x, uint_fast8_t y,
                                  GbaPpuScreen* screen) {
+  if (!registers->dispcnt.bg2_enable) {
+    return;
+  }
+
   GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_5,
                                /*back_page=*/registers->dispcnt.page_select,
                                internal_registers, x, y, screen);
