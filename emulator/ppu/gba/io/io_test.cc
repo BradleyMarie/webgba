@@ -110,6 +110,16 @@ TEST_F(IoTest, GbaPpuRegistersStore16LEVCount) {
   EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
   EXPECT_EQ(0u, contents);
+
+  internal_registers_.cycle_count = 1231u;
+  EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
+  EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
+  EXPECT_EQ(0u, contents);
+
+  internal_registers_.cycle_count = 1232u;
+  EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
+  EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
+  EXPECT_EQ(1u, contents);
 }
 
 TEST_F(IoTest, GbaPpuRegistersStore16LEDispstat) {
