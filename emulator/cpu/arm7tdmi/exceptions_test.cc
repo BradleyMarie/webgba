@@ -154,7 +154,7 @@ TEST(ArmExceptionFIQ, ArmMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionFIQ(&registers);
-  EXPECT_EQ(108u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x1Cu, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
@@ -184,7 +184,7 @@ TEST(ArmExceptionFIQ, ThumbMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionFIQ(&registers);
-  EXPECT_EQ(106u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x1Cu, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
@@ -213,7 +213,7 @@ TEST(ArmExceptionIRQ, ArmMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionIRQ(&registers);
-  EXPECT_EQ(108u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x18u, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
@@ -241,7 +241,7 @@ TEST(ArmExceptionIRQ, ThumbMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionIRQ(&registers);
-  EXPECT_EQ(106u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
   EXPECT_EQ(0x18u, registers.current.user.gprs.pc);
   EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
