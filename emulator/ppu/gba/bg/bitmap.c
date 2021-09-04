@@ -38,7 +38,7 @@ static void GbaPpuBackground2BitmapPixel(
     lookup_x =
         (internal_registers->affine[0u].x + registers->affine[0u].pa * x) >> 8u;
     lookup_y =
-        (internal_registers->affine[0u].y + registers->affine[0u].pc * y) >> 8u;
+        (internal_registers->affine[0u].y + registers->affine[0u].pc * x) >> 8u;
   }
 
   uint16_t color;
