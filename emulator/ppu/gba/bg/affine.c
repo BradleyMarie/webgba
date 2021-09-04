@@ -9,7 +9,7 @@ static bool GbaPpuAffineMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
                                uint_fast8_t y, GbaPpuAffineBackground bg_index,
                                int32_t* mosaic_pixel_x,
                                int32_t* mosaic_pixel_y) {
-  if (!registers->bgcnt[bg_index].mosaic) {
+  if (!registers->bgcnt[2u + bg_index].mosaic) {
     return false;
   }
 
@@ -67,12 +67,13 @@ static void GbaPpuAffineBackgroundPixelColor(
         registers->affine[bg_index].pd;
   }
 
-  static const uint_fast16_t screen_sizes[4] = {128u, 256u, 512u, 1024u};
+  static const uint_fast16_t screen_sizes_pixels[4] = {128u, 256u, 512u, 1024u};
+  static const uint_fast16_t screen_sizes_tiles[4] = {16u, 32u, 64u, 128u};
   uint_fast16_t screen_size =
-      screen_sizes[registers->bgcnt[2u + bg_index].size];
+      screen_sizes_pixels[registers->bgcnt[2u + bg_index].size];
 
   if (registers->bgcnt[2u + bg_index].wraparound) {
-    static const uint_fast16_t screen_size_masks[4] = {0x08Fu, 0x0FFu, 0x1FFu,
+    static const uint_fast16_t screen_size_masks[4] = {0x07Fu, 0x0FFu, 0x1FFu,
                                                        0x3FFu};
     pixel_x &= screen_size_masks[registers->bgcnt[2u + bg_index].size];
     pixel_y &= screen_size_masks[registers->bgcnt[2u + bg_index].size];
@@ -80,10 +81,16 @@ static void GbaPpuAffineBackgroundPixelColor(
     return;
   }
 
+  uint_fast16_t screen_size_tiles =
+      screen_sizes_tiles[registers->bgcnt[2u + bg_index].size];
+
+  uint_fast8_t tile_x = pixel_x / GBA_TILE_1D_SIZE;
+  uint_fast8_t tile_y = pixel_y / GBA_TILE_1D_SIZE;
+
   uint8_t tile_index =
       memory->vram.mode_012.bg.tile_map
           .blocks[registers->bgcnt[2u + bg_index].tile_map_base_block]
-          .indices[pixel_y * screen_size + pixel_x];
+          .indices[tile_y * screen_size_tiles + tile_x];
 
   uint_fast8_t tile_pixel_x = pixel_x % GBA_TILE_1D_SIZE;
   uint_fast8_t tile_pixel_y = pixel_y % GBA_TILE_1D_SIZE;
@@ -94,6 +101,10 @@ static void GbaPpuAffineBackgroundPixelColor(
           .blocks[registers->bgcnt[2u + bg_index].tile_base_block]
           .d_tiles[tile_index]
           .pixels[tile_pixel_y][tile_pixel_x];
+  if (color_index == 0u) {
+    return;
+  }
+
   uint16_t color = memory->palette.bg.large_palette[color_index];
 
   GbaPpuScreenDrawPixel(screen, x, y, color,

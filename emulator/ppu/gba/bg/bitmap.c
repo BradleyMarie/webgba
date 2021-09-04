@@ -78,6 +78,10 @@ static void GbaPpuBackground2BitmapPixel(
       } else {
         color_index =
             memory->vram.mode_4.bg.pages[back_page].pixels[lookup_y][lookup_x];
+        if (color_index == 0u) {
+          return;
+        }
+
         color = memory->palette.bg.large_palette[color_index];
         priority = registers->bgcnt[2u].priority;
       }
