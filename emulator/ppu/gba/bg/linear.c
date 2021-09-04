@@ -84,6 +84,10 @@ static void GbaPpuLinearBackgroundPixelColor(
             .blocks[registers->bgcnt[bg_index].tile_base_block]
             .d_tiles[entry.index]
             .pixels[lookup_y_tile_pixel][lookup_x_tile_pixel];
+    if (color_index == 0u) {
+      return;
+    }
+
     color = memory->palette.bg.large_palette[color_index];
   } else {
     uint8_t shift_amount[2] = {0u, 4u};
@@ -95,6 +99,10 @@ static void GbaPpuLinearBackgroundPixelColor(
             .value;
     color_index_pair >>= shift_amount[lookup_x_tile_pixel & 1u];
     color_index_pair &= 0xFu;
+    if (color_index_pair == 0u) {
+      return;
+    }
+
     color = memory->palette.bg.small_palettes[entry.palette][color_index_pair];
   }
 
