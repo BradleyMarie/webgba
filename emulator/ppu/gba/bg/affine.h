@@ -5,22 +5,15 @@
 #include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/screen.h"
 
-void GbaPpuBackground2Mode1Pixel(const GbaPpuMemory* memory,
-                                 const GbaPpuRegisters* registers,
-                                 GbaPpuInternalRegisters* internal_registers,
-                                 uint_fast8_t x, uint_fast8_t y,
-                                 GbaPpuScreen* screen);
+typedef enum {
+  GBA_PPU_AFFINE_BACKGROUND_2 = 0,
+  GBA_PPU_AFFINE_BACKGROUND_3 = 1,
+} GbaPpuAffineBackground;
 
-void GbaPpuBackground2Mode2Pixel(const GbaPpuMemory* memory,
-                                 const GbaPpuRegisters* registers,
-                                 GbaPpuInternalRegisters* internal_registers,
-                                 uint_fast8_t x, uint_fast8_t y,
-                                 GbaPpuScreen* screen);
-
-void GbaPpuBackground3Mode2Pixel(const GbaPpuMemory* memory,
-                                 const GbaPpuRegisters* registers,
-                                 GbaPpuInternalRegisters* internal_registers,
-                                 uint_fast8_t x, uint_fast8_t y,
-                                 GbaPpuScreen* screen);
+void GbaPpuAffineBackgroundPixel(
+    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuAffineBackground background, uint_fast8_t x, uint_fast8_t y,
+    GbaPpuScreen* screen);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_BG_AFFINE_
