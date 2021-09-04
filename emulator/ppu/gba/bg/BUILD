@@ -27,9 +27,9 @@ cc_library(
 )
 
 cc_library(
-    name = "linear",
-    hdrs = ["linear.h"],
-    srcs = ["linear.c"],
+    name = "scrolling",
+    hdrs = ["scrolling.h"],
+    srcs = ["scrolling.c"],
     deps = [
         "//emulator/memory:memory",
         "//emulator/ppu/gba:memory",

@@ -5,7 +5,7 @@
 
 #include "emulator/ppu/gba/bg/affine.h"
 #include "emulator/ppu/gba/bg/bitmap.h"
-#include "emulator/ppu/gba/bg/linear.h"
+#include "emulator/ppu/gba/bg/scrolling.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -39,57 +39,87 @@ struct _GbaPpu {
 };
 
 static void GbaPpuStepMode0(GbaPpu *ppu) {
-  GbaPpuBackground0Mode0Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground1Mode0Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground2Mode0Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground3Mode0Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg0_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg1_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_2, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg3_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_3, ppu->x, ppu->y, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode1(GbaPpu *ppu) {
-  GbaPpuBackground0Mode1Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground1Mode1Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground2Mode1Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg0_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg1_enable) {
+    GbaPpuScrollingBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuAffineBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_AFFINE_BACKGROUND_2, ppu->x, ppu->y, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode2(GbaPpu *ppu) {
-  GbaPpuBackground2Mode2Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
-  GbaPpuBackground3Mode2Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuAffineBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_AFFINE_BACKGROUND_2, ppu->x, ppu->y, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.bg3_enable) {
+    GbaPpuAffineBackgroundPixel(
+        &ppu->memory, &ppu->registers, &ppu->internal_registers,
+        GBA_PPU_AFFINE_BACKGROUND_3, ppu->x, ppu->y, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode3(GbaPpu *ppu) {
-  GbaPpuBackground2Mode3Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuBitmapMode3Pixel(&ppu->memory, &ppu->registers,
+                           &ppu->internal_registers, ppu->x, ppu->y,
+                           &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode4(GbaPpu *ppu) {
-  GbaPpuBackground2Mode4Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuBitmapMode4Pixel(&ppu->memory, &ppu->registers,
+                           &ppu->internal_registers, ppu->x, ppu->y,
+                           &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode5(GbaPpu *ppu) {
-  GbaPpuBackground2Mode5Pixel(&ppu->memory, &ppu->registers,
-                              &ppu->internal_registers, ppu->x, ppu->y,
-                              &ppu->screen);
+  if (ppu->registers.dispcnt.bg2_enable) {
+    GbaPpuBitmapMode5Pixel(&ppu->memory, &ppu->registers,
+                           &ppu->internal_registers, ppu->x, ppu->y,
+                           &ppu->screen);
+  }
 }
 
 static void GbaPpuStepNoOp(GbaPpu *ppu) {
