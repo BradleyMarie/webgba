@@ -107,16 +107,12 @@ TEST_F(IoTest, GbaPpuRegistersLoad8Fails) {
 
 TEST_F(IoTest, GbaPpuRegistersStore16LEVCount) {
   uint16_t contents;
+  registers_.vcount = 0u;
   EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
   EXPECT_EQ(0u, contents);
 
-  internal_registers_.cycle_count = 1231u;
-  EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
-  EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
-
-  internal_registers_.cycle_count = 1232u;
+  registers_.vcount = 1u;
   EXPECT_TRUE(Store16LE(memory_, VCOUNT_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Load16LE(memory_, VCOUNT_OFFSET, &contents));
   EXPECT_EQ(1u, contents);

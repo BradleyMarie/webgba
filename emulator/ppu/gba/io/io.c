@@ -46,11 +46,6 @@
 #define BLDALPHA_OFFSET 0x52u
 #define BLDY_OFFSET 0x54u
 
-#define GBA_PPU_CYCLES_PER_PIXEL 4u
-#define GBA_PPU_PIXELS_PER_SCANLINE 308u
-#define GBA_PPU_CYCLES_PER_SCANLINE \
-  (GBA_PPU_PIXELS_PER_SCANLINE * GBA_PPU_CYCLES_PER_PIXEL)
-
 typedef struct {
   GbaPpuRegisters *registers;
   GbaPpuInternalRegisters *internal_registers;
@@ -75,8 +70,7 @@ static bool GbaPpuIoLoad16LE(const void *context, uint32_t address,
       *value = io->registers->dispstat.value;
       return true;
     case VCOUNT_OFFSET:
-      *value =
-          io->internal_registers->cycle_count / GBA_PPU_CYCLES_PER_SCANLINE;
+      *value = io->registers->vcount;
       return true;
     case BG0CNT_OFFSET:
       *value = io->registers->bgcnt[0u].value;
