@@ -60,6 +60,15 @@ typedef struct {
   unsigned short unused1 : 7;
 } BackgroundOffsetRegister;
 
+typedef struct {
+  int16_t pa;
+  int16_t pb;
+  int16_t pc;
+  int16_t pd;
+  int32_t x;
+  int32_t y;
+} BackgroundAffineRegister;
+
 typedef union {
   struct {
     unsigned char bg_horiz : 4;
@@ -80,18 +89,7 @@ typedef union {
     uint16_t vcount;  // Ignored
     BgCntRegister bgcnt[4];
     BackgroundOffsetRegister bg_offsets[4];
-    uint16_t bg2pa;
-    uint16_t bg2pb;
-    uint16_t bg2pc;
-    uint16_t bg2pd;
-    uint32_t bg2x;
-    uint32_t bg2y;
-    uint16_t bg3pa;
-    uint16_t bg3pb;
-    uint16_t bg3pc;
-    uint16_t bg3pd;
-    uint32_t bg3x;
-    uint32_t bg3y;
+    BackgroundAffineRegister affine[2];
     uint16_t win0h;
     uint16_t win1h;
     uint16_t win0v;
@@ -112,10 +110,14 @@ static_assert(sizeof(GbaPpuRegisters) == GBA_PPU_REGISTERS_SIZE,
               "sizeof(GbaPpuRegisters) != GBA_PPU_REGISTERS_SIZE");
 
 typedef struct {
-  int32_t bg2_x_row_start;
-  int32_t bg2_y_row_start;
-  int32_t bg2_x;
-  int32_t bg2_y;
+  int32_t x_row_start;
+  int32_t y_row_start;
+  int32_t x;
+  int32_t y;
+} GbaPpuInternalAffineRegisters;
+
+typedef struct {
+  GbaPpuInternalAffineRegisters affine[2];
   uint32_t cycle_count;
 } GbaPpuInternalRegisters;
 

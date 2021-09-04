@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "emulator/ppu/gba/bg/affine.h"
 #include "emulator/ppu/gba/bg/bitmap.h"
 #include "emulator/ppu/gba/bg/linear.h"
 #include "emulator/ppu/gba/io/io.h"
@@ -59,10 +60,18 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
   GbaPpuBackground1Mode1Pixel(&ppu->memory, &ppu->registers,
                               &ppu->internal_registers, ppu->x, ppu->y,
                               &ppu->screen);
+  GbaPpuBackground2Mode1Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, ppu->x, ppu->y,
+                              &ppu->screen);
 }
 
 static void GbaPpuStepMode2(GbaPpu *ppu) {
-  // TODO: Implement
+  GbaPpuBackground2Mode2Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, ppu->x, ppu->y,
+                              &ppu->screen);
+  GbaPpuBackground3Mode2Pixel(&ppu->memory, &ppu->registers,
+                              &ppu->internal_registers, ppu->x, ppu->y,
+                              &ppu->screen);
 }
 
 static void GbaPpuStepMode3(GbaPpu *ppu) {
@@ -142,8 +151,10 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
 
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
-  (*ppu)->registers.bg2pa = 0x100u;
-  (*ppu)->registers.bg2pd = 0x100u;
+  (*ppu)->registers.affine[0u].pa = 0x100;
+  (*ppu)->registers.affine[0u].pd = 0x100;
+  (*ppu)->registers.affine[1u].pa = 0x100;
+  (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->next_wake = GBA_PPU_CYCLES_PER_PIXEL - 1u;
 
   GbaPlatformRetain(platform);
