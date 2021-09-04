@@ -183,6 +183,10 @@ void GbaPpuStep(GbaPpu *ppu) {
     if (ppu->frame_done != NULL) {
       ppu->frame_done(GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
     }
+    ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
+    ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
+    ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
+    ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
     ppu->x = 0u;
     ppu->y = 0u;
     ppu->next_wake = GBA_PPU_CYCLES_PER_VBLANK - 1u;
@@ -210,6 +214,10 @@ void GbaPpuStep(GbaPpu *ppu) {
       ppu->next_wake = GBA_PPU_PIXELS_PER_SCANLINE * GBA_SCREEN_HEIGHT *
                        GBA_PPU_CYCLES_PER_PIXEL;
     }
+    ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
+    ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
+    ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
+    ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
     ppu->x = 0u;
     ppu->y += 1u;
   } else {

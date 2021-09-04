@@ -33,29 +33,12 @@ static void GbaPpuBackground2BitmapPixel(
     GbaPpuBackground2BitmapMode mode, bool back_page,
     GbaPpuInternalRegisters* internal_registers, uint_fast8_t x, uint_fast8_t y,
     GbaPpuScreen* screen) {
-  if (x == 0) {
-    if (y == 0) {
-      internal_registers->affine[0u].x_row_start = registers->affine[0u].x;
-      internal_registers->affine[0u].y_row_start = registers->affine[0u].y;
-    }
-    internal_registers->affine[0u].x =
-        internal_registers->affine[0u].x_row_start;
-    internal_registers->affine[0u].y =
-        internal_registers->affine[0u].y_row_start;
-  }
-
   uint_fast8_t lookup_x, lookup_y;
   if (!GbaPpuBitmapMosaic(registers, x, y, &lookup_x, &lookup_y)) {
-    lookup_x = internal_registers->affine[0u].x >> 8u;
-    lookup_y = internal_registers->affine[0u].y >> 8u;
-  }
-
-  internal_registers->affine[0u].x += registers->affine[0u].pa;
-  internal_registers->affine[0u].y += registers->affine[0u].pc;
-
-  if (x == GBA_SCREEN_WIDTH - 1u) {
-    internal_registers->affine[0u].x_row_start += registers->affine[0u].pb;
-    internal_registers->affine[0u].y_row_start += registers->affine[0u].pd;
+    lookup_x =
+        (internal_registers->affine[0u].x + registers->affine[0u].pa * x) >> 8u;
+    lookup_y =
+        (internal_registers->affine[0u].y + registers->affine[0u].pc * y) >> 8u;
   }
 
   uint16_t color;

@@ -110,8 +110,6 @@ static_assert(sizeof(GbaPpuRegisters) == GBA_PPU_REGISTERS_SIZE,
               "sizeof(GbaPpuRegisters) != GBA_PPU_REGISTERS_SIZE");
 
 typedef struct {
-  int32_t x_row_start;
-  int32_t y_row_start;
   int32_t x;
   int32_t y;
 } GbaPpuInternalAffineRegisters;
