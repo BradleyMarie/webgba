@@ -43,7 +43,9 @@ void ArmExceptionPrefetchABT(ArmAllRegisters* registers) {
 }
 
 void ArmExceptionFIQ(ArmAllRegisters* registers) {
-  uint32_t next_instruction = ArmNextInstruction(registers);
+  // Since interrupts fire between instructions, the current instruction pointed
+  // to by the program counter is actually the next instruction to be executed.
+  uint32_t next_instruction = ArmCurrentInstruction(registers);
 
   ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
   ArmProgramStatusRegister next_status = old_cpsr;
@@ -59,7 +61,9 @@ void ArmExceptionFIQ(ArmAllRegisters* registers) {
 }
 
 void ArmExceptionIRQ(ArmAllRegisters* registers) {
-  uint32_t next_instruction = ArmNextInstruction(registers);
+  // Since interrupts fire between instructions, the current instruction pointed
+  // to by the program counter is actually the next instruction to be executed.
+  uint32_t next_instruction = ArmCurrentInstruction(registers);
 
   ArmProgramStatusRegister old_cpsr = registers->current.user.cpsr;
   ArmProgramStatusRegister next_status = old_cpsr;
