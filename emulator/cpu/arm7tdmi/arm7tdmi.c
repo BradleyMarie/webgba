@@ -6,15 +6,35 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
+// TODO: Remove these once the emulator can run the BIOS
+#define USR_BANK_INDEX 0u
+#define SYS_BANK_INDEX 0u
+#define FIQ_BANK_INDEX 1u
+#define IRQ_BANK_INDEX 2u
+#define SVC_BANK_INDEX 3u
+#define ABT_BANK_INDEX 4u
+#define UND_BANK_INDEX 5u
+
 Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
                            InterruptLine* irq) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)calloc(1, sizeof(Arm7Tdmi));
   if (cpu != NULL) {
     cpu->registers.current.user.cpsr.mode = MODE_SVC;
-    cpu->registers.current.user.gprs.pc = 8u;
+    // TODO: Set this back to 0x8u once the emulator can run the BIOS
+    cpu->registers.current.user.gprs.pc = 0x08000008u;
     cpu->rst = rst;
     cpu->fiq = fiq;
     cpu->irq = irq;
+
+    // TODO: Remove these once the emulator can run the BIOS
+    cpu->registers.current.user.gprs.sp = 0x03007FE0u;
+    cpu->registers.banked_splrs[USR_BANK_INDEX][0u] = 0x03007F00u;
+    cpu->registers.banked_splrs[SYS_BANK_INDEX][0u] = 0x03007F00u;
+    cpu->registers.banked_splrs[FIQ_BANK_INDEX][0u] = 0x03007FA0u;
+    cpu->registers.banked_splrs[IRQ_BANK_INDEX][0u] = 0x03007FA0u;
+    cpu->registers.banked_splrs[SVC_BANK_INDEX][0u] = 0x03007FE0u;
+    cpu->registers.banked_splrs[ABT_BANK_INDEX][0u] = 0x03007FA0u;
+    cpu->registers.banked_splrs[UND_BANK_INDEX][0u] = 0x03007FA0u;
   }
   return cpu;
 }
