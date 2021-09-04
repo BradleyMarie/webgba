@@ -152,6 +152,18 @@ static void GbaPpuRelease(void *context) {
   GbaPpuFree(ppu);
 }
 
+static void GbaPpuSetVCount(GbaPpu *ppu, uint16_t value) {
+  ppu->registers.vcount = value;
+  if (ppu->registers.dispstat.vcount_trigger == ppu->registers.vcount) {
+    ppu->registers.dispstat.vcount_status = true;
+    if (ppu->registers.dispstat.vcount_irq_enable) {
+      GbaPlatformRaiseVBlankCountInterrupt(ppu->platform);
+    }
+  } else {
+    ppu->registers.dispstat.vcount_status = false;
+  }
+}
+
 bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
                     Memory **vram, Memory **oam, Memory **registers) {
   *ppu = (GbaPpu *)calloc(1, sizeof(GbaPpu));
@@ -206,6 +218,7 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   (*ppu)->registers.affine[0u].pd = 0x100;
   (*ppu)->registers.affine[1u].pa = 0x100;
   (*ppu)->registers.affine[1u].pd = 0x100;
+  (*ppu)->registers.dispstat.vcount_status = true;
   (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
 
   GbaPlatformRetain(platform);
@@ -225,8 +238,12 @@ void GbaPpuStep(GbaPpu *ppu) {
     ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
     ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
     ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
+
     ppu->x = 0u;
-    ppu->registers.vcount = 0u;
+    GbaPpuSetVCount(ppu, 0u);
+
+    ppu->registers.dispstat.hblank_status = false;
+    ppu->registers.dispstat.vblank_status = false;
 
     ppu->cycle_count = 0u;
     ppu->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
@@ -237,7 +254,9 @@ void GbaPpuStep(GbaPpu *ppu) {
 
   // Wake at Last Cycle of HBlank
   if (ppu->x == GBA_SCREEN_WIDTH) {
-    ppu->registers.vcount += 1u;
+    ppu->registers.dispstat.hblank_status = false;
+
+    GbaPpuSetVCount(ppu, ppu->registers.vcount + 1u);
 
     // Wake at Last Cycle Before Starting Next Row
     if (ppu->registers.vcount < GBA_SCREEN_HEIGHT - 1u) {
@@ -253,7 +272,10 @@ void GbaPpuStep(GbaPpu *ppu) {
 
     // Wake at Last Cycle Before VBlank
     if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1u) {
-      GbaPlatformRaiseVBlankCountInterrupt(ppu->platform);
+      ppu->registers.dispstat.vblank_status = true;
+      if (ppu->registers.dispstat.vblank_irq_enable) {
+        GbaPlatformRaiseVBlankInterrupt(ppu->platform);
+      }
       GbaPpuScreenClear(&ppu->screen);
       if (!ppu->hardware_render) {
         GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
@@ -277,7 +299,10 @@ void GbaPpuStep(GbaPpu *ppu) {
   mode_step_routines[ppu->registers.dispcnt.mode](ppu);
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
-    GbaPlatformRaiseHBlankInterrupt(ppu->platform);
+    ppu->registers.dispstat.hblank_status = true;
+    if (ppu->registers.dispstat.hblank_irq_enable) {
+      GbaPlatformRaiseHBlankInterrupt(ppu->platform);
+    }
     ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
   } else {
     ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
