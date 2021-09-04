@@ -86,7 +86,7 @@ typedef union {
     DispCntRegister dispcnt;
     uint16_t greenswp;  // Unimplemented
     DispStatRegister dispstat;
-    uint16_t vcount;  // Ignored
+    uint16_t vcount;
     BgCntRegister bgcnt[4];
     BackgroundOffsetRegister bg_offsets[4];
     BackgroundAffineRegister affine[2];
@@ -116,7 +116,6 @@ typedef struct {
 
 typedef struct {
   GbaPpuInternalAffineRegisters affine[2];
-  uint32_t cycle_count;
 } GbaPpuInternalRegisters;
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_REGISTERS_
