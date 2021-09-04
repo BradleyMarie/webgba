@@ -1,14 +1,14 @@
 #include "emulator/ppu/gba/bg/linear.h"
 
 typedef enum {
-  GBA_PPU_LINEAR_BG0,
-  GBA_PPU_LINEAR_BG1,
-  GBA_PPU_LINEAR_BG2,
-  GBA_PPU_LINEAR_BG3,
+  GBA_PPU_LINEAR_BG0 = 0,
+  GBA_PPU_LINEAR_BG1 = 1,
+  GBA_PPU_LINEAR_BG2 = 2,
+  GBA_PPU_LINEAR_BG3 = 3,
 } GbaPpuLinearBackground;
 
 static bool GbaPpuLinearMosaic(const GbaPpuRegisters* registers, uint_fast8_t x,
-                               uint_fast8_t y, uint_fast8_t bg_index,
+                               uint_fast8_t y, GbaPpuLinearBackground bg_index,
                                uint_fast16_t* mosaic_pixel_x,
                                uint_fast16_t* mosaic_pixel_y) {
   if (!registers->bgcnt[bg_index].mosaic) {

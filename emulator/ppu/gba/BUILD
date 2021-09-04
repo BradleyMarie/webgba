@@ -35,6 +35,7 @@ cc_library(
         "//emulator/memory:memory",
         "//emulator/ppu/gba/io:io",
         "//emulator/platform/gba:platform",
+        "//emulator/ppu/gba/bg:affine",
         "//emulator/ppu/gba/bg:bitmap",
         "//emulator/ppu/gba/bg:linear",
         "//emulator/ppu/gba/oam:oam",

@@ -165,13 +165,27 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
   switch (address) {
     case BG2X_OFFSET:
     case BG2X_OFFSET_HI:
-      io->internal_registers->bg2_x_row_start = io->registers->bg2x;
-      io->internal_registers->bg2_x = io->registers->bg2x;
+      io->internal_registers->affine[0u].x_row_start =
+          io->registers->affine[0u].x;
+      io->internal_registers->affine[0u].x = io->registers->affine[0u].x;
       break;
     case BG2Y_OFFSET:
     case BG2Y_OFFSET_HI:
-      io->internal_registers->bg2_y_row_start = io->registers->bg2y;
-      io->internal_registers->bg2_y = io->registers->bg2y;
+      io->internal_registers->affine[0u].y_row_start =
+          io->registers->affine[0u].y;
+      io->internal_registers->affine[0u].y = io->registers->affine[0u].y;
+      break;
+    case BG3X_OFFSET:
+    case BG3X_OFFSET_HI:
+      io->internal_registers->affine[1u].x_row_start =
+          io->registers->affine[1u].x;
+      io->internal_registers->affine[1u].x = io->registers->affine[1u].x;
+      break;
+    case BG3Y_OFFSET:
+    case BG3Y_OFFSET_HI:
+      io->internal_registers->affine[1u].y_row_start =
+          io->registers->affine[1u].y;
+      io->internal_registers->affine[1u].y = io->registers->affine[1u].y;
       break;
   }
 
