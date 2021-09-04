@@ -94,6 +94,8 @@ TEST_F(PpuTest, GbaPpuRegistersLoad16LE) {
       EXPECT_TRUE(Load16LE(regs_, address, &contents));
       if (address == DISPCNT_OFFSET) {
         EXPECT_EQ(0x80u, contents);
+      } else if (address == DISPSTAT_OFFSET) {
+        EXPECT_EQ(0x4u, contents);
       } else {
         EXPECT_EQ(0u, contents);
       }
