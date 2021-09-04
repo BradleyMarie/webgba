@@ -34,14 +34,12 @@ static void GbaPpuAffineBackgroundPixelColor(
     GbaPpuAffineBackground bg_index, GbaPpuScreen* screen) {
   int32_t lookup_x, lookup_y;
   if (!GbaPpuAffineMosaic(registers, x, y, bg_index, &lookup_x, &lookup_y)) {
-    lookup_x =
-        (internal_registers->affine[bg_index].x +
-         registers->affine[bg_index].pa * x + registers->affine[bg_index].x) >>
-        8u;
-    lookup_y =
-        (internal_registers->affine[bg_index].y +
-         registers->affine[bg_index].pc * y + registers->affine[bg_index].y) >>
-        8u;
+    lookup_x = (internal_registers->affine[bg_index].x +
+                registers->affine[bg_index].pa * x) >>
+               8u;
+    lookup_y = (internal_registers->affine[bg_index].y +
+                registers->affine[bg_index].pc * x) >>
+               8u;
   }
 
   static const uint_fast16_t screen_sizes_pixels[4] = {128u, 256u, 512u, 1024u};
