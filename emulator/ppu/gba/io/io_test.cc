@@ -4,6 +4,8 @@ extern "C" {
 
 #include "googletest/include/gtest/gtest.h"
 
+#define REGISTERS_SIZE 88u
+
 #define DISPCNT_OFFSET 0x00u
 #define GREENSWP_OFFSET 0x02u
 #define DISPSTAT_OFFSET 0x04u
@@ -66,6 +68,23 @@ class IoTest : public testing::Test {
   GbaPpuInternalRegisters internal_registers_;
   Memory* memory_;
 };
+
+TEST_F(IoTest, GbaPpuRegistersLoad16LE) {
+  for (uint32_t address = 0; address < REGISTERS_SIZE; address += 2) {
+    uint16_t contents = 1u;
+    if (address == DISPCNT_OFFSET || address == GREENSWP_OFFSET ||
+        address == DISPSTAT_OFFSET || address == VCOUNT_OFFSET ||
+        address == BG0CNT_OFFSET || address == BG1CNT_OFFSET ||
+        address == BG2CNT_OFFSET || address == BG3CNT_OFFSET ||
+        address == WININ_OFFSET || address == WINOUT_OFFSET ||
+        address == BLDCNT_OFFSET) {
+      EXPECT_TRUE(Load16LE(memory_, address, &contents));
+      EXPECT_EQ(0u, contents);
+    } else {
+      EXPECT_FALSE(Load16LE(memory_, address, &contents));
+    }
+  }
+}
 
 TEST_F(IoTest, GbaPpuRegistersLoad32LEUnusedLow) {
   uint32_t contents;
