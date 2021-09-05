@@ -61,7 +61,7 @@ class DmaUnitTest : public testing::Test {
     InterruptLineFree(rst_);
     InterruptLineFree(fiq_);
     InterruptLineFree(irq_);
-    GbaDmaUnitFree(dma_unit_);
+    GbaDmaUnitRelease(dma_unit_);
     MemoryFree(regs_);
     MemoryFree(memory_);
   }

@@ -32,6 +32,7 @@ cc_library(
         ":memory",
         ":registers",
         ":screen",
+        "//emulator/dma/gba:dma",
         "//emulator/memory:memory",
         "//emulator/ppu/gba/io:io",
         "//emulator/platform/gba:platform",

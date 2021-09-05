@@ -18,6 +18,8 @@ void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount);
 void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit);
 void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit);
 
-void GbaDmaUnitFree(GbaDmaUnit *dma_unit);
+// Reference Counting
+void GbaDmaUnitRetain(GbaDmaUnit *dma_unit);
+void GbaDmaUnitRelease(GbaDmaUnit *dma_unit);
 
 #endif  // _WEBGBA_EMULATOR_DMA_GBA_DMA_

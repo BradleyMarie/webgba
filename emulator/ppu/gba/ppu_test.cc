@@ -11,10 +11,14 @@ class PpuTest : public testing::Test {
  public:
   void SetUp() override {
     ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
-    ASSERT_TRUE(GbaPpuAllocate(plat_, &ppu_, &pram_, &vram_, &oam_, &regs_));
+    ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_regs_));
+    ASSERT_TRUE(
+        GbaPpuAllocate(dma_unit_, plat_, &ppu_, &pram_, &vram_, &oam_, &regs_));
   }
 
   void TearDown() override {
+    GbaDmaUnitRelease(dma_unit_);
+    MemoryFree(dma_unit_regs_);
     GbaPlatformRelease(plat_);
     MemoryFree(plat_regs_);
     InterruptLineFree(rst_);
@@ -30,6 +34,8 @@ class PpuTest : public testing::Test {
  protected:
   GbaPlatform *plat_;
   Memory *plat_regs_;
+  GbaDmaUnit *dma_unit_;
+  Memory *dma_unit_regs_;
   InterruptLine *rst_;
   InterruptLine *fiq_;
   InterruptLine *irq_;

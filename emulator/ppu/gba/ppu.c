@@ -36,6 +36,7 @@
 typedef void (*GbaPpuStepRoutine)(GbaPpu *ppu);
 
 struct _GbaPpu {
+  GbaDmaUnit *dma_unit;
   GbaPlatform *platform;
   GbaPpuMemory memory;
   GbaPpuScreen screen;
@@ -162,10 +163,12 @@ static void GbaPpuSetVCount(GbaPpu *ppu, uint16_t value) {
   } else {
     ppu->registers.dispstat.vcount_status = false;
   }
+  GbaDmaUnitSignalHBlank(ppu->dma_unit, value);
 }
 
-bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
-                    Memory **vram, Memory **oam, Memory **registers) {
+bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
+                    Memory **palette, Memory **vram, Memory **oam,
+                    Memory **registers) {
   *ppu = (GbaPpu *)calloc(1, sizeof(GbaPpu));
   if (*ppu == NULL) {
     return false;
@@ -212,6 +215,7 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
 
   (*ppu)->reference_count += 1u;
 
+  (*ppu)->dma_unit = dma_unit;
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
   (*ppu)->registers.affine[0u].pa = 0x100;
@@ -221,6 +225,7 @@ bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **palette,
   (*ppu)->registers.dispstat.vcount_status = true;
   (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
 
+  GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
 
   return true;
@@ -276,6 +281,7 @@ void GbaPpuStep(GbaPpu *ppu) {
       if (ppu->registers.dispstat.vblank_irq_enable) {
         GbaPlatformRaiseVBlankInterrupt(ppu->platform);
       }
+      GbaDmaUnitSignalVBlank(ppu->dma_unit);
       GbaPpuScreenClear(&ppu->screen);
       if (!ppu->hardware_render) {
         GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
