@@ -65,7 +65,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   success = GbaTimersAllocate((*emulator)->platform, &(*emulator)->timers,
                               &timer_registers);
   if (!success) {
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -76,7 +76,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   success = GbaSpuAllocate(&(*emulator)->spu, &sound_registers);
   if (!success) {
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -89,7 +89,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   if (!success) {
     GbaSpuFree((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -104,7 +104,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
     MemoryFree(game_rom);
     GbaSpuFree((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -120,7 +120,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
     MemoryFree(game_rom);
     GbaSpuFree((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -131,8 +131,9 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   Memory *vram;
   Memory *oam;
   Memory *ppu_registers;
-  success = GbaPpuAllocate((*emulator)->platform, &(*emulator)->ppu, &palette,
-                           &vram, &oam, &ppu_registers);
+  success =
+      GbaPpuAllocate((*emulator)->dma, (*emulator)->platform, &(*emulator)->ppu,
+                     &palette, &vram, &oam, &ppu_registers);
   if (!success) {
     GbaPeripheralsFree((*emulator)->peripherals);
     GamePadFree(*gamepad);
@@ -140,7 +141,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
     MemoryFree(game_rom);
     GbaSpuFree((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -163,7 +164,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
     MemoryFree(game_rom);
     GbaSpuFree((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitFree((*emulator)->dma);
+    GbaDmaUnitRelease((*emulator)->dma);
     Arm7TdmiFree((*emulator)->cpu);
     GbaPlatformRelease((*emulator)->platform);
     free(*emulator);
@@ -177,7 +178,7 @@ void GbaEmulatorFree(GbaEmulator *emulator) {
   GbaPlatformRelease(emulator->platform);
   Arm7TdmiFree(emulator->cpu);
   MemoryFree(emulator->memory);
-  GbaDmaUnitFree(emulator->dma);
+  GbaDmaUnitRelease(emulator->dma);
   GbaPpuFree(emulator->ppu);
   GbaSpuFree(emulator->spu);
   GbaTimersFree(emulator->timers);

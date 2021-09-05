@@ -236,7 +236,7 @@ static bool GbaDmaUnitRegistersStore8(void *context, uint32_t address,
 
 void GbaDmaUnitMemoryFree(void *context) {
   GbaDmaUnit *dma_unit = (GbaDmaUnit *)context;
-  GbaDmaUnitFree(dma_unit);
+  GbaDmaUnitRelease(dma_unit);
 }
 
 bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
@@ -362,7 +362,9 @@ void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit) {
   }
 }
 
-void GbaDmaUnitFree(GbaDmaUnit *dma_unit) {
+void GbaDmaUnitRetain(GbaDmaUnit *dma_unit) { dma_unit->reference_count += 1u; }
+
+void GbaDmaUnitRelease(GbaDmaUnit *dma_unit) {
   assert(dma_unit->reference_count != 0u);
   dma_unit->reference_count -= 1u;
   if (dma_unit->reference_count == 0u) {

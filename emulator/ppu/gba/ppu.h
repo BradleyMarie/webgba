@@ -3,14 +3,16 @@
 
 #include <GLES2/gl2.h>
 
+#include "emulator/dma/gba/dma.h"
 #include "emulator/memory/memory.h"
 #include "emulator/platform/gba/platform.h"
 
 typedef struct _GbaPpu GbaPpu;
 
 // General PPU routines
-bool GbaPpuAllocate(GbaPlatform *platform, GbaPpu **ppu, Memory **pram,
-                    Memory **vram, Memory **oam, Memory **registers);
+bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
+                    Memory **pram, Memory **vram, Memory **oam,
+                    Memory **registers);
 
 void GbaPpuStep(GbaPpu *ppu);
 
