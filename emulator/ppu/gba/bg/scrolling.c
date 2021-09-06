@@ -86,20 +86,22 @@ void GbaPpuScrollingBackgroundPixel(
 
     color = memory->palette.bg.large_palette[color_index];
   } else {
-    uint8_t shift_amount[2] = {0u, 4u};
     uint8_t color_index_pair =
         memory->vram.mode_012.bg.tiles
             .blocks[registers->bgcnt[background].tile_base_block]
             .s_tiles[entry.index]
             .pixels[lookup_y_tile_pixel][lookup_x_tile_pixel >> 1u]
             .value;
-    color_index_pair >>= shift_amount[lookup_x_tile_pixel & 1u];
-    color_index_pair &= 0xFu;
-    if (color_index_pair == 0u) {
+
+    // Select lower 4 bits if lookup_x_tile_pixel is even and upper 4 bits
+    // if lookup_x_tile_pixel is odd.
+    uint_fast8_t color_index =
+        (color_index_pair >> ((lookup_x_tile_pixel & 1u) << 2u)) & 0xFu;
+    if (color_index == 0u) {
       return;
     }
 
-    color = memory->palette.bg.small_palettes[entry.palette][color_index_pair];
+    color = memory->palette.bg.small_palettes[entry.palette][color_index];
   }
 
   GbaPpuScreenDrawPixel(screen, x, y, color,
