@@ -12,14 +12,14 @@ typedef struct {
 static inline void GbaPpuObjectSetAdd(GbaPpuObjectSet* object_set,
                                       uint_fast8_t index) {
   assert(index < 128u);
-  bool set_index = index & 0x40u;
+  uint_fast8_t set_index = index >> 6u;
   object_set->objects[set_index] |= 1ull << (index & 0x3Fu);
 }
 
 static inline void GbaPpuObjectSetRemove(GbaPpuObjectSet* object_set,
                                          uint_fast8_t index) {
   assert(index < 128u);
-  bool set_index = index & 0x40u;
+  uint_fast8_t set_index = index >> 6u;
   uint64_t mask = 1ull << (index & 0x3Fu);
   object_set->objects[set_index] &= ~mask;
 }
