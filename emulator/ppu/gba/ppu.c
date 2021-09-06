@@ -295,14 +295,19 @@ void GbaPpuStep(GbaPpu *ppu) {
     return;
   }
 
-  GbaPpuScreenDrawPixel(&ppu->screen, ppu->x, ppu->registers.vcount,
-                        ppu->memory.palette.bg.large_palette[0u],
-                        GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
+  if (ppu->registers.dispcnt.forced_blank) {
+    GbaPpuScreenDrawPixel(&ppu->screen, ppu->x, ppu->registers.vcount, 0u,
+                          GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
+  } else {
+    GbaPpuScreenDrawPixel(&ppu->screen, ppu->x, ppu->registers.vcount,
+                          ppu->memory.palette.bg.large_palette[0u],
+                          GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
 
-  static const GbaPpuStepRoutine mode_step_routines[8u] = {
-      GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
-      GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
-  mode_step_routines[ppu->registers.dispcnt.mode](ppu);
+    static const GbaPpuStepRoutine mode_step_routines[8u] = {
+        GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
+        GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
+    mode_step_routines[ppu->registers.dispcnt.mode](ppu);
+  }
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
     ppu->registers.dispstat.hblank_status = true;
