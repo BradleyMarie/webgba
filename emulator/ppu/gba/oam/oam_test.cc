@@ -2,13 +2,16 @@ extern "C" {
 #include "emulator/ppu/gba/oam/oam.h"
 }
 
+#include <cstring>
+
 #include "googletest/include/gtest/gtest.h"
 
 class OamTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&oam_memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
-    memory_ = OamAllocate(&oam_memory_, FreeRoutine, nullptr);
+    memset(&object_state_, 0, sizeof(GbaPpuObjectState));
+    memory_ = OamAllocate(&oam_memory_, &object_state_, FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -18,6 +21,7 @@ class OamTest : public testing::Test {
 
  protected:
   GbaPpuObjectAttributeMemory oam_memory_;
+  GbaPpuObjectState object_state_;
   Memory* memory_;
 };
 
@@ -46,4 +50,71 @@ TEST_F(OamTest, LoadStore8Succeeds) {
   EXPECT_EQ(0x0u, value);
   EXPECT_TRUE(Load8(memory_, OAM_SIZE, &value));
   EXPECT_EQ(0x0u, value);
+}
+
+TEST_F(OamTest, Store16UpdatesAddsState0) {
+  EXPECT_TRUE(Store16LE(memory_, 0x0u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store16UpdatesAddsState2) {
+  EXPECT_TRUE(Store16LE(memory_, 0x2u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store16UpdatesAddsState4) {
+  EXPECT_TRUE(Store16LE(memory_, 0x4u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store16UpdatesAddsState6) {
+  EXPECT_TRUE(Store16LE(memory_, 0x6u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store16UpdatesAddsState8) {
+  EXPECT_TRUE(Store16LE(memory_, 0x8u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_EQ(1u, GbaPpuObjectSetPop(&set));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store16UpdatesClearsState) {
+  EXPECT_TRUE(Store16LE(memory_, 0x0u, 0u));
+  EXPECT_TRUE(Store16LE(memory_, 0x0u, 127u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store32UpdatesAddsState0) {
+  EXPECT_TRUE(Store32LE(memory_, 0x0u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store32UpdatesAddsState4) {
+  EXPECT_TRUE(Store16LE(memory_, 0x4u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store32UpdatesAddsState8) {
+  EXPECT_TRUE(Store16LE(memory_, 0x8u, 0u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_EQ(1u, GbaPpuObjectSetPop(&set));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
+}
+
+TEST_F(OamTest, Store32UpdatesClearsState) {
+  EXPECT_TRUE(Store32LE(memory_, 0x0u, 0u));
+  EXPECT_TRUE(Store32LE(memory_, 0x0u, 127u));
+  GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&object_state_, 0u, 0u);
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
 }

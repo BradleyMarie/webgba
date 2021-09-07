@@ -12,6 +12,7 @@ cc_library(
     name = "object_state",
     srcs = ["object_state.c"],
     hdrs = ["object_state.h"],
+    visibility = ["//emulator/ppu:__subpackages__"],
     deps = [
         ":memory",
         ":object_set",
@@ -49,6 +50,7 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":memory",
+        ":object_state",
         ":registers",
         ":screen",
         "//emulator/dma/gba:dma",

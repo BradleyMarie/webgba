@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
+#include "emulator/ppu/gba/object_state.h"
 #include "emulator/ppu/gba/palette/palette.h"
 #include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/screen.h"
@@ -42,6 +43,7 @@ struct _GbaPpu {
   GbaPpuScreen screen;
   GbaPpuRegisters registers;
   GbaPpuInternalRegisters internal_registers;
+  GbaPpuObjectState object_state;
   GLuint fbo;
   bool hardware_render;
   PpuRenderDoneFunction frame_done;
@@ -193,7 +195,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *oam = OamAllocate(&(*ppu)->memory.oam, GbaPpuRelease, *ppu);
+  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->object_state, GbaPpuRelease,
+                     *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -224,6 +227,10 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
   (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
+
+  for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
+    GbaPpuObjectStateAdd(&(*ppu)->memory.oam, object, &(*ppu)->object_state);
+  }
 
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
