@@ -14,7 +14,7 @@ static const int_fast16_t shape_size_to_y_size_pixels[4][4] = {
 
 void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
                             uint_fast8_t object, GbaPpuObjectState* state) {
-  if (!oam->object_attributes[object].rotation_scale_enable &&
+  if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_1) {
     return;
   }
@@ -60,7 +60,7 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
 
 void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
                           uint_fast8_t object, GbaPpuObjectState* state) {
-  if (!oam->object_attributes[object].rotation_scale_enable &&
+  if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_1) {
     return;
   }

@@ -52,7 +52,6 @@ static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
 
   address &= OAM_ADDRESS_MASK;
 
-  uint_fast8_t object = address >> 3u;
   if ((address & 0x7u) < 4u) {
     uint_fast8_t object = address >> 3u;
     GbaPpuObjectStateClear(oam->memory, object, oam->object_state);
