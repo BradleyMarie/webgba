@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator/memory/gba:__subpackages__"])
 
 cc_library(
     name = "iram",
-    hdrs = ["iram.h"],
     srcs = ["iram.c"],
+    hdrs = ["iram.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )
 

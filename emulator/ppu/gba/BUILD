@@ -43,8 +43,8 @@ cc_test(
 
 cc_library(
     name = "ppu",
-    hdrs = ["ppu.h"],
     srcs = ["ppu.c"],
+    hdrs = ["ppu.h"],
     linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
@@ -52,15 +52,15 @@ cc_library(
         ":registers",
         ":screen",
         "//emulator/dma/gba:dma",
-        "//emulator/memory:memory",
-        "//emulator/ppu/gba/io:io",
+        "//emulator/memory",
         "//emulator/platform/gba:platform",
         "//emulator/ppu/gba/bg:affine",
         "//emulator/ppu/gba/bg:bitmap",
         "//emulator/ppu/gba/bg:scrolling",
-        "//emulator/ppu/gba/oam:oam",
-        "//emulator/ppu/gba/palette:palette",
-        "//emulator/ppu/gba/vram:vram",
+        "//emulator/ppu/gba/io",
+        "//emulator/ppu/gba/oam",
+        "//emulator/ppu/gba/palette",
+        "//emulator/ppu/gba/vram",
     ],
 )
 
@@ -81,10 +81,10 @@ cc_library(
 
 cc_library(
     name = "screen",
-    hdrs = ["screen.h"],
     srcs = ["screen.c"],
-    visibility = ["//emulator/ppu:__subpackages__"],
+    hdrs = ["screen.h"],
     linkopts = ["-lGL"],
+    visibility = ["//emulator/ppu:__subpackages__"],
     deps = [
         ":memory",
         ":registers",

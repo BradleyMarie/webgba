@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator/memory/gba:__subpackages__"])
 
 cc_library(
     name = "bad",
-    hdrs = ["bad.h"],
     srcs = ["bad.c"],
+    hdrs = ["bad.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )
 

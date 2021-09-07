@@ -1,5 +1,3 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
 cc_binary(
     name = "webgba.so",
     srcs = ["webgba.c"],
@@ -11,6 +9,6 @@ cc_binary(
     deps = [
         ":webgba.lds",
         "//emulator:gba",
-        "//third_party/libretro:libretro",
+        "//third_party/libretro",
     ],
 )

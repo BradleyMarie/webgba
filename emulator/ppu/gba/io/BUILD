@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator/ppu/gba:__subpackages__"])
 
 cc_library(
     name = "io",
-    hdrs = ["io.h"],
     srcs = ["io.c"],
+    hdrs = ["io.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/ppu/gba:registers",
     ],
 )

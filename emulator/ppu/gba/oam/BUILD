@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator/ppu/gba:__subpackages__"])
 
 cc_library(
     name = "oam",
-    hdrs = ["oam.h"],
     srcs = ["oam.c"],
+    hdrs = ["oam.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/ppu/gba:memory",
     ],
 )

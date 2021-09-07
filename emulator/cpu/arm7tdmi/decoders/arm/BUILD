@@ -43,8 +43,8 @@ cc_library(
         ":operand",
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi/instructions:block_data_transfer",
-        "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
         "//emulator/cpu/arm7tdmi/instructions:branch",
+        "//emulator/cpu/arm7tdmi/instructions:branch_exchange",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_operation",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:coprocessor_register_transfer",
@@ -56,7 +56,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi/instructions:signed_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:single_data_swap",
         "//emulator/cpu/arm7tdmi/instructions:swi",
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )
 

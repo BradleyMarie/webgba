@@ -9,11 +9,11 @@ cc_library(
 
 cc_library(
     name = "bios",
-    hdrs = ["bios.h"],
     srcs = ["bios.c"],
+    hdrs = ["bios.h"],
     deps = [
         ":bios_data",
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )
 
