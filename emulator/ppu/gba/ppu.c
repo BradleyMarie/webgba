@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
+#include "emulator/ppu/gba/obj/objects.h"
 #include "emulator/ppu/gba/object_state.h"
 #include "emulator/ppu/gba/palette/palette.h"
 #include "emulator/ppu/gba/registers.h"
@@ -81,6 +82,11 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
                                    GBA_PPU_SCROLLING_BACKGROUND_3, ppu->x,
                                    ppu->registers.vcount, &ppu->screen);
   }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode1(GbaPpu *ppu) {
@@ -104,6 +110,11 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
                                 GBA_PPU_AFFINE_BACKGROUND_2, ppu->x,
                                 ppu->registers.vcount, &ppu->screen);
   }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode2(GbaPpu *ppu) {
@@ -120,6 +131,11 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
                                 GBA_PPU_AFFINE_BACKGROUND_3, ppu->x,
                                 ppu->registers.vcount, &ppu->screen);
   }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode3(GbaPpu *ppu) {
@@ -127,6 +143,11 @@ static void GbaPpuStepMode3(GbaPpu *ppu) {
     GbaPpuBitmapMode3Pixel(&ppu->memory, &ppu->registers,
                            &ppu->internal_registers, ppu->x,
                            ppu->registers.vcount, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -136,6 +157,11 @@ static void GbaPpuStepMode4(GbaPpu *ppu) {
                            &ppu->internal_registers, ppu->x,
                            ppu->registers.vcount, &ppu->screen);
   }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
+  }
 }
 
 static void GbaPpuStepMode5(GbaPpu *ppu) {
@@ -143,6 +169,11 @@ static void GbaPpuStepMode5(GbaPpu *ppu) {
     GbaPpuBitmapMode5Pixel(&ppu->memory, &ppu->registers,
                            &ppu->internal_registers, ppu->x,
                            ppu->registers.vcount, &ppu->screen);
+  }
+
+  if (ppu->registers.dispcnt.object_enable) {
+    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
+                       ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 

@@ -61,6 +61,7 @@ cc_library(
         "//emulator/ppu/gba/bg:scrolling",
         "//emulator/ppu/gba/io",
         "//emulator/ppu/gba/oam",
+        "//emulator/ppu/gba/obj:objects",
         "//emulator/ppu/gba/palette",
         "//emulator/ppu/gba/vram",
     ],
