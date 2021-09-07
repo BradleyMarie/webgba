@@ -68,3 +68,24 @@ TEST_F(ObjectSetTest, PopMultiple) {
   EXPECT_EQ(127u, GbaPpuObjectSetPop(&set_));
   EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
 }
+
+TEST_F(ObjectSetTest, Intersection) {
+  GbaPpuObjectSetAdd(&set_, 1u);
+  GbaPpuObjectSetAdd(&set_, 2u);
+  GbaPpuObjectSetAdd(&set_, 64u);
+  GbaPpuObjectSetAdd(&set_, 65u);
+
+  GbaPpuObjectSet set1;
+  set1.objects[0u] = 0u;
+  set1.objects[1u] = 0u;
+  GbaPpuObjectSetAdd(&set1, 2u);
+  GbaPpuObjectSetAdd(&set1, 3u);
+  GbaPpuObjectSetAdd(&set1, 65u);
+  GbaPpuObjectSetAdd(&set1, 66u);
+
+  GbaPpuObjectSet intersection = GbaPpuObjectSetIntersection(&set_, &set1);
+  EXPECT_EQ(2u, GbaPpuObjectSetPop(&intersection));
+  EXPECT_FALSE(GbaPpuObjectSetEmpty(&intersection));
+  EXPECT_EQ(65u, GbaPpuObjectSetPop(&intersection));
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&intersection));
+}

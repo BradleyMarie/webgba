@@ -37,4 +37,12 @@ static inline uint_fast8_t GbaPpuObjectSetPop(GbaPpuObjectSet* object_set) {
   return base[set_index] + set_bit_index;
 }
 
+static inline GbaPpuObjectSet GbaPpuObjectSetIntersection(
+    const GbaPpuObjectSet* object_set0, const GbaPpuObjectSet* object_set1) {
+  GbaPpuObjectSet result;
+  result.objects[0] = object_set0->objects[0] & object_set1->objects[0];
+  result.objects[1] = object_set0->objects[1] & object_set1->objects[1];
+  return result;
+}
+
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OBJECT_SET_
