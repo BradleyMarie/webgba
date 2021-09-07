@@ -45,7 +45,7 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddNotVisible) {
 }
 
 TEST_F(ObjectStateTest, GbaPpuObjectStateAddDouble) {
-  memory_.object_attributes[0u].rotation_scale_enable = true;
+  memory_.object_attributes[0u].affine = true;
   memory_.object_attributes[0u].flex_param_1 = true;
   GbaPpuObjectStateAdd(&memory_, 0u, &state_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
@@ -146,9 +146,9 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClearNotVisible) {
 }
 
 TEST_F(ObjectStateTest, GbaPpuObjectStateClearDouble) {
-  memory_.object_attributes[0u].rotation_scale_enable = true;
+  memory_.object_attributes[0u].affine = true;
   memory_.object_attributes[0u].flex_param_1 = true;
-  memory_.object_attributes[1u].rotation_scale_enable = true;
+  memory_.object_attributes[1u].affine = true;
   memory_.object_attributes[1u].flex_param_1 = true;
   GbaPpuObjectStateAdd(&memory_, 0u, &state_);
   GbaPpuObjectStateAdd(&memory_, 1u, &state_);
