@@ -4,17 +4,17 @@ package(default_visibility = ["//visibility:private"])
 
 cc_library(
     name = "arm7tdmi",
-    hdrs = ["arm7tdmi.h"],
     srcs = ["arm7tdmi.c"],
+    hdrs = ["arm7tdmi.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":exceptions",
         ":registers",
         "//emulator/cpu/arm7tdmi/decoders/arm:execute",
         "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/platform:interrupt_line",
-    ]
+    ],
 )
 
 cc_test(
@@ -28,8 +28,8 @@ cc_test(
 
 cc_library(
     name = "exceptions",
-    hdrs = ["exceptions.h"],
     srcs = ["exceptions.c"],
+    hdrs = ["exceptions.h"],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
     deps = [
         ":registers",
@@ -53,12 +53,12 @@ cc_library(
 
 cc_library(
     name = "memory",
-    hdrs = ["memory.h"],
     srcs = ["memory.c"],
-    deps = [
-        "//emulator/memory:memory",
-    ],
+    hdrs = ["memory.h"],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+    deps = [
+        "//emulator/memory",
+    ],
 )
 
 cc_test(
@@ -72,8 +72,8 @@ cc_test(
 
 cc_library(
     name = "registers",
-    hdrs = ["registers.h"],
     srcs = ["registers.c"],
+    hdrs = ["registers.h"],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
 )
 

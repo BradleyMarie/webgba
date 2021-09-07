@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "timers",
-    hdrs = ["timers.h"],
     srcs = ["timers.c"],
+    hdrs = ["timers.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/platform/gba:platform",
     ],
 )

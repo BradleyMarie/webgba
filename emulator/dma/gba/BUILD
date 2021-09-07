@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "dma",
-    hdrs = ["dma.h"],
     srcs = ["dma.c"],
+    hdrs = ["dma.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/platform/gba:platform",
     ],
 )

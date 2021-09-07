@@ -4,8 +4,8 @@ package(default_visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"])
 
 cc_library(
     name = "block_data_transfer",
-    hdrs = ["block_data_transfer.h"],
     srcs = ["block_data_transfer.c"],
+    hdrs = ["block_data_transfer.h"],
     deps = [
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",

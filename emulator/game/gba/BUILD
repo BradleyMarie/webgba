@@ -4,9 +4,9 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "game",
-    hdrs = ["game.h"],
     srcs = ["game.c"],
+    hdrs = ["game.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )

@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "platform",
-    hdrs = ["platform.h"],
     srcs = ["platform.c"],
+    hdrs = ["platform.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
         "//emulator/platform:interrupt_line",
     ],
 )

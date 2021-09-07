@@ -4,14 +4,14 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "memory",
-    hdrs = ["memory.h"],
     srcs = ["memory.c"],
+    hdrs = ["memory.h"],
     deps = [
-        "//emulator/memory/gba/bad:bad",
-        "//emulator/memory/gba/bios:bios",
-        "//emulator/memory/gba/io:io",
-        "//emulator/memory/gba/iram:iram",
-        "//emulator/memory/gba/wram:wram",
+        "//emulator/memory/gba/bad",
+        "//emulator/memory/gba/bios",
+        "//emulator/memory/gba/io",
+        "//emulator/memory/gba/iram",
+        "//emulator/memory/gba/wram",
     ],
 )
 

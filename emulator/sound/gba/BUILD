@@ -4,10 +4,10 @@ package(default_visibility = ["//emulator:__subpackages__"])
 
 cc_library(
     name = "sound",
-    hdrs = ["sound.h"],
     srcs = ["sound.c"],
+    hdrs = ["sound.h"],
     deps = [
-        "//emulator/memory:memory",
+        "//emulator/memory",
     ],
 )
 
