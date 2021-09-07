@@ -9,6 +9,25 @@ cc_library(
 )
 
 cc_library(
+    name = "object_state",
+    srcs = ["object_state.c"],
+    hdrs = ["object_state.h"],
+    deps = [
+        ":memory",
+        ":object_set",
+    ],
+)
+
+cc_test(
+    name = "object_state_test",
+    srcs = ["object_state_test.cc"],
+    deps = [
+        ":object_state",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "object_set",
     hdrs = ["object_set.h"],
 )
