@@ -58,7 +58,7 @@ static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
     oam->memory->words[address >> 2u] = value;
     GbaPpuObjectStateAdd(oam->memory, object, oam->object_state);
   } else {
-    oam->memory->half_words[address >> 1u] = value;
+    oam->memory->words[address >> 2u] = value;
   }
 
   return true;

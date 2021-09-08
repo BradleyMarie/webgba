@@ -64,32 +64,54 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
     if (memory->oam.object_attributes[object].affine) {
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
 
-      lookup_x <<= 8u;
-      lookup_x += memory->oam.rotate_scale[group].pa * lookup_x +
-                  memory->oam.rotate_scale[group].pb * lookup_y;
-      lookup_x >>= 8u;
+      int_fast16_t obj_size_x = shape_size_to_x_size_pixels
+          [memory->oam.object_attributes[object].obj_shape]
+          [memory->oam.object_attributes[object].obj_size];
+      int_fast16_t obj_size_y = shape_size_to_y_size_pixels
+          [memory->oam.object_attributes[object].obj_shape]
+          [memory->oam.object_attributes[object].obj_size];
 
-      int_fast16_t x_size =
-          shape_size_to_x_size_pixels
-              [memory->oam.object_attributes[object].obj_shape]
-              [memory->oam.object_attributes[object].obj_size]
-          << memory->oam.object_attributes[object].flex_param_0;
-      if (lookup_x < 0 || lookup_x >= x_size) {
+      if (memory->oam.object_attributes[object].flex_param_0) {
+        int_fast16_t center_x = obj_size_x;
+        int_fast16_t center_y = obj_size_y;
+
+        int_fast16_t from_center_x = lookup_x - center_x;
+        int_fast16_t from_center_y = lookup_y - center_y;
+
+        int_fast32_t x_rotation =
+            memory->oam.rotate_scale[group].pa * from_center_x +
+            memory->oam.rotate_scale[group].pb * from_center_y;
+
+        int_fast32_t y_rotation =
+            memory->oam.rotate_scale[group].pc * from_center_x +
+            memory->oam.rotate_scale[group].pd * from_center_y;
+
+        lookup_x = center_x + (x_rotation >> 8u) - (obj_size_x >> 1u);
+        lookup_y = center_y + (y_rotation >> 8u) - (obj_size_y >> 1u);
+      } else {
+        int_fast16_t center_x = obj_size_x >> 1u;
+        int_fast16_t center_y = obj_size_y >> 1u;
+
+        int_fast16_t from_center_x = lookup_x - center_x;
+        int_fast16_t from_center_y = lookup_y - center_y;
+
+        int_fast32_t x_rotation =
+            memory->oam.rotate_scale[group].pa * from_center_x +
+            memory->oam.rotate_scale[group].pb * from_center_y;
+
+        int_fast32_t y_rotation =
+            memory->oam.rotate_scale[group].pc * from_center_x +
+            memory->oam.rotate_scale[group].pd * from_center_y;
+
+        lookup_x = center_x + (x_rotation >> 8u);
+        lookup_y = center_y + (y_rotation >> 8u);
+      }
+
+      if (lookup_x < 0 || lookup_x >= obj_size_x) {
         continue;
       }
 
-      lookup_y <<= 8u;
-      lookup_y += memory->oam.rotate_scale[group].pc * lookup_x +
-                  memory->oam.rotate_scale[group].pd * lookup_y;
-      lookup_y >>= 8u;
-
-      int_fast16_t y_size =
-          shape_size_to_y_size_pixels
-              [memory->oam.object_attributes[object].obj_shape]
-              [memory->oam.object_attributes[object].obj_size]
-          << memory->oam.object_attributes[object].flex_param_0;
-
-      if (lookup_y < 0 || lookup_y >= y_size) {
+      if (lookup_y < 0 || lookup_y >= obj_size_y) {
         continue;
       }
     } else {
