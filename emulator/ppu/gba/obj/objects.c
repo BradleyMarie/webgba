@@ -151,7 +151,7 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
       color = memory->palette.obj.large_palette[color_index];
     } else {
       uint8_t color_index_pair = memory->vram.mode_012.obj.s_tiles[tile_index]
-                                     .pixels[y_tile_pixel][x_tile_pixel]
+                                     .pixels[y_tile_pixel][x_tile_pixel >> 1u]
                                      .value;
 
       // Select lower 4 bits if lookup_x_tile_pixel is even and upper 4 bits
