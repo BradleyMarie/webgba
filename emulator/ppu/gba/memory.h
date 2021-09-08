@@ -69,7 +69,8 @@ typedef struct {
 } TileMapEntry;
 
 #define GBA_TILE_MAP_BLOCK_1D_SIZE 32u
-#define GBA_TILE_MAP_BLOCK_1D_SIZE_PIXELS (GBA_TILE_MAP_BLOCK_1D_SIZE * GBA_TILE_1D_SIZE)
+#define GBA_TILE_MAP_BLOCK_1D_SIZE_PIXELS \
+  (GBA_TILE_MAP_BLOCK_1D_SIZE * GBA_TILE_1D_SIZE)
 #define GBA_AFFINE_TILE_MAP_INDICES_PER_BLOCK 2048u
 
 typedef union {
@@ -186,13 +187,13 @@ typedef struct {
 
 typedef struct {
   uint16_t unused0[3u];
-  uint16_t pa;
+  int16_t pa;
   uint16_t unused1[3u];
-  uint16_t pb;
+  int16_t pb;
   uint16_t unused2[3u];
-  uint16_t pc;
+  int16_t pc;
   uint16_t unused3[3u];
-  uint16_t pd;
+  int16_t pd;
 } ObjectRotateScaleParameter;
 
 #define OAM_NUM_OBJECTS 128u
