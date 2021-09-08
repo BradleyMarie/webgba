@@ -15,7 +15,7 @@ static const int_fast16_t shape_size_to_y_size_pixels[4][4] = {
 void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
                             uint_fast8_t object, GbaPpuObjectState* state) {
   if (!oam->object_attributes[object].affine &&
-      oam->object_attributes[object].flex_param_1) {
+      oam->object_attributes[object].flex_param_0) {
     return;
   }
 
@@ -23,7 +23,7 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t x_size =
       shape_size_to_x_size_pixels[oam->object_attributes[object].obj_shape]
                                  [oam->object_attributes[object].obj_size]
-      << oam->object_attributes[object].flex_param_1;
+      << oam->object_attributes[object].flex_param_0;
   int_fast16_t x_end = x_start + x_size;
 
   if (x_start < 0) {
@@ -42,7 +42,7 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t y_size =
       shape_size_to_y_size_pixels[oam->object_attributes[object].obj_shape]
                                  [oam->object_attributes[object].obj_size]
-      << oam->object_attributes[object].flex_param_1;
+      << oam->object_attributes[object].flex_param_0;
   int_fast16_t y_end = y_start + y_size;
 
   if (y_start < 0) {
@@ -61,7 +61,7 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
 void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
                           uint_fast8_t object, GbaPpuObjectState* state) {
   if (!oam->object_attributes[object].affine &&
-      oam->object_attributes[object].flex_param_1) {
+      oam->object_attributes[object].flex_param_0) {
     return;
   }
 
@@ -69,7 +69,7 @@ void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t x_size =
       shape_size_to_x_size_pixels[oam->object_attributes[object].obj_shape]
                                  [oam->object_attributes[object].obj_size]
-      << oam->object_attributes[object].flex_param_1;
+      << oam->object_attributes[object].flex_param_0;
   int_fast16_t x_end = x_start + x_size;
 
   if (x_start < 0) {
@@ -87,7 +87,7 @@ void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t y_size =
       shape_size_to_y_size_pixels[oam->object_attributes[object].obj_shape]
                                  [oam->object_attributes[object].obj_size]
-      << oam->object_attributes[object].flex_param_1;
+      << oam->object_attributes[object].flex_param_0;
   int_fast16_t y_end = y_start + y_size;
 
   if (y_start < 0) {
