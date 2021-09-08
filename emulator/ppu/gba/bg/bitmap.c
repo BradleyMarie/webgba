@@ -82,7 +82,7 @@ static inline void GbaPpuBackground2BitmapPixel(
       break;
   };
 
-  GbaPpuScreenDrawPixel(screen, x, y, color, priority);
+  GbaPpuScreenDrawBackgroundPixel(screen, x, y, color, priority);
 }
 
 void GbaPpuBitmapMode3Pixel(const GbaPpuMemory* memory,

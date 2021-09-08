@@ -104,6 +104,6 @@ void GbaPpuScrollingBackgroundPixel(
     color = memory->palette.bg.small_palettes[entry.palette][color_index];
   }
 
-  GbaPpuScreenDrawPixel(screen, x, y, color,
-                        registers->bgcnt[background].priority);
+  GbaPpuScreenDrawBackgroundPixel(screen, x, y, color,
+                                  registers->bgcnt[background].priority);
 }
