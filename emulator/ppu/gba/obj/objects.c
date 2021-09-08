@@ -145,7 +145,7 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
       uint8_t color_index = memory->vram.mode_012.obj.d_tiles[tile_index >> 1u]
                                 .pixels[y_tile_pixel][x_tile_pixel];
       if (color_index == 0u) {
-        return;
+        continue;
       }
 
       color = memory->palette.obj.large_palette[color_index];
@@ -159,7 +159,7 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
       uint_fast8_t color_index =
           (color_index_pair >> ((x_tile_pixel & 1u) << 2u)) & 0xFu;
       if (color_index == 0u) {
-        return;
+        continue;
       }
 
       color = memory->palette.obj
