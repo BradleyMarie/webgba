@@ -86,5 +86,5 @@ void GbaPpuAffineBackgroundPixel(
 
   uint16_t color = memory->palette.bg.large_palette[color_index];
 
-  GbaPpuScreenDrawPixel(screen, x, y, color, bgcnt.priority);
+  GbaPpuScreenDrawBackgroundPixel(screen, x, y, color, bgcnt.priority);
 }

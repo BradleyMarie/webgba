@@ -10,8 +10,6 @@
 #define GBA_SCREEN_HEIGHT GBA_FULL_FRAME_HEIGHT
 #define GBA_SCREEN_WIDTH GBA_FULL_FRAME_WIDTH
 
-#define GBA_PPU_SCREEN_TRANSPARENT_PRIORITY 5u
-
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
   uint8_t priorities[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
@@ -19,9 +17,10 @@ typedef struct {
   GLuint texture;
 } GbaPpuScreen;
 
-static inline void GbaPpuScreenDrawPixel(GbaPpuScreen* screen, uint_fast8_t x,
-                                         uint_fast8_t y, uint16_t value,
-                                         uint8_t priority) {
+static inline void GbaPpuScreenDrawObjectPixel(GbaPpuScreen* screen,
+                                               uint_fast8_t x, uint_fast8_t y,
+                                               uint16_t value,
+                                               uint8_t priority) {
   assert(x < GBA_SCREEN_WIDTH);
   assert(y < GBA_SCREEN_HEIGHT);
   priority = UINT8_MAX - priority;
@@ -29,6 +28,21 @@ static inline void GbaPpuScreenDrawPixel(GbaPpuScreen* screen, uint_fast8_t x,
     screen->pixels[y][x] = value;
     screen->priorities[y][x] = priority;
   }
+}
+
+static inline void GbaPpuScreenDrawBackgroundPixel(GbaPpuScreen* screen,
+                                                   uint_fast8_t x,
+                                                   uint_fast8_t y,
+                                                   uint16_t value,
+                                                   uint8_t priority) {
+  GbaPpuScreenDrawObjectPixel(screen, x, y, value, priority + 1u);
+}
+
+static inline void GbaPpuScreenDrawTransparentPixel(GbaPpuScreen* screen,
+                                                    uint_fast8_t x,
+                                                    uint_fast8_t y,
+                                                    uint16_t value) {
+  GbaPpuScreenDrawObjectPixel(screen, x, y, value, UINT8_MAX - 1u);
 }
 
 void GbaPpuScreenClear(GbaPpuScreen* screen);

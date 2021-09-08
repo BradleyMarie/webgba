@@ -17,14 +17,32 @@ class ScreenTest : public testing::Test {
   GbaPpuScreen screen_;
 };
 
-TEST_F(ScreenTest, DrawPixel) {
-  GbaPpuScreenDrawPixel(&screen_, 100u, 50u, 0x02345u, 1u);
+TEST_F(ScreenTest, DrawObjectPixel) {
+  GbaPpuScreenDrawObjectPixel(&screen_, 100u, 50u, 0x02345u, 1u);
   EXPECT_EQ(0x02345u, screen_.pixels[50u][100u]);
   EXPECT_EQ(UINT8_MAX - 1u, screen_.priorities[50u][100u]);
-  GbaPpuScreenDrawPixel(&screen_, 100u, 50u, 0x0234u, 1u);
+  GbaPpuScreenDrawObjectPixel(&screen_, 100u, 50u, 0x0234u, 1u);
   EXPECT_EQ(0x02345u, screen_.pixels[50u][100u]);
   EXPECT_EQ(UINT8_MAX - 1u, screen_.priorities[50u][100u]);
-  GbaPpuScreenDrawPixel(&screen_, 100u, 50u, 0x0234u, 0u);
+  GbaPpuScreenDrawObjectPixel(&screen_, 100u, 50u, 0x0234u, 0u);
   EXPECT_EQ(0x0234u, screen_.pixels[50u][100u]);
   EXPECT_EQ(UINT8_MAX, screen_.priorities[50u][100u]);
+}
+
+TEST_F(ScreenTest, DrawBackgroundPixel) {
+  GbaPpuScreenDrawBackgroundPixel(&screen_, 100u, 50u, 0x02345u, 1u);
+  EXPECT_EQ(0x02345u, screen_.pixels[50u][100u]);
+  EXPECT_EQ(UINT8_MAX - 2u, screen_.priorities[50u][100u]);
+  GbaPpuScreenDrawBackgroundPixel(&screen_, 100u, 50u, 0x0234u, 1u);
+  EXPECT_EQ(0x02345u, screen_.pixels[50u][100u]);
+  EXPECT_EQ(UINT8_MAX - 2u, screen_.priorities[50u][100u]);
+  GbaPpuScreenDrawBackgroundPixel(&screen_, 100u, 50u, 0x0234u, 0u);
+  EXPECT_EQ(0x0234u, screen_.pixels[50u][100u]);
+  EXPECT_EQ(UINT8_MAX - 1u, screen_.priorities[50u][100u]);
+}
+
+TEST_F(ScreenTest, DrawTransparentPixel) {
+  GbaPpuScreenDrawTransparentPixel(&screen_, 100u, 50u, 0x02345u);
+  EXPECT_EQ(0x02345u, screen_.pixels[50u][100u]);
+  EXPECT_EQ(1u, screen_.priorities[50u][100u]);
 }

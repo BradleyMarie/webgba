@@ -334,12 +334,12 @@ void GbaPpuStep(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.forced_blank) {
-    GbaPpuScreenDrawPixel(&ppu->screen, ppu->x, ppu->registers.vcount, 0u,
-                          GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
+    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
+                                     ppu->registers.vcount, 0u);
   } else {
-    GbaPpuScreenDrawPixel(&ppu->screen, ppu->x, ppu->registers.vcount,
-                          ppu->memory.palette.bg.large_palette[0u],
-                          GBA_PPU_SCREEN_TRANSPARENT_PRIORITY);
+    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
+                                     ppu->registers.vcount,
+                                     ppu->memory.palette.bg.large_palette[0u]);
 
     static const GbaPpuStepRoutine mode_step_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,

@@ -169,8 +169,7 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
 
     // TODO: Transparency and Windowing
 
-    // TODO: Objects should have higher priorities than background layers
-    GbaPpuScreenDrawPixel(screen, x, y, color,
-                          memory->oam.object_attributes[object].priority);
+    GbaPpuScreenDrawObjectPixel(screen, x, y, color,
+                                memory->oam.object_attributes[object].priority);
   }
 }
