@@ -3,6 +3,7 @@
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/obj/set.h"
+#include "emulator/ppu/gba/registers.h"
 
 typedef struct {
   GbaPpuObjectSet x_sets[GBA_FULL_FRAME_WIDTH];
@@ -10,11 +11,13 @@ typedef struct {
 } GbaPpuObjectVisibility;
 
 void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
+                                  const GbaPpuInternalRegisters* registers,
                                   uint_fast8_t object,
                                   GbaPpuObjectVisibility* visibility);
 
 void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
                                  uint_fast8_t object,
+                                 GbaPpuInternalRegisters* registers,
                                  GbaPpuObjectVisibility* visibility);
 
 static inline GbaPpuObjectSet GbaPpuObjectVisibilityGet(

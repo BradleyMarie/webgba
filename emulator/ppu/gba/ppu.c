@@ -83,8 +83,9 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -111,8 +112,9 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -132,8 +134,9 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -145,8 +148,9 @@ static void GbaPpuStepMode3(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -158,8 +162,9 @@ static void GbaPpuStepMode4(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -171,8 +176,9 @@ static void GbaPpuStepMode5(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
-                      ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->internal_registers,
+                      &ppu->object_visibility, ppu->x, ppu->registers.vcount,
+                      &ppu->screen);
   }
 }
 
@@ -225,8 +231,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->object_visibility,
-                     GbaPpuRelease, *ppu);
+  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->internal_registers,
+                     &(*ppu)->object_visibility, GbaPpuRelease, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -260,6 +266,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
     GbaPpuObjectVisibilityDrawn(&(*ppu)->memory.oam, object,
+                                &(*ppu)->internal_registers,
                                 &(*ppu)->object_visibility);
   }
 

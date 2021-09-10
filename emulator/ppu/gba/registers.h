@@ -116,6 +116,7 @@ typedef struct {
 
 typedef struct {
   GbaPpuInternalAffineRegisters affine[2];
+  int16_t object_y[128];  // TODO: Fix this magic number
 } GbaPpuInternalRegisters;
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_REGISTERS_

@@ -27,6 +27,7 @@ static inline bool GbaPpuObjectMosaic(const GbaPpuRegisters* registers,
 
 void GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
+                       const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y,
                        GbaPpuScreen* screen) {
@@ -59,7 +60,7 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     }
 
     lookup_x -= memory->oam.object_attributes[object].x_coordinate;
-    lookup_y -= memory->oam.object_attributes[object].y_coordinate;
+    lookup_y -= internal_registers->object_y[object];
 
     if (memory->oam.object_attributes[object].affine) {
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;

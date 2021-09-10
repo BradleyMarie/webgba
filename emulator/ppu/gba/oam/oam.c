@@ -7,6 +7,7 @@
 
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
+  GbaPpuInternalRegisters *internal_registers;
   GbaPpuObjectVisibility *object_visibility;
   MemoryContextFree free_routine;
   void *free_address;
@@ -54,9 +55,11 @@ static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
 
   if ((address & 0x7u) < 4u) {
     uint_fast8_t object = address >> 3u;
-    GbaPpuObjectVisibilityHidden(oam->memory, object, oam->object_visibility);
+    GbaPpuObjectVisibilityHidden(oam->memory, oam->internal_registers, object,
+                                 oam->object_visibility);
     oam->memory->words[address >> 2u] = value;
-    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->object_visibility);
+    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->internal_registers,
+                                oam->object_visibility);
   } else {
     oam->memory->words[address >> 2u] = value;
   }
@@ -72,9 +75,11 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   address &= OAM_ADDRESS_MASK;
   if ((address & 0x7u) < 4u) {
     uint_fast8_t object = address >> 3u;
-    GbaPpuObjectVisibilityHidden(oam->memory, object, oam->object_visibility);
+    GbaPpuObjectVisibilityHidden(oam->memory, oam->internal_registers, object,
+                                 oam->object_visibility);
     oam->memory->half_words[address >> 1u] = value;
-    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->object_visibility);
+    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->internal_registers,
+                                oam->object_visibility);
   } else {
     oam->memory->half_words[address >> 1u] = value;
   }
@@ -94,6 +99,7 @@ static void OamFree(void *context) {
 }
 
 Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
+                    GbaPpuInternalRegisters *internal_registers,
                     GbaPpuObjectVisibility *object_visibility,
                     MemoryContextFree free_routine, void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
@@ -102,6 +108,7 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
   }
 
   oam->memory = oam_memory;
+  oam->internal_registers = internal_registers;
   oam->object_visibility = object_visibility;
   oam->free_routine = free_routine;
   oam->free_address = free_address;

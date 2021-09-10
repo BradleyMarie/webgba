@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//emulator/memory",
         "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
         "//emulator/ppu/gba/obj:visibility",
     ],
 )
