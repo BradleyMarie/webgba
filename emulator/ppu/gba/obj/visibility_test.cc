@@ -35,8 +35,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawn) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNotVisible) {
@@ -65,8 +65,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnDouble) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(16u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(16u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeX) {
@@ -97,8 +97,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveX) {
   }
   EXPECT_EQ(236, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveY) {
@@ -116,8 +116,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveY) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(127, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHidden) {
@@ -136,8 +136,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHidden) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNotVisible) {
@@ -175,8 +175,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenDouble) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(16u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(16u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeX) {
@@ -197,8 +197,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeX) {
   }
   EXPECT_EQ(-4, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveX) {
@@ -219,8 +219,8 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveX) {
   }
   EXPECT_EQ(236, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(8u, internal_registers_.object_coordinates[0u].y_size);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
@@ -243,6 +243,6 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
   }
   EXPECT_EQ(0, internal_registers_.object_coordinates[0u].x);
   EXPECT_EQ(127, internal_registers_.object_coordinates[0u].y);
-  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].x_render_size);
-  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].y_render_size);
+  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].x_size);
+  EXPECT_EQ(64u, internal_registers_.object_coordinates[0u].y_size);
 }

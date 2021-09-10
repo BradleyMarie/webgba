@@ -10,8 +10,10 @@ void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
   }
 
   int_fast16_t x_start = registers->object_coordinates[object].x;
-  int_fast16_t x_size = registers->object_coordinates[object].x_render_size;
-  int_fast16_t x_end = x_start + x_size;
+  int_fast16_t x_texture_size = registers->object_coordinates[object].x_size;
+  int_fast16_t x_render_size = x_texture_size
+                               << oam->object_attributes[object].flex_param_0;
+  int_fast16_t x_end = x_start + x_render_size;
 
   if (x_start < 0) {
     x_start = 0;
@@ -26,8 +28,10 @@ void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
   }
 
   int_fast16_t y_start = registers->object_coordinates[object].y;
-  int_fast16_t y_size = registers->object_coordinates[object].y_render_size;
-  int_fast16_t y_end = y_start + y_size;
+  int_fast16_t y_texture_size = registers->object_coordinates[object].y_size;
+  int_fast16_t y_render_size = y_texture_size
+                               << oam->object_attributes[object].flex_param_0;
+  int_fast16_t y_end = y_start + y_render_size;
 
   if (y_start < 0) {
     y_start = 0;
@@ -72,8 +76,7 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t x_end = x_start + x_render_size;
 
   registers->object_coordinates[object].x = x_start;
-  registers->object_coordinates[object].x_texture_size = x_texture_size;
-  registers->object_coordinates[object].x_render_size = x_render_size;
+  registers->object_coordinates[object].x_size = x_texture_size;
 
   if (x_start < 0) {
     x_start = 0;
@@ -106,8 +109,7 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
   }
 
   registers->object_coordinates[object].y = y_start;
-  registers->object_coordinates[object].y_texture_size = y_texture_size;
-  registers->object_coordinates[object].y_render_size = y_render_size;
+  registers->object_coordinates[object].y_size = y_texture_size;
 
   if (y_start < 0) {
     y_start = 0;
