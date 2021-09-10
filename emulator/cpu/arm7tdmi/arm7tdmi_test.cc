@@ -27,7 +27,7 @@ class ExecuteTest : public testing::Test {
 
     cpu_ = Arm7TdmiAllocate(rst_line, fiq_line, irq_line);
     ASSERT_NE(nullptr, cpu_);
-    ASSERT_EQ(0x08000008u, cpu_->registers.current.user.gprs.pc);
+    ASSERT_EQ(0x8u, cpu_->registers.current.user.gprs.pc);
 
     cpu_->registers.current.user.gprs.pc = 0x108u;
     cpu_->registers.current.user.gprs.sp = 0x200u;
