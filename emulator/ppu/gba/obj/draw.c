@@ -51,9 +51,9 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
 
       int_fast16_t obj_size_x =
-          internal_registers->object_coordinates[object].x_texture_size;
+          internal_registers->object_coordinates[object].x_size;
       int_fast16_t obj_size_y =
-          internal_registers->object_coordinates[object].y_texture_size;
+          internal_registers->object_coordinates[object].y_size;
 
       if (memory->oam.object_attributes[object].flex_param_0) {
         int_fast16_t center_x = obj_size_x;
@@ -102,14 +102,14 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
       // Horizontal Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x8u) {
         int_fast16_t x_size =
-            internal_registers->object_coordinates[object].x_texture_size;
+            internal_registers->object_coordinates[object].x_size;
         lookup_x = x_size - lookup_x - 1;
       }
 
       // Vertical Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x10u) {
         int_fast16_t y_size =
-            internal_registers->object_coordinates[object].y_texture_size;
+            internal_registers->object_coordinates[object].y_size;
         lookup_y = y_size - lookup_y - 1;
       }
     }
@@ -133,7 +133,7 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     if (registers->dispcnt.object_mode) {
       // One Dimensional Lookup
       int_fast16_t x_size_tiles =
-          internal_registers->object_coordinates[object].x_texture_size / 8u;
+          internal_registers->object_coordinates[object].x_size / 8u;
       tile_index = character_name + y_tile * x_size_tiles + x_tile;
     } else {
       // Two Dimensional Lookup

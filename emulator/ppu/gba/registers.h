@@ -117,10 +117,8 @@ typedef struct {
 typedef struct {
   int16_t x;
   int16_t y;
-  uint8_t x_texture_size;
-  uint8_t y_texture_size;
-  uint8_t x_render_size;
-  uint8_t y_render_size;
+  uint8_t x_size;
+  uint8_t y_size;
 } GbaPpuInternalObjectCoordinates;
 
 typedef struct {
