@@ -10,8 +10,10 @@ class OamTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&oam_memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
+    memset(&internal_registers_, 0, sizeof(GbaPpuInternalRegisters));
     memset(&visibility_, 0, sizeof(GbaPpuObjectVisibility));
-    memory_ = OamAllocate(&oam_memory_, &visibility_, FreeRoutine, nullptr);
+    memory_ = OamAllocate(&oam_memory_, &internal_registers_, &visibility_,
+                          FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -21,6 +23,7 @@ class OamTest : public testing::Test {
 
  protected:
   GbaPpuObjectAttributeMemory oam_memory_;
+  GbaPpuInternalRegisters internal_registers_;
   GbaPpuObjectVisibility visibility_;
   Memory* memory_;
 };

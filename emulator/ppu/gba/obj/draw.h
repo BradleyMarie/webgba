@@ -8,6 +8,7 @@
 
 void GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
+                       const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y,
                        GbaPpuScreen* screen);

@@ -13,6 +13,7 @@ static const int_fast16_t shape_size_to_y_size_pixels[4][4] = {
     {0u, 0u, 0u, 0u}};
 
 void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
+                                  const GbaPpuInternalRegisters* registers,
                                   uint_fast8_t object,
                                   GbaPpuObjectVisibility* visibility) {
   if (!oam->object_attributes[object].affine &&
@@ -39,7 +40,7 @@ void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
     GbaPpuObjectSetRemove(visibility->x_sets + x, object);
   }
 
-  int_fast16_t y_start = oam->object_attributes[object].y_coordinate;
+  int_fast16_t y_start = registers->object_y[object];
   int_fast16_t y_size =
       shape_size_to_y_size_pixels[oam->object_attributes[object].obj_shape]
                                  [oam->object_attributes[object].obj_size]
@@ -61,6 +62,7 @@ void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
 
 void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
                                  uint_fast8_t object,
+                                 GbaPpuInternalRegisters* registers,
                                  GbaPpuObjectVisibility* visibility) {
   if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_0) {
@@ -91,6 +93,14 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
                                  [oam->object_attributes[object].obj_size]
       << oam->object_attributes[object].flex_param_0;
   int_fast16_t y_end = y_start + y_size;
+
+  // Handle "negative precedence" wrapping for large objects
+  if (y_end > 256u) {
+    y_start -= 256u;
+    y_end -= 256u;
+  }
+
+  registers->object_y[object] = y_start;
 
   if (y_start < 0) {
     y_start = 0;

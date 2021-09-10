@@ -37,6 +37,7 @@ cc_library(
     deps = [
         ":set",
         "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
     ],
 )
 

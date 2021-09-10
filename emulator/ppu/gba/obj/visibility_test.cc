@@ -10,17 +10,19 @@ class ObjectVisibilityTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&visibility_, 0, sizeof(GbaPpuObjectVisibility));
+    memset(&internal_registers_, 0, sizeof(GbaPpuInternalRegisters));
     memset(&memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
   }
 
  protected:
   GbaPpuObjectAttributeMemory memory_;
+  GbaPpuInternalRegisters internal_registers_;
   GbaPpuObjectVisibility visibility_;
 };
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawn) {
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -31,11 +33,12 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawn) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNotVisible) {
   memory_.object_attributes[0u].flex_param_0 = true;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -47,7 +50,7 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNotVisible) {
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnDouble) {
   memory_.object_attributes[0u].affine = true;
   memory_.object_attributes[0u].flex_param_0 = true;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -57,11 +60,12 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnDouble) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeX) {
   memory_.object_attributes[0u].x_coordinate = -4;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -73,23 +77,9 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeX) {
   }
 }
 
-TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeY) {
-  memory_.object_attributes[0u].y_coordinate = -4;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
-    for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
-      if (x < 8u && y < 4u) {
-        EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
-      }
-      EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
-    }
-  }
-}
-
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveX) {
   memory_.object_attributes[0u].x_coordinate = 236u;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -99,12 +89,13 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveX) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveY) {
   memory_.object_attributes[0u].y_coordinate = 127u;
   memory_.object_attributes[0u].obj_size = 3u;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -114,12 +105,14 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveY) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(127, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHidden) {
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -129,14 +122,16 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHidden) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNotVisible) {
   memory_.object_attributes[0u].flex_param_0 = true;
   memory_.object_attributes[1u].flex_param_0 = true;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -150,9 +145,10 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenDouble) {
   memory_.object_attributes[0u].flex_param_0 = true;
   memory_.object_attributes[1u].affine = true;
   memory_.object_attributes[1u].flex_param_0 = true;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -162,14 +158,16 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenDouble) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeX) {
   memory_.object_attributes[0u].x_coordinate = -4;
   memory_.object_attributes[1u].x_coordinate = -4;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -179,31 +177,16 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeX) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
-}
-
-TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeY) {
-  memory_.object_attributes[0u].y_coordinate = -4;
-  memory_.object_attributes[1u].y_coordinate = -4;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
-  for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
-    for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
-      if (x < 8u && y < 4u) {
-        EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
-      }
-      EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
-    }
-  }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveX) {
   memory_.object_attributes[0u].x_coordinate = 236u;
   memory_.object_attributes[0u].x_coordinate = 236u;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -213,6 +196,7 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveX) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(0, internal_registers_.object_y[0u]);
 }
 
 TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
@@ -220,9 +204,10 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
   memory_.object_attributes[0u].obj_size = 3u;
   memory_.object_attributes[1u].y_coordinate = 127u;
   memory_.object_attributes[1u].obj_size = 3u;
-  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
-  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
-  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &internal_registers_, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, &internal_registers_, 1u,
+                               &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
       GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
@@ -232,4 +217,5 @@ TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
+  EXPECT_EQ(127, internal_registers_.object_y[0u]);
 }
