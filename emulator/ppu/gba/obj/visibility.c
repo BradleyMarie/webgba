@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/object_state.h"
+#include "emulator/ppu/gba/obj/visibility.h"
 
 static const int_fast16_t shape_size_to_x_size_pixels[4][4] = {
     {8u, 16u, 32u, 64u},
@@ -12,8 +12,9 @@ static const int_fast16_t shape_size_to_y_size_pixels[4][4] = {
     {16u, 32u, 32u, 64u},
     {0u, 0u, 0u, 0u}};
 
-void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
-                            uint_fast8_t object, GbaPpuObjectState* state) {
+void GbaPpuObjectVisibilityHidden(const GbaPpuObjectAttributeMemory* oam,
+                                  uint_fast8_t object,
+                                  GbaPpuObjectVisibility* visibility) {
   if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_0) {
     return;
@@ -35,7 +36,7 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
   }
 
   for (int_fast16_t x = x_start; x < x_end; x++) {
-    GbaPpuObjectSetRemove(state->x_sets + x, object);
+    GbaPpuObjectSetRemove(visibility->x_sets + x, object);
   }
 
   int_fast16_t y_start = oam->object_attributes[object].y_coordinate;
@@ -54,12 +55,13 @@ void GbaPpuObjectStateClear(const GbaPpuObjectAttributeMemory* oam,
   }
 
   for (int_fast16_t y = y_start; y < y_end; y++) {
-    GbaPpuObjectSetRemove(state->y_sets + y, object);
+    GbaPpuObjectSetRemove(visibility->y_sets + y, object);
   }
 }
 
-void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
-                          uint_fast8_t object, GbaPpuObjectState* state) {
+void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
+                                 uint_fast8_t object,
+                                 GbaPpuObjectVisibility* visibility) {
   if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_0) {
     return;
@@ -81,7 +83,7 @@ void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
   }
 
   for (int_fast16_t x = x_start; x < x_end; x++) {
-    GbaPpuObjectSetAdd(state->x_sets + x, object);
+    GbaPpuObjectSetAdd(visibility->x_sets + x, object);
   }
   int_fast16_t y_start = oam->object_attributes[object].y_coordinate;
   int_fast16_t y_size =
@@ -99,6 +101,6 @@ void GbaPpuObjectStateAdd(const GbaPpuObjectAttributeMemory* oam,
   }
 
   for (int_fast16_t y = y_start; y < y_end; y++) {
-    GbaPpuObjectSetAdd(state->y_sets + y, object);
+    GbaPpuObjectSetAdd(visibility->y_sets + y, object);
   }
 }

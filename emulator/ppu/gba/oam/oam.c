@@ -7,7 +7,7 @@
 
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
-  GbaPpuObjectState *object_state;
+  GbaPpuObjectVisibility *object_visibility;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuOam;
@@ -54,9 +54,9 @@ static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
 
   if ((address & 0x7u) < 4u) {
     uint_fast8_t object = address >> 3u;
-    GbaPpuObjectStateClear(oam->memory, object, oam->object_state);
+    GbaPpuObjectVisibilityHidden(oam->memory, object, oam->object_visibility);
     oam->memory->words[address >> 2u] = value;
-    GbaPpuObjectStateAdd(oam->memory, object, oam->object_state);
+    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->object_visibility);
   } else {
     oam->memory->words[address >> 2u] = value;
   }
@@ -72,9 +72,9 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   address &= OAM_ADDRESS_MASK;
   if ((address & 0x7u) < 4u) {
     uint_fast8_t object = address >> 3u;
-    GbaPpuObjectStateClear(oam->memory, object, oam->object_state);
+    GbaPpuObjectVisibilityHidden(oam->memory, object, oam->object_visibility);
     oam->memory->half_words[address >> 1u] = value;
-    GbaPpuObjectStateAdd(oam->memory, object, oam->object_state);
+    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->object_visibility);
   } else {
     oam->memory->half_words[address >> 1u] = value;
   }
@@ -94,7 +94,7 @@ static void OamFree(void *context) {
 }
 
 Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
-                    GbaPpuObjectState *object_state,
+                    GbaPpuObjectVisibility *object_visibility,
                     MemoryContextFree free_routine, void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
   if (oam == NULL) {
@@ -102,7 +102,7 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
   }
 
   oam->memory = oam_memory;
-  oam->object_state = object_state;
+  oam->object_visibility = object_visibility;
   oam->free_routine = free_routine;
   oam->free_address = free_address;
 

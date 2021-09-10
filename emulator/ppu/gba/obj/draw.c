@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/obj/objects.h"
+#include "emulator/ppu/gba/obj/draw.h"
 
 static inline bool GbaPpuObjectMosaic(const GbaPpuRegisters* registers,
                                       const GbaPpuMemory* memory,
@@ -25,11 +25,11 @@ static inline bool GbaPpuObjectMosaic(const GbaPpuRegisters* registers,
   return true;
 }
 
-void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
-                        const GbaPpuRegisters* registers,
-                        const GbaPpuObjectState* object_state,
-                        const uint_fast8_t x, uint_fast8_t y,
-                        GbaPpuScreen* screen) {
+void GbaPpuObjectPixel(const GbaPpuMemory* memory,
+                       const GbaPpuRegisters* registers,
+                       const GbaPpuObjectVisibility* visibility,
+                       const uint_fast8_t x, uint_fast8_t y,
+                       GbaPpuScreen* screen) {
   static const int_fast16_t shape_size_to_x_size_pixels[4][4] = {
       {8u, 16u, 32u, 64u},
       {16u, 32u, 32u, 64u},
@@ -45,7 +45,7 @@ void GbaPpuObjectsPixel(const GbaPpuMemory* memory,
       {16u, 32u, 32u, 64u},
       {0u, 0u, 0u, 0u}};
 
-  GbaPpuObjectSet objects = GbaPpuObjectStateGetObjects(object_state, x, y);
+  GbaPpuObjectSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
   while (!GbaPpuObjectSetEmpty(&objects)) {
     uint_fast8_t object = GbaPpuObjectSetPop(&objects);
     assert(memory->oam.object_attributes[object].affine ||

@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_OBJECT_SET_
-#define _WEBGBA_EMULATOR_PPU_GBA_OBJECT_SET_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_OBJ_SET_
+#define _WEBGBA_EMULATOR_PPU_GBA_OBJ_SET_
 
 #include <assert.h>
 #include <stdbool.h>
@@ -45,4 +45,4 @@ static inline GbaPpuObjectSet GbaPpuObjectSetIntersection(
   return result;
 }
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_OBJECT_SET_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_OBJ_SET_
