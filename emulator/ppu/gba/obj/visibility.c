@@ -76,6 +76,8 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
   int_fast16_t x_end = x_start + x_render_size;
 
   registers->object_coordinates[object].x = x_start;
+  registers->object_coordinates[object].x_center =
+      x_start + (x_render_size >> 1u);
   registers->object_coordinates[object].x_size = x_texture_size;
 
   if (x_start < 0) {
@@ -109,6 +111,8 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
   }
 
   registers->object_coordinates[object].y = y_start;
+  registers->object_coordinates[object].y_center =
+      y_start + (y_render_size >> 1u);
   registers->object_coordinates[object].y_size = y_texture_size;
 
   if (y_start < 0) {

@@ -44,73 +44,54 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
       lookup_y = y;
     }
 
-    lookup_x -= internal_registers->object_coordinates[object].x;
-    lookup_y -= internal_registers->object_coordinates[object].y;
-
     if (memory->oam.object_attributes[object].affine) {
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
 
-      int_fast16_t obj_size_x =
-          internal_registers->object_coordinates[object].x_size;
-      int_fast16_t obj_size_y =
-          internal_registers->object_coordinates[object].y_size;
+      int_fast16_t center_x =
+          internal_registers->object_coordinates[object].x_center;
+      int_fast16_t center_y =
+          internal_registers->object_coordinates[object].y_center;
 
-      if (memory->oam.object_attributes[object].flex_param_0) {
-        int_fast16_t center_x = obj_size_x;
-        int_fast16_t center_y = obj_size_y;
+      int_fast16_t from_center_x = lookup_x - center_x;
+      int_fast16_t from_center_y = lookup_y - center_y;
 
-        int_fast16_t from_center_x = lookup_x - center_x;
-        int_fast16_t from_center_y = lookup_y - center_y;
+      int_fast32_t x_rotation =
+          memory->oam.rotate_scale[group].pa * from_center_x +
+          memory->oam.rotate_scale[group].pb * from_center_y;
 
-        int_fast32_t x_rotation =
-            memory->oam.rotate_scale[group].pa * from_center_x +
-            memory->oam.rotate_scale[group].pb * from_center_y;
+      int_fast32_t y_rotation =
+          memory->oam.rotate_scale[group].pc * from_center_x +
+          memory->oam.rotate_scale[group].pd * from_center_y;
 
-        int_fast32_t y_rotation =
-            memory->oam.rotate_scale[group].pc * from_center_x +
-            memory->oam.rotate_scale[group].pd * from_center_y;
+      lookup_x = (internal_registers->object_coordinates[object].x_size >> 1) +
+                 (x_rotation >> 8u);
 
-        lookup_x = center_x + (x_rotation >> 8u) - (obj_size_x >> 1u);
-        lookup_y = center_y + (y_rotation >> 8u) - (obj_size_y >> 1u);
-      } else {
-        int_fast16_t center_x = obj_size_x >> 1u;
-        int_fast16_t center_y = obj_size_y >> 1u;
-
-        int_fast16_t from_center_x = lookup_x - center_x;
-        int_fast16_t from_center_y = lookup_y - center_y;
-
-        int_fast32_t x_rotation =
-            memory->oam.rotate_scale[group].pa * from_center_x +
-            memory->oam.rotate_scale[group].pb * from_center_y;
-
-        int_fast32_t y_rotation =
-            memory->oam.rotate_scale[group].pc * from_center_x +
-            memory->oam.rotate_scale[group].pd * from_center_y;
-
-        lookup_x = center_x + (x_rotation >> 8u);
-        lookup_y = center_y + (y_rotation >> 8u);
-      }
-
-      if (lookup_x < 0 || lookup_x >= obj_size_x) {
+      if (lookup_x < 0 ||
+          lookup_x >= internal_registers->object_coordinates[object].x_size) {
         continue;
       }
 
-      if (lookup_y < 0 || lookup_y >= obj_size_y) {
+      lookup_y = (internal_registers->object_coordinates[object].y_size >> 1) +
+                 (y_rotation >> 8u);
+
+      if (lookup_y < 0 ||
+          lookup_y >= internal_registers->object_coordinates[object].y_size) {
         continue;
       }
     } else {
+      lookup_x -= internal_registers->object_coordinates[object].x;
+      lookup_y -= internal_registers->object_coordinates[object].y;
+
       // Horizontal Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x8u) {
-        int_fast16_t x_size =
-            internal_registers->object_coordinates[object].x_size;
-        lookup_x = x_size - lookup_x - 1;
+        lookup_x = internal_registers->object_coordinates[object].x_size -
+                   lookup_x - 1;
       }
 
       // Vertical Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x10u) {
-        int_fast16_t y_size =
-            internal_registers->object_coordinates[object].y_size;
-        lookup_y = y_size - lookup_y - 1;
+        lookup_y = internal_registers->object_coordinates[object].y_size -
+                   lookup_y - 1;
       }
     }
 
@@ -132,7 +113,7 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     unsigned short tile_index;
     if (registers->dispcnt.object_mode) {
       // One Dimensional Lookup
-      int_fast16_t x_size_tiles =
+      uint_fast8_t x_size_tiles =
           internal_registers->object_coordinates[object].x_size / 8u;
       tile_index = character_name + y_tile * x_size_tiles + x_tile;
     } else {
