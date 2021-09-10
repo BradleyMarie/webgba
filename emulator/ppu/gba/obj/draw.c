@@ -31,21 +31,6 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y,
                        GbaPpuScreen* screen) {
-  static const int_fast16_t shape_size_to_x_size_pixels[4][4] = {
-      {8u, 16u, 32u, 64u},
-      {16u, 32u, 32u, 64u},
-      {8u, 8u, 16u, 32u},
-      {0u, 0u, 0u, 0u}};
-
-  static const int_fast16_t shape_size_to_x_size_tiles[4][4] = {
-      {1u, 2u, 4u, 8u}, {2u, 4u, 4u, 8u}, {1u, 1u, 2u, 4u}, {0u, 0u, 0u, 0u}};
-
-  static const int_fast16_t shape_size_to_y_size_pixels[4][4] = {
-      {8u, 16u, 32u, 64u},
-      {8u, 8u, 16u, 32u},
-      {16u, 32u, 32u, 64u},
-      {0u, 0u, 0u, 0u}};
-
   GbaPpuObjectSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
   while (!GbaPpuObjectSetEmpty(&objects)) {
     uint_fast8_t object = GbaPpuObjectSetPop(&objects);
@@ -59,18 +44,16 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
       lookup_y = y;
     }
 
-    lookup_x -= memory->oam.object_attributes[object].x_coordinate;
-    lookup_y -= internal_registers->object_y[object];
+    lookup_x -= internal_registers->object_coordinates[object].x;
+    lookup_y -= internal_registers->object_coordinates[object].y;
 
     if (memory->oam.object_attributes[object].affine) {
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
 
-      int_fast16_t obj_size_x = shape_size_to_x_size_pixels
-          [memory->oam.object_attributes[object].obj_shape]
-          [memory->oam.object_attributes[object].obj_size];
-      int_fast16_t obj_size_y = shape_size_to_y_size_pixels
-          [memory->oam.object_attributes[object].obj_shape]
-          [memory->oam.object_attributes[object].obj_size];
+      int_fast16_t obj_size_x =
+          internal_registers->object_coordinates[object].x_texture_size;
+      int_fast16_t obj_size_y =
+          internal_registers->object_coordinates[object].y_texture_size;
 
       if (memory->oam.object_attributes[object].flex_param_0) {
         int_fast16_t center_x = obj_size_x;
@@ -118,17 +101,15 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     } else {
       // Horizontal Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x8u) {
-        int_fast16_t x_size = shape_size_to_x_size_pixels
-            [memory->oam.object_attributes[object].obj_shape]
-            [memory->oam.object_attributes[object].obj_size];
+        int_fast16_t x_size =
+            internal_registers->object_coordinates[object].x_texture_size;
         lookup_x = x_size - lookup_x - 1;
       }
 
       // Vertical Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x10u) {
-        int_fast16_t y_size = shape_size_to_y_size_pixels
-            [memory->oam.object_attributes[object].obj_shape]
-            [memory->oam.object_attributes[object].obj_size];
+        int_fast16_t y_size =
+            internal_registers->object_coordinates[object].y_texture_size;
         lookup_y = y_size - lookup_y - 1;
       }
     }
@@ -151,10 +132,9 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     unsigned short tile_index;
     if (registers->dispcnt.object_mode) {
       // One Dimensional Lookup
-      int_fast16_t x_size = shape_size_to_x_size_tiles
-          [memory->oam.object_attributes[object].obj_shape]
-          [memory->oam.object_attributes[object].obj_size];
-      tile_index = character_name + y_tile * x_size + x_tile;
+      int_fast16_t x_size_tiles =
+          internal_registers->object_coordinates[object].x_texture_size / 8u;
+      tile_index = character_name + y_tile * x_size_tiles + x_tile;
     } else {
       // Two Dimensional Lookup
       tile_index = character_name + y_tile * 32u + x_tile;
