@@ -1,5 +1,5 @@
 extern "C" {
-#include "emulator/ppu/gba/object_set.h"
+#include "emulator/ppu/gba/obj/set.h"
 }
 
 #include "googletest/include/gtest/gtest.h"

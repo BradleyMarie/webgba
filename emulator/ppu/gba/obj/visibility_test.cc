@@ -1,29 +1,29 @@
 extern "C" {
-#include "emulator/ppu/gba/object_state.h"
+#include "emulator/ppu/gba/obj/visibility.h"
 }
 
 #include <cstring>
 
 #include "googletest/include/gtest/gtest.h"
 
-class ObjectStateTest : public testing::Test {
+class ObjectVisibilityTest : public testing::Test {
  public:
   void SetUp() override {
-    memset(&state_, 0, sizeof(GbaPpuObjectState));
+    memset(&visibility_, 0, sizeof(GbaPpuObjectVisibility));
     memset(&memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
   }
 
  protected:
   GbaPpuObjectAttributeMemory memory_;
-  GbaPpuObjectState state_;
+  GbaPpuObjectVisibility visibility_;
 };
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAdd) {
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawn) {
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 8u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
         EXPECT_EQ(1u, GbaPpuObjectSetPop(&set));
@@ -33,24 +33,24 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAdd) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddNotVisible) {
-  memory_.object_attributes[0u].flex_param_1 = true;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNotVisible) {
+  memory_.object_attributes[0u].flex_param_0 = true;
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddDouble) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnDouble) {
   memory_.object_attributes[0u].affine = true;
-  memory_.object_attributes[0u].flex_param_1 = true;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+  memory_.object_attributes[0u].flex_param_0 = true;
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 16u && y < 16u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -59,12 +59,12 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddDouble) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddNegativeX) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeX) {
   memory_.object_attributes[0u].x_coordinate = -4;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 4u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -73,12 +73,12 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddNegativeX) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddNegativeY) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnNegativeY) {
   memory_.object_attributes[0u].y_coordinate = -4;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 8u && y < 4u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -87,12 +87,12 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddNegativeY) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddPositiveX) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveX) {
   memory_.object_attributes[0u].x_coordinate = 236u;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x >= 236u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -101,13 +101,13 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddPositiveX) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateAddPositiveY) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityDrawnPositiveY) {
   memory_.object_attributes[0u].y_coordinate = 127u;
   memory_.object_attributes[0u].obj_size = 3u;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 64u && y >= 127u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -116,13 +116,13 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateAddPositiveY) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClear) {
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHidden) {
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 8u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -131,31 +131,31 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClear) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearNotVisible) {
-  memory_.object_attributes[0u].flex_param_1 = true;
-  memory_.object_attributes[1u].flex_param_1 = true;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNotVisible) {
+  memory_.object_attributes[0u].flex_param_0 = true;
+  memory_.object_attributes[1u].flex_param_0 = true;
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       EXPECT_TRUE(GbaPpuObjectSetEmpty(&set));
     }
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearDouble) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenDouble) {
   memory_.object_attributes[0u].affine = true;
-  memory_.object_attributes[0u].flex_param_1 = true;
+  memory_.object_attributes[0u].flex_param_0 = true;
   memory_.object_attributes[1u].affine = true;
-  memory_.object_attributes[1u].flex_param_1 = true;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+  memory_.object_attributes[1u].flex_param_0 = true;
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 16u && y < 16u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -164,15 +164,15 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClearDouble) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearNegativeX) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeX) {
   memory_.object_attributes[0u].x_coordinate = -4;
   memory_.object_attributes[1u].x_coordinate = -4;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 4u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -181,15 +181,15 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClearNegativeX) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearNegativeY) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenNegativeY) {
   memory_.object_attributes[0u].y_coordinate = -4;
   memory_.object_attributes[1u].y_coordinate = -4;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 8u && y < 4u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -198,15 +198,15 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClearNegativeY) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearPositiveX) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveX) {
   memory_.object_attributes[0u].x_coordinate = 236u;
   memory_.object_attributes[0u].x_coordinate = 236u;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x >= 236u && y < 8u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }
@@ -215,17 +215,17 @@ TEST_F(ObjectStateTest, GbaPpuObjectStateClearPositiveX) {
   }
 }
 
-TEST_F(ObjectStateTest, GbaPpuObjectStateClearPositiveY) {
+TEST_F(ObjectVisibilityTest, GbaPpuObjectVisibilityHiddenPositiveY) {
   memory_.object_attributes[0u].y_coordinate = 127u;
   memory_.object_attributes[0u].obj_size = 3u;
   memory_.object_attributes[1u].y_coordinate = 127u;
   memory_.object_attributes[1u].obj_size = 3u;
-  GbaPpuObjectStateAdd(&memory_, 0u, &state_);
-  GbaPpuObjectStateAdd(&memory_, 1u, &state_);
-  GbaPpuObjectStateClear(&memory_, 1u, &state_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 0u, &visibility_);
+  GbaPpuObjectVisibilityDrawn(&memory_, 1u, &visibility_);
+  GbaPpuObjectVisibilityHidden(&memory_, 1u, &visibility_);
   for (uint_fast8_t x = 0; x < GBA_FULL_FRAME_WIDTH; x++) {
     for (uint_fast8_t y = 0; y < GBA_FULL_FRAME_HEIGHT; y++) {
-      GbaPpuObjectSet set = GbaPpuObjectStateGetObjects(&state_, x, y);
+      GbaPpuObjectSet set = GbaPpuObjectVisibilityGet(&visibility_, x, y);
       if (x < 64u && y >= 127u) {
         EXPECT_EQ(0u, GbaPpuObjectSetPop(&set));
       }

@@ -9,40 +9,6 @@ cc_library(
 )
 
 cc_library(
-    name = "object_state",
-    srcs = ["object_state.c"],
-    hdrs = ["object_state.h"],
-    visibility = ["//emulator/ppu:__subpackages__"],
-    deps = [
-        ":memory",
-        ":object_set",
-    ],
-)
-
-cc_test(
-    name = "object_state_test",
-    srcs = ["object_state_test.cc"],
-    deps = [
-        ":object_state",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "object_set",
-    hdrs = ["object_set.h"],
-)
-
-cc_test(
-    name = "object_set_test",
-    srcs = ["object_set_test.cc"],
-    deps = [
-        ":object_set",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "ppu",
     srcs = ["ppu.c"],
     hdrs = ["ppu.h"],
@@ -50,7 +16,6 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":memory",
-        ":object_state",
         ":registers",
         ":screen",
         "//emulator/dma/gba:dma",
@@ -61,7 +26,7 @@ cc_library(
         "//emulator/ppu/gba/bg:scrolling",
         "//emulator/ppu/gba/io",
         "//emulator/ppu/gba/oam",
-        "//emulator/ppu/gba/obj:objects",
+        "//emulator/ppu/gba/obj:draw",
         "//emulator/ppu/gba/palette",
         "//emulator/ppu/gba/vram",
     ],

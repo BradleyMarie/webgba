@@ -9,8 +9,7 @@
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
-#include "emulator/ppu/gba/obj/objects.h"
-#include "emulator/ppu/gba/object_state.h"
+#include "emulator/ppu/gba/obj/draw.h"
 #include "emulator/ppu/gba/palette/palette.h"
 #include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/screen.h"
@@ -44,7 +43,7 @@ struct _GbaPpu {
   GbaPpuScreen screen;
   GbaPpuRegisters registers;
   GbaPpuInternalRegisters internal_registers;
-  GbaPpuObjectState object_state;
+  GbaPpuObjectVisibility object_visibility;
   GLuint fbo;
   bool hardware_render;
   PpuRenderDoneFunction frame_done;
@@ -84,8 +83,8 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -112,8 +111,8 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -133,8 +132,8 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -146,8 +145,8 @@ static void GbaPpuStepMode3(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -159,8 +158,8 @@ static void GbaPpuStepMode4(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -172,8 +171,8 @@ static void GbaPpuStepMode5(GbaPpu *ppu) {
   }
 
   if (ppu->registers.dispcnt.object_enable) {
-    GbaPpuObjectsPixel(&ppu->memory, &ppu->registers, &ppu->object_state,
-                       ppu->x, ppu->registers.vcount, &ppu->screen);
+    GbaPpuObjectPixel(&ppu->memory, &ppu->registers, &ppu->object_visibility,
+                      ppu->x, ppu->registers.vcount, &ppu->screen);
   }
 }
 
@@ -226,8 +225,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->object_state, GbaPpuRelease,
-                     *ppu);
+  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->object_visibility,
+                     GbaPpuRelease, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -260,7 +259,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
 
   for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
-    GbaPpuObjectStateAdd(&(*ppu)->memory.oam, object, &(*ppu)->object_state);
+    GbaPpuObjectVisibilityDrawn(&(*ppu)->memory.oam, object,
+                                &(*ppu)->object_visibility);
   }
 
   GbaDmaUnitRetain(dma_unit);
