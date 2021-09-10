@@ -87,6 +87,7 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
   for (int_fast16_t x = x_start; x < x_end; x++) {
     GbaPpuObjectSetAdd(visibility->x_sets + x, object);
   }
+
   int_fast16_t y_start = oam->object_attributes[object].y_coordinate;
   int_fast16_t y_size =
       shape_size_to_y_size_pixels[oam->object_attributes[object].obj_shape]
@@ -94,10 +95,14 @@ void GbaPpuObjectVisibilityDrawn(const GbaPpuObjectAttributeMemory* oam,
       << oam->object_attributes[object].flex_param_0;
   int_fast16_t y_end = y_start + y_size;
 
-  // Handle "negative precedence" wrapping for large objects
-  if (y_end > 256u) {
-    y_start -= 256u;
-    y_end -= 256u;
+  // Since there are only 8 bits for storing an object's y coordinate in OAM,
+  // there are not enough bits to fully express all of its possible locations
+  // on screen as a signed value. To address this, if an object is wholly below
+  // the screen, the GBA instead treats the value as an unsigned integer to
+  // allow drawing at line 128 and above.
+  if (y_end < 0) {
+    y_start = oam->object_attributes[object].y_coordinate_u;
+    y_end = y_start + y_size;
   }
 
   registers->object_y[object] = y_start;
