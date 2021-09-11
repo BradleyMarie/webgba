@@ -201,7 +201,6 @@ static void GbaPpuSetVCount(GbaPpu *ppu, uint16_t value) {
   } else {
     ppu->registers.dispstat.vcount_status = false;
   }
-  GbaDmaUnitSignalHBlank(ppu->dma_unit, value);
 }
 
 bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
@@ -311,10 +310,6 @@ void GbaPpuStep(GbaPpu *ppu) {
 
     // Wake at Last Cycle Before Starting Next Row
     if (current_row < GBA_SCREEN_HEIGHT - 1u) {
-      ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
-      ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
-      ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
-      ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
       ppu->x = 0u;
 
       ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
@@ -357,9 +352,16 @@ void GbaPpuStep(GbaPpu *ppu) {
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
     ppu->registers.dispstat.hblank_status = true;
+    GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
     if (ppu->registers.dispstat.hblank_irq_enable) {
       GbaPlatformRaiseHBlankInterrupt(ppu->platform);
     }
+
+    ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
+    ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
+    ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
+    ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
+
     ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
   } else {
     ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
