@@ -19,18 +19,13 @@
 #define GBA_PPU_PIXELS_PER_SCANLINE 308u
 #define GBA_PPU_SCANLINES_PER_REFRESH 228u
 
+#define GBA_PPU_DRAW_LENGTH_CYCLES \
+  (GBA_PPU_SCANLINES_PER_REFRESH * GBA_PPU_CYCLES_PER_PIXEL)
+
 #define GBA_PPU_HBLANK_LENGTH_PIXELS \
   (GBA_PPU_PIXELS_PER_SCANLINE - GBA_SCREEN_WIDTH)
 #define GBA_PPU_HBLANK_LENGTH_CYCLES \
   (GBA_PPU_HBLANK_LENGTH_PIXELS * GBA_PPU_CYCLES_PER_PIXEL)
-
-#define GBA_PPU_SCANLINE_LENGTH_CYCLES \
-  (GBA_PPU_PIXELS_PER_SCANLINE * GBA_PPU_CYCLES_PER_PIXEL)
-
-#define GBA_PPU_REFRESH_LENGTH_PIXELS \
-  (GBA_PPU_SCANLINES_PER_REFRESH * GBA_PPU_PIXELS_PER_SCANLINE)
-#define GBA_PPU_REFRESH_LENGTH_CYCLES \
-  (GBA_PPU_REFRESH_LENGTH_PIXELS * GBA_PPU_CYCLES_PER_PIXEL)
 
 #define GBA_PPU_FIRST_PIXEL_WAKE_CYCLE (GBA_PPU_CYCLES_PER_PIXEL - 1u)
 
@@ -47,11 +42,25 @@ struct _GbaPpu {
   GLuint fbo;
   bool hardware_render;
   PpuRenderDoneFunction frame_done;
+  GbaPpuStepRoutine next_wake_routine;
   uint_fast8_t x;
   uint32_t cycle_count;
   uint32_t next_wake;
   uint16_t reference_count;
 };
+
+//
+// Reference Counting
+//
+
+static void GbaPpuRelease(void *context) {
+  GbaPpu *ppu = (GbaPpu *)context;
+  GbaPpuFree(ppu);
+}
+
+//
+// Rendering Routines
+//
 
 static void GbaPpuStepMode0(GbaPpu *ppu) {
   if (ppu->registers.dispcnt.bg0_enable) {
@@ -186,13 +195,18 @@ static void GbaPpuStepNoOp(GbaPpu *ppu) {
   // Do Nothing
 }
 
-static void GbaPpuRelease(void *context) {
-  GbaPpu *ppu = (GbaPpu *)context;
-  GbaPpuFree(ppu);
+//
+// PPU State Machine
+//
+
+static void GbaPpuStartHBlank(GbaPpu *ppu) {
+  ppu->registers.dispstat.hblank_status = true;
 }
 
-static void GbaPpuSetVCount(GbaPpu *ppu, uint16_t value) {
-  ppu->registers.vcount = value;
+static void GbaPpuEndHBlank(GbaPpu *ppu, uint16_t next_row) {
+  ppu->registers.dispstat.hblank_status = false;
+
+  ppu->registers.vcount = next_row;
   if (ppu->registers.dispstat.vcount_trigger == ppu->registers.vcount) {
     ppu->registers.dispstat.vcount_status = true;
     if (ppu->registers.dispstat.vcount_irq_enable) {
@@ -202,6 +216,133 @@ static void GbaPpuSetVCount(GbaPpu *ppu, uint16_t value) {
     ppu->registers.dispstat.vcount_status = false;
   }
 }
+
+static void GbaPpuPreVBlank(GbaPpu *ppu);
+static void GbaPpuPostVBlank(GbaPpu *ppu);
+static void GbaPpuPostDrawnHBlank(GbaPpu *ppu);
+static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu);
+static void GbaPpuPostOffScreenHBlank(GbaPpu *ppu);
+
+static void GbaPpuDrawPixel(GbaPpu *ppu) {
+  if (ppu->registers.dispcnt.forced_blank) {
+    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
+                                     ppu->registers.vcount, 0u);
+  } else {
+    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
+                                     ppu->registers.vcount,
+                                     ppu->memory.palette.bg.large_palette[0u]);
+
+    static const GbaPpuStepRoutine mode_step_routines[8u] = {
+        GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
+        GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
+    mode_step_routines[ppu->registers.dispcnt.mode](ppu);
+  }
+
+  if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
+    GbaPpuStartHBlank(ppu);
+
+    GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
+    if (ppu->registers.dispstat.hblank_irq_enable) {
+      GbaPlatformRaiseHBlankInterrupt(ppu->platform);
+    }
+
+    if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
+      ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
+      ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
+      ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
+      ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
+      ppu->next_wake_routine = GbaPpuPreVBlank;
+    } else {
+      ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
+      ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
+      ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
+      ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
+      ppu->next_wake_routine = GbaPpuPostDrawnHBlank;
+    }
+
+    ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
+    ppu->x = 0u;
+  } else {
+    ppu->next_wake_routine = GbaPpuDrawPixel;
+    ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
+    ppu->x += 1u;
+  }
+
+  ppu->cycle_count += 1;
+}
+
+static void GbaPpuPostDrawnHBlank(GbaPpu *ppu) {
+  GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
+
+  ppu->next_wake_routine = GbaPpuDrawPixel;
+  ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
+
+  ppu->cycle_count += 1;
+}
+
+static void GbaPpuPreVBlank(GbaPpu *ppu) {
+  GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
+
+  ppu->registers.dispstat.vblank_status = true;
+
+  if (ppu->registers.dispstat.vblank_irq_enable) {
+    GbaPlatformRaiseVBlankInterrupt(ppu->platform);
+  }
+
+  GbaDmaUnitSignalVBlank(ppu->dma_unit);
+  GbaPpuScreenClear(&ppu->screen);
+
+  if (!ppu->hardware_render) {
+    GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
+  }
+
+  if (ppu->frame_done != NULL) {
+    ppu->frame_done(GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
+  }
+
+  ppu->next_wake_routine = GbaPpuPreOffScreenHBlank;
+  ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
+
+  ppu->cycle_count += 1;
+}
+
+static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu) {
+  GbaPpuStartHBlank(ppu);
+
+  if (ppu->registers.vcount == GBA_PPU_SCANLINES_PER_REFRESH - 1) {
+    ppu->next_wake_routine = GbaPpuPostVBlank;
+  } else {
+    ppu->next_wake_routine = GbaPpuPostOffScreenHBlank;
+  }
+
+  ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
+
+  ppu->cycle_count += 1;
+}
+
+static void GbaPpuPostOffScreenHBlank(GbaPpu *ppu) {
+  GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
+
+  ppu->next_wake_routine = GbaPpuPreOffScreenHBlank;
+  ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
+
+  ppu->cycle_count += 1;
+}
+
+static void GbaPpuPostVBlank(GbaPpu *ppu) {
+  GbaPpuEndHBlank(ppu, 0u);
+
+  ppu->registers.dispstat.vblank_status = false;
+
+  ppu->next_wake_routine = GbaPpuDrawPixel;
+  ppu->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
+
+  ppu->cycle_count = 0u;
+}
+
+//
+// Public Functions
+//
 
 bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
                     Memory **palette, Memory **vram, Memory **oam,
@@ -261,6 +402,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pa = 0x100;
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
+  (*ppu)->next_wake_routine = GbaPpuDrawPixel;
   (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
 
   for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
@@ -278,96 +420,9 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 void GbaPpuStep(GbaPpu *ppu) {
   if (ppu->cycle_count != ppu->next_wake) {
     ppu->cycle_count += 1u;
-    return;
-  }
-
-  // Wake at Last Cycle of Refresh
-  if (ppu->cycle_count == GBA_PPU_REFRESH_LENGTH_CYCLES - 1u) {
-    ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
-    ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
-    ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
-    ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
-
-    ppu->x = 0u;
-    GbaPpuSetVCount(ppu, 0u);
-
-    ppu->registers.dispstat.hblank_status = false;
-    ppu->registers.dispstat.vblank_status = false;
-
-    ppu->cycle_count = 0u;
-    ppu->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
-    return;
-  }
-
-  ppu->cycle_count += 1u;
-
-  // Wake at Last Cycle of HBlank
-  if (ppu->x == GBA_SCREEN_WIDTH) {
-    ppu->registers.dispstat.hblank_status = false;
-
-    uint16_t current_row = ppu->registers.vcount;
-    GbaPpuSetVCount(ppu, current_row + 1u);
-
-    // Wake at Last Cycle Before Starting Next Row
-    if (current_row < GBA_SCREEN_HEIGHT - 1u) {
-      ppu->x = 0u;
-
-      ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
-      return;
-    }
-
-    // Wake at Last Cycle Before VBlank
-    if (current_row == GBA_SCREEN_HEIGHT - 1u) {
-      ppu->registers.dispstat.vblank_status = true;
-      if (ppu->registers.dispstat.vblank_irq_enable) {
-        GbaPlatformRaiseVBlankInterrupt(ppu->platform);
-      }
-      GbaDmaUnitSignalVBlank(ppu->dma_unit);
-      GbaPpuScreenClear(&ppu->screen);
-      if (!ppu->hardware_render) {
-        GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
-      }
-      if (ppu->frame_done != NULL) {
-        ppu->frame_done(GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
-      }
-    }
-
-    ppu->next_wake += GBA_PPU_SCANLINE_LENGTH_CYCLES;
-    return;
-  }
-
-  if (ppu->registers.dispcnt.forced_blank) {
-    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
-                                     ppu->registers.vcount, 0u);
   } else {
-    GbaPpuScreenDrawTransparentPixel(&ppu->screen, ppu->x,
-                                     ppu->registers.vcount,
-                                     ppu->memory.palette.bg.large_palette[0u]);
-
-    static const GbaPpuStepRoutine mode_step_routines[8u] = {
-        GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
-        GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
-    mode_step_routines[ppu->registers.dispcnt.mode](ppu);
+    ppu->next_wake_routine(ppu);
   }
-
-  if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
-    ppu->registers.dispstat.hblank_status = true;
-    GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
-    if (ppu->registers.dispstat.hblank_irq_enable) {
-      GbaPlatformRaiseHBlankInterrupt(ppu->platform);
-    }
-
-    ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
-    ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
-    ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
-    ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
-
-    ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
-  } else {
-    ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
-  }
-
-  ppu->x += 1u;
 }
 
 void GbaPpuFree(GbaPpu *ppu) {
