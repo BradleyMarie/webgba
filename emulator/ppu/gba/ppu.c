@@ -306,10 +306,11 @@ void GbaPpuStep(GbaPpu *ppu) {
   if (ppu->x == GBA_SCREEN_WIDTH) {
     ppu->registers.dispstat.hblank_status = false;
 
-    GbaPpuSetVCount(ppu, ppu->registers.vcount + 1u);
+    uint16_t current_row = ppu->registers.vcount;
+    GbaPpuSetVCount(ppu, current_row + 1u);
 
     // Wake at Last Cycle Before Starting Next Row
-    if (ppu->registers.vcount < GBA_SCREEN_HEIGHT - 1u) {
+    if (current_row < GBA_SCREEN_HEIGHT - 1u) {
       ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
       ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
       ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
@@ -321,7 +322,7 @@ void GbaPpuStep(GbaPpu *ppu) {
     }
 
     // Wake at Last Cycle Before VBlank
-    if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1u) {
+    if (current_row == GBA_SCREEN_HEIGHT - 1u) {
       ppu->registers.dispstat.vblank_status = true;
       if (ppu->registers.dispstat.vblank_irq_enable) {
         GbaPlatformRaiseVBlankInterrupt(ppu->platform);
