@@ -1,29 +1,5 @@
 #include "emulator/ppu/gba/bg/scrolling.h"
 
-static inline bool GbaPpuScrollingMosaic(const GbaPpuRegisters* registers,
-                                         uint_fast8_t x, uint_fast8_t y,
-                                         GbaPpuScrollingBackground background,
-                                         uint_fast16_t* mosaic_pixel_x,
-                                         uint_fast16_t* mosaic_pixel_y) {
-  if (!registers->bgcnt[background].mosaic) {
-    return false;
-  }
-
-  uint_fast16_t mosaic_size_x = registers->mosaic.bg_horiz + 1u;
-  uint_fast16_t mosaic_size_y = registers->mosaic.bg_vert + 1u;
-
-  uint_fast16_t mosaic_offset_x = x % mosaic_size_x;
-  uint_fast16_t mosaic_offset_y = y % mosaic_size_y;
-  if (mosaic_offset_x == 0u && mosaic_offset_y == 0u) {
-    return false;
-  }
-
-  *mosaic_pixel_x = x / mosaic_size_x;
-  *mosaic_pixel_y = y / mosaic_size_y;
-
-  return true;
-}
-
 void GbaPpuScrollingBackgroundPixel(
     const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
@@ -33,18 +9,16 @@ void GbaPpuScrollingBackgroundPixel(
   static const uint_fast16_t bg_mask_y[4] = {0xFFu, 0xFFu, 0x1FFu, 0x1FFu};
   static const uint_fast8_t bg_tile_block_width[4] = {1u, 2u, 1u, 2u};
 
-  uint_fast16_t lookup_x, lookup_y;
-  if (!GbaPpuScrollingMosaic(registers, x, y, background, &lookup_x,
-                             &lookup_y)) {
-    lookup_x = x;
-    lookup_y = y;
-  }
-
-  lookup_x += registers->bg_offsets[background].x;
+  uint_fast16_t lookup_x = x + registers->bg_offsets[background].x;
   lookup_x &= bg_mask_x[registers->bgcnt[background].size];
 
-  lookup_y += registers->bg_offsets[background].y;
+  uint_fast16_t lookup_y = y + registers->bg_offsets[background].y;
   lookup_y &= bg_mask_y[registers->bgcnt[background].size];
+
+  if (registers->bgcnt[background].mosaic) {
+    lookup_x -= lookup_x % (registers->mosaic.bg_horiz + 1u);
+    lookup_y -= lookup_y % (registers->mosaic.bg_vert + 1u);
+  }
 
   uint_fast8_t lookup_x_block = lookup_x / GBA_TILE_MAP_BLOCK_1D_SIZE_PIXELS;
   uint_fast8_t lookup_y_block = lookup_y / GBA_TILE_MAP_BLOCK_1D_SIZE_PIXELS;

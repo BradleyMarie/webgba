@@ -8,44 +8,21 @@ static inline BgCntRegister GetBgCnt(const GbaPpuRegisters* registers,
   return registers->bgcnt[2u + background];
 }
 
-static inline bool GbaPpuAffineMosaic(const GbaPpuRegisters* registers,
-                                      uint_fast8_t x, uint_fast8_t y,
-                                      GbaPpuAffineBackground background,
-                                      int32_t* mosaic_lookup_x,
-                                      int32_t* mosaic_lookup_y) {
-  BgCntRegister bgcnt = GetBgCnt(registers, background);
-  if (!bgcnt.mosaic) {
-    return false;
-  }
-
-  uint_fast16_t mosaic_size_x = registers->mosaic.bg_horiz + 1u;
-  uint_fast16_t mosaic_size_y = registers->mosaic.bg_vert + 1u;
-
-  uint_fast16_t mosaic_offset_x = x % mosaic_size_x;
-  uint_fast16_t mosaic_offset_y = y % mosaic_size_y;
-  if (mosaic_offset_x == 0u && mosaic_offset_y == 0u) {
-    return false;
-  }
-
-  *mosaic_lookup_x = x / mosaic_size_x;
-  *mosaic_lookup_y = y / mosaic_size_y;
-
-  return true;
-}
-
 void GbaPpuAffineBackgroundPixel(
     const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuAffineBackground background, uint_fast8_t x, uint_fast8_t y,
     GbaPpuScreen* screen) {
-  int32_t lookup_x, lookup_y;
-  if (!GbaPpuAffineMosaic(registers, x, y, background, &lookup_x, &lookup_y)) {
-    lookup_x = (internal_registers->affine[background].x +
-                registers->affine[background].pa * x) >>
-               8u;
-    lookup_y = (internal_registers->affine[background].y +
-                registers->affine[background].pc * x) >>
-               8u;
+  int32_t lookup_x = (internal_registers->affine[background].x +
+                      registers->affine[background].pa * x) >>
+                     8u;
+  int32_t lookup_y = (internal_registers->affine[background].y +
+                      registers->affine[background].pc * x) >>
+                     8u;
+
+  if (registers->bgcnt[background].mosaic) {
+    lookup_x -= lookup_x % (registers->mosaic.bg_horiz + 1u);
+    lookup_y -= lookup_y % (registers->mosaic.bg_vert + 1u);
   }
 
   static const uint_fast16_t screen_sizes_pixels[4] = {128u, 256u, 512u, 1024u};
