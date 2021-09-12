@@ -1,30 +1,5 @@
 #include "emulator/ppu/gba/obj/draw.h"
 
-static inline bool GbaPpuObjectMosaic(const GbaPpuRegisters* registers,
-                                      const GbaPpuMemory* memory,
-                                      uint_fast8_t x, uint_fast8_t y,
-                                      uint_fast8_t object,
-                                      int32_t* mosaic_lookup_x,
-                                      int32_t* mosaic_lookup_y) {
-  if (!memory->oam.object_attributes[object].obj_mosaic) {
-    return false;
-  }
-
-  uint_fast16_t mosaic_size_x = registers->mosaic.bg_horiz + 1u;
-  uint_fast16_t mosaic_size_y = registers->mosaic.bg_vert + 1u;
-
-  uint_fast16_t mosaic_offset_x = x % mosaic_size_x;
-  uint_fast16_t mosaic_offset_y = y % mosaic_size_y;
-  if (mosaic_offset_x == 0u && mosaic_offset_y == 0u) {
-    return false;
-  }
-
-  *mosaic_lookup_x = x / mosaic_size_x;
-  *mosaic_lookup_y = y / mosaic_size_y;
-
-  return true;
-}
-
 void GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
                        const GbaPpuInternalRegisters* internal_registers,
@@ -37,12 +12,8 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     assert(memory->oam.object_attributes[object].affine ||
            !memory->oam.object_attributes[object].flex_param_0);
 
-    int32_t lookup_x, lookup_y;
-    if (!GbaPpuObjectMosaic(registers, memory, x, y, object, &lookup_x,
-                            &lookup_y)) {
-      lookup_x = x;
-      lookup_y = y;
-    }
+    int32_t lookup_x = x;
+    int32_t lookup_y = y;
 
     if (memory->oam.object_attributes[object].affine) {
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
@@ -78,9 +49,19 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
           lookup_y >= internal_registers->object_coordinates[object].y_size) {
         continue;
       }
+
+      if (memory->oam.object_attributes[object].obj_mosaic) {
+        lookup_x -= lookup_x % (registers->mosaic.obj_horiz + 1u);
+        lookup_y -= lookup_y % (registers->mosaic.obj_vert + 1u);
+      }
     } else {
       lookup_x -= internal_registers->object_coordinates[object].x;
       lookup_y -= internal_registers->object_coordinates[object].y;
+
+      if (memory->oam.object_attributes[object].obj_mosaic) {
+        lookup_x -= lookup_x % (registers->mosaic.obj_horiz + 1u);
+        lookup_y -= lookup_y % (registers->mosaic.obj_vert + 1u);
+      }
 
       // Horizontal Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x8u) {

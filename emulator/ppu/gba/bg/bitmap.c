@@ -6,40 +6,22 @@ typedef enum {
   GBA_PPU_BG2_MODE_5
 } GbaPpuBackground2BitmapMode;
 
-static inline bool GbaPpuBitmapMosaic(const GbaPpuRegisters* registers,
-                                      uint_fast8_t x, uint_fast8_t y,
-                                      uint_fast8_t* mosaic_pixel_x,
-                                      uint_fast8_t* mosaic_pixel_y) {
-  if (!registers->bgcnt[2u].mosaic) {
-    return false;
-  }
-
-  uint_fast8_t mosaic_size_x = registers->mosaic.bg_horiz + 1u;
-  uint_fast8_t mosaic_size_y = registers->mosaic.bg_vert + 1u;
-
-  uint_fast8_t mosaic_offset_x = x % mosaic_size_x;
-  uint_fast8_t mosaic_offset_y = y % mosaic_size_y;
-  if (mosaic_offset_x == 0u && mosaic_offset_y == 0u) {
-    return false;
-  }
-
-  *mosaic_pixel_x = x / mosaic_size_x;
-  *mosaic_pixel_y = y / mosaic_size_y;
-
-  return true;
-}
-
 static inline void GbaPpuBackground2BitmapPixel(
     const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuBackground2BitmapMode mode, bool back_page, uint_fast8_t x,
     uint_fast8_t y, GbaPpuScreen* screen) {
-  uint_fast8_t lookup_x, lookup_y;
-  if (!GbaPpuBitmapMosaic(registers, x, y, &lookup_x, &lookup_y)) {
-    lookup_x =
-        (internal_registers->affine[0u].x + registers->affine[0u].pa * x) >> 8u;
-    lookup_y =
-        (internal_registers->affine[0u].y + registers->affine[0u].pc * x) >> 8u;
+  int32_t lookup_x =
+      (internal_registers->affine[0u].x + registers->affine[0u].pa * x) >> 8u;
+  int32_t lookup_y =
+      (internal_registers->affine[0u].y + registers->affine[0u].pc * x) >> 8u;
+  if (lookup_x < 0 || lookup_y < 0) {
+    return;
+  }
+
+  if (registers->bgcnt[2u].mosaic) {
+    lookup_x -= lookup_x % (registers->mosaic.bg_horiz + 1u);
+    lookup_y -= lookup_y % (registers->mosaic.bg_vert + 1u);
   }
 
   uint16_t color;
