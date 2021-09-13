@@ -28,6 +28,8 @@ typedef struct {
   GbaPpuLayer top_layer;
   GbaPpuLayerPriority bottom_priorities[2];
   GbaPpuLayer bottom_layers[2];
+  GbaPpuLayerPriority first_layer_priority;
+  GbaPpuLayer first_layer;
   bool obj_semi_transparent;
 } GbaPpuBlendUnit;
 
