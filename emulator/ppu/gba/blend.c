@@ -15,6 +15,8 @@ void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
   blend_unit->bottom_layers[0u] = GBA_PPU_LAYER_BACKDROP;
   blend_unit->bottom_priorities[1u] = GBA_PPU_LAYER_PRIORITY_TRANSPARENT;
   blend_unit->bottom_layers[1u] = GBA_PPU_LAYER_BACKDROP;
+  blend_unit->first_layer_priority = GBA_PPU_LAYER_PRIORITY_TRANSPARENT;
+  blend_unit->first_layer = GBA_PPU_LAYER_BACKDROP;
   blend_unit->obj_semi_transparent = false;
 }
 
@@ -47,6 +49,11 @@ void GbaPpuBlendUnitSet(GbaPpuBlendUnit* blend_unit, GbaPpuLayer layer,
       blend_unit->bottom_layers[1u] = layer;
     }
   }
+
+  if (priority < blend_unit->first_layer_priority) {
+    blend_unit->first_layer_priority = priority;
+    blend_unit->first_layer = layer;
+  }
 }
 
 void GbaPpuBlendUnitSetObj(GbaPpuBlendUnit* blend_unit, bool top, bool bottom,
@@ -65,24 +72,15 @@ void GbaPpuBlendUnitSetObj(GbaPpuBlendUnit* blend_unit, bool top, bool bottom,
 }
 
 uint16_t GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit) {
-  GbaPpuLayer best_layer = GBA_PPU_LAYER_BACKDROP;
-  GbaPpuLayerPriority best_priority = GBA_PPU_LAYER_PRIORITY_TRANSPARENT;
-  for (GbaPpuLayer layer = GBA_PPU_LAYER_OBJ; layer < GBA_PPU_LAYER_BACKDROP;
-       layer++) {
-    if (blend_unit->priorities[layer] < best_priority) {
-      best_layer = layer;
-      best_priority = blend_unit->priorities[layer];
-    }
-  }
-
-  return blend_unit->layers[best_layer];
+  return blend_unit->layers[blend_unit->first_layer];
 }
 
 uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
                               uint_fast8_t eva, uint_fast8_t evb) {
   bool bottom_index = blend_unit->top_layer == blend_unit->bottom_layers[0u];
 
-  if (blend_unit->top_priority > blend_unit->bottom_priorities[bottom_index] ||
+  if (blend_unit->top_priority > blend_unit->first_layer_priority ||
+      blend_unit->top_priority > blend_unit->bottom_priorities[bottom_index] ||
       blend_unit->top_priority > GBA_PPU_LAYER_PRIORITY_3 ||
       blend_unit->bottom_priorities[bottom_index] > GBA_PPU_LAYER_PRIORITY_3) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
@@ -132,7 +130,8 @@ uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
 uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
                                uint_fast8_t eva, uint_fast8_t evb,
                                uint_fast8_t evy) {
-  if (blend_unit->top_layer == GBA_PPU_LAYER_BACKDROP) {
+  if (blend_unit->top_priority > blend_unit->first_layer_priority ||
+      blend_unit->top_layer == GBA_PPU_LAYER_BACKDROP) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
@@ -160,7 +159,8 @@ uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
 uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
                                  uint_fast8_t eva, uint_fast8_t evb,
                                  uint_fast8_t evy) {
-  if (blend_unit->top_layer == GBA_PPU_LAYER_BACKDROP) {
+  if (blend_unit->top_priority > blend_unit->first_layer_priority ||
+      blend_unit->top_layer == GBA_PPU_LAYER_BACKDROP) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
