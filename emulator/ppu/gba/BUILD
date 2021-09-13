@@ -3,6 +3,21 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:private"])
 
 cc_library(
+    name = "blend",
+    srcs = ["blend.c"],
+    hdrs = ["blend.h"],
+)
+
+cc_test(
+    name = "blend_test",
+    srcs = ["blend_test.cc"],
+    deps = [
+        ":blend",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
