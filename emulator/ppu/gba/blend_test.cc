@@ -17,6 +17,6 @@ TEST_F(BlendTest, BackdropOnly) {
                      GBA_PPU_LAYER_PRIORITY_TRANSPARENT);
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitNoBlend(&blend_unit_));
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, 17u, 17u));
-  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlackBlend(&blend_unit_, 17u));
-  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitWhiteBlend(&blend_unit_, 17u));
+  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitDarken(&blend_unit_, 17u, 17u, 0u));
+  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBrighten(&blend_unit_, 17u, 17u, 0u));
 }

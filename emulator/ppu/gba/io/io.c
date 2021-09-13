@@ -91,7 +91,7 @@ static bool GbaPpuIoLoad16LE(const void *context, uint32_t address,
       *value = io->registers->winout;
       return true;
     case BLDCNT_OFFSET:
-      *value = io->registers->bldcnt;
+      *value = io->registers->bldcnt.value;
       return true;
   }
 

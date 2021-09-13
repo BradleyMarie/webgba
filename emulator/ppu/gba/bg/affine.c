@@ -8,11 +8,11 @@ static inline BgCntRegister GetBgCnt(const GbaPpuRegisters* registers,
   return registers->bgcnt[2u + background];
 }
 
-void GbaPpuAffineBackgroundPixel(
+bool GbaPpuAffineBackgroundPixel(
     const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuAffineBackground background, uint_fast8_t x, uint_fast8_t y,
-    GbaPpuScreen* screen) {
+    uint16_t* color) {
   int32_t lookup_x = (internal_registers->affine[background].x +
                       registers->affine[background].pa * x) >>
                      8u;
@@ -37,7 +37,7 @@ void GbaPpuAffineBackgroundPixel(
     lookup_x &= screen_size_masks[bgcnt.size];
     lookup_y &= screen_size_masks[bgcnt.size];
   } else if (lookup_x >= screen_size || lookup_y >= screen_size) {
-    return;
+    return false;
   }
 
   uint_fast16_t screen_size_tiles = screen_sizes_tiles[bgcnt.size];
@@ -58,10 +58,10 @@ void GbaPpuAffineBackgroundPixel(
           .d_tiles[tile_index]
           .pixels[tile_lookup_y][tile_lookup_x];
   if (color_index == 0u) {
-    return;
+    return false;
   }
 
-  uint16_t color = memory->palette.bg.large_palette[color_index];
+  *color = memory->palette.bg.large_palette[color_index];
 
-  GbaPpuScreenDrawBackgroundPixel(screen, x, y, color, bgcnt.priority);
+  return true;
 }

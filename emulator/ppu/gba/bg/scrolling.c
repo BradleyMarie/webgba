@@ -1,10 +1,10 @@
 #include "emulator/ppu/gba/bg/scrolling.h"
 
-void GbaPpuScrollingBackgroundPixel(
-    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuScrollingBackground background, uint_fast8_t x, uint_fast8_t y,
-    GbaPpuScreen* screen) {
+bool GbaPpuScrollingBackgroundPixel(const GbaPpuMemory* memory,
+                                    const GbaPpuRegisters* registers,
+                                    GbaPpuScrollingBackground background,
+                                    uint_fast8_t x, uint_fast8_t y,
+                                    uint16_t* color) {
   static const uint_fast16_t bg_mask_x[4] = {0xFFu, 0x1FFu, 0xFFu, 0x1FFu};
   static const uint_fast16_t bg_mask_y[4] = {0xFFu, 0xFFu, 0x1FFu, 0x1FFu};
   static const uint_fast8_t bg_tile_block_width[4] = {1u, 2u, 1u, 2u};
@@ -47,7 +47,6 @@ void GbaPpuScrollingBackgroundPixel(
   }
 
   // TODO: Handle accesses to obj tiles
-  uint16_t color;
   if (registers->bgcnt[background].large_palette) {
     uint8_t color_index =
         memory->vram.mode_012.bg.tiles
@@ -55,10 +54,10 @@ void GbaPpuScrollingBackgroundPixel(
             .d_tiles[entry.index]
             .pixels[lookup_y_tile_pixel][lookup_x_tile_pixel];
     if (color_index == 0u) {
-      return;
+      return false;
     }
 
-    color = memory->palette.bg.large_palette[color_index];
+    *color = memory->palette.bg.large_palette[color_index];
   } else {
     uint8_t color_index_pair =
         memory->vram.mode_012.bg.tiles
@@ -72,12 +71,11 @@ void GbaPpuScrollingBackgroundPixel(
     uint_fast8_t color_index =
         (color_index_pair >> ((lookup_x_tile_pixel & 1u) << 2u)) & 0xFu;
     if (color_index == 0u) {
-      return;
+      return false;
     }
 
-    color = memory->palette.bg.small_palettes[entry.palette][color_index];
+    *color = memory->palette.bg.small_palettes[entry.palette][color_index];
   }
 
-  GbaPpuScreenDrawBackgroundPixel(screen, x, y, color,
-                                  registers->bgcnt[background].priority);
+  return true;
 }

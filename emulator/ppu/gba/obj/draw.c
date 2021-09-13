@@ -1,11 +1,14 @@
 #include "emulator/ppu/gba/obj/draw.h"
 
-void GbaPpuObjectPixel(const GbaPpuMemory* memory,
+bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
                        const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
-                       const uint_fast8_t x, uint_fast8_t y,
-                       GbaPpuScreen* screen) {
+                       const uint_fast8_t x, uint_fast8_t y, uint16_t* color,
+                       uint8_t* priority, bool* semi_transparent) {
+  *priority = UINT8_MAX;
+  bool found = false;
+
   GbaPpuObjectSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
   while (!GbaPpuObjectSetEmpty(&objects)) {
     uint_fast8_t object = GbaPpuObjectSetPop(&objects);
@@ -105,7 +108,7 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
     uint_fast8_t x_tile_pixel = lookup_x & 0x7u;
     uint_fast8_t y_tile_pixel = lookup_y & 0x7u;
 
-    uint16_t color;
+    uint16_t obj_color;
     if (memory->oam.object_attributes[object].palette_mode) {
       uint8_t color_index = memory->vram.mode_012.obj.d_tiles[tile_index >> 1u]
                                 .pixels[y_tile_pixel][x_tile_pixel];
@@ -113,7 +116,7 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
         continue;
       }
 
-      color = memory->palette.obj.large_palette[color_index];
+      obj_color = memory->palette.obj.large_palette[color_index];
     } else {
       uint8_t color_index_pair = memory->vram.mode_012.obj.s_tiles[tile_index]
                                      .pixels[y_tile_pixel][x_tile_pixel >> 1u]
@@ -127,14 +130,21 @@ void GbaPpuObjectPixel(const GbaPpuMemory* memory,
         continue;
       }
 
-      color = memory->palette.obj
-                  .small_palettes[memory->oam.object_attributes[object].palette]
-                                 [color_index];
+      obj_color =
+          memory->palette.obj
+              .small_palettes[memory->oam.object_attributes[object].palette]
+                             [color_index];
     }
 
     // TODO: Transparency and Windowing
 
-    GbaPpuScreenDrawObjectPixel(screen, x, y, color,
-                                memory->oam.object_attributes[object].priority);
+    found = true;
+    if (memory->oam.object_attributes[object].priority < *priority) {
+      *priority = memory->oam.object_attributes[object].priority;
+      *color = obj_color;
+      *semi_transparent = memory->oam.object_attributes[object].obj_mode == 1u;
+    }
   }
+
+  return found;
 }

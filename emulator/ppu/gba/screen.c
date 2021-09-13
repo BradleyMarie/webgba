@@ -22,11 +22,6 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
   glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
-void GbaPpuScreenClear(GbaPpuScreen* screen) {
-  memset(&screen->priorities, 0,
-         sizeof(uint8_t) * GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH);
-}
-
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   screen->program = glCreateProgram();
 
