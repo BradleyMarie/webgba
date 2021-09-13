@@ -5,11 +5,11 @@
 #include <stdint.h>
 
 typedef enum {
-  GBA_PPU_LAYER_BG0 = 0,
-  GBA_PPU_LAYER_BG1 = 1,
-  GBA_PPU_LAYER_BG2 = 2,
-  GBA_PPU_LAYER_BG3 = 3,
-  GBA_PPU_LAYER_OBJ = 4,
+  GBA_PPU_LAYER_OBJ = 0,
+  GBA_PPU_LAYER_BG0 = 1,
+  GBA_PPU_LAYER_BG1 = 2,
+  GBA_PPU_LAYER_BG2 = 3,
+  GBA_PPU_LAYER_BG3 = 4,
   GBA_PPU_LAYER_BACKDROP = 5,
 } GbaPpuLayer;
 
@@ -28,6 +28,7 @@ typedef struct {
   GbaPpuLayer top_layer;
   GbaPpuLayerPriority bottom_priorities[2];
   GbaPpuLayer bottom_layers[2];
+  bool obj_semi_transparent;
 } GbaPpuBlendUnit;
 
 void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit);
@@ -36,19 +37,21 @@ void GbaPpuBlendUnitSet(GbaPpuBlendUnit* blend_unit, GbaPpuLayer layer,
                         bool top, bool bottom, uint16_t color,
                         GbaPpuLayerPriority priority);
 
-static inline uint16_t GbaPpuBlendUnitNoBlend(
-    const GbaPpuBlendUnit* blend_unit) {
-  return blend_unit->layers[blend_unit->top_layer];
-}
+void GbaPpuBlendUnitSetObj(GbaPpuBlendUnit* blend_unit, bool top, bool bottom,
+                           uint16_t color, GbaPpuLayerPriority priority,
+                           bool semi_transparent);
+
+uint16_t GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit);
 
 uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
-                              uint_fast8_t top_weight,
-                              uint_fast8_t bottom_weight);
+                              uint_fast8_t eva, uint_fast8_t evb);
 
-uint16_t GbaPpuBlendUnitBlackBlend(const GbaPpuBlendUnit* blend_unit,
-                                   uint_fast8_t weight);
+uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
+                               uint_fast8_t eva, uint_fast8_t evb,
+                               uint_fast8_t evy);
 
-uint16_t GbaPpuBlendUnitWhiteBlend(const GbaPpuBlendUnit* blend_unit,
-                                   uint_fast8_t weight);
+uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
+                                 uint_fast8_t eva, uint_fast8_t evb,
+                                 uint_fast8_t evy);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_BLEND_

@@ -11,7 +11,6 @@ cc_library(
         "//emulator/memory",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
-        "//emulator/ppu/gba:screen",
     ],
 )
 

@@ -30,6 +30,7 @@ cc_library(
     linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
+        ":blend",
         ":memory",
         ":registers",
         ":screen",

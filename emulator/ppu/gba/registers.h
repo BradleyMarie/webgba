@@ -79,6 +79,44 @@ typedef union {
   uint16_t value;
 } MosaicRegister;
 
+typedef union {
+  struct {
+    bool a_bg0 : 1;
+    bool a_bg1 : 1;
+    bool a_bg2 : 1;
+    bool a_bg3 : 1;
+    bool a_obj : 1;
+    bool a_bd : 1;
+    unsigned char mode : 2;
+    bool b_bg0 : 1;
+    bool b_bg1 : 1;
+    bool b_bg2 : 1;
+    bool b_bg3 : 1;
+    bool b_obj : 1;
+    bool b_bd : 1;
+    unsigned char unused : 2;
+  };
+  uint16_t value;
+} BldCntRegister;
+
+typedef union {
+  struct {
+    unsigned char eva : 5;
+    unsigned char unused0 : 3;
+    unsigned char evb : 5;
+    unsigned char unused1 : 3;
+  };
+  uint16_t value;
+} BldAlphaRegister;
+
+typedef union {
+  struct {
+    unsigned char evy : 5;
+    unsigned short unused : 11;
+  };
+  uint16_t value;
+} BldYRegister;
+
 #define GBA_PPU_REGISTERS_SIZE 88u
 
 typedef union {
@@ -98,9 +136,9 @@ typedef union {
     uint16_t winout;
     MosaicRegister mosaic;
     uint16_t unused0;
-    uint16_t bldcnt;
-    uint16_t bldalpha;
-    uint16_t bldy;
+    BldCntRegister bldcnt;
+    BldAlphaRegister bldalpha;
+    BldYRegister bldy;
     uint16_t unused2;
   };
   uint16_t half_words[GBA_PPU_REGISTERS_SIZE >> 1u];
