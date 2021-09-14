@@ -11,6 +11,7 @@ typedef enum {
   GBA_PPU_LAYER_BG2 = 3,
   GBA_PPU_LAYER_BG3 = 4,
   GBA_PPU_LAYER_BACKDROP = 5,
+  GBA_PPU_LAYER_NOT_SET = 6,
 } GbaPpuLayer;
 
 typedef enum {
@@ -18,7 +19,8 @@ typedef enum {
   GBA_PPU_LAYER_PRIORITY_1 = 1,
   GBA_PPU_LAYER_PRIORITY_2 = 2,
   GBA_PPU_LAYER_PRIORITY_3 = 3,
-  GBA_PPU_LAYER_PRIORITY_TRANSPARENT = 4,
+  GBA_PPU_LAYER_PRIORITY_BACKDROP = 4,
+  GBA_PPU_LAYER_PRIORITY_NOT_SET = 5,
 } GbaPpuLayerPriority;
 
 typedef struct {
