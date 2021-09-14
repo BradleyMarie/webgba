@@ -161,7 +161,7 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
+      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG0,
                          ppu->registers.bldcnt.a_bg0,
                          ppu->registers.bldcnt.b_bg0, color,
                          ppu->registers.bgcnt[0u].priority);
@@ -378,7 +378,7 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
     GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BACKDROP,
                        ppu->registers.bldcnt.a_bd, ppu->registers.bldcnt.b_bd,
                        ppu->memory.palette.bg.large_palette[0u],
-                       GBA_PPU_LAYER_PRIORITY_TRANSPARENT);
+                       GBA_PPU_LAYER_PRIORITY_BACKDROP);
 
     static const GbaPpuDrawPixelRoutine mode_draw_pixel_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
