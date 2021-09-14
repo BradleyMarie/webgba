@@ -34,6 +34,7 @@ cc_library(
         ":memory",
         ":registers",
         ":screen",
+        ":window",
         "//emulator/dma/gba:dma",
         "//emulator/memory",
         "//emulator/platform/gba:platform",
@@ -82,5 +83,14 @@ cc_test(
     deps = [
         ":screen",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "window",
+    srcs = ["window.c"],
+    hdrs = ["window.h"],
+    deps = [
+        ":registers",
     ],
 )

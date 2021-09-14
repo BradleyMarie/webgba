@@ -15,6 +15,7 @@
 #include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/screen.h"
 #include "emulator/ppu/gba/vram/vram.h"
+#include "emulator/ppu/gba/window.h"
 
 #define GBA_PPU_CYCLES_PER_PIXEL 4u
 #define GBA_PPU_PIXELS_PER_SCANLINE 308u
@@ -30,6 +31,9 @@
 
 #define GBA_PPU_FIRST_PIXEL_WAKE_CYCLE (GBA_PPU_CYCLES_PER_PIXEL - 1u)
 
+typedef void (*GbaPpuDrawPixelRoutine)(GbaPpu *ppu, bool draw_obj,
+                                       bool draw_bg0, bool draw_bg1,
+                                       bool draw_bg2, bool draw_bg3);
 typedef void (*GbaPpuStepRoutine)(GbaPpu *ppu);
 
 struct _GbaPpu {
@@ -64,8 +68,9 @@ static void GbaPpuRelease(void *context) {
 // Rendering Routines
 //
 
-static void GbaPpuStepMode0(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -80,7 +85,7 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg0_enable) {
+  if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x,
@@ -93,7 +98,7 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg1_enable) {
+  if (draw_bg1 && ppu->registers.dispcnt.bg1_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x,
@@ -106,7 +111,7 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_2, ppu->x,
@@ -119,7 +124,7 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg3_enable) {
+  if (draw_bg3 && ppu->registers.dispcnt.bg3_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_3, ppu->x,
@@ -133,8 +138,9 @@ static void GbaPpuStepMode0(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepMode1(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -149,7 +155,7 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg0_enable) {
+  if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x,
@@ -162,7 +168,7 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg1_enable) {
+  if (draw_bg1 && ppu->registers.dispcnt.bg1_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x,
@@ -175,7 +181,7 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuAffineBackgroundPixel(
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
@@ -189,8 +195,9 @@ static void GbaPpuStepMode1(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepMode2(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -205,7 +212,7 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuAffineBackgroundPixel(
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
@@ -218,7 +225,7 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg3_enable) {
+  if (draw_bg3 && ppu->registers.dispcnt.bg3_enable) {
     uint16_t color;
     bool success = GbaPpuAffineBackgroundPixel(
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
@@ -232,8 +239,9 @@ static void GbaPpuStepMode2(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepMode3(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -248,7 +256,7 @@ static void GbaPpuStepMode3(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode3Pixel(&ppu->memory, &ppu->registers,
                                           &ppu->internal_registers, ppu->x,
@@ -262,8 +270,9 @@ static void GbaPpuStepMode3(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepMode4(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -278,7 +287,7 @@ static void GbaPpuStepMode4(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode4Pixel(&ppu->memory, &ppu->registers,
                                           &ppu->internal_registers, ppu->x,
@@ -292,8 +301,9 @@ static void GbaPpuStepMode4(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepMode5(GbaPpu *ppu) {
-  if (ppu->registers.dispcnt.object_enable) {
+static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+  if (draw_obj && ppu->registers.dispcnt.object_enable) {
     uint16_t color;
     uint8_t priority;
     bool semi_transparent;
@@ -308,7 +318,7 @@ static void GbaPpuStepMode5(GbaPpu *ppu) {
     }
   }
 
-  if (ppu->registers.dispcnt.bg2_enable) {
+  if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode5Pixel(&ppu->memory, &ppu->registers,
                                           &ppu->internal_registers, ppu->x,
@@ -322,7 +332,8 @@ static void GbaPpuStepMode5(GbaPpu *ppu) {
   }
 }
 
-static void GbaPpuStepNoOp(GbaPpu *ppu) {
+static void GbaPpuStepNoOp(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
+                           bool draw_bg1, bool draw_bg2, bool draw_bg3) {
   // Do Nothing
 }
 
@@ -357,22 +368,29 @@ static void GbaPpuPostOffScreenHBlank(GbaPpu *ppu);
 static void GbaPpuDrawPixel(GbaPpu *ppu) {
   GbaPpuBlendUnitReset(&ppu->blend_unit);
 
-  if (ppu->registers.dispcnt.forced_blank) {
-    GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BACKDROP, true, false,
-                       0x7FFFu, GBA_PPU_LAYER_PRIORITY_TRANSPARENT);
-  } else {
+  uint16_t color = 0u;
+  if (!ppu->registers.dispcnt.forced_blank) {
+    bool draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3, enable_blending;
+    GbaPpuWindowCheck(&ppu->registers, ppu->x, ppu->registers.vcount, &draw_obj,
+                      &draw_bg0, &draw_bg1, &draw_bg2, &draw_bg3,
+                      &enable_blending);
+
     GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BACKDROP,
                        ppu->registers.bldcnt.a_bd, ppu->registers.bldcnt.b_bd,
                        ppu->memory.palette.bg.large_palette[0u],
                        GBA_PPU_LAYER_PRIORITY_TRANSPARENT);
 
-    static const GbaPpuStepRoutine mode_step_routines[8u] = {
+    static const GbaPpuDrawPixelRoutine mode_draw_pixel_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
         GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
-    mode_step_routines[ppu->registers.dispcnt.mode](ppu);
+    mode_draw_pixel_routines[ppu->registers.dispcnt.mode](
+        ppu, draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3);
 
-    uint16_t color = 0u;
-    switch (ppu->registers.bldcnt.mode) {
+    static const uint8_t blend_mode_masks[2u] = {0x0u, 0x3u};
+    uint_fast8_t blend_mode =
+        ppu->registers.bldcnt.mode & blend_mode_masks[enable_blending];
+
+    switch (blend_mode) {
       case 0u:
         color = GbaPpuBlendUnitNoBlend(&ppu->blend_unit);
         break;
@@ -392,9 +410,9 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
             ppu->registers.bldalpha.evb, ppu->registers.bldy.evy);
         break;
     }
-
-    GbaPpuScreenSet(&ppu->screen, ppu->x, ppu->registers.vcount, color);
   }
+
+  GbaPpuScreenSet(&ppu->screen, ppu->x, ppu->registers.vcount, color);
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
     GbaPpuStartHBlank(ppu);
