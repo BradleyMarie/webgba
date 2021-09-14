@@ -136,8 +136,6 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                              [color_index];
     }
 
-    // TODO: Transparency and Windowing
-
     found = true;
     if (memory->oam.object_attributes[object].priority < *priority) {
       *priority = memory->oam.object_attributes[object].priority;
