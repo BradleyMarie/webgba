@@ -5,16 +5,6 @@
 #include <stdint.h>
 
 typedef enum {
-  GBA_PPU_LAYER_OBJ = 0,
-  GBA_PPU_LAYER_BG0 = 1,
-  GBA_PPU_LAYER_BG1 = 2,
-  GBA_PPU_LAYER_BG2 = 3,
-  GBA_PPU_LAYER_BG3 = 4,
-  GBA_PPU_LAYER_BACKDROP = 5,
-  GBA_PPU_LAYER_NOT_SET = 6,
-} GbaPpuLayer;
-
-typedef enum {
   GBA_PPU_LAYER_PRIORITY_0 = 0,
   GBA_PPU_LAYER_PRIORITY_1 = 1,
   GBA_PPU_LAYER_PRIORITY_2 = 2,
@@ -24,26 +14,23 @@ typedef enum {
 } GbaPpuLayerPriority;
 
 typedef struct {
-  uint16_t layers[6];
-  GbaPpuLayerPriority priorities[6];
-  GbaPpuLayerPriority top_priority;
-  GbaPpuLayer top_layer;
-  GbaPpuLayerPriority bottom_priorities[2];
-  GbaPpuLayer bottom_layers[2];
-  GbaPpuLayerPriority first_layer_priority;
-  GbaPpuLayer first_layer;
+  uint16_t layers[2];
+  GbaPpuLayerPriority priorities[2];
+  bool top[2];
+  bool bottom[2];
   bool obj_semi_transparent;
 } GbaPpuBlendUnit;
 
 void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit);
 
-void GbaPpuBlendUnitSet(GbaPpuBlendUnit* blend_unit, GbaPpuLayer layer,
-                        bool top, bool bottom, uint16_t color,
-                        GbaPpuLayerPriority priority);
+void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
+                                  bool bottom, uint16_t color,
+                                  GbaPpuLayerPriority priority);
 
-void GbaPpuBlendUnitSetObj(GbaPpuBlendUnit* blend_unit, bool top, bool bottom,
-                           uint16_t color, GbaPpuLayerPriority priority,
-                           bool semi_transparent);
+void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
+                              bool bottom, uint16_t color,
+                              GbaPpuLayerPriority priority,
+                              bool semi_transparent);
 
 uint16_t GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit);
 
