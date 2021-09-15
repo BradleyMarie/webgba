@@ -79,9 +79,9 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -91,10 +91,10 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG0,
-                         ppu->registers.bldcnt.a_bg0,
-                         ppu->registers.bldcnt.b_bg0, color,
-                         ppu->registers.bgcnt[0u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg0,
+                                   ppu->registers.bldcnt.b_bg0, color,
+                                   ppu->registers.bgcnt[0u].priority);
     }
   }
 
@@ -104,10 +104,10 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG1,
-                         ppu->registers.bldcnt.a_bg1,
-                         ppu->registers.bldcnt.b_bg1, color,
-                         ppu->registers.bgcnt[1u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg1,
+                                   ppu->registers.bldcnt.b_bg1, color,
+                                   ppu->registers.bgcnt[1u].priority);
     }
   }
 
@@ -117,10 +117,10 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_2, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 
@@ -130,10 +130,10 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_3, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG3,
-                         ppu->registers.bldcnt.a_bg3,
-                         ppu->registers.bldcnt.b_bg3, color,
-                         ppu->registers.bgcnt[3u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg3,
+                                   ppu->registers.bldcnt.b_bg3, color,
+                                   ppu->registers.bgcnt[3u].priority);
     }
   }
 }
@@ -149,9 +149,9 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -161,10 +161,10 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG0,
-                         ppu->registers.bldcnt.a_bg0,
-                         ppu->registers.bldcnt.b_bg0, color,
-                         ppu->registers.bgcnt[0u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg0,
+                                   ppu->registers.bldcnt.b_bg0, color,
+                                   ppu->registers.bgcnt[0u].priority);
     }
   }
 
@@ -174,10 +174,10 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, ppu->x,
         ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG1,
-                         ppu->registers.bldcnt.a_bg1,
-                         ppu->registers.bldcnt.b_bg1, color,
-                         ppu->registers.bgcnt[1u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg1,
+                                   ppu->registers.bldcnt.b_bg1, color,
+                                   ppu->registers.bgcnt[1u].priority);
     }
   }
 
@@ -187,10 +187,10 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
         GBA_PPU_AFFINE_BACKGROUND_2, ppu->x, ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 }
@@ -206,9 +206,9 @@ static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -218,10 +218,10 @@ static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
         GBA_PPU_AFFINE_BACKGROUND_2, ppu->x, ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 
@@ -231,10 +231,10 @@ static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->memory, &ppu->registers, &ppu->internal_registers,
         GBA_PPU_AFFINE_BACKGROUND_3, ppu->x, ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG3,
-                         ppu->registers.bldcnt.a_bg3,
-                         ppu->registers.bldcnt.b_bg3, color,
-                         ppu->registers.bgcnt[3u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg3,
+                                   ppu->registers.bldcnt.b_bg3, color,
+                                   ppu->registers.bgcnt[3u].priority);
     }
   }
 }
@@ -250,9 +250,9 @@ static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -262,10 +262,10 @@ static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
                                           &ppu->internal_registers, ppu->x,
                                           ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 }
@@ -281,9 +281,9 @@ static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -293,10 +293,10 @@ static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
                                           &ppu->internal_registers, ppu->x,
                                           ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 }
@@ -312,9 +312,9 @@ static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
         &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
         &priority, &semi_transparent);
     if (success) {
-      GbaPpuBlendUnitSetObj(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
-                            ppu->registers.bldcnt.b_obj, color, priority,
-                            semi_transparent);
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, ppu->registers.bldcnt.a_obj,
+                               ppu->registers.bldcnt.b_obj, color, priority,
+                               semi_transparent);
     }
   }
 
@@ -324,10 +324,10 @@ static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
                                           &ppu->internal_registers, ppu->x,
                                           ppu->registers.vcount, &color);
     if (success) {
-      GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BG2,
-                         ppu->registers.bldcnt.a_bg2,
-                         ppu->registers.bldcnt.b_bg2, color,
-                         ppu->registers.bgcnt[2u].priority);
+      GbaPpuBlendUnitAddBackground(&ppu->blend_unit,
+                                   ppu->registers.bldcnt.a_bg2,
+                                   ppu->registers.bldcnt.b_bg2, color,
+                                   ppu->registers.bgcnt[2u].priority);
     }
   }
 }
@@ -375,10 +375,10 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
                       &draw_bg0, &draw_bg1, &draw_bg2, &draw_bg3,
                       &enable_blending);
 
-    GbaPpuBlendUnitSet(&ppu->blend_unit, GBA_PPU_LAYER_BACKDROP,
-                       ppu->registers.bldcnt.a_bd, ppu->registers.bldcnt.b_bd,
-                       ppu->memory.palette.bg.large_palette[0u],
-                       GBA_PPU_LAYER_PRIORITY_BACKDROP);
+    GbaPpuBlendUnitAddBackground(&ppu->blend_unit, ppu->registers.bldcnt.a_bd,
+                                 ppu->registers.bldcnt.b_bd,
+                                 ppu->memory.palette.bg.large_palette[0u],
+                                 GBA_PPU_LAYER_PRIORITY_BACKDROP);
 
     static const GbaPpuDrawPixelRoutine mode_draw_pixel_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,

@@ -13,8 +13,8 @@ class BlendTest : public testing::Test {
 };
 
 TEST_F(BlendTest, BackdropOnly) {
-  GbaPpuBlendUnitSet(&blend_unit_, GBA_PPU_LAYER_BACKDROP, true, true, 0x7FFFu,
-                     GBA_PPU_LAYER_PRIORITY_BACKDROP);
+  GbaPpuBlendUnitAddBackground(&blend_unit_, true, true, 0x7FFFu,
+                               GBA_PPU_LAYER_PRIORITY_BACKDROP);
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitNoBlend(&blend_unit_));
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, 17u, 17u));
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitDarken(&blend_unit_, 17u, 17u, 0u));
