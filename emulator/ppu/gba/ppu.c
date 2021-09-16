@@ -484,6 +484,11 @@ static void GbaPpuPreVBlank(GbaPpu *ppu) {
 static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu) {
   GbaPpuStartHBlank(ppu);
 
+  GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
+  if (ppu->registers.dispstat.hblank_irq_enable) {
+    GbaPlatformRaiseHBlankInterrupt(ppu->platform);
+  }
+
   if (ppu->registers.vcount == GBA_PPU_SCANLINES_PER_REFRESH - 1) {
     ppu->next_wake_routine = GbaPpuPostVBlank;
   } else {
