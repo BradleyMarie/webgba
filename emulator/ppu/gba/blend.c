@@ -2,21 +2,16 @@
 
 #include <assert.h>
 
-void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
-  blend_unit->priorities[0u] = GBA_PPU_LAYER_PRIORITY_NOT_SET;
-  blend_unit->priorities[1u] = GBA_PPU_LAYER_PRIORITY_NOT_SET;
-  blend_unit->top[0u] = false;
-  blend_unit->top[1u] = false;
-  blend_unit->bottom[0u] = false;
-  blend_unit->bottom[1u] = false;
-  blend_unit->obj_semi_transparent = false;
-}
+#define GBA_PPU_LAYER_PRIORITY_BACKDROP 5u
+#define GBA_PPU_LAYER_PRIORITY_NOT_SET 6u
 
-void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
-                                  bool bottom, uint16_t color,
-                                  GbaPpuLayerPriority priority) {
-  assert(GBA_PPU_LAYER_PRIORITY_0 <= priority);
-  assert(priority <= GBA_PPU_LAYER_PRIORITY_BACKDROP);
+static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
+                                                 bool top, bool bottom,
+                                                 uint16_t color,
+                                                 uint_fast8_t priority) {
+  if (blend_unit->priorities[1u] <= priority) {
+    return;
+  }
 
   if (blend_unit->priorities[0u] > priority) {
     blend_unit->priorities[1u] = blend_unit->priorities[0u];
@@ -27,7 +22,7 @@ void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
     blend_unit->layers[0u] = color;
     blend_unit->top[0u] = top;
     blend_unit->bottom[0u] = bottom;
-  } else if (blend_unit->priorities[1u] > priority) {
+  } else {
     blend_unit->priorities[1u] = priority;
     blend_unit->layers[1u] = color;
     blend_unit->top[1u] = top;
@@ -35,26 +30,13 @@ void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
   }
 }
 
-void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
-                              bool bottom, uint16_t color,
-                              GbaPpuLayerPriority priority,
-                              bool semi_transparent) {
-  if (semi_transparent) {
-    priority = GBA_PPU_LAYER_PRIORITY_0;
-    top = true;
-  }
-
-  blend_unit->obj_semi_transparent = semi_transparent;
-
-  GbaPpuBlendUnitAddBackground(blend_unit, top, bottom, color, priority);
+static uint16_t GbaPpuBlendUnitNoBlendInternal(
+    const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
+  return GbaPpuBlendUnitNoBlend(blend_unit);
 }
 
-uint16_t GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit) {
-  return blend_unit->layers[0u];
-}
-
-uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
-                              uint_fast8_t eva, uint_fast8_t evb) {
+static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
+                                             const GbaPpuRegisters* registers) {
   if (!blend_unit->top[0u] || !blend_unit->bottom[1u]) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
@@ -63,12 +45,11 @@ uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u,
       11u, 12u, 13u, 14u, 15u, 16u, 16u, 16u, 16u, 16u, 16u,
       16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u};
+  assert(registers->bldalpha.eva < 32u);
+  assert(registers->bldalpha.evb < 32u);
 
-  assert(eva < 32u);
-  eva = clipped_weights[eva];
-
-  assert(evb < 32u);
-  evb = clipped_weights[evb];
+  uint_fast8_t eva = clipped_weights[registers->bldalpha.eva];
+  uint_fast8_t evb = clipped_weights[registers->bldalpha.evb];
 
   uint_fast32_t top = blend_unit->layers[0u];
   uint_fast32_t t0 = (((top & 0x001Fu) * eva) >> 0u);
@@ -99,23 +80,22 @@ uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
   return s0 | s1 | s2;
 }
 
-uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
-                               uint_fast8_t eva, uint_fast8_t evb,
-                               uint_fast8_t evy) {
+static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
+                                      const GbaPpuRegisters* registers) {
   if (!blend_unit->top[0u]) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
   if (blend_unit->obj_semi_transparent && blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitBlend(blend_unit, eva, evb);
+    return GbaPpuBlendUnitAdditiveBlend(blend_unit, registers);
   }
 
   const static uint8_t clipped_weights[32u] = {
       16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
       0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+  assert(registers->bldy.evy < 32u);
 
-  assert(evy < 32u);
-  evy = clipped_weights[evy];
+  uint_fast8_t evy = clipped_weights[registers->bldy.evy];
 
   uint_fast32_t color = blend_unit->layers[0u];
   uint_fast32_t c0 = (((color & 0x001Fu) * evy) >> 4u);
@@ -125,23 +105,22 @@ uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
   return c0 | c1 | c2;
 }
 
-uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
-                                 uint_fast8_t eva, uint_fast8_t evb,
-                                 uint_fast8_t evy) {
+static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
+                                        const GbaPpuRegisters* registers) {
   if (!blend_unit->top[0u]) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
   if (blend_unit->obj_semi_transparent && blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitBlend(blend_unit, eva, evb);
+    return GbaPpuBlendUnitAdditiveBlend(blend_unit, registers);
   }
 
   const static uint8_t clipped_weights[32u] = {
       16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
       0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+  assert(registers->bldy.evy < 32u);
 
-  assert(evy < 32u);
-  evy = clipped_weights[evy];
+  uint_fast8_t evy = clipped_weights[registers->bldy.evy];
 
   uint_fast32_t color = blend_unit->layers[0u];
   uint_fast32_t c0 = (((color & 0x001Fu) * evy) >> 0u);
@@ -170,4 +149,48 @@ uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
   uint_fast32_t s2 = clipped_values[(c2 + w2) >> 4u] << 10u;
 
   return s0 | s1 | s2;
+}
+
+void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
+                              bool bottom, uint16_t color,
+                              uint_fast8_t priority, bool semi_transparent) {
+  assert(priority < GBA_PPU_LAYER_PRIORITY_BACKDROP);
+  assert(blend_unit->priorities[0u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
+  assert(blend_unit->priorities[1u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
+
+  if (semi_transparent) {
+    priority = 0u;
+    top = true;
+  }
+
+  blend_unit->priorities[0u] = priority;
+  blend_unit->layers[0u] = color;
+  blend_unit->top[0u] = top;
+  blend_unit->bottom[0u] = bottom;
+  blend_unit->obj_semi_transparent = semi_transparent;
+}
+
+void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
+                                  bool bottom, uint16_t color,
+                                  uint_fast8_t priority) {
+  assert(priority < GBA_PPU_LAYER_PRIORITY_BACKDROP);
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, top, bottom, color,
+                                       priority);
+}
+
+void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit, bool top,
+                                bool bottom, uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, top, bottom, color,
+                                       GBA_PPU_LAYER_PRIORITY_BACKDROP);
+}
+
+uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
+                              const GbaPpuRegisters* registers) {
+  static const uint16_t (*blend_table[])(const GbaPpuBlendUnit*,
+                                         const GbaPpuRegisters*) = {
+      GbaPpuBlendUnitNoBlendInternal, GbaPpuBlendUnitAdditiveBlend,
+      GbaPpuBlendUnitBrighten, GbaPpuBlendUnitDarken};
+  assert(registers->bldcnt.mode < 4u);
+
+  return blend_table[registers->bldcnt.mode](blend_unit, registers);
 }

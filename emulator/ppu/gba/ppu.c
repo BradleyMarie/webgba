@@ -343,6 +343,11 @@ static void GbaPpuStepNoOp(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
 
 static void GbaPpuStartHBlank(GbaPpu *ppu) {
   ppu->registers.dispstat.hblank_status = true;
+
+  GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
+  if (ppu->registers.dispstat.hblank_irq_enable) {
+    GbaPlatformRaiseHBlankInterrupt(ppu->platform);
+  }
 }
 
 static void GbaPpuEndHBlank(GbaPpu *ppu, uint16_t next_row) {
@@ -375,40 +380,20 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
                       &draw_bg0, &draw_bg1, &draw_bg2, &draw_bg3,
                       &enable_blending);
 
-    GbaPpuBlendUnitAddBackground(&ppu->blend_unit, ppu->registers.bldcnt.a_bd,
-                                 ppu->registers.bldcnt.b_bd,
-                                 ppu->memory.palette.bg.large_palette[0u],
-                                 GBA_PPU_LAYER_PRIORITY_BACKDROP);
-
     static const GbaPpuDrawPixelRoutine mode_draw_pixel_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
         GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
     mode_draw_pixel_routines[ppu->registers.dispcnt.mode](
         ppu, draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3);
 
-    static const uint8_t blend_mode_masks[2u] = {0x0u, 0x3u};
-    uint_fast8_t blend_mode =
-        ppu->registers.bldcnt.mode & blend_mode_masks[enable_blending];
+    GbaPpuBlendUnitAddBackdrop(&ppu->blend_unit, ppu->registers.bldcnt.a_bd,
+                               ppu->registers.bldcnt.b_bd,
+                               ppu->memory.palette.bg.large_palette[0u]);
 
-    switch (blend_mode) {
-      case 0u:
-        color = GbaPpuBlendUnitNoBlend(&ppu->blend_unit);
-        break;
-      case 1u:
-        color =
-            GbaPpuBlendUnitBlend(&ppu->blend_unit, ppu->registers.bldalpha.eva,
-                                 ppu->registers.bldalpha.evb);
-        break;
-      case 2u:
-        color = GbaPpuBlendUnitBrighten(
-            &ppu->blend_unit, ppu->registers.bldalpha.eva,
-            ppu->registers.bldalpha.evb, ppu->registers.bldy.evy);
-        break;
-      case 3u:
-        color = GbaPpuBlendUnitDarken(
-            &ppu->blend_unit, ppu->registers.bldalpha.eva,
-            ppu->registers.bldalpha.evb, ppu->registers.bldy.evy);
-        break;
+    if (enable_blending) {
+      color = GbaPpuBlendUnitBlend(&ppu->blend_unit, &ppu->registers);
+    } else {
+      color = GbaPpuBlendUnitNoBlend(&ppu->blend_unit);
     }
   }
 
@@ -416,11 +401,6 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
     GbaPpuStartHBlank(ppu);
-
-    GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
-    if (ppu->registers.dispstat.hblank_irq_enable) {
-      GbaPlatformRaiseHBlankInterrupt(ppu->platform);
-    }
 
     if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
       ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
@@ -483,11 +463,6 @@ static void GbaPpuPreVBlank(GbaPpu *ppu) {
 
 static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu) {
   GbaPpuStartHBlank(ppu);
-
-  GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
-  if (ppu->registers.dispstat.hblank_irq_enable) {
-    GbaPlatformRaiseHBlankInterrupt(ppu->platform);
-  }
 
   if (ppu->registers.vcount == GBA_PPU_SCANLINES_PER_REFRESH - 1) {
     ppu->next_wake_routine = GbaPpuPostVBlank;

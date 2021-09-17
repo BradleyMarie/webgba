@@ -6,6 +6,9 @@ cc_library(
     name = "blend",
     srcs = ["blend.c"],
     hdrs = ["blend.h"],
+    deps = [
+        ":registers",
+    ],
 )
 
 cc_test(
