@@ -4,45 +4,56 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum {
-  GBA_PPU_LAYER_PRIORITY_0 = 0,
-  GBA_PPU_LAYER_PRIORITY_1 = 1,
-  GBA_PPU_LAYER_PRIORITY_2 = 2,
-  GBA_PPU_LAYER_PRIORITY_3 = 3,
-  GBA_PPU_LAYER_PRIORITY_BACKDROP = 4,
-  GBA_PPU_LAYER_PRIORITY_NOT_SET = 5,
-} GbaPpuLayerPriority;
+#include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  uint16_t layers[2];
-  GbaPpuLayerPriority priorities[2];
-  bool top[2];
-  bool bottom[2];
+  uint16_t layers[2u];
+  uint_fast8_t priorities[2u];
+  bool top[2u];
+  bool bottom[2u];
   bool obj_semi_transparent;
 } GbaPpuBlendUnit;
 
-void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit);
+//
+// This module makes strong assumptions about the order in which the calls to it
+// are made in order to simplify its logic and also save on a bit of
+// performance. The correct ordering of these calls is as follows.
+//
+//   1) GbaPpuBlendUnitReset
+//   2) GbaPpuBlendUnitAddObject for the Object Layer
+//   3) GbaPpuBlendUnitAddBackground for Background 0
+//   4) GbaPpuBlendUnitAddBackground for Background 1
+//   5) GbaPpuBlendUnitAddBackground for Background 2
+//   6) GbaPpuBlendUnitAddBackground for Background 3
+//   7) GbaPpuBlendUnitAddBackdrop for the Backdrop Layer
+//   8) GbaPpuBlendUnitBlend or GbaPpuBlendUnitNoBlend to get result
+//
 
-void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
-                                  bool bottom, uint16_t color,
-                                  GbaPpuLayerPriority priority);
+static inline void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
+  blend_unit->priorities[0u] = 6u;
+  blend_unit->priorities[1u] = 6u;
+  blend_unit->top[1u] = false;
+  blend_unit->bottom[1u] = false;
+  blend_unit->obj_semi_transparent = false;
+}
 
 void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
                               bool bottom, uint16_t color,
-                              GbaPpuLayerPriority priority,
-                              bool semi_transparent);
+                              uint_fast8_t priority, bool semi_transparent);
 
-uint16_t GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit);
+void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
+                                  bool bottom, uint16_t color,
+                                  uint_fast8_t priority);
+
+void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit, bool top,
+                                bool bottom, uint16_t color);
 
 uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
-                              uint_fast8_t eva, uint_fast8_t evb);
+                              const GbaPpuRegisters* registers);
 
-uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
-                               uint_fast8_t eva, uint_fast8_t evb,
-                               uint_fast8_t evy);
-
-uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
-                                 uint_fast8_t eva, uint_fast8_t evb,
-                                 uint_fast8_t evy);
+static inline uint16_t GbaPpuBlendUnitNoBlend(
+    const GbaPpuBlendUnit* blend_unit) {
+  return blend_unit->layers[0u];
+}
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_BLEND_

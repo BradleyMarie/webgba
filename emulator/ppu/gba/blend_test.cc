@@ -2,21 +2,45 @@ extern "C" {
 #include "emulator/ppu/gba/blend.h"
 }
 
+#include <cstring>
+
 #include "googletest/include/gtest/gtest.h"
 
 class BlendTest : public testing::Test {
  public:
-  void SetUp() override { GbaPpuBlendUnitReset(&blend_unit_); }
+  void SetUp() override {
+    GbaPpuBlendUnitReset(&blend_unit_);
+    memset(&registers_, 0, sizeof(GbaPpuRegisters));
+  }
 
  protected:
   GbaPpuBlendUnit blend_unit_;
+  GbaPpuRegisters registers_;
 };
 
-TEST_F(BlendTest, BackdropOnly) {
-  GbaPpuBlendUnitAddBackground(&blend_unit_, true, true, 0x7FFFu,
-                               GBA_PPU_LAYER_PRIORITY_BACKDROP);
+TEST_F(BlendTest, BackdropOnlyNoBlend) {
+  GbaPpuBlendUnitAddBackdrop(&blend_unit_, true, true, 0x7FFFu);
   EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitNoBlend(&blend_unit_));
-  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, 17u, 17u));
-  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitDarken(&blend_unit_, 17u, 17u, 0u));
-  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBrighten(&blend_unit_, 17u, 17u, 0u));
+}
+
+TEST_F(BlendTest, BackdropOnlyAddative) {
+  registers_.bldcnt.mode = 1u;
+  registers_.bldalpha.eva = 17u;
+  registers_.bldalpha.evb = 17u;
+  GbaPpuBlendUnitAddBackdrop(&blend_unit_, true, true, 0x7FFFu);
+  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, &registers_));
+}
+
+TEST_F(BlendTest, BackdropOnlyBrighten) {
+  registers_.bldcnt.mode = 2u;
+  registers_.bldy.evy = 0u;
+  GbaPpuBlendUnitAddBackdrop(&blend_unit_, true, true, 0x7FFFu);
+  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, &registers_));
+}
+
+TEST_F(BlendTest, BackdropOnlyDarken) {
+  registers_.bldcnt.mode = 3u;
+  registers_.bldy.evy = 0u;
+  GbaPpuBlendUnitAddBackdrop(&blend_unit_, true, true, 0x7FFFu);
+  EXPECT_EQ(0x7FFFu, GbaPpuBlendUnitBlend(&blend_unit_, &registers_));
 }
