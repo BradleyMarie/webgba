@@ -20,13 +20,13 @@ typedef struct {
 // performance. The correct ordering of these calls is as follows.
 //
 //   1) GbaPpuBlendUnitReset
-//   2) GbaPpuBlendUnitAddObject for the Object Layer
-//   3) GbaPpuBlendUnitAddBackground for Background 0
-//   4) GbaPpuBlendUnitAddBackground for Background 1
-//   5) GbaPpuBlendUnitAddBackground for Background 2
-//   6) GbaPpuBlendUnitAddBackground for Background 3
-//   7) GbaPpuBlendUnitAddBackdrop for the Backdrop Layer
-//   8) GbaPpuBlendUnitBlend or GbaPpuBlendUnitNoBlend to get result
+//   2) GbaPpuBlendUnitAddObject
+//   3) GbaPpuBlendUnitAddBackground0
+//   4) GbaPpuBlendUnitAddBackground1
+//   5) GbaPpuBlendUnitAddBackground2
+//   6) GbaPpuBlendUnitAddBackground3
+//   7) GbaPpuBlendUnitAddBackdrop
+//   8) GbaPpuBlendUnitBlend / GbaPpuBlendUnitNoBlend
 //
 
 static inline void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
@@ -37,16 +37,29 @@ static inline void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
   blend_unit->obj_semi_transparent = false;
 }
 
-void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
-                              bool bottom, uint16_t color,
+void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
+                              const GbaPpuRegisters* registers, uint16_t color,
                               uint_fast8_t priority, bool semi_transparent);
 
-void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
-                                  bool bottom, uint16_t color,
-                                  uint_fast8_t priority);
+void GbaPpuBlendUnitAddBackground0(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color);
 
-void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit, bool top,
-                                bool bottom, uint16_t color);
+void GbaPpuBlendUnitAddBackground1(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color);
+
+void GbaPpuBlendUnitAddBackground2(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color);
+
+void GbaPpuBlendUnitAddBackground3(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color);
+
+void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
+                                const GbaPpuRegisters* registers,
+                                uint16_t color);
 
 uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
                               const GbaPpuRegisters* registers);
