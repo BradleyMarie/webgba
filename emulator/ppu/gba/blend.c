@@ -151,36 +151,65 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
   return s0 | s1 | s2;
 }
 
-void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit, bool top,
-                              bool bottom, uint16_t color,
+void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
+                              const GbaPpuRegisters* registers, uint16_t color,
                               uint_fast8_t priority, bool semi_transparent) {
   assert(priority < GBA_PPU_LAYER_PRIORITY_BACKDROP);
   assert(blend_unit->priorities[0u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
   assert(blend_unit->priorities[1u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
 
+  bool top;
   if (semi_transparent) {
     priority = 0u;
     top = true;
+  } else {
+    top = registers->bldcnt.a_obj;
   }
 
   blend_unit->priorities[0u] = priority;
   blend_unit->layers[0u] = color;
   blend_unit->top[0u] = top;
-  blend_unit->bottom[0u] = bottom;
+  blend_unit->bottom[0u] = registers->bldcnt.b_obj;
   blend_unit->obj_semi_transparent = semi_transparent;
 }
 
-void GbaPpuBlendUnitAddBackground(GbaPpuBlendUnit* blend_unit, bool top,
-                                  bool bottom, uint16_t color,
-                                  uint_fast8_t priority) {
-  assert(priority < GBA_PPU_LAYER_PRIORITY_BACKDROP);
-  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, top, bottom, color,
-                                       priority);
+void GbaPpuBlendUnitAddBackground0(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bg0,
+                                       registers->bldcnt.b_bg0, color,
+                                       registers->bgcnt[0u].priority);
 }
 
-void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit, bool top,
-                                bool bottom, uint16_t color) {
-  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, top, bottom, color,
+void GbaPpuBlendUnitAddBackground1(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bg1,
+                                       registers->bldcnt.b_bg1, color,
+                                       registers->bgcnt[1u].priority);
+}
+
+void GbaPpuBlendUnitAddBackground2(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bg2,
+                                       registers->bldcnt.b_bg2, color,
+                                       registers->bgcnt[2u].priority);
+}
+
+void GbaPpuBlendUnitAddBackground3(GbaPpuBlendUnit* blend_unit,
+                                   const GbaPpuRegisters* registers,
+                                   uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bg3,
+                                       registers->bldcnt.b_bg3, color,
+                                       registers->bgcnt[3u].priority);
+}
+
+void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
+                                const GbaPpuRegisters* registers,
+                                uint16_t color) {
+  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bd,
+                                       registers->bldcnt.b_bd, color,
                                        GBA_PPU_LAYER_PRIORITY_BACKDROP);
 }
 
