@@ -117,6 +117,40 @@ typedef union {
   uint16_t value;
 } BldYRegister;
 
+typedef union {
+  struct {
+    unsigned char end;
+    unsigned char start;
+  };
+  uint16_t value;
+} WindowBoundsRegister;
+
+typedef struct {
+  bool bg0 : 1;
+  bool bg1 : 1;
+  bool bg2 : 1;
+  bool bg3 : 1;
+  bool obj : 1;
+  bool bld : 1;
+  unsigned char unused : 2;
+} WindowLayerBits;
+
+typedef union {
+  struct {
+    WindowLayerBits win0;
+    WindowLayerBits win1;
+  };
+  uint16_t value;
+} WindowInRegister;
+
+typedef union {
+  struct {
+    WindowLayerBits winout;
+    WindowLayerBits winobj;
+  };
+  uint16_t value;
+} WindowOutRegister;
+
 #define GBA_PPU_REGISTERS_SIZE 88u
 
 typedef union {
@@ -128,12 +162,12 @@ typedef union {
     BgCntRegister bgcnt[4];
     BackgroundOffsetRegister bg_offsets[4];
     BackgroundAffineRegister affine[2];
-    uint16_t win0h;
-    uint16_t win1h;
-    uint16_t win0v;
-    uint16_t win1v;
-    uint16_t winin;
-    uint16_t winout;
+    WindowBoundsRegister win0h;
+    WindowBoundsRegister win1h;
+    WindowBoundsRegister win0v;
+    WindowBoundsRegister win1v;
+    WindowInRegister winin;
+    WindowOutRegister winout;
     MosaicRegister mosaic;
     uint16_t unused0;
     BldCntRegister bldcnt;
