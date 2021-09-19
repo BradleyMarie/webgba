@@ -31,9 +31,9 @@
 
 #define GBA_PPU_FIRST_PIXEL_WAKE_CYCLE (GBA_PPU_CYCLES_PER_PIXEL - 1u)
 
-typedef void (*GbaPpuDrawPixelRoutine)(GbaPpu *ppu, bool draw_obj,
-                                       bool draw_bg0, bool draw_bg1,
-                                       bool draw_bg2, bool draw_bg3);
+typedef void (*GbaPpuDrawPixelRoutine)(GbaPpu *ppu, bool draw_bg0,
+                                       bool draw_bg1, bool draw_bg2,
+                                       bool draw_bg3);
 typedef void (*GbaPpuStepRoutine)(GbaPpu *ppu);
 
 struct _GbaPpu {
@@ -68,22 +68,8 @@ static void GbaPpuRelease(void *context) {
 // Rendering Routines
 //
 
-static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
@@ -125,22 +111,8 @@ static void GbaPpuStepMode0(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
     uint16_t color;
     bool success = GbaPpuScrollingBackgroundPixel(
@@ -172,22 +144,8 @@ static void GbaPpuStepMode1(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuAffineBackgroundPixel(
@@ -209,22 +167,8 @@ static void GbaPpuStepMode2(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode3Pixel(&ppu->memory, &ppu->registers,
@@ -236,22 +180,8 @@ static void GbaPpuStepMode3(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode4Pixel(&ppu->memory, &ppu->registers,
@@ -263,22 +193,8 @@ static void GbaPpuStepMode4(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                            bool draw_bg1, bool draw_bg2, bool draw_bg3) {
-  if (draw_obj && ppu->registers.dispcnt.object_enable) {
-    uint16_t color;
-    uint8_t priority;
-    bool semi_transparent;
-    bool success = GbaPpuObjectPixel(
-        &ppu->memory, &ppu->registers, &ppu->internal_registers,
-        &ppu->object_visibility, ppu->x, ppu->registers.vcount, &color,
-        &priority, &semi_transparent);
-    if (success) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, color,
-                               priority, semi_transparent);
-    }
-  }
-
+static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                            bool draw_bg2, bool draw_bg3) {
   if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
     uint16_t color;
     bool success = GbaPpuBitmapMode5Pixel(&ppu->memory, &ppu->registers,
@@ -290,8 +206,8 @@ static void GbaPpuStepMode5(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
   }
 }
 
-static void GbaPpuStepNoOp(GbaPpu *ppu, bool draw_obj, bool draw_bg0,
-                           bool draw_bg1, bool draw_bg2, bool draw_bg3) {
+static void GbaPpuStepNoOp(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
+                           bool draw_bg2, bool draw_bg3) {
   // Do Nothing
 }
 
@@ -333,16 +249,33 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
 
   uint16_t color = 0u;
   if (!ppu->registers.dispcnt.forced_blank) {
+    uint16_t obj_color;
+    uint8_t obj_priority;
+    bool object_on_pixel, obj_semi_transparent;
+    if (ppu->registers.dispcnt.object_enable) {
+      object_on_pixel = GbaPpuObjectPixel(
+          &ppu->memory, &ppu->registers, &ppu->internal_registers,
+          &ppu->object_visibility, ppu->x, ppu->registers.vcount, &obj_color,
+          &obj_priority, &obj_semi_transparent);
+    } else {
+      object_on_pixel = false;
+    }
+
     bool draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3, enable_blending;
-    GbaPpuWindowCheck(&ppu->registers, ppu->x, ppu->registers.vcount, &draw_obj,
-                      &draw_bg0, &draw_bg1, &draw_bg2, &draw_bg3,
-                      &enable_blending);
+    GbaPpuWindowCheck(&ppu->registers, ppu->x, ppu->registers.vcount,
+                      object_on_pixel, &draw_obj, &draw_bg0, &draw_bg1,
+                      &draw_bg2, &draw_bg3, &enable_blending);
+
+    if (object_on_pixel && draw_obj) {
+      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, obj_color,
+                               obj_priority, obj_semi_transparent);
+    }
 
     static const GbaPpuDrawPixelRoutine mode_draw_pixel_routines[8u] = {
         GbaPpuStepMode0, GbaPpuStepMode1, GbaPpuStepMode2, GbaPpuStepMode3,
         GbaPpuStepMode4, GbaPpuStepMode5, GbaPpuStepNoOp,  GbaPpuStepNoOp};
     mode_draw_pixel_routines[ppu->registers.dispcnt.mode](
-        ppu, draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3);
+        ppu, draw_bg0, draw_bg1, draw_bg2, draw_bg3);
 
     GbaPpuBlendUnitAddBackdrop(&ppu->blend_unit, &ppu->registers,
                                ppu->memory.palette.bg.large_palette[0u]);
