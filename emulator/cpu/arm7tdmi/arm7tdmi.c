@@ -32,12 +32,12 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
   if (InterruptLineIsRaised(cpu->rst)) {
     ArmExceptionRST(&cpu->registers);
     modified_pc = true;
-  } else if (!cpu->registers.current.user.cpsr.fiq_disable &&
-             InterruptLineIsRaised(cpu->fiq)) {
+  } else if (InterruptLineIsRaised(cpu->fiq) &&
+             !cpu->registers.current.user.cpsr.fiq_disable) {
     ArmExceptionFIQ(&cpu->registers);
     modified_pc = true;
-  } else if (!cpu->registers.current.user.cpsr.irq_disable &&
-             InterruptLineIsRaised(cpu->irq)) {
+  } else if (InterruptLineIsRaised(cpu->irq) &&
+             !cpu->registers.current.user.cpsr.irq_disable) {
     ArmExceptionIRQ(&cpu->registers);
     modified_pc = true;
   } else if (cpu->registers.current.user.cpsr.thumb) {
