@@ -12,22 +12,32 @@ static inline uint_fast8_t PopCount(uint_fast16_t value) {
   return __builtin_popcount(value);
 }
 
+static inline bool NextRegister(uint_fast16_t *register_list, int *index) {
+  if (*register_list == 0u) {
+    return false;
+  }
+
+  *index = __builtin_ctz(*register_list);
+  *register_list ^= 1u << *index;
+
+  return true;
+}
+
 bool ArmLDMDA(ArmAllRegisters *registers, const Memory *memory,
               ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u + 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -38,16 +48,15 @@ bool ArmLDMDB(ArmAllRegisters *registers, const Memory *memory,
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -58,16 +67,15 @@ bool ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size + 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
   return success;
@@ -79,16 +87,15 @@ bool ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
   return success;
@@ -99,16 +106,15 @@ bool ArmLDMIA(ArmAllRegisters *registers, const Memory *memory,
   assert(register_list <= UINT16_MAX);
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -118,15 +124,14 @@ bool ArmLDMIB(ArmAllRegisters *registers, const Memory *memory,
   assert(register_list <= UINT16_MAX);
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
   }
   return success;
@@ -138,16 +143,15 @@ bool ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] += size;
   return success;
@@ -159,15 +163,14 @@ bool ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
   }
   registers->current.user.gprs.gprs[Rn] += size;
@@ -193,15 +196,14 @@ bool ArmLDMSDA(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -236,15 +238,14 @@ bool ArmLDMSDB(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -279,15 +280,14 @@ bool ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
 
@@ -323,15 +323,14 @@ bool ArmLDMSDBW(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
 
@@ -366,15 +365,14 @@ bool ArmLDMSIA(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -408,14 +406,13 @@ bool ArmLDMSIB(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
   }
 
@@ -451,15 +448,14 @@ bool ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] += size;
 
@@ -495,14 +491,13 @@ bool ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmLoad32LE(memory, address, &registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
   }
   registers->current.user.gprs.gprs[Rn] += size;
@@ -526,16 +521,15 @@ bool ArmSTMDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u + 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -546,16 +540,15 @@ bool ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint32_t address =
       registers->current.user.gprs.gprs[Rn] - PopCount(register_list) * 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -566,16 +559,15 @@ bool ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size + 4u;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
   return success;
@@ -587,16 +579,15 @@ bool ArmSTMDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size;
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
   return success;
@@ -607,16 +598,15 @@ bool ArmSTMIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   assert(register_list <= UINT16_MAX);
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   return success;
 }
@@ -626,15 +616,14 @@ bool ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   assert(register_list <= UINT16_MAX);
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
   }
   return success;
@@ -646,16 +635,15 @@ bool ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] += size;
   return success;
@@ -667,15 +655,14 @@ bool ArmSTMIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        ArmExceptionDataABT(registers);
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      break;
     }
   }
   registers->current.user.gprs.gprs[Rn] += size;
@@ -700,15 +687,14 @@ bool ArmSTMSDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -740,15 +726,14 @@ bool ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -780,15 +765,14 @@ bool ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
 
@@ -821,15 +805,14 @@ bool ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] -= size;
 
@@ -861,15 +844,14 @@ bool ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
 
   if (modify_banked_registers) {
@@ -900,14 +882,13 @@ bool ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
   }
 
@@ -940,15 +921,14 @@ bool ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
-      address += 4u;
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
+    address += 4u;
   }
   registers->current.user.gprs.gprs[Rn] += size;
 
@@ -981,14 +961,13 @@ bool ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   }
 
   bool success = true;
-  for (uint_fast8_t i = 0u; i < 16u; i++) {
-    if (register_list & (1u << i)) {
-      address += 4u;
-      success =
-          ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
-      if (!success) {
-        break;
-      }
+  int i;
+  while (NextRegister(&register_list, &i)) {
+    address += 4u;
+    success =
+        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    if (!success) {
+      break;
     }
   }
   registers->current.user.gprs.gprs[Rn] += size;
