@@ -76,9 +76,9 @@ struct _GbaPlatform {
 
 static bool GbaIrqLineIsRaisedFunction(const void *context) {
   const GbaPlatform *controller = (const GbaPlatform *)context;
-  return controller->registers.interrupt_master_enable.enabled &&
-         controller->registers.interrupt_enable.value &
-             controller->registers.interrupt_flags.value;
+  return (controller->registers.interrupt_enable.value &
+          controller->registers.interrupt_flags.value) &&
+         controller->registers.interrupt_master_enable.enabled;
 }
 
 static void GbaIrqLineFree(void *context) {
