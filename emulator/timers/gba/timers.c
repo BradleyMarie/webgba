@@ -31,24 +31,57 @@ typedef union {
 } GbaTimerRegisters;
 
 struct _GbaTimers {
+  uint_fast8_t num_active_timers;
+  bool timer_cascade[GBA_NUM_TIMERS];
+  uint16_t timer_ticks[GBA_NUM_TIMERS];
+  uint16_t timer_tick_rate[GBA_NUM_TIMERS];
+  uint_fast8_t timer_index[GBA_NUM_TIMERS];
+  uint16_t all_timer_ticks[GBA_NUM_TIMERS];
   GbaTimerRegisters read;
   GbaTimerRegisters write;
-  uint16_t timer_ticks[GBA_NUM_TIMERS];
   GbaPlatform *platform;
   uint16_t reference_count;
 };
 
 static void UpdateTimersAfterWrite(GbaTimers *timers) {
+  static const uint16_t tick_rates[4] = {1u, 64u, 256u, 1024u};
+
+  // Copy out tick counts
+  for (uint_fast8_t i = 0; i < timers->num_active_timers; i++) {
+    timers->all_timer_ticks[timers->timer_index[i]] = timers->timer_ticks[i];
+  }
+
+  // Setup active timers
+  timers->num_active_timers = 0u;
   for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
     bool timer_started = timers->write.registers[i].tmcnt_h.started &&
                          !timers->read.registers[i].tmcnt_h.started;
-
     timers->read.registers[i].tmcnt_h = timers->write.registers[i].tmcnt_h;
+
+    if (!timers->read.registers[i].tmcnt_h.started) {
+      continue;
+    }
+
+    if (timers->read.registers[i].tmcnt_h.cascade && i != 0 &&
+        !timers->read.registers[i - 1u].tmcnt_h.started) {
+      continue;
+    }
+
+    timers->timer_cascade[timers->num_active_timers] =
+        timers->read.registers[i].tmcnt_h.cascade;
+    timers->timer_tick_rate[timers->num_active_timers] =
+        tick_rates[timers->read.registers[i].tmcnt_h.prescalar];
+    timers->timer_index[timers->num_active_timers] = i;
 
     if (timer_started) {
       timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
-      timers->timer_ticks[i] = 0;
+      timers->timer_ticks[timers->num_active_timers] = 0;
+    } else {
+      timers->timer_ticks[timers->num_active_timers] =
+          timers->all_timer_ticks[i];
     }
+
+    timers->num_active_timers += 1u;
   }
 }
 
@@ -178,41 +211,32 @@ bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
 }
 
 void GbaTimersStep(GbaTimers *timers) {
-  static const uint16_t tick_rates[4] = {1u, 64u, 256u, 1024u};
-
   bool overflowed = false;
-  for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
-    if (!timers->read.registers[i].tmcnt_h.started) {
-      overflowed = false;
-      continue;
-    }
-
-    bool ticked;
-    if (timers->read.registers[i].tmcnt_h.cascade) {
-      ticked = overflowed;
+  for (uint_fast8_t i = 0u; i < timers->num_active_timers; i++) {
+    if (timers->timer_cascade[i]) {
+      if (!overflowed) {
+        continue;
+      }
     } else {
-      uint16_t rate = tick_rates[timers->read.registers[i].tmcnt_h.prescalar];
       timers->timer_ticks[i] += 1;
-      if (timers->timer_ticks[i] == rate) {
-        timers->timer_ticks[i] = 0u;
-        ticked = true;
-      } else {
-        ticked = false;
+      if (timers->timer_ticks[i] != timers->timer_tick_rate[i]) {
+        overflowed = false;
+        continue;
       }
+
+      timers->timer_ticks[i] = 0u;
     }
 
-    if (ticked) {
-      timers->read.registers[i].tmcnt_l += 1;
-      if (timers->read.registers[i].tmcnt_l == 0u) {
-        timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
-        if (timers->read.registers[i].tmcnt_h.irq_enable) {
-          GbaPlatformRaiseTimerInterrupt(timers->platform, i);
-        }
-
-        overflowed = true;
-      } else {
-        overflowed = false;
+    uint_fast8_t timer_index = timers->timer_index[i];
+    timers->read.registers[timer_index].tmcnt_l += 1;
+    if (timers->read.registers[timer_index].tmcnt_l == 0u) {
+      timers->read.registers[timer_index].tmcnt_l =
+          timers->write.registers[timer_index].tmcnt_l;
+      if (timers->read.registers[timer_index].tmcnt_h.irq_enable) {
+        GbaPlatformRaiseTimerInterrupt(timers->platform, timer_index);
       }
+
+      overflowed = true;
     } else {
       overflowed = false;
     }
