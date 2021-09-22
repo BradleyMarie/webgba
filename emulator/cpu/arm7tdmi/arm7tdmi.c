@@ -100,12 +100,6 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
   }
 }
 
-void Arm7TdmiRun(Arm7Tdmi* cpu, Memory* memory, uint32_t num_steps) {
-  for (uint32_t i = 0; i < num_steps; i++) {
-    Arm7TdmiStep(cpu, memory);
-  }
-}
-
 void Arm7TdmiFree(Arm7Tdmi* cpu) {
   InterruptLineFree(cpu->rst);
   InterruptLineFree(cpu->fiq);
