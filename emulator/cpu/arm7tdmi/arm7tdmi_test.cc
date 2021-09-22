@@ -117,7 +117,11 @@ class ExecuteTest : public testing::Test {
     }
   }
 
-  void Run(uint32_t num_steps) { Arm7TdmiRun(cpu_, memory_, num_steps); }
+  void Run(uint32_t num_steps) {
+    for (uint32_t i = 0; i < num_steps; i++) {
+      Arm7TdmiStep(cpu_, memory_);
+    }
+  }
 
   static std::vector<char> memory_space_;
   size_t instruction_end_;
