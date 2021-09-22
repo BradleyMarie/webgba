@@ -6,6 +6,11 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
+#define ARM_INSTRUCTION_OFFSET 8u
+#define ARM_INSTRUCTION_SIZE 4u
+#define THUMB_INSTRUCTION_OFFSET 4u
+#define THUMB_INSTRUCTION_SIZE 2u
+
 Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
                            InterruptLine* irq) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)calloc(1, sizeof(Arm7Tdmi));
@@ -20,58 +25,79 @@ Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  const static uint8_t thumb_instruction_offset = 4u;
-  const static uint8_t arm_instruction_offset = 8u;
-  const static uint8_t thumb_instruction_size = 2u;
-  const static uint8_t arm_instruction_size = 4u;
-  const static uint8_t next_pc_offset[2][2] = {
-      {arm_instruction_size, thumb_instruction_size},
-      {arm_instruction_offset, thumb_instruction_offset}};
-
-  bool modified_pc;
   if (InterruptLineIsRaised(cpu->rst)) {
     ArmExceptionRST(&cpu->registers);
-    modified_pc = true;
-  } else if (InterruptLineIsRaised(cpu->fiq) &&
-             !cpu->registers.current.user.cpsr.fiq_disable) {
+    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    return;
+  }
+
+  if (InterruptLineIsRaised(cpu->fiq) &&
+      !cpu->registers.current.user.cpsr.fiq_disable) {
     ArmExceptionFIQ(&cpu->registers);
-    modified_pc = true;
-  } else if (InterruptLineIsRaised(cpu->irq) &&
-             !cpu->registers.current.user.cpsr.irq_disable) {
+    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    return;
+  }
+
+  if (InterruptLineIsRaised(cpu->irq) &&
+      !cpu->registers.current.user.cpsr.irq_disable) {
     ArmExceptionIRQ(&cpu->registers);
-    modified_pc = true;
-  } else if (cpu->registers.current.user.cpsr.thumb) {
+    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    return;
+  }
+
+  if (cpu->registers.current.user.cpsr.thumb) {
     cpu->registers.current.user.gprs.pc &= 0xFFFFFFFEu;
 
     uint32_t next_instruction_addr =
-        cpu->registers.current.user.gprs.pc - thumb_instruction_offset;
+        cpu->registers.current.user.gprs.pc - THUMB_INSTRUCTION_OFFSET;
     uint16_t next_instruction;
     bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
     if (!success) {
       ArmExceptionPrefetchABT(&cpu->registers);
-      modified_pc = true;
-    } else {
-      modified_pc =
-          ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
+      cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+      return;
     }
-  } else {
-    cpu->registers.current.user.gprs.pc &= 0xFFFFFFFCu;
 
-    uint32_t next_instruction_addr =
-        cpu->registers.current.user.gprs.pc - arm_instruction_offset;
-    uint32_t next_instruction;
-    bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
-    if (!success) {
-      ArmExceptionPrefetchABT(&cpu->registers);
-      modified_pc = true;
-    } else {
-      modified_pc =
-          ArmInstructionExecute(next_instruction, &cpu->registers, memory);
+    bool modified_pc =
+        ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
+
+    cpu->registers.current.user.gprs.pc += THUMB_INSTRUCTION_SIZE;
+
+    if (modified_pc) {
+      static const uint32_t pc_offset[2u] = {
+          ARM_INSTRUCTION_OFFSET - THUMB_INSTRUCTION_SIZE,
+          THUMB_INSTRUCTION_OFFSET - THUMB_INSTRUCTION_SIZE};
+      cpu->registers.current.user.gprs.pc +=
+          pc_offset[cpu->registers.current.user.cpsr.thumb];
     }
+
+    return;
   }
 
-  cpu->registers.current.user.gprs.pc +=
-      next_pc_offset[modified_pc][cpu->registers.current.user.cpsr.thumb];
+  cpu->registers.current.user.gprs.pc &= 0xFFFFFFFCu;
+
+  uint32_t next_instruction_addr =
+      cpu->registers.current.user.gprs.pc - ARM_INSTRUCTION_OFFSET;
+  uint32_t next_instruction;
+  bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
+  if (!success) {
+    ArmExceptionPrefetchABT(&cpu->registers);
+    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    return;
+  }
+
+  bool modified_pc =
+      ArmInstructionExecute(next_instruction, &cpu->registers, memory);
+
+  cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_SIZE;
+
+  if (modified_pc) {
+    static const uint32_t pc_offset[2u] = {
+        ARM_INSTRUCTION_OFFSET - ARM_INSTRUCTION_SIZE,
+        THUMB_INSTRUCTION_OFFSET - ARM_INSTRUCTION_SIZE};
+    cpu->registers.current.user.gprs.pc +=
+        pc_offset[cpu->registers.current.user.cpsr.thumb];
+  }
 }
 
 void Arm7TdmiRun(Arm7Tdmi* cpu, Memory* memory, uint32_t num_steps) {
