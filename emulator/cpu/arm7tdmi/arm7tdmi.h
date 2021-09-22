@@ -6,6 +6,7 @@
 #include "emulator/platform/interrupt_line.h"
 
 typedef struct {
+  unsigned int interrupts_raised;
   ArmAllRegisters registers;
   InterruptLine* rst;
   InterruptLine* fiq;
