@@ -30,7 +30,11 @@ extern "C" {
 class PeripheralsTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
+    raised_ = false;
+    InterruptLine *irq =
+        InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
+    ASSERT_NE(irq, nullptr);
+    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
     ASSERT_TRUE(
         GbaPeripheralsAllocate(plat_, &peripherals_, &gamepad_, &regs_));
 
@@ -42,24 +46,26 @@ class PeripheralsTest : public testing::Test {
   void TearDown() override {
     GbaPlatformRelease(plat_);
     MemoryFree(plat_regs_);
-    InterruptLineFree(rst_);
-    InterruptLineFree(fiq_);
-    InterruptLineFree(irq_);
     GbaPeripheralsFree(peripherals_);
     GamePadFree(gamepad_);
     MemoryFree(regs_);
   }
 
  protected:
+  static void InterruptSetLevel(void *context, bool raised) {
+    raised_ = raised;
+  }
+
+  static bool raised_;
+
   GbaPlatform *plat_;
   Memory *plat_regs_;
-  InterruptLine *rst_;
-  InterruptLine *fiq_;
-  InterruptLine *irq_;
   GbaPeripherals *peripherals_;
   GamePad *gamepad_;
   Memory *regs_;
 };
+
+bool PeripheralsTest::raised_ = false;
 
 TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad16LE) {
   uint16_t contents;
@@ -320,42 +326,42 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad32LE) {
 
 TEST_F(PeripheralsTest, GamePadInterruptDisabled) {
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadInterruptOrA) {
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x4003u));
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleSelect(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleA(gamepad_, true);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadInterruptOrB) {
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x4003u));
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleB(gamepad_, true);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadInterruptAnd) {
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0xC003u));
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleSelect(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleA(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleB(gamepad_, true);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadUp) {
@@ -366,9 +372,9 @@ TEST_F(PeripheralsTest, GamePadUp) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleUp(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleUp(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadDown) {
@@ -379,9 +385,9 @@ TEST_F(PeripheralsTest, GamePadDown) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleDown(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleDown(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadLeft) {
@@ -392,9 +398,9 @@ TEST_F(PeripheralsTest, GamePadLeft) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleLeft(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleLeft(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadRight) {
@@ -405,9 +411,9 @@ TEST_F(PeripheralsTest, GamePadRight) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleRight(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleRight(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadA) {
@@ -418,9 +424,9 @@ TEST_F(PeripheralsTest, GamePadA) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleA(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleA(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadB) {
@@ -431,9 +437,9 @@ TEST_F(PeripheralsTest, GamePadB) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleB(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleB(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadL) {
@@ -444,9 +450,9 @@ TEST_F(PeripheralsTest, GamePadL) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleL(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleL(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadR) {
@@ -457,9 +463,9 @@ TEST_F(PeripheralsTest, GamePadR) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleR(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleR(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadStart) {
@@ -470,9 +476,9 @@ TEST_F(PeripheralsTest, GamePadStart) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleStart(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleStart(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(PeripheralsTest, GamePadSelect) {
@@ -483,7 +489,7 @@ TEST_F(PeripheralsTest, GamePadSelect) {
 
   EXPECT_TRUE(Store16LE(regs_, KEYCNT_OFFSET, 0x41FFu));
   GamePadToggleSelect(gamepad_, true);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
   GamePadToggleSelect(gamepad_, false);
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }

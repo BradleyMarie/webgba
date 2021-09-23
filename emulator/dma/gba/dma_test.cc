@@ -38,7 +38,11 @@ extern "C" {
 class DmaUnitTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
+    raised_ = false;
+    InterruptLine *irq =
+        InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
+    ASSERT_NE(irq, nullptr);
+    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
     ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &regs_));
 
     for (char &c : memory_space_) {
@@ -58,9 +62,6 @@ class DmaUnitTest : public testing::Test {
   void TearDown() override {
     GbaPlatformRelease(plat_);
     MemoryFree(plat_regs_);
-    InterruptLineFree(rst_);
-    InterruptLineFree(fiq_);
-    InterruptLineFree(irq_);
     GbaDmaUnitRelease(dma_unit_);
     MemoryFree(regs_);
     MemoryFree(memory_);
@@ -163,18 +164,22 @@ class DmaUnitTest : public testing::Test {
     EXPECT_TRUE(control >> 15u);
   }
 
+  static void InterruptSetLevel(void *context, bool raised) {
+    raised_ = raised;
+  }
+
+  static bool raised_;
+
   static std::vector<char> memory_space_;
   GbaPlatform *plat_;
   Memory *plat_regs_;
-  InterruptLine *rst_;
-  InterruptLine *fiq_;
-  InterruptLine *irq_;
   GbaDmaUnit *dma_unit_;
   Memory *regs_;
   Memory *memory_;
 };
 
 std::vector<char> DmaUnitTest::memory_space_(1024u, 0);
+bool DmaUnitTest::raised_ = false;
 
 TEST_F(DmaUnitTest, GbaDmaUnitRegistersLoad16LE) {
   uint16_t contents;
@@ -391,12 +396,12 @@ TEST_F(DmaUnitTest, TestDmaIrq0) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
@@ -416,12 +421,12 @@ TEST_F(DmaUnitTest, TestDmaIrq1) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
@@ -441,12 +446,12 @@ TEST_F(DmaUnitTest, TestDmaIrq2) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));
@@ -466,12 +471,12 @@ TEST_F(DmaUnitTest, TestDmaIrq3) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &interrupt_flags));

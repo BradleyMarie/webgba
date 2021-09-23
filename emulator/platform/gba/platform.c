@@ -71,22 +71,15 @@ typedef struct {
 struct _GbaPlatform {
   GbaPlatformRegisters registers;
   GbaPowerState power_state;
+  InterruptLine *interrupt_line;
   uint16_t reference_count;
 };
 
-static bool GbaIrqLineIsRaisedFunction(const void *context) {
-  const GbaPlatform *controller = (const GbaPlatform *)context;
+static inline bool GbaIrqLineIsRaisedFunction(const GbaPlatform *controller) {
   return (controller->registers.interrupt_enable.value &
           controller->registers.interrupt_flags.value) &&
          controller->registers.interrupt_master_enable.enabled;
 }
-
-static void GbaIrqLineFree(void *context) {
-  GbaPlatform *controller = (GbaPlatform *)context;
-  GbaPlatformRelease(controller);
-}
-
-static bool GbaRstFiqLineIsRaisedFunction(const void *context) { return false; }
 
 static bool GbaPlatformRegisterIsMemoryControl(uint32_t address) {
   address = (address + 0x200u) % 0x10000u;
@@ -225,18 +218,25 @@ static bool GbaPlatformRegistersStore16LEFunction(void *context,
 
   GbaPlatform *platform = (GbaPlatform *)context;
 
+  bool raised;
   switch (address) {
     case IE_OFFSET:
       platform->registers.interrupt_enable.value = value;
+      raised = GbaIrqLineIsRaisedFunction(platform);
+      InterruptLineSetLevel(platform->interrupt_line, raised);
       return true;
     case IF_OFFSET:
       platform->registers.interrupt_flags.value &= ~value;
+      raised = GbaIrqLineIsRaisedFunction(platform);
+      InterruptLineSetLevel(platform->interrupt_line, raised);
       return true;
     case WAITCNT_OFFSET:
       platform->registers.waitcnt.value = value & 0x7FFFu;
       return true;
     case IME_OFFSET:
       platform->registers.interrupt_master_enable.value = value & 1u;
+      raised = GbaIrqLineIsRaisedFunction(platform);
+      InterruptLineSetLevel(platform->interrupt_line, raised);
       return true;
     case POSTFLG_OFFSET:
       platform->registers.postflg = value;
@@ -317,15 +317,15 @@ void GbaPlatformRegistersFree(void *context) {
   GbaPlatformRelease(platform);
 }
 
-bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
-                         InterruptLine **rst_line, InterruptLine **fiq_line,
-                         InterruptLine **irq_line) {
+bool GbaPlatformAllocate(InterruptLine *irq_line, GbaPlatform **platform,
+                         Memory **registers) {
   *platform = (GbaPlatform *)calloc(1, sizeof(GbaPlatform));
   if (*platform == NULL) {
     return false;
   }
 
-  (*platform)->reference_count = 1;
+  (*platform)->interrupt_line = irq_line;
+  (*platform)->reference_count = 2u;
 
   *registers = MemoryAllocate(
       *platform, GbaPlatformRegistersLoad32LEFunction,
@@ -335,62 +335,42 @@ bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
       GbaPlatformRegistersFree);
 
   if (*registers == NULL) {
-    GbaPlatformRelease(*platform);
+    free(*platform);
     return false;
   }
-
-  (*platform)->reference_count += 1;
-
-  *rst_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
-  if (*rst_line == NULL) {
-    MemoryFree(*registers);
-    GbaPlatformRelease(*platform);
-    return false;
-  }
-
-  *fiq_line = InterruptLineAllocate(NULL, GbaRstFiqLineIsRaisedFunction, NULL);
-  if (*fiq_line == NULL) {
-    InterruptLineFree(*rst_line);
-    MemoryFree(*registers);
-    GbaPlatformRelease(*platform);
-    return false;
-  }
-
-  *irq_line = InterruptLineAllocate(*platform, GbaIrqLineIsRaisedFunction,
-                                    GbaIrqLineFree);
-  if (*irq_line == NULL) {
-    InterruptLineFree(*fiq_line);
-    InterruptLineFree(*rst_line);
-    MemoryFree(*registers);
-    GbaPlatformRelease(*platform);
-    return false;
-  }
-
-  (*platform)->reference_count += 1;
 
   return true;
 }
 
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.vblank = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
+  if (platform->power_state == GBA_POWER_STATE_HALT && raised) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
 
 void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.hblank = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
+  if (platform->power_state == GBA_POWER_STATE_HALT && raised) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
 
 void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.vblank_count = true;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
+  if (platform->power_state == GBA_POWER_STATE_HALT && raised) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
@@ -399,14 +379,21 @@ void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer) {
   assert(GBA_TIMER_0 <= timer && timer <= GBA_TIMER_3);
 
   platform->registers.interrupt_flags.timers |= 1u << timer;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
+  if (platform->power_state == GBA_POWER_STATE_HALT && raised) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
 
 void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.serial = true;
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
   if (platform->power_state != GBA_POWER_STATE_RUN) {
     const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
@@ -422,14 +409,21 @@ void GbaPlatformRaiseDmaInterrupt(GbaPlatform *platform, GbaDmaId dma) {
   assert(GBA_DMA_0 <= dma && dma <= GBA_DMA_3);
 
   platform->registers.interrupt_flags.dmas |= 1u << dma;
-  if (platform->power_state == GBA_POWER_STATE_HALT &&
-      GbaIrqLineIsRaisedFunction(platform)) {
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
+  if (platform->power_state == GBA_POWER_STATE_HALT && raised) {
     platform->power_state = GBA_POWER_STATE_RUN;
   }
 }
 
 void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.keypad = true;
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
   if (platform->power_state != GBA_POWER_STATE_RUN) {
     const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
@@ -443,6 +437,10 @@ void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
 
 void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
   platform->registers.interrupt_flags.cartridge = true;
+
+  bool raised = GbaIrqLineIsRaisedFunction(platform);
+  InterruptLineSetLevel(platform->interrupt_line, raised);
+
   if (platform->power_state != GBA_POWER_STATE_RUN) {
     const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
@@ -513,6 +511,7 @@ void GbaPlatformRelease(GbaPlatform *platform) {
   assert(platform->reference_count);
   platform->reference_count -= 1u;
   if (platform->reference_count == 0u) {
+    InterruptLineFree(platform->interrupt_line);
     free(platform);
   }
 }

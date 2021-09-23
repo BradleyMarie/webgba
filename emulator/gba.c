@@ -30,22 +30,23 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
     return false;
   }
 
-  Memory *platform_registers;
   InterruptLine *rst;
   InterruptLine *fiq;
   InterruptLine *irq;
-  bool success = GbaPlatformAllocate(&(*emulator)->platform,
-                                     &platform_registers, &rst, &fiq, &irq);
-  if (!success) {
+  bool success = Arm7TdmiAllocate(&(*emulator)->cpu, &rst, &fiq, &irq);
+  if ((*emulator)->cpu == NULL) {
     free(*emulator);
     return false;
   }
 
-  (*emulator)->cpu = Arm7TdmiAllocate(rst, fiq, irq);
-  if ((*emulator)->cpu == NULL) {
-    GbaPlatformRelease((*emulator)->platform);
-    InterruptLineFree(rst);
-    InterruptLineFree(fiq);
+  InterruptLineFree(rst);
+  InterruptLineFree(fiq);
+
+  Memory *platform_registers;
+  success =
+      GbaPlatformAllocate(irq, &(*emulator)->platform, &platform_registers);
+  if (!success) {
+    Arm7TdmiFree((*emulator)->cpu);
     InterruptLineFree(irq);
     free(*emulator);
     return false;

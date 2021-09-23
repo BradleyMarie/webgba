@@ -10,7 +10,11 @@ extern "C" {
 class PpuTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
+    raised_ = false;
+    InterruptLine *irq =
+        InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
+    ASSERT_NE(irq, nullptr);
+    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
     ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_regs_));
     ASSERT_TRUE(
         GbaPpuAllocate(dma_unit_, plat_, &ppu_, &pram_, &vram_, &oam_, &regs_));
@@ -21,9 +25,6 @@ class PpuTest : public testing::Test {
     MemoryFree(dma_unit_regs_);
     GbaPlatformRelease(plat_);
     MemoryFree(plat_regs_);
-    InterruptLineFree(rst_);
-    InterruptLineFree(fiq_);
-    InterruptLineFree(irq_);
     GbaPpuFree(ppu_);
     MemoryFree(pram_);
     MemoryFree(vram_);
@@ -32,19 +33,24 @@ class PpuTest : public testing::Test {
   }
 
  protected:
+  static void InterruptSetLevel(void *context, bool raised) {
+    raised_ = raised;
+  }
+
+  static bool raised_;
+
   GbaPlatform *plat_;
   Memory *plat_regs_;
   GbaDmaUnit *dma_unit_;
   Memory *dma_unit_regs_;
-  InterruptLine *rst_;
-  InterruptLine *fiq_;
-  InterruptLine *irq_;
   GbaPpu *ppu_;
   Memory *pram_;
   Memory *vram_;
   Memory *oam_;
   Memory *regs_;
 };
+
+bool PpuTest::raised_ = false;
 
 TEST_F(PpuTest, InitialRegisterState) {
   uint16_t contents;

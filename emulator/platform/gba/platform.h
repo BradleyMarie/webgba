@@ -3,14 +3,13 @@
 
 #include <stdint.h>
 
+#include "emulator/cpu/interrupt_line.h"
 #include "emulator/memory/memory.h"
-#include "emulator/platform/interrupt_line.h"
 
 typedef struct _GbaPlatform GbaPlatform;
 
-bool GbaPlatformAllocate(GbaPlatform **platform, Memory **registers,
-                         InterruptLine **rst_line, InterruptLine **fiq_line,
-                         InterruptLine **irq_line);
+bool GbaPlatformAllocate(InterruptLine *irq_line, GbaPlatform **platform,
+                         Memory **registers);
 
 // Interrupts
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
