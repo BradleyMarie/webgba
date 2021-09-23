@@ -10,10 +10,10 @@ cc_library(
     deps = [
         ":exceptions",
         ":registers",
+        "//emulator/cpu:interrupt_line",
         "//emulator/cpu/arm7tdmi/decoders/arm:execute",
         "//emulator/cpu/arm7tdmi/decoders/thumb:execute",
         "//emulator/memory",
-        "//emulator/platform:interrupt_line",
     ],
 )
 

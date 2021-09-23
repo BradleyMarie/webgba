@@ -10,6 +10,7 @@ class InterruptLineTest : public testing::Test {
     expected_address_ = (void*)0x12345678u;
     interrupt_line_ = InterruptLineAllocate(expected_address_,
                                             InterruptLineSetCallback, nullptr);
+    ASSERT_NE(interrupt_line_, nullptr);
   }
 
   void TearDown() override { InterruptLineFree(interrupt_line_); }

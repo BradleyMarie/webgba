@@ -7,8 +7,8 @@ cc_library(
     srcs = ["platform.c"],
     hdrs = ["platform.h"],
     deps = [
+        "//emulator/cpu:interrupt_line",
         "//emulator/memory",
-        "//emulator/platform:interrupt_line",
     ],
 )
 

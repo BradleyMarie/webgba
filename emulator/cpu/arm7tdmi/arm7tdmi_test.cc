@@ -16,20 +16,7 @@ class ExecuteTest : public testing::Test {
                              Store16LE, Store8, nullptr);
     ASSERT_NE(nullptr, memory_);
 
-    rst = false;
-    auto rst_line = InterruptLineAllocate(nullptr, Rst, nullptr);
-    ASSERT_NE(nullptr, rst_line);
-
-    fiq = false;
-    auto fiq_line = InterruptLineAllocate(nullptr, Fiq, nullptr);
-    ASSERT_NE(nullptr, fiq_line);
-
-    irq = false;
-    auto irq_line = InterruptLineAllocate(nullptr, Irq, nullptr);
-    ASSERT_NE(nullptr, irq_line);
-
-    cpu_ = Arm7TdmiAllocate(rst_line, fiq_line, irq_line);
-    ASSERT_NE(nullptr, cpu_);
+    ASSERT_TRUE(Arm7TdmiAllocate(&cpu_, &rst_, &fiq_, &irq_));
 
     // Initialize CPU state
     AddInstruction(0x0u, "0x02DCA0E3");  // mov sp, #0x200
@@ -45,12 +32,10 @@ class ExecuteTest : public testing::Test {
   void TearDown() override {
     MemoryFree(memory_);
     Arm7TdmiFree(cpu_);
+    InterruptLineFree(rst_);
+    InterruptLineFree(fiq_);
+    InterruptLineFree(irq_);
   }
-
- private:
-  static bool Rst(const void *context) { return rst; };
-  static bool Fiq(const void *context) { return fiq; };
-  static bool Irq(const void *context) { return irq; };
 
  protected:
   static bool Load32LE(const void *context, uint32_t address, uint32_t *value) {
@@ -144,17 +129,13 @@ class ExecuteTest : public testing::Test {
   static std::vector<char> memory_space_;
   size_t instruction_end_;
   Arm7Tdmi *cpu_;
+  InterruptLine *rst_;
+  InterruptLine *fiq_;
+  InterruptLine *irq_;
   Memory *memory_;
-
-  static bool rst;
-  static bool fiq;
-  static bool irq;
 };
 
 std::vector<char> ExecuteTest::memory_space_(1024u, 0);
-bool ExecuteTest::rst = false;
-bool ExecuteTest::fiq = false;
-bool ExecuteTest::irq = false;
 
 TEST_F(ExecuteTest, ArmGCD) {
   AddInstruction("0x0F00A0E3");  // mov r0, #15
@@ -238,7 +219,8 @@ TEST_F(ExecuteTest, ThumbPrefetchABT) {
 }
 
 TEST_F(ExecuteTest, DoFIQ) {
-  fiq = true;
+  InterruptLineSetLevel(fiq_, true);
+
   AddInstruction(0x1Cu, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x20u, "0x00D08DE5");  // str sp, [sp]
   Run(3u);
@@ -249,7 +231,8 @@ TEST_F(ExecuteTest, DoFIQ) {
 }
 
 TEST_F(ExecuteTest, DoIRQ) {
-  irq = true;
+  InterruptLineSetLevel(irq_, true);
+
   AddInstruction(0x18u, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x1Cu, "0x00D08DE5");  // str sp, [sp]
   Run(3u);
@@ -260,8 +243,9 @@ TEST_F(ExecuteTest, DoIRQ) {
 }
 
 TEST_F(ExecuteTest, FIQPreemptsIRQ) {
-  fiq = true;
-  irq = true;
+  InterruptLineSetLevel(fiq_, true);
+  InterruptLineSetLevel(irq_, true);
+
   AddInstruction(0x1Cu, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x20u, "0x00D08DE5");  // str sp, [sp]
   Run(3u);
@@ -272,12 +256,12 @@ TEST_F(ExecuteTest, FIQPreemptsIRQ) {
 }
 
 TEST_F(ExecuteTest, RSTPreemptsAll) {
-  rst = true;
-  fiq = true;
-  irq = true;
+  InterruptLineSetLevel(rst_, true);
+  InterruptLineSetLevel(fiq_, true);
+  InterruptLineSetLevel(irq_, true);
   Run(1u);
 
-  rst = false;
+  InterruptLineSetLevel(rst_, false);
   AddInstruction(0x0u, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x4u, "0x00D08DE5");  // str sp, [sp]
   Run(3u);

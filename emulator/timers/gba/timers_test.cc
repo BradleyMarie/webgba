@@ -20,7 +20,11 @@ extern "C" {
 class TimersTest : public testing::Test {
  public:
   void SetUp() override {
-    ASSERT_TRUE(GbaPlatformAllocate(&plat_, &plat_regs_, &rst_, &fiq_, &irq_));
+    raised_ = false;
+    InterruptLine *irq =
+        InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
+    ASSERT_NE(irq, nullptr);
+    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
     ASSERT_TRUE(GbaTimersAllocate(plat_, &timers_, &regs_));
     ASSERT_TRUE(Store16LE(plat_regs_, IE_OFFSET, 0xFFFFu));
     ASSERT_TRUE(Store16LE(plat_regs_, IF_OFFSET, 0xFFFFu));
@@ -30,22 +34,24 @@ class TimersTest : public testing::Test {
   void TearDown() override {
     GbaPlatformRelease(plat_);
     MemoryFree(plat_regs_);
-    InterruptLineFree(rst_);
-    InterruptLineFree(fiq_);
-    InterruptLineFree(irq_);
     GbaTimersFree(timers_);
     MemoryFree(regs_);
   }
 
  protected:
+  static void InterruptSetLevel(void *context, bool raised) {
+    raised_ = raised;
+  }
+
+  static bool raised_;
+
   GbaPlatform *plat_;
   Memory *plat_regs_;
-  InterruptLine *rst_;
-  InterruptLine *fiq_;
-  InterruptLine *irq_;
   GbaTimers *timers_;
   Memory *regs_;
 };
+
+bool TimersTest::raised_ = false;
 
 TEST_F(TimersTest, GbaSpuRegistersLoad32LENotStarted) {
   uint32_t contents;
@@ -62,7 +68,7 @@ TEST_F(TimersTest, GbaSpuRegistersLoad32LENotStarted) {
   EXPECT_TRUE(Load32LE(regs_, TM3CNT_L_OFFSET, &contents));
   EXPECT_EQ(0x55660000u, contents);
 
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(TimersTest, GbaSpuRegistersLoad32LEStarted) {
@@ -80,7 +86,7 @@ TEST_F(TimersTest, GbaSpuRegistersLoad32LEStarted) {
   EXPECT_TRUE(Load32LE(regs_, TM3CNT_L_OFFSET, &contents));
   EXPECT_EQ(0xAABB7788u, contents);
 
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(TimersTest, GbaSpuRegistersLoad16LENotStarted) {
@@ -118,7 +124,7 @@ TEST_F(TimersTest, GbaSpuRegistersLoad16LENotStarted) {
   EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
   EXPECT_EQ(0x1122u, contents);
 
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(TimersTest, GbaSpuRegistersLoad8) {
@@ -200,7 +206,7 @@ TEST_F(TimersTest, GbaSpuRegistersLoad8) {
   EXPECT_TRUE(Load8(regs_, TM3CNT_L_OFFSET + 1u, &contents));
   EXPECT_EQ(0x22u, contents);
 
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(TimersTest, OutOfBounds) {
@@ -211,16 +217,16 @@ TEST_F(TimersTest, OutOfBounds) {
   EXPECT_FALSE(Load16LE(regs_, TM3CNT_H_OFFSET + 2u, nullptr));
   EXPECT_FALSE(Load8(regs_, TM3CNT_H_OFFSET + 2u, nullptr));
 
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 }
 
 TEST_F(TimersTest, OneCycleCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_H_OFFSET, 0xC0u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -233,15 +239,15 @@ TEST_F(TimersTest, OneCycleCounter) {
 TEST_F(TimersTest, SixtyFourCycleCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM1CNT_L_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(regs_, TM1CNT_H_OFFSET, 0xC1u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 63u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -254,15 +260,15 @@ TEST_F(TimersTest, SixtyFourCycleCounter) {
 TEST_F(TimersTest, TwoFiftySixCycleCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM2CNT_L_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(regs_, TM2CNT_H_OFFSET, 0xC2u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 255u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -275,15 +281,15 @@ TEST_F(TimersTest, TwoFiftySixCycleCounter) {
 TEST_F(TimersTest, FiveTwelveCycleCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM2CNT_L_OFFSET, 0xFFFEu));
   EXPECT_TRUE(Store16LE(regs_, TM2CNT_H_OFFSET, 0xC2u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 511u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -296,15 +302,15 @@ TEST_F(TimersTest, FiveTwelveCycleCounter) {
 TEST_F(TimersTest, TenTwentyFourCycleCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_L_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_H_OFFSET, 0xC3u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 1023u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -317,15 +323,15 @@ TEST_F(TimersTest, TenTwentyFourCycleCounter) {
 TEST_F(TimersTest, ZeroCounter) {
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_L_OFFSET, 0u));
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_H_OFFSET, 0xC0u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint32_t i = 0; i < UINT16_MAX; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -340,15 +346,15 @@ TEST_F(TimersTest, Cascaded) {
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_H_OFFSET, 0x81u));
   EXPECT_TRUE(Store16LE(regs_, TM1CNT_L_OFFSET, 0xFFFEu));
   EXPECT_TRUE(Store16LE(regs_, TM1CNT_H_OFFSET, 0xC7));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint32_t i = 0; i < 127; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -363,15 +369,15 @@ TEST_F(TimersTest, Cascaded) {
 TEST_F(TimersTest, Repeats) {
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_L_OFFSET, 0xFFFFu));
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_H_OFFSET, 0xC3u));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 1023u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
 
   uint16_t contents;
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -381,15 +387,15 @@ TEST_F(TimersTest, Repeats) {
   EXPECT_EQ(0xFFFFu, contents);
 
   EXPECT_TRUE(Store16LE(plat_regs_, IF_OFFSET, 0xFFFFu));
-  EXPECT_FALSE(InterruptLineIsRaised(irq_));
+  EXPECT_FALSE(raised_);
 
   for (uint16_t i = 0; i < 1023u; i++) {
     GbaTimersStep(timers_);
-    EXPECT_FALSE(InterruptLineIsRaised(irq_));
+    EXPECT_FALSE(raised_);
   }
 
   GbaTimersStep(timers_);
-  EXPECT_TRUE(InterruptLineIsRaised(irq_));
+  EXPECT_TRUE(raised_);
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
   EXPECT_EQ(1u << 6u, contents);
 
