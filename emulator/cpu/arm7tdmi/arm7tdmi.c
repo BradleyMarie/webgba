@@ -13,27 +13,27 @@
 #define THUMB_INSTRUCTION_SIZE 2u
 
 struct _Arm7Tdmi {
-  unsigned int interrupts_raised;
+  unsigned int step_routine_index;
   ArmAllRegisters registers;
   uint16_t reference_count;
 };
 
 static void Arm7TdmiSetLevelRst(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->interrupts_raised &= 3u;
-  cpu->interrupts_raised |= raised << 2u;
+  cpu->step_routine_index &= 7u;
+  cpu->step_routine_index |= raised << 3u;
 }
 
 static void Arm7TdmiSetLevelFiq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->interrupts_raised &= 5u;
-  cpu->interrupts_raised |= raised << 1u;
+  cpu->step_routine_index &= 11u;
+  cpu->step_routine_index |= raised << 2u;
 }
 
 static void Arm7TdmiSetLevelIrq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->interrupts_raised &= 6u;
-  cpu->interrupts_raised |= raised;
+  cpu->step_routine_index &= 13u;
+  cpu->step_routine_index |= raised << 1u;
 }
 
 static void Arm7TdmiInterruptLineFree(void* context) {
@@ -41,8 +41,14 @@ static void Arm7TdmiInterruptLineFree(void* context) {
   Arm7TdmiFree(cpu);
 }
 
+static inline void Arm7TdmiSetThumbMode(Arm7Tdmi* cpu, bool thumb) {
+  cpu->step_routine_index &= 14u;
+  cpu->step_routine_index |= thumb;
+}
+
 static void Arm7TdmiStepRst(Arm7Tdmi* cpu, Memory* memory) {
   ArmExceptionRST(&cpu->registers);
+  Arm7TdmiSetThumbMode(cpu, false);
   cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
 }
 
@@ -52,6 +58,7 @@ static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionFIQ(&cpu->registers);
+  Arm7TdmiSetThumbMode(cpu, false);
   cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
 
   return true;
@@ -63,17 +70,13 @@ static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionIRQ(&cpu->registers);
+  Arm7TdmiSetThumbMode(cpu, false);
   cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
 
   return true;
 }
 
-static inline bool Arm7TdmiStepMaybeThumbExecute(Arm7Tdmi* cpu,
-                                                 Memory* memory) {
-  if (!cpu->registers.current.user.cpsr.thumb) {
-    return false;
-  }
-
+static inline void Arm7TdmiStepThumbExecute(Arm7Tdmi* cpu, Memory* memory) {
   cpu->registers.current.user.gprs.pc &= 0xFFFFFFFEu;
 
   uint32_t next_instruction_addr =
@@ -82,8 +85,9 @@ static inline bool Arm7TdmiStepMaybeThumbExecute(Arm7Tdmi* cpu,
   bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
   if (!success) {
     ArmExceptionPrefetchABT(&cpu->registers);
+    Arm7TdmiSetThumbMode(cpu, false);
     cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
-    return true;
+    return;
   }
 
   bool modified_pc =
@@ -97,9 +101,8 @@ static inline bool Arm7TdmiStepMaybeThumbExecute(Arm7Tdmi* cpu,
         THUMB_INSTRUCTION_OFFSET - THUMB_INSTRUCTION_SIZE};
     cpu->registers.current.user.gprs.pc +=
         pc_offset[cpu->registers.current.user.cpsr.thumb];
+    Arm7TdmiSetThumbMode(cpu, cpu->registers.current.user.cpsr.thumb);
   }
-
-  return true;
 }
 
 static inline void Arm7TdmiStepArmExecute(Arm7Tdmi* cpu, Memory* memory) {
@@ -111,6 +114,7 @@ static inline void Arm7TdmiStepArmExecute(Arm7Tdmi* cpu, Memory* memory) {
   bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
   if (!success) {
     ArmExceptionPrefetchABT(&cpu->registers);
+    Arm7TdmiSetThumbMode(cpu, false);
     cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
     return;
   }
@@ -126,18 +130,31 @@ static inline void Arm7TdmiStepArmExecute(Arm7Tdmi* cpu, Memory* memory) {
         THUMB_INSTRUCTION_OFFSET - ARM_INSTRUCTION_SIZE};
     cpu->registers.current.user.gprs.pc +=
         pc_offset[cpu->registers.current.user.cpsr.thumb];
+    Arm7TdmiSetThumbMode(cpu, cpu->registers.current.user.cpsr.thumb);
   }
 }
 
-static inline void Arm7TdmiStepExecute(Arm7Tdmi* cpu, Memory* memory) {
-  if (Arm7TdmiStepMaybeThumbExecute(cpu, memory)) {
+static inline void Arm7TdmiStepExecuteArm(Arm7Tdmi* cpu, Memory* memory) {
+  Arm7TdmiStepArmExecute(cpu, memory);
+}
+
+static inline void Arm7TdmiStepExecuteThumb(Arm7Tdmi* cpu, Memory* memory) {
+  Arm7TdmiStepThumbExecute(cpu, memory);
+}
+
+static void Arm7TdmiStepFiqIrqArm(Arm7Tdmi* cpu, Memory* memory) {
+  if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+    return;
+  }
+
+  if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
     return;
   }
 
   Arm7TdmiStepArmExecute(cpu, memory);
 }
 
-static void Arm7TdmiStepFiqIrq(Arm7Tdmi* cpu, Memory* memory) {
+static void Arm7TdmiStepFiqIrqThumb(Arm7Tdmi* cpu, Memory* memory) {
   if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
     return;
   }
@@ -146,27 +163,47 @@ static void Arm7TdmiStepFiqIrq(Arm7Tdmi* cpu, Memory* memory) {
     return;
   }
 
-  Arm7TdmiStepExecute(cpu, memory);
+  Arm7TdmiStepThumbExecute(cpu, memory);
 }
 
-static void Arm7TdmiStepFiq(Arm7Tdmi* cpu, Memory* memory) {
+static void Arm7TdmiStepFiqArm(Arm7Tdmi* cpu, Memory* memory) {
   if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
     return;
   }
 
-  Arm7TdmiStepExecute(cpu, memory);
+  Arm7TdmiStepExecuteArm(cpu, memory);
 }
 
-static void Arm7TdmiStepIrq(Arm7Tdmi* cpu, Memory* memory) {
+static void Arm7TdmiStepFiqThumb(Arm7Tdmi* cpu, Memory* memory) {
+  if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+    return;
+  }
+
+  Arm7TdmiStepExecuteThumb(cpu, memory);
+}
+
+static void Arm7TdmiStepIrqArm(Arm7Tdmi* cpu, Memory* memory) {
   if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
     return;
   }
 
-  Arm7TdmiStepExecute(cpu, memory);
+  Arm7TdmiStepExecuteArm(cpu, memory);
 }
 
-static void Arm7TdmiStepClear(Arm7Tdmi* cpu, Memory* memory) {
-  Arm7TdmiStepExecute(cpu, memory);
+static void Arm7TdmiStepIrqThumb(Arm7Tdmi* cpu, Memory* memory) {
+  if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
+    return;
+  }
+
+  Arm7TdmiStepExecuteThumb(cpu, memory);
+}
+
+static void Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory) {
+  Arm7TdmiStepExecuteArm(cpu, memory);
+}
+
+static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
+  Arm7TdmiStepExecuteThumb(cpu, memory);
 }
 
 bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
@@ -205,12 +242,16 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  static const void (*step_routines[8u])(Arm7Tdmi*, Memory*) = {
-      Arm7TdmiStepClear, Arm7TdmiStepIrq, Arm7TdmiStepFiq, Arm7TdmiStepFiqIrq,
-      Arm7TdmiStepRst,   Arm7TdmiStepRst, Arm7TdmiStepRst, Arm7TdmiStepRst};
-  assert(cpu->interrupts_raised < 8u);
+  static const void (*step_routines[16u])(Arm7Tdmi*, Memory*) = {
+      Arm7TdmiStepArm,       Arm7TdmiStepThumb,       Arm7TdmiStepIrqArm,
+      Arm7TdmiStepIrqThumb,  Arm7TdmiStepFiqArm,      Arm7TdmiStepFiqThumb,
+      Arm7TdmiStepFiqIrqArm, Arm7TdmiStepFiqIrqThumb, Arm7TdmiStepRst,
+      Arm7TdmiStepRst,       Arm7TdmiStepRst,         Arm7TdmiStepRst,
+      Arm7TdmiStepRst,       Arm7TdmiStepRst,         Arm7TdmiStepRst,
+      Arm7TdmiStepRst};
+  assert(cpu->step_routine_index < 16u);
 
-  step_routines[cpu->interrupts_raised](cpu, memory);
+  step_routines[cpu->step_routine_index](cpu, memory);
 }
 
 void Arm7TdmiFree(Arm7Tdmi* cpu) {
