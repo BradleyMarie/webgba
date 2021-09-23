@@ -101,7 +101,7 @@ static void Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory) {
       ArmInstructionExecute(next_instruction, &cpu->registers, memory);
   bool thumb = cpu->registers.current.user.cpsr.thumb;
 
-  static const uint32_t pc_offset[2u][2u] = {
+  static const uint8_t pc_offset[2u][2u] = {
       {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
       {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
   cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
@@ -127,7 +127,7 @@ static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
       ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
   bool thumb = cpu->registers.current.user.cpsr.thumb;
 
-  static const uint32_t pc_offset[2u][2u] = {
+  static const uint8_t pc_offset[2u][2u] = {
       {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
       {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
   cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
