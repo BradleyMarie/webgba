@@ -92,17 +92,14 @@ static inline void Arm7TdmiStepThumbExecute(Arm7Tdmi* cpu, Memory* memory) {
 
   bool modified_pc =
       ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
+  bool thumb = cpu->registers.current.user.cpsr.thumb;
 
-  cpu->registers.current.user.gprs.pc += THUMB_INSTRUCTION_SIZE;
+  static const uint32_t pc_offset[2u][2u] = {
+      {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
+      {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
+  cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
 
-  if (modified_pc) {
-    static const uint32_t pc_offset[2u] = {
-        ARM_INSTRUCTION_OFFSET - THUMB_INSTRUCTION_SIZE,
-        THUMB_INSTRUCTION_OFFSET - THUMB_INSTRUCTION_SIZE};
-    cpu->registers.current.user.gprs.pc +=
-        pc_offset[cpu->registers.current.user.cpsr.thumb];
-    Arm7TdmiSetThumbMode(cpu, cpu->registers.current.user.cpsr.thumb);
-  }
+  Arm7TdmiSetThumbMode(cpu, thumb);
 }
 
 static inline void Arm7TdmiStepArmExecute(Arm7Tdmi* cpu, Memory* memory) {
@@ -121,17 +118,14 @@ static inline void Arm7TdmiStepArmExecute(Arm7Tdmi* cpu, Memory* memory) {
 
   bool modified_pc =
       ArmInstructionExecute(next_instruction, &cpu->registers, memory);
+  bool thumb = cpu->registers.current.user.cpsr.thumb;
 
-  cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_SIZE;
+  static const uint32_t pc_offset[2u][2u] = {
+      {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
+      {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
+  cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
 
-  if (modified_pc) {
-    static const uint32_t pc_offset[2u] = {
-        ARM_INSTRUCTION_OFFSET - ARM_INSTRUCTION_SIZE,
-        THUMB_INSTRUCTION_OFFSET - ARM_INSTRUCTION_SIZE};
-    cpu->registers.current.user.gprs.pc +=
-        pc_offset[cpu->registers.current.user.cpsr.thumb];
-    Arm7TdmiSetThumbMode(cpu, cpu->registers.current.user.cpsr.thumb);
-  }
+  Arm7TdmiSetThumbMode(cpu, thumb);
 }
 
 static inline void Arm7TdmiStepExecuteArm(Arm7Tdmi* cpu, Memory* memory) {
