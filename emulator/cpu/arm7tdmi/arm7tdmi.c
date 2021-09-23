@@ -11,28 +11,19 @@
 #define THUMB_INSTRUCTION_OFFSET 4u
 #define THUMB_INSTRUCTION_SIZE 2u
 
-static inline void Arm7TdmiRaiseRst(Arm7Tdmi* cpu) {
-  cpu->interrupts_raised |= 4u;
-}
-
-static inline void Arm7TdmiClearRst(Arm7Tdmi* cpu) {
+static inline void Arm7TdmiSetRst(Arm7Tdmi* cpu, bool raised) {
   cpu->interrupts_raised &= 3u;
+  cpu->interrupts_raised |= raised << 2u;
 }
 
-static inline void Arm7TdmiRaiseFiq(Arm7Tdmi* cpu) {
-  cpu->interrupts_raised |= 2u;
-}
-
-static inline void Arm7TdmiClearFiq(Arm7Tdmi* cpu) {
+static inline void Arm7TdmiSetFiq(Arm7Tdmi* cpu, bool raised) {
   cpu->interrupts_raised &= 5u;
+  cpu->interrupts_raised |= raised << 1u;
 }
 
-static inline void Arm7TdmiRaiseIrq(Arm7Tdmi* cpu) {
-  cpu->interrupts_raised |= 1u;
-}
-
-static inline void Arm7TdmiClearIrq(Arm7Tdmi* cpu) {
+static inline void Arm7TdmiSetIrq(Arm7Tdmi* cpu, bool raised) {
   cpu->interrupts_raised &= 6u;
+  cpu->interrupts_raised |= raised;
 }
 
 static void Arm7TdmiStepRst(Arm7Tdmi* cpu, Memory* memory) {
@@ -177,23 +168,9 @@ Arm7Tdmi* Arm7TdmiAllocate(InterruptLine* rst, InterruptLine* fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  if (InterruptLineIsRaised(cpu->rst)) {
-    Arm7TdmiRaiseRst(cpu);
-  } else {
-    Arm7TdmiClearRst(cpu);
-  }
-
-  if (InterruptLineIsRaised(cpu->fiq)) {
-    Arm7TdmiRaiseFiq(cpu);
-  } else {
-    Arm7TdmiClearFiq(cpu);
-  }
-
-  if (InterruptLineIsRaised(cpu->irq)) {
-    Arm7TdmiRaiseIrq(cpu);
-  } else {
-    Arm7TdmiClearIrq(cpu);
-  }
+  Arm7TdmiSetRst(cpu, InterruptLineIsRaised(cpu->rst));
+  Arm7TdmiSetFiq(cpu, InterruptLineIsRaised(cpu->fiq));
+  Arm7TdmiSetIrq(cpu, InterruptLineIsRaised(cpu->irq));
 
   static const void (*step_routines[8u])(Arm7Tdmi*, Memory*) = {
       Arm7TdmiStepClear, Arm7TdmiStepIrq, Arm7TdmiStepFiq, Arm7TdmiStepFiqIrq,
