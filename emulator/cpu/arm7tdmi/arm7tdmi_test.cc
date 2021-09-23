@@ -16,26 +16,30 @@ class ExecuteTest : public testing::Test {
                              Store16LE, Store8, nullptr);
     ASSERT_NE(nullptr, memory_);
 
+    rst = false;
     auto rst_line = InterruptLineAllocate(nullptr, Rst, nullptr);
     ASSERT_NE(nullptr, rst_line);
 
+    fiq = false;
     auto fiq_line = InterruptLineAllocate(nullptr, Fiq, nullptr);
     ASSERT_NE(nullptr, fiq_line);
 
+    irq = false;
     auto irq_line = InterruptLineAllocate(nullptr, Irq, nullptr);
     ASSERT_NE(nullptr, irq_line);
 
     cpu_ = Arm7TdmiAllocate(rst_line, fiq_line, irq_line);
     ASSERT_NE(nullptr, cpu_);
-    ASSERT_EQ(0x8u, cpu_->registers.current.user.gprs.pc);
 
-    cpu_->registers.current.user.gprs.pc = 0x108u;
-    cpu_->registers.current.user.gprs.sp = 0x200u;
-    cpu_->registers.current.spsr.mode = MODE_USR;
+    // Initialize CPU state
+    AddInstruction(0x0u, "0x02DCA0E3");  // mov sp, #0x200
+    AddInstruction(0x4u, "0x00D08DE5");  // str sp, [sp]
+    AddInstruction(0x8u, "0x01FCA0E3");  // mov pc, #0x100
+    Run(3u);
 
-    rst = false;
-    fiq = false;
-    irq = false;
+    uint32_t value;
+    ASSERT_TRUE(Load32LE(memory_, 0x200u, &value));
+    ASSERT_EQ(0x200u, value);
   }
 
   void TearDown() override {
@@ -117,6 +121,20 @@ class ExecuteTest : public testing::Test {
     }
   }
 
+  void AddInstruction(uint32_t address, std::string instruction_hex) {
+    if (instruction_hex[0u] == '0' && instruction_hex[1u] == 'x') {
+      instruction_hex.erase(0u, 2u);
+    }
+
+    assert(instruction_hex.size() == 4u || instruction_hex.size() == 8u);
+    for (size_t i = 0u; i < instruction_hex.size(); i += 2u) {
+      std::string hex_byte;
+      hex_byte += instruction_hex[i];
+      hex_byte += instruction_hex[i + 1u];
+      memory_space_[address++] = (char)std::stoul(hex_byte, nullptr, 16u);
+    }
+  }
+
   void Run(uint32_t num_steps) {
     for (uint32_t i = 0; i < num_steps; i++) {
       Arm7TdmiStep(cpu_, memory_);
@@ -145,8 +163,12 @@ TEST_F(ExecuteTest, ArmGCD) {
   AddInstruction("0x010040C0");  // subgt r0, r0, r1
   AddInstruction("0x001041B0");  // sublt r1, r1, r0
   AddInstruction("0xFBFFFF1A");  // bne #-12
-  Run(20u);
-  EXPECT_EQ(5u, cpu_->registers.current.user.gprs.r0);
+  AddInstruction("0x00008DE5");  // str r0, [sp]
+  Run(15u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x200u, &value));
+  EXPECT_EQ(5u, value);
 }
 
 TEST_F(ExecuteTest, ThumbGCD) {
@@ -159,13 +181,17 @@ TEST_F(ExecuteTest, ThumbGCD) {
   AddInstruction("0x0A21");  // movs r1, #10
   AddInstruction("0x8842");  // cmp r0, r1
   AddInstruction("0x04D0");  // beq #12
-  AddInstruction("0x02DB");  // blt #8
+  AddInstruction("0x01DB");  // blt #6
   AddInstruction("0x401A");  // subs r0, r0, r1
   AddInstruction("0xFAE7");  // b #-8
   AddInstruction("0x091A");  // subs r1, r1, r0
   AddInstruction("0xF8E7");  // b #-12
-  Run(40u);
-  EXPECT_EQ(5u, cpu_->registers.current.user.gprs.r0);
+  AddInstruction("0x0090");  // str r0, [sp]
+  Run(17u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x200u, &value));
+  EXPECT_EQ(5u, value);
 }
 
 TEST_F(ExecuteTest, ModeSwitches) {
@@ -179,79 +205,84 @@ TEST_F(ExecuteTest, ModeSwitches) {
 
   // Arm Instructions
   AddInstruction("0xFF70A0E3");  // mov r7, #255
-  Run(5u);
-  EXPECT_EQ(255u, cpu_->registers.current.user.gprs.r7);
+  AddInstruction("0x00708DE5");  // str r7, [sp]
+  Run(6u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x200u, &value));
+  EXPECT_EQ(255u, value);
 }
 
 TEST_F(ExecuteTest, ArmPrefetchABT) {
-  AddInstruction("0xFFE4A0E3");  // mov lr, #0xFF000000
-  AddInstruction("0x1EFF2FE1");  // bx lr
-  Run(3u);
+  AddInstruction("0xFFE4A0E3");         // mov lr, #0xFF000000
+  AddInstruction("0x1EFF2FE1");         // bx lr
+  AddInstruction(0x0Cu, "0x02DCA0E3");  // mov sp, #0x200
+  AddInstruction(0x10u, "0x00E08DE5");  // str lr, [sp]
+  Run(5u);
 
-  EXPECT_EQ(MODE_ABT, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x14u, cpu_->registers.current.user.gprs.pc);
-  EXPECT_FALSE(cpu_->registers.current.spsr.thumb);
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x200u, &value));
+  EXPECT_EQ(0xFF000004, value);
 }
 
 TEST_F(ExecuteTest, ThumbPrefetchABT) {
-  AddInstruction("0x1FE2A0E3");  // mov lr, #0xF0000001
-  AddInstruction("0x1EFF2FE1");  // bx lr
-  Run(3u);
+  AddInstruction("0x1FE2A0E3");         // mov lr, #0xF0000001
+  AddInstruction("0x1EFF2FE1");         // bx lr
+  AddInstruction(0x0Cu, "0x02DCA0E3");  // mov sp, #0x200
+  AddInstruction(0x10u, "0x00E08DE5");  // str lr, [sp]
+  Run(5u);
 
-  EXPECT_EQ(MODE_ABT, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x14u, cpu_->registers.current.user.gprs.pc);
-  EXPECT_TRUE(cpu_->registers.current.spsr.thumb);
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x200u, &value));
+  EXPECT_EQ(0xF0000004, value);
 }
 
 TEST_F(ExecuteTest, DoFIQ) {
   fiq = true;
-  Run(1u);
+  AddInstruction(0x1Cu, "0x03DCA0E3");  // mov sp, #0x300
+  AddInstruction(0x20u, "0x00D08DE5");  // str sp, [sp]
+  Run(3u);
 
-  EXPECT_EQ(MODE_FIQ, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x24u, cpu_->registers.current.user.gprs.pc);
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
+  EXPECT_EQ(0x300u, value);
 }
 
 TEST_F(ExecuteTest, DoIRQ) {
   irq = true;
-  Run(1u);
+  AddInstruction(0x18u, "0x03DCA0E3");  // mov sp, #0x300
+  AddInstruction(0x1Cu, "0x00D08DE5");  // str sp, [sp]
+  Run(3u);
 
-  EXPECT_EQ(MODE_IRQ, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x20u, cpu_->registers.current.user.gprs.pc);
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
+  EXPECT_EQ(0x300u, value);
 }
 
 TEST_F(ExecuteTest, FIQPreemptsIRQ) {
   fiq = true;
   irq = true;
-  Run(1u);
+  AddInstruction(0x1Cu, "0x03DCA0E3");  // mov sp, #0x300
+  AddInstruction(0x20u, "0x00D08DE5");  // str sp, [sp]
+  Run(3u);
 
-  EXPECT_EQ(MODE_FIQ, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x24u, cpu_->registers.current.user.gprs.pc);
-}
-
-TEST_F(ExecuteTest, MaskedFIQ) {
-  cpu_->registers.current.user.cpsr.fiq_disable = true;
-  fiq = true;
-  Run(1u);
-
-  EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x10Cu, cpu_->registers.current.user.gprs.pc);
-}
-
-TEST_F(ExecuteTest, MaskedIRQ) {
-  cpu_->registers.current.user.cpsr.irq_disable = true;
-  irq = true;
-  Run(1u);
-
-  EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x10Cu, cpu_->registers.current.user.gprs.pc);
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
+  EXPECT_EQ(0x300u, value);
 }
 
 TEST_F(ExecuteTest, RSTPreemptsAll) {
+  rst = true;
   fiq = true;
   irq = true;
-  rst = true;
   Run(1u);
 
-  EXPECT_EQ(MODE_SVC, cpu_->registers.current.user.cpsr.mode);
-  EXPECT_EQ(0x8u, cpu_->registers.current.user.gprs.pc);
+  rst = false;
+  AddInstruction(0x0u, "0x03DCA0E3");  // mov sp, #0x300
+  AddInstruction(0x4u, "0x00D08DE5");  // str sp, [sp]
+  Run(3u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
+  EXPECT_EQ(0x300u, value);
 }

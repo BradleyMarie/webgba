@@ -5,11 +5,20 @@
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
+#include "emulator/cpu/arm7tdmi/registers.h"
 
 #define ARM_INSTRUCTION_OFFSET 8u
 #define ARM_INSTRUCTION_SIZE 4u
 #define THUMB_INSTRUCTION_OFFSET 4u
 #define THUMB_INSTRUCTION_SIZE 2u
+
+struct _Arm7Tdmi {
+  unsigned int interrupts_raised;
+  ArmAllRegisters registers;
+  InterruptLine* rst;
+  InterruptLine* fiq;
+  InterruptLine* irq;
+};
 
 static inline void Arm7TdmiSetRst(Arm7Tdmi* cpu, bool raised) {
   cpu->interrupts_raised &= 3u;
