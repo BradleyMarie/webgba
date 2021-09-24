@@ -1,0 +1,3 @@
+build:release -c opt
+build:release --copt=-flto
+build:release --linkopt=-flto
