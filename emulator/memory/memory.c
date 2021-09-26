@@ -13,6 +13,18 @@ struct _Memory {
   void *context;
 };
 
+static bool IgnoreStore32LE(void *context, uint32_t address, uint32_t value) {
+  return true;
+}
+
+static bool IgnoreStore16LE(void *context, uint32_t address, uint16_t value) {
+  return true;
+}
+
+static bool IgnoreStore8(void *context, uint32_t address, uint8_t value) {
+  return true;
+}
+
 Memory *MemoryAllocate(void *context, Load32LEFunction load_le_32,
                        Load16LEFunction load_le_16, Load8Function load_8,
                        Store32LEFunction store_le_32,
@@ -33,6 +45,12 @@ Memory *MemoryAllocate(void *context, Load32LEFunction load_le_32,
   result->context = context;
 
   return result;
+}
+
+void MemorySetIgnoreWrites(Memory *memory) {
+  memory->store_le_32 = IgnoreStore32LE;
+  memory->store_le_16 = IgnoreStore16LE;
+  memory->store_8 = IgnoreStore8;
 }
 
 bool Load32LE(const Memory *memory, uint32_t address, uint32_t *value) {
