@@ -24,6 +24,8 @@ Memory *MemoryAllocate(void *context, Load32LEFunction load_le_32,
                        Store16LEFunction store_le_16, Store8Function store_8,
                        MemoryContextFree free_context);
 
+void MemorySetIgnoreWrites(Memory *memory);
+
 bool Load32LE(const Memory *memory, uint32_t address, uint32_t *value);
 bool Load16LE(const Memory *memory, uint32_t address, uint16_t *value);
 bool Load8(const Memory *memory, uint32_t address, uint8_t *value);
