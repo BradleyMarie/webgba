@@ -25,17 +25,17 @@ static inline bool ThumbShouldBranch(ArmProgramStatusRegister cpsr,
     case 7u:  // THUMB_CONDITION_VC
       return !cpsr.overflow;
     case 8u:  // THUMB_CONDITION_HI
-      return !cpsr.zero && cpsr.carry;
+      return !cpsr.zero & cpsr.carry;
     case 9u:  // THUMB_CONDITION_LS
-      return cpsr.zero || !cpsr.carry;
+      return cpsr.zero | !cpsr.carry;
     case 10u:  // THUMB_CONDITION_GE
       return cpsr.negative == cpsr.overflow;
     case 11u:  // THUMB_CONDITION_LT
       return cpsr.negative != cpsr.overflow;
     case 12u:  // THUMB_CONDITION_GT
-      return !cpsr.zero && cpsr.negative == cpsr.overflow;
+      return !cpsr.zero & (cpsr.negative == cpsr.overflow);
     case 13u:  // THUMB_CONDITION_LE
-      return cpsr.zero || cpsr.negative != cpsr.overflow;
+      return cpsr.zero | (cpsr.negative != cpsr.overflow);
   }
 
   assert(false);
