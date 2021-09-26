@@ -105,6 +105,41 @@ class GbaMemoryTest : public testing::Test {
     return expected_response_;
   }
 
+  static void TestStandardAddress(Memory** bank, uint32_t start, uint32_t end) {
+    for (uint32_t addr = start; addr < end; addr++) {
+      expected_bank_ = bank;
+      expected_address_ = addr - start;
+
+      if (addr % 4u == 0u) {
+        expected32_ = addr;
+        expected_response_ = true;
+
+        uint32_t value;
+        EXPECT_TRUE(Store32LE(memory_, addr, expected32_));
+        EXPECT_TRUE(Load32LE(memory_, addr, &value));
+        EXPECT_EQ(expected32_, value);
+      }
+
+      if (addr % 2u == 0) {
+        expected16_ = (uint16_t)addr;
+        expected_response_ = true;
+
+        uint16_t value;
+        EXPECT_TRUE(Store16LE(memory_, addr, expected16_));
+        EXPECT_TRUE(Load16LE(memory_, addr, &value));
+        EXPECT_EQ(expected16_, value);
+      }
+
+      expected8_ = (uint8_t)addr;
+      expected_response_ = true;
+
+      uint8_t value;
+      EXPECT_TRUE(Store8(memory_, addr, expected8_));
+      EXPECT_TRUE(Load8(memory_, addr, &value));
+      EXPECT_EQ(expected8_, value);
+    }
+  }
+
   static void TestIoRegisterAddress(Memory** bank, uint32_t start,
                                     uint32_t end) {
     for (uint32_t addr = start; addr < end; addr++) {
@@ -305,31 +340,31 @@ TEST_F(GbaMemoryTest, IoBank) {
 }
 
 TEST_F(GbaMemoryTest, ObjBank) {
-  TestIoRegisterAddress(&palette_, 0x5000000u, 0x6000000u);
+  TestStandardAddress(&palette_, 0x5000000u, 0x6000000u);
 }
 
 TEST_F(GbaMemoryTest, VramBank) {
-  TestIoRegisterAddress(&vram_, 0x6000000u, 0x7000000u);
+  TestStandardAddress(&vram_, 0x6000000u, 0x7000000u);
 }
 
 TEST_F(GbaMemoryTest, OamBank) {
-  TestIoRegisterAddress(&oam_, 0x7000000u, 0x8000000u);
+  TestStandardAddress(&oam_, 0x7000000u, 0x8000000u);
 }
 
 TEST_F(GbaMemoryTest, GameBank0) {
-  TestIoRegisterAddress(&game_, 0x08000000u, 0x0A000000u);
+  TestStandardAddress(&game_, 0x08000000u, 0x0A000000u);
 }
 
 TEST_F(GbaMemoryTest, GameBank1) {
-  TestIoRegisterAddress(&game_, 0x0A000000u, 0x0C000000u);
+  TestStandardAddress(&game_, 0x0A000000u, 0x0C000000u);
 }
 
 TEST_F(GbaMemoryTest, GameBank2) {
-  TestIoRegisterAddress(&game_, 0x0C000000u, 0x0E000000u);
+  TestStandardAddress(&game_, 0x0C000000u, 0x0E000000u);
 }
 
 TEST_F(GbaMemoryTest, SramBank) {
-  TestIoRegisterAddress(&sram_, 0x0E000000u, 0x0F000000u);
+  TestStandardAddress(&sram_, 0x0E000000u, 0x0F000000u);
 }
 
 TEST_F(GbaMemoryTest, BadBank) {

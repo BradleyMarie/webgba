@@ -11,6 +11,7 @@ cc_library(
         "//emulator/memory/gba/bios",
         "//emulator/memory/gba/io",
         "//emulator/memory/gba/iram",
+        "//emulator/memory/gba/open_bus",
         "//emulator/memory/gba/wram",
     ],
 )
