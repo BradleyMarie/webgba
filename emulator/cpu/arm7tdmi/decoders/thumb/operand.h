@@ -124,9 +124,9 @@ static inline void ThumbOperandPopRegisterList(uint16_t instruction,
 }
 
 static inline void ThumbOperandLoadStoreMultiple(uint16_t instruction,
-                                                 ArmRegisterIndex *Rd,
+                                                 ArmRegisterIndex *Rn,
                                                  uint_fast16_t *register_list) {
-  *Rd = (ArmRegisterIndex)((instruction >> 8u) & 0x7u);
+  *Rn = (ArmRegisterIndex)((instruction >> 8u) & 0x7u);
   *register_list = (instruction & 0xFFu);
 }
 

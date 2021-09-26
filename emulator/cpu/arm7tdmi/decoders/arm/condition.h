@@ -29,17 +29,17 @@ static inline bool ArmInstructionShouldExecute(ArmProgramStatusRegister cpsr,
     case 7u:  // ARM_CONDITION_VC
       return !cpsr.overflow;
     case 8u:  // ARM_CONDITION_HI
-      return !cpsr.zero && cpsr.carry;
+      return !cpsr.zero & cpsr.carry;
     case 9u:  // ARM_CONDITION_LS
-      return cpsr.zero || !cpsr.carry;
+      return cpsr.zero | !cpsr.carry;
     case 10u:  // ARM_CONDITION_GE
       return cpsr.negative == cpsr.overflow;
     case 11u:  // ARM_CONDITION_LT
       return cpsr.negative != cpsr.overflow;
     case 12u:  // ARM_CONDITION_GT
-      return !cpsr.zero && cpsr.negative == cpsr.overflow;
+      return !cpsr.zero & (cpsr.negative == cpsr.overflow);
     case 13u:  // 1ARM_CONDITION_LE
-      return cpsr.zero || cpsr.negative != cpsr.overflow;
+      return cpsr.zero | (cpsr.negative != cpsr.overflow);
     case 15u:  // ARM_CONDITION_NV
       return false;
   }

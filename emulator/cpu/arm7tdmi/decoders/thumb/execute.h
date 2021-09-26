@@ -97,11 +97,9 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
     case THUMB_OPCODE_B_FWD_COND:
       ThumbOperandConditionalForwardBranch(next_instruction, &condition,
                                            &branch_offset_32);
-      if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
+      modified_pc = ThumbShouldBranch(registers->current.user.cpsr, condition);
+      if (modified_pc) {
         ArmB(&registers->current.user.gprs, branch_offset_32);
-        modified_pc = true;
-      } else {
-        modified_pc = false;
       }
       break;
     case THUMB_OPCODE_B_REV:
@@ -112,11 +110,9 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
     case THUMB_OPCODE_B_REV_COND:
       ThumbOperandConditionalReverseBranch(next_instruction, &condition,
                                            &branch_offset_32);
-      if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
+      modified_pc = ThumbShouldBranch(registers->current.user.cpsr, condition);
+      if (modified_pc) {
         ArmB(&registers->current.user.gprs, branch_offset_32);
-        modified_pc = true;
-      } else {
-        modified_pc = false;
       }
       break;
     case THUMB_OPCODE_BICS:
@@ -176,11 +172,11 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       modified_pc = false;
       break;
     case THUMB_OPCODE_LDMIA:
-      ThumbOperandLoadStoreMultiple(next_instruction, &rd, &register_list);
-      if (register_list & (1u << rd)) {
-        load_store_success = ArmLDMIA(registers, memory, rd, register_list);
+      ThumbOperandLoadStoreMultiple(next_instruction, &rn, &register_list);
+      if (register_list & (1u << rn)) {
+        load_store_success = ArmLDMIA(registers, memory, rn, register_list);
       } else {
-        load_store_success = ArmLDMIAW(registers, memory, rd, register_list);
+        load_store_success = ArmLDMIAW(registers, memory, rn, register_list);
       }
       modified_pc = !load_store_success;
       break;
@@ -301,7 +297,8 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       ThumbOperandPopRegisterList(next_instruction, &register_list);
       load_store_success =
           ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
-      modified_pc = !load_store_success || register_list & (1u << REGISTER_R15);
+      modified_pc =
+          !load_store_success | !!(register_list & (1u << REGISTER_R15));
       break;
     case THUMB_OPCODE_PUSH:
       ThumbOperandPushRegisterList(next_instruction, &register_list);
