@@ -1,15 +1,19 @@
 #include "emulator/memory/gba/memory.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "emulator/memory/gba/bad/bad.h"
 #include "emulator/memory/gba/bios/bios.h"
 #include "emulator/memory/gba/io/io.h"
 #include "emulator/memory/gba/iram/iram.h"
+#include "emulator/memory/gba/open_bus/open_bus.h"
 #include "emulator/memory/gba/wram/wram.h"
 
+#define NUMBER_OF_MEMORY_BANKS 256u
+
 typedef struct {
-  Memory* banks[16];
+  Memory* banks[NUMBER_OF_MEMORY_BANKS];
   Memory* bios;
   Memory* ewram;
   Memory* iwram;
@@ -25,15 +29,59 @@ typedef struct {
 static Memory* GbaMemorySelectBank(const GbaMemory* memory, uint32_t* address) {
   uint32_t bank = *address >> 24u;
 
-  if (bank >= 16u) {
-    return memory->bad;
-  }
-
-  static const uint32_t address_mask[16] = {
-      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
-      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
-      0x01FFFFFFu, 0x01FFFFFFu, 0x01FFFFFFu, 0x01FFFFFFu,
-      0x01FFFFFFu, 0x01FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu};
+  static const uint32_t address_mask[NUMBER_OF_MEMORY_BANKS] = {
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x01FFFFFFu, 0x01FFFFFFu,
+      0x01FFFFFFu, 0x01FFFFFFu, 0x01FFFFFFu, 0x01FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu,  // Everything after this is for an unused bank
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu,
+      0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu, 0x00FFFFFFu};
   *address &= address_mask[bank];
 
   return memory->banks[bank];
@@ -43,65 +91,53 @@ static bool GbaMemoryLoad32LE(const void* context, uint32_t address,
                               uint32_t* value) {
   const GbaMemory* gba_memory = (const GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  if (Load32LE(memory, address, value)) {
-    return true;
-  }
-
-  // TODO: Implement Open Bus
-  *value = 0u;
-
-  return true;
+  bool result = Load32LE(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static bool GbaMemoryLoad16LE(const void* context, uint32_t address,
                               uint16_t* value) {
   const GbaMemory* gba_memory = (const GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  if (Load16LE(memory, address, value)) {
-    return true;
-  }
-
-  // TODO: Implement Open Bus
-  *value = 0u;
-
-  return true;
+  bool result = Load16LE(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static bool GbaMemoryLoad8(const void* context, uint32_t address,
                            uint8_t* value) {
   const GbaMemory* gba_memory = (const GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  if (Load8(memory, address, value)) {
-    return true;
-  }
-
-  // TODO: Implement Open Bus
-  *value = 0u;
-
-  return true;
+  bool result = Load8(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static bool GbaMemoryStore32LE(void* context, uint32_t address,
                                uint32_t value) {
   GbaMemory* gba_memory = (GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  Store32LE(memory, address, value);
-  return true;
+  bool result = Store32LE(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static bool GbaMemoryStore16LE(void* context, uint32_t address,
                                uint16_t value) {
   GbaMemory* gba_memory = (GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  Store16LE(memory, address, value);
-  return true;
+  bool result = Store16LE(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static bool GbaMemoryStore8(void* context, uint32_t address, uint8_t value) {
   GbaMemory* gba_memory = (GbaMemory*)context;
   Memory* memory = GbaMemorySelectBank(gba_memory, &address);
-  Store8(memory, address, value);
-  return true;
+  bool result = Store8(memory, address, value);
+  assert(result);
+  return result;
 }
 
 static void GbaMemoryFree(void* context) {
@@ -130,14 +166,29 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
     return NULL;
   }
 
-  Memory* bad = BadMemoryAllocate();
-  if (bad == NULL) {
+  Memory* bad_internal = BadMemoryAllocate();
+  if (bad_internal == NULL) {
     free(gba_memory);
     return false;
   }
 
-  Memory* bios = GBABiosAllocate();
+  Memory* bad = OpenBusAllocate(bad_internal);
+  if (bad == NULL) {
+    MemoryFree(bad_internal);
+    free(gba_memory);
+    return NULL;
+  }
+
+  Memory* bios_internal = GBABiosAllocate();
+  if (bios_internal == NULL) {
+    MemoryFree(bad);
+    free(gba_memory);
+    return NULL;
+  }
+
+  Memory* bios = OpenBusAllocate(bios_internal);
   if (bios == NULL) {
+    MemoryFree(bios_internal);
     MemoryFree(bad);
     free(gba_memory);
     return NULL;
@@ -160,11 +211,35 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
     return NULL;
   }
 
+  // TODO: Make memory reference counted
+  Memory* io_internal = IoMemoryAllocate(
+      ppu_registers, sound_registers, dma_registers, timer_registers,
+      peripheral_registers, platform_registers);
+  if (io_internal == NULL) {
+    MemoryFree(ewram);
+    MemoryFree(iwram);
+    MemoryFree(bios);
+    MemoryFree(bad);
+    free(gba_memory);
+    return NULL;
+  }
+
+  Memory* io = OpenBusAllocate(io_internal);
+  if (io == NULL) {
+    MemoryFree(io_internal);
+    MemoryFree(ewram);
+    MemoryFree(iwram);
+    MemoryFree(bios);
+    MemoryFree(bad);
+    free(gba_memory);
+    return NULL;
+  }
+
   gba_memory->banks[0x0u] = bios;
   gba_memory->banks[0x1u] = bad;
   gba_memory->banks[0x2u] = ewram;
   gba_memory->banks[0x3u] = iwram;
-  gba_memory->banks[0x4u] = NULL;
+  gba_memory->banks[0x4u] = io;
   gba_memory->banks[0x5u] = palette;
   gba_memory->banks[0x6u] = vram;
   gba_memory->banks[0x7u] = oam;
@@ -177,15 +252,19 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
   gba_memory->banks[0xEu] = sram;
   gba_memory->banks[0xFu] = bad;
 
+  for (size_t i = 16u; i < NUMBER_OF_MEMORY_BANKS; i++) {
+    gba_memory->banks[i] = bad;
+  }
+
   gba_memory->bios = bios;
   gba_memory->ewram = ewram;
   gba_memory->iwram = iwram;
-  gba_memory->io = NULL;
-  gba_memory->palette = NULL;
-  gba_memory->vram = NULL;
-  gba_memory->oam = NULL;
-  gba_memory->game = NULL;
-  gba_memory->sram = NULL;
+  gba_memory->io = io;
+  gba_memory->palette = palette;
+  gba_memory->vram = vram;
+  gba_memory->oam = oam;
+  gba_memory->game = game;
+  gba_memory->sram = sram;
   gba_memory->bad = bad;
 
   Memory* result = MemoryAllocate(
@@ -200,26 +279,8 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
     return NULL;
   }
 
-  // This is a bit of a hack in my opinion. It'd be a little cleaner if
-  // gba_memory was not modified by this function after allocating the result.
-  // That said, this is easier than the alternative mechanisms for *not* freeing
-  // the inputs to this function in the presence of a failed allocation.
-  Memory* io = IoMemoryAllocate(ppu_registers, sound_registers, dma_registers,
-                                timer_registers, peripheral_registers,
-                                platform_registers);
-  if (io == NULL) {
-    MemoryFree(result);
-    return NULL;
-  }
-
-  gba_memory->banks[0x4u] = io;
-
-  gba_memory->io = io;
-  gba_memory->palette = palette;
-  gba_memory->vram = vram;
-  gba_memory->oam = oam;
-  gba_memory->game = game;
-  gba_memory->sram = sram;
+  MemorySetIgnoreWrites(game);
+  MemorySetIgnoreWrites(sram);
 
   return result;
 }
