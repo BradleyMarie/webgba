@@ -206,6 +206,11 @@ void GbaEmulatorStep(GbaEmulator *emulator) {
   GbaTimersStep(emulator->timers);
 }
 
+void GbaEmulatorSetRenderAudioSample(
+    GbaEmulator *emulator, GbaEmulatorRenderAudioSampleRoutine render_routine) {
+  GbaSpuSetRenderAudioSampleRoutine(emulator->spu, render_routine);
+}
+
 void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer) {
   GbaPpuSetRenderOutput(emulator->ppu, framebuffer);
 }

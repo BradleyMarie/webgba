@@ -15,6 +15,12 @@ void GbaEmulatorFree(GbaEmulator *emulator);
 
 void GbaEmulatorStep(GbaEmulator *emulator);
 
+// Sound Output Management
+typedef void (*GbaEmulatorRenderAudioSampleRoutine)(int16_t left,
+                                                    int16_t right);
+void GbaEmulatorSetRenderAudioSample(
+    GbaEmulator *emulator, GbaEmulatorRenderAudioSampleRoutine render_routine);
+
 // Render Output Management
 typedef void (*GbaEmulatorRenderDoneFunction)(uint32_t width, uint32_t height);
 void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer);

@@ -90,7 +90,7 @@ void retro_get_system_info(struct retro_system_info *info) {
 void retro_get_system_av_info(struct retro_system_av_info *info) {
   memset(info, 0, sizeof(struct retro_system_av_info));
 
-  info->timing.fps = 16780000.0 / 280896.0;
+  info->timing.fps = 16777216.0 / 280896.0;
   info->timing.sample_rate = 32768.0;
   info->geometry.base_width = BASE_WIDTH;
   info->geometry.base_height = BASE_HEIGHT;
@@ -145,6 +145,7 @@ void retro_run() {
     UpdateVariables();
   }
 
+  GbaEmulatorSetRenderAudioSample(emulator, audio_cb);
   GbaEmulatorSetRenderOutput(emulator, hw_render.get_current_framebuffer());
   GbaEmulatorSetRenderScale(emulator, render_scale);
   GbaEmulatorSetRenderDoneCallback(emulator, FrameDoneCallback);
