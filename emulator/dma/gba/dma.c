@@ -361,10 +361,11 @@ void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit) {
   }
 }
 
-void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit) {
+void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit, uint32_t destination) {
   for (uint_fast8_t i = 1; i <= 2; i++) {
     if (dma_unit->registers.units[i].control.enabled &&
-        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL &&
+        dma_unit->registers.units[i].destination == destination) {
       GbaDmaUnitSetActiveBitTo(dma_unit, i, true);
     }
   }
