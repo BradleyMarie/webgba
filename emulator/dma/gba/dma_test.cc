@@ -794,8 +794,11 @@ TEST_F(DmaUnitTest, TestSpecialDma1) {
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(1u);
 
-  GbaDmaUnitSignalFifoRefresh(dma_unit_);
+  GbaDmaUnitSignalFifoRefresh(dma_unit_, 0u);
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  CheckDmaIsEnabled(1u);
 
+  GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(1u);
 }
@@ -808,8 +811,11 @@ TEST_F(DmaUnitTest, TestSpecialDma2) {
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(2u);
 
-  GbaDmaUnitSignalFifoRefresh(dma_unit_);
+  GbaDmaUnitSignalFifoRefresh(dma_unit_, 0u);
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  CheckDmaIsEnabled(2u);
 
+  GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(2u);
 }

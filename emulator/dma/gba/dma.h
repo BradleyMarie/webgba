@@ -16,7 +16,7 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory);
 // Triggers
 void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount);
 void GbaDmaUnitSignalVBlank(GbaDmaUnit *dma_unit);
-void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit);
+void GbaDmaUnitSignalFifoRefresh(GbaDmaUnit *dma_unit, uint32_t destination);
 
 // Reference Counting
 void GbaDmaUnitRetain(GbaDmaUnit *dma_unit);
