@@ -91,6 +91,7 @@ bool DirectSoundChannelPop(DirectSoundChannel* channel, int16_t* value) {
 
   channel->sample_index += 1u;
   if (channel->sample_index == sizeof(uint32_t)) {
+    channel->sample_index = 0u;
     channel->front += 1u;
     channel->size -= 1u;
 
@@ -107,6 +108,11 @@ uint32_t DirectSoundChannelPeekBack(DirectSoundChannel* channel) {
       (channel->front + channel->size) / FIFO_BUFFER_SIZE_PACKED_SAMPLES;
 
   return channel->packed_samples_high[next];
+}
+
+void DirectSoundChannelClear(DirectSoundChannel* channel) {
+  channel->size = 0u;
+  channel->sample_index = 0u;
 }
 
 void DirectSoundChannelFree(DirectSoundChannel* channel) {
