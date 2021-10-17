@@ -8,6 +8,15 @@ cc_library(
     hdrs = ["direct_sound.h"],
 )
 
+cc_test(
+    name = "direct_sound_test",
+    srcs = ["direct_sound_test.cc"],
+    deps = [
+        ":direct_sound",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "sound",
     srcs = ["sound.c"],

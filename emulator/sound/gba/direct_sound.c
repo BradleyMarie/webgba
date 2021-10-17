@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define FIFO_BUFFER_SIZE_PACKED_SAMPLES 7u
-#define FIFO_BUFFER_DMA_THRESHOLD 4u
+#define FIFO_BUFFER_DMA_THRESHOLD 3u
 
 struct _DirectSoundChannel {
   uint32_t packed_samples_high[FIFO_BUFFER_SIZE_PACKED_SAMPLES];
@@ -22,11 +22,12 @@ DirectSoundChannel* DirectSoundChannelAllocate() {
 void DirectSoundChannelPush8BitSamples(DirectSoundChannel* channel,
                                        uint32_t packed_samples) {
   uint_fast8_t next =
-      (channel->front + channel->size) / FIFO_BUFFER_SIZE_PACKED_SAMPLES;
+      (channel->front + channel->size) % FIFO_BUFFER_SIZE_PACKED_SAMPLES;
 
   channel->packed_samples_high[next] = packed_samples;
+  channel->packed_samples_low[next] = 0u;
 
-  if (channel->size < FIFO_BUFFER_SIZE_PACKED_SAMPLES - 1u) {
+  if (channel->size < FIFO_BUFFER_SIZE_PACKED_SAMPLES) {
     channel->size += 1u;
   }
 
@@ -36,7 +37,7 @@ void DirectSoundChannelPush8BitSamples(DirectSoundChannel* channel,
 void DirectSoundChannelPush16BitSamples(DirectSoundChannel* channel,
                                         uint32_t packed_samples) {
   uint_fast8_t next =
-      (channel->front + channel->size) / FIFO_BUFFER_SIZE_PACKED_SAMPLES;
+      (channel->front + channel->size) % FIFO_BUFFER_SIZE_PACKED_SAMPLES;
 
   uint32_t high_value_to_write = channel->packed_samples_high[next];
   uint32_t low_value_to_write = channel->packed_samples_low[next];
@@ -57,10 +58,10 @@ void DirectSoundChannelPush16BitSamples(DirectSoundChannel* channel,
     channel->write_upper_half = false;
   } else {
     high_value_to_write &= 0x0000FFFFu;
-    high_value_to_write |= high_samples << 16u;
+    high_value_to_write |= (uint32_t)high_samples << 16u;
 
     low_value_to_write &= 0x0000FFFFu;
-    high_value_to_write |= high_samples << 16u;
+    low_value_to_write |= (uint32_t)low_samples << 16u;
 
     channel->write_upper_half = true;
   }
@@ -68,19 +69,21 @@ void DirectSoundChannelPush16BitSamples(DirectSoundChannel* channel,
   channel->packed_samples_high[next] = high_value_to_write;
   channel->packed_samples_low[next] = low_value_to_write;
 
-  if (channel->size < FIFO_BUFFER_SIZE_PACKED_SAMPLES - 1u) {
+  if (channel->write_upper_half &&
+      channel->size < FIFO_BUFFER_SIZE_PACKED_SAMPLES) {
     channel->size += 1u;
   }
 }
 
 bool DirectSoundChannelPop(DirectSoundChannel* channel, int16_t* value) {
   if (channel->size == 0u) {
-    return 0u;
+    *value = 0;
+    return true;
   }
 
   uint_fast8_t bit_shift = 8u * channel->sample_index;
   uint8_t low_bits = channel->packed_samples_low[channel->front] >> bit_shift;
-  uint8_t high_bits = channel->packed_samples_low[channel->front] >> bit_shift;
+  uint8_t high_bits = channel->packed_samples_high[channel->front] >> bit_shift;
 
   *value = (uint16_t)low_bits | (((uint16_t)high_bits) << 8u);
 
@@ -100,7 +103,7 @@ bool DirectSoundChannelPop(DirectSoundChannel* channel, int16_t* value) {
 
 uint32_t DirectSoundChannelPeekBack(DirectSoundChannel* channel) {
   uint_fast8_t next =
-      (channel->front + channel->size) / FIFO_BUFFER_SIZE_PACKED_SAMPLES;
+      (channel->front + channel->size) % FIFO_BUFFER_SIZE_PACKED_SAMPLES;
 
   return channel->packed_samples_high[next];
 }
@@ -110,6 +113,4 @@ void DirectSoundChannelClear(DirectSoundChannel* channel) {
   channel->sample_index = 0u;
 }
 
-void DirectSoundChannelFree(DirectSoundChannel* channel) {
-  free(channel);
-}
+void DirectSoundChannelFree(DirectSoundChannel* channel) { free(channel); }
