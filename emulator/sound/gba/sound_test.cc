@@ -31,14 +31,34 @@ extern "C" {
 
 class SoundTest : public testing::Test {
  public:
-  void SetUp() override { ASSERT_TRUE(GbaSpuAllocate(&spu_, &regs_)); }
+  void SetUp() override {
+    InterruptLine *irq =
+        InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
+    ASSERT_NE(irq, nullptr);
+    ASSERT_TRUE(GbaPlatformAllocate(irq, &platform_, &platform_registers_));
+    ASSERT_TRUE(
+        GbaDmaUnitAllocate(platform_, &dma_unit_, &dma_unit_registers_));
+    ASSERT_TRUE(GbaSpuAllocate(dma_unit_, &spu_, &regs_));
+  }
 
   void TearDown() override {
-    GbaSpuFree(spu_);
+    GbaPlatformRelease(platform_);
+    MemoryFree(platform_registers_);
+    GbaDmaUnitRelease(dma_unit_);
+    MemoryFree(dma_unit_registers_);
+    GbaSpuRelease(spu_);
     MemoryFree(regs_);
   }
 
+  static void InterruptSetLevel(void *context, bool raised) {
+    // Do Nothing
+  }
+
  protected:
+  GbaPlatform *platform_;
+  Memory *platform_registers_;
+  GbaDmaUnit *dma_unit_;
+  Memory *dma_unit_registers_;
   GbaSpu *spu_;
   Memory *regs_;
 };

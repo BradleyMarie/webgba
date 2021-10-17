@@ -12,15 +12,10 @@ struct _DirectSoundChannel {
   uint_fast8_t front;
   uint_fast8_t size;
   bool write_upper_half;
-  GbaDmaUnit* dma_unit;
 };
 
-DirectSoundChannel* DirectSoundChannelAllocate(GbaDmaUnit* dma_unit) {
+DirectSoundChannel* DirectSoundChannelAllocate() {
   DirectSoundChannel* result = calloc(1u, sizeof(DirectSoundChannel));
-  if (result != NULL) {
-    result->dma_unit = dma_unit;
-    GbaDmaUnitRetain(dma_unit);
-  }
   return result;
 }
 
@@ -116,6 +111,5 @@ void DirectSoundChannelClear(DirectSoundChannel* channel) {
 }
 
 void DirectSoundChannelFree(DirectSoundChannel* channel) {
-  GbaDmaUnitRelease(channel->dma_unit);
   free(channel);
 }

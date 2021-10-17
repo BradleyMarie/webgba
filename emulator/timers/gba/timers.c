@@ -13,6 +13,7 @@
 #define TM3CNT_H_OFFSET 0x0Eu
 
 #define GBA_TIMER_REGISTERS_SIZE 0x10u
+#define GBA_SPU_TIMER_MAX_INDEX 1u
 #define GBA_NUM_TIMERS 4u
 
 typedef union {
@@ -47,6 +48,7 @@ struct _GbaTimers {
   GbaTimerRegisters read;
   GbaTimerRegisters write;
   GbaPlatform *platform;
+  GbaSpu *spu;
   uint16_t reference_count;
 };
 
@@ -267,7 +269,7 @@ void GbaTimersMemoryFree(void *context) {
   GbaTimersFree(timers);
 }
 
-bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
+bool GbaTimersAllocate(GbaPlatform *platform, GbaSpu *spu, GbaTimers **timers,
                        Memory **registers) {
   *timers = (GbaTimers *)calloc(1, sizeof(GbaTimers));
   if (*timers == NULL) {
@@ -286,9 +288,11 @@ bool GbaTimersAllocate(GbaPlatform *platform, GbaTimers **timers,
 
   FindAndUpdateNextEvent(*timers);
   (*timers)->platform = platform;
+  (*timers)->spu = spu;
   (*timers)->reference_count = 2u;
 
   GbaPlatformRetain(platform);
+  GbaSpuRetain(spu);
 
   return true;
 }
@@ -323,6 +327,10 @@ void GbaTimersStep(GbaTimers *timers) {
       if (timers->read.registers[i].tmcnt_h.irq_enable) {
         GbaPlatformRaiseTimerInterrupt(timers->platform, i);
       }
+
+      if (i <= GBA_SPU_TIMER_MAX_INDEX) {
+        GbaSpuTimerTick(timers->spu, i);
+      }
     }
   }
 
@@ -333,6 +341,8 @@ void GbaTimersFree(GbaTimers *timers) {
   assert(timers->reference_count != 0u);
   timers->reference_count -= 1u;
   if (timers->reference_count == 0u) {
+    GbaPlatformRelease(timers->platform);
+    GbaSpuRelease(timers->spu);
     free(timers);
   }
 }

@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//emulator/memory",
         "//emulator/platform/gba:platform",
+        "//emulator/sound/gba:sound",
     ],
 )
 
