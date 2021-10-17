@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "emulator/sound/gba/direct_sound.h"
+
 #define GBA_SPU_CYCLES_PER_SAMPLE 512u
 
 #define SOUND1CNT_L_OFFSET 0x00u
@@ -27,10 +29,24 @@
 #define WAVE_RAM2_H_OFFSET 0x3Au
 #define WAVE_RAM3_L_OFFSET 0x3Cu
 #define WAVE_RAM3_H_OFFSET 0x3Eu
-#define FIFO_A_OFFSET 0x40u
-#define FIFO_B_OFFSET 0x44u
+#define FIFO_A_LL_OFFSET 0x40u
+#define FIFO_A_LH_OFFSET 0x41u
+#define FIFO_A_HL_OFFSET 0x42u
+#define FIFO_A_HH_OFFSET 0x43u
+#define FIFO_B_LL_OFFSET 0x44u
+#define FIFO_B_LH_OFFSET 0x45u
+#define FIFO_B_HL_OFFSET 0x46u
+#define FIFO_B_HH_OFFSET 0x47u
+#define FIFO_A_16_LL_OFFSET 0x48u
+#define FIFO_A_16_LH_OFFSET 0x49u
+#define FIFO_A_16_HL_OFFSET 0x4Au
+#define FIFO_A_16_HH_OFFSET 0x4Bu
+#define FIFO_B_16_LL_OFFSET 0x4Cu
+#define FIFO_B_16_LH_OFFSET 0x4Du
+#define FIFO_B_16_HL_OFFSET 0x4Eu
+#define FIFO_B_16_HH_OFFSET 0x4Fu
 
-#define GBA_SPU_REGISTERS_SIZE 0x40u
+#define GBA_SPU_REGISTERS_SIZE 0x50u
 
 typedef union {
   struct {
@@ -214,14 +230,18 @@ typedef union {
     uint16_t unused8;
     uint16_t unused9;
     WaveRam wave_ram;
+    uint32_t unused10[4u];
   };
   uint16_t half_words[32];
 } GbaSpuRegisters;
 
 struct _GbaSpu {
   GbaSpuRegisters registers;
+  GbaDmaUnit *dma_unit;
+  DirectSoundChannel *direct_sound_a;
+  DirectSoundChannel *direct_sound_b;
   GbaSpuRenderAudioSampleRoutine render_routine;
-  uint_fast16_t cycles_until_wake;
+  bool xq_audio_enabled;
   uint16_t reference_count;
 };
 
@@ -341,14 +361,83 @@ static bool GbaSpuRegistersStore16LE(void *context, uint32_t address,
                                      uint16_t value) {
   assert((address & 0x1u) == 0u);
 
+  if (address > GBA_SPU_REGISTERS_SIZE) {
+    return false;
+  }
+
   GbaSpu *spu = (GbaSpu *)context;
 
-  if (address >= GBA_SPU_REGISTERS_SIZE) {
-    // Possibly FIFO registers
-    return true;
+  uint32_t samples;
+  switch (address) {
+    case FIFO_A_LL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0xFFFF0000;
+      samples |= value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_HL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0x0000FFFF;
+      samples |= (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_B_LL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0xFFFF0000;
+      samples |= value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_HL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0x0000FFFF;
+      samples |= (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_A_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_16_HL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_B_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_16_HL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
   }
 
   spu->registers.half_words[address >> 1u] = value;
+
+  if (!spu->registers.soundcnt_x.fifo_master_enable) {
+    DirectSoundChannelClear(spu->direct_sound_a);
+    DirectSoundChannelClear(spu->direct_sound_b);
+
+    for (uint_fast8_t index = 0; index < SOUNDCNT_H_OFFSET;
+         index += sizeof(uint16_t)) {
+      spu->registers.half_words[index >> 2u] = 0u;
+    }
+  } else if (spu->registers.soundcnt_h.dma_sound_a_reset_fifo) {
+    DirectSoundChannelClear(spu->direct_sound_a);
+  } else if (spu->registers.soundcnt_h.dma_sound_b_reset_fifo) {
+    DirectSoundChannelClear(spu->direct_sound_b);
+  }
 
   return true;
 }
@@ -356,6 +445,29 @@ static bool GbaSpuRegistersStore16LE(void *context, uint32_t address,
 static bool GbaSpuRegistersStore32LE(void *context, uint32_t address,
                                      uint32_t value) {
   assert((address & 0x3u) == 0u);
+
+  GbaSpu *spu = (GbaSpu *)context;
+
+  switch (address) {
+    case FIFO_A_LL_OFFSET:
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, value);
+      return true;
+    case FIFO_B_LL_OFFSET:
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, value);
+      return true;
+    case FIFO_A_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_a, value);
+      return true;
+    case FIFO_B_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_b, value);
+      return true;
+  }
 
   GbaSpuRegistersStore16LE(context, address, value);
   GbaSpuRegistersStore16LE(context, address + 2u, value >> 16u);
@@ -366,6 +478,114 @@ static bool GbaSpuRegistersStore32LE(void *context, uint32_t address,
 static bool GbaSpuRegistersStore8(void *context, uint32_t address,
                                   uint8_t value) {
   GbaSpu *spu = (GbaSpu *)context;
+
+  uint32_t samples;
+  switch (address) {
+    case FIFO_A_LL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0xFFFFFF00;
+      samples |= value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_LH_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0xFFFF00FF;
+      samples |= (uint32_t)value << 8u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_HL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0xFF00FFFF;
+      samples |= (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_HH_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_a);
+      samples &= 0x00FFFFFF;
+      samples |= (uint32_t)value << 24u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_B_LL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0xFFFFFF00;
+      samples |= value;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_LH_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0xFFFF00FF;
+      samples |= (uint32_t)value << 8u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_HL_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0xFF00FFFF;
+      samples |= (uint32_t)value << 16u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_HH_OFFSET:
+      samples = DirectSoundChannelPeekBack(spu->direct_sound_b);
+      samples &= 0x00FFFFFF;
+      samples |= (uint32_t)value << 24u;
+      DirectSoundChannelPush8BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_A_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = value;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_16_LH_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 8u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_16_HL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 16u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_A_16_HH_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 24u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_a, samples);
+      return true;
+    case FIFO_B_16_LL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = value;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_16_LH_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 8u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_16_HL_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 16u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_b, samples);
+      return true;
+    case FIFO_B_16_HH_OFFSET:
+      if (!spu->xq_audio_enabled) {
+        return false;
+      }
+      samples = (uint32_t)value << 24u;
+      DirectSoundChannelPush16BitSamples(spu->direct_sound_b, samples);
+      return true;
+  }
 
   uint32_t read_address = address & 0xFFFFFFFEu;
   uint16_t value16 = spu->registers.half_words[read_address >> 1u];
@@ -384,10 +604,10 @@ static bool GbaSpuRegistersStore8(void *context, uint32_t address,
 
 void GbaSpuMemoryFree(void *context) {
   GbaSpu *spu = (GbaSpu *)context;
-  GbaSpuFree(spu);
+  GbaSpuRelease(spu);
 }
 
-bool GbaSpuAllocate(GbaSpu **spu, Memory **registers) {
+bool GbaSpuAllocate(GbaDmaUnit *dma_unit, GbaSpu **spu, Memory **registers) {
   *spu = (GbaSpu *)calloc(1, sizeof(GbaSpu));
   if (*spu == NULL) {
     return false;
@@ -402,6 +622,24 @@ bool GbaSpuAllocate(GbaSpu **spu, Memory **registers) {
     return false;
   }
 
+  (*spu)->direct_sound_a = DirectSoundChannelAllocate();
+  if ((*spu)->direct_sound_a == NULL) {
+    MemoryFree(*registers);
+    free(*spu);
+    return false;
+  }
+
+  (*spu)->direct_sound_b = DirectSoundChannelAllocate();
+  if ((*spu)->direct_sound_b == NULL) {
+    DirectSoundChannelFree((*spu)->direct_sound_a);
+    MemoryFree(*registers);
+    free(*spu);
+    return false;
+  }
+
+  GbaDmaUnitRetain(dma_unit);
+
+  (*spu)->dma_unit = dma_unit;
   (*spu)->registers.soundbias.level = 0x200u;
   (*spu)->reference_count = 2u;
 
@@ -409,16 +647,72 @@ bool GbaSpuAllocate(GbaSpu **spu, Memory **registers) {
 }
 
 void GbaSpuStep(GbaSpu *spu) {
-  if (spu->cycles_until_wake != 0u) {
-    spu->cycles_until_wake -= 1u;
+  // TODO
+}
+
+void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
+  if (!spu->registers.soundcnt_x.fifo_master_enable ||
+      spu->render_routine == NULL) {
     return;
   }
 
-  spu->cycles_until_wake = GBA_SPU_CYCLES_PER_SAMPLE;
+  int32_t left = 0u;
+  int32_t right = 0u;
+  if (spu->registers.soundcnt_h.dma_sound_a_timer_select == timer_index) {
+    int16_t sample;
+    bool refill_needed = DirectSoundChannelPop(spu->direct_sound_a, &sample);
+    if (refill_needed) {
+      GbaDmaUnitSignalFifoRefresh(spu->dma_unit, 0x40000A0u);
+      GbaDmaUnitSignalFifoRefresh(spu->dma_unit, 0x40000A8u);
+    }
 
-  if (spu->render_routine != NULL) {
-    spu->render_routine(0u, 0u);
+    if (!spu->registers.soundcnt_h.dma_sound_a_volume) {
+      sample /= 2u;
+    }
+
+    if (spu->registers.soundcnt_h.dma_sound_a_left_enabled) {
+      left += sample;
+    }
+
+    if (spu->registers.soundcnt_h.dma_sound_a_right_enabled) {
+      right += sample;
+    }
   }
+
+  if (spu->registers.soundcnt_h.dma_sound_b_timer_select == timer_index) {
+    int16_t sample;
+    bool refill_needed = DirectSoundChannelPop(spu->direct_sound_b, &sample);
+    if (refill_needed) {
+      GbaDmaUnitSignalFifoRefresh(spu->dma_unit, 0x40000A4u);
+      GbaDmaUnitSignalFifoRefresh(spu->dma_unit, 0x40000ACu);
+    }
+
+    if (!spu->registers.soundcnt_h.dma_sound_b_volume) {
+      sample /= 2u;
+    }
+
+    if (spu->registers.soundcnt_h.dma_sound_b_left_enabled) {
+      left += sample;
+    }
+
+    if (spu->registers.soundcnt_h.dma_sound_b_right_enabled) {
+      right += sample;
+    }
+  }
+
+  if (left < INT16_MIN) {
+    left = INT16_MIN;
+  } else if (left > INT16_MAX) {
+    left = INT16_MAX;
+  }
+
+  if (right < INT16_MIN) {
+    right = INT16_MIN;
+  } else if (right > INT16_MAX) {
+    right = INT16_MAX;
+  }
+
+  spu->render_routine(left, right);
 }
 
 void GbaSpuSetRenderAudioSampleRoutine(
@@ -426,10 +720,18 @@ void GbaSpuSetRenderAudioSampleRoutine(
   spu->render_routine = render_routine;
 }
 
-void GbaSpuFree(GbaSpu *spu) {
+void GbaSpuRetain(GbaSpu *spu) {
+  assert(spu->reference_count != UINT16_MAX);
+  spu->reference_count += 1u;
+}
+
+void GbaSpuRelease(GbaSpu *spu) {
   assert(spu->reference_count != 0u);
   spu->reference_count -= 1u;
   if (spu->reference_count == 0u) {
+    DirectSoundChannelFree(spu->direct_sound_a);
+    DirectSoundChannelFree(spu->direct_sound_b);
+    GbaDmaUnitRelease(spu->dma_unit);
     free(spu);
   }
 }

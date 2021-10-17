@@ -6,9 +6,6 @@ cc_library(
     name = "direct_sound",
     srcs = ["direct_sound.c"],
     hdrs = ["direct_sound.h"],
-    deps = [
-        "//emulator/dma/gba:dma",
-    ],
 )
 
 cc_library(
@@ -16,6 +13,8 @@ cc_library(
     srcs = ["sound.c"],
     hdrs = ["sound.h"],
     deps = [
+        ":direct_sound",
+        "//emulator/dma/gba:dma",
         "//emulator/memory",
     ],
 )

@@ -1,11 +1,12 @@
 #ifndef _WEBGBA_EMULATOR_SOUND_GBA_DIRECT_SOUND_
 #define _WEBGBA_EMULATOR_SOUND_GBA_DIRECT_SOUND_
 
-#include "emulator/dma/gba/dma.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef struct _DirectSoundChannel DirectSoundChannel;
 
-DirectSoundChannel* DirectSoundChannelAllocate(GbaDmaUnit* dma_unit);
+DirectSoundChannel* DirectSoundChannelAllocate();
 
 void DirectSoundChannelPush8BitSamples(DirectSoundChannel* channel,
                                        uint32_t packed_samples);
