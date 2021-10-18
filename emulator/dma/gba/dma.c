@@ -282,7 +282,8 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
     }
 
     uint32_t transfer_size;
-    if (dma_unit->registers.units[i].control.transfer_word) {
+    if (dma_unit->registers.units[i].control.transfer_word ||
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
       const static uint32_t address_mask = 0xFFFFFFFCu;
       uint32_t value;
       Load32LE(memory, dma_unit->current_source[i] & address_mask, &value);
@@ -305,20 +306,23 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
         break;
     }
 
-    switch (dma_unit->registers.units[i].control.dest_addr) {
-      case GBA_DMA_ADDR_INCREMENT:
-        dma_unit->current_destination[i] += transfer_size;
-        break;
-      case GBA_DMA_ADDR_DECREMENT:
-        dma_unit->current_destination[i] -= transfer_size;
-        break;
-      case GBA_DMA_ADDR_INCREMENT_RELOAD:
-        dma_unit->current_destination[i] += transfer_size;
-        break;
+    if (dma_unit->registers.units[i].control.start_timing != GBA_DMA_SPECIAL) {
+      switch (dma_unit->registers.units[i].control.dest_addr) {
+        case GBA_DMA_ADDR_INCREMENT:
+          dma_unit->current_destination[i] += transfer_size;
+          break;
+        case GBA_DMA_ADDR_DECREMENT:
+          dma_unit->current_destination[i] -= transfer_size;
+          break;
+        case GBA_DMA_ADDR_INCREMENT_RELOAD:
+          dma_unit->current_destination[i] += transfer_size;
+          break;
+      }
     }
 
     dma_unit->transfers_remaining[i] -= 1u;
-    if (dma_unit->transfers_remaining[i] == 0u) {
+    if (dma_unit->transfers_remaining[i] == 0u ||
+        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
       GbaDmaUnitClearActive(dma_unit, i);
       if (!dma_unit->registers.units[i].control.repeat) {
         dma_unit->registers.units[i].control.enabled = false;
