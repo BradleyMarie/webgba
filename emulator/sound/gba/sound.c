@@ -651,8 +651,7 @@ void GbaSpuStep(GbaSpu *spu) {
 }
 
 void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
-  if (!spu->registers.soundcnt_x.fifo_master_enable ||
-      spu->render_routine == NULL) {
+  if (!spu->registers.soundcnt_x.fifo_master_enable) {
     return;
   }
 
@@ -712,7 +711,9 @@ void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
     right = INT16_MAX;
   }
 
-  spu->render_routine(left, right);
+  if (spu->render_routine != NULL) {
+    spu->render_routine(left, right);
+  }
 }
 
 void GbaSpuSetRenderAudioSampleRoutine(

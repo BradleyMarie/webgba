@@ -801,6 +801,15 @@ TEST_F(DmaUnitTest, TestSpecialDma1) {
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(1u);
+
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  DmaDoSteps(1u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
 }
 
 TEST_F(DmaUnitTest, TestSpecialDma2) {
@@ -818,6 +827,15 @@ TEST_F(DmaUnitTest, TestSpecialDma2) {
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(2u);
+
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  DmaDoSteps(1u);
+
+  uint32_t value;
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x12345678u, value);
+
+  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
 }
 
 TEST_F(DmaUnitTest, TestSpecialDma3) {

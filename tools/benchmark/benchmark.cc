@@ -25,8 +25,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  std::cout << "Rendering " << frame_count << " frames." << std::endl;
-
   std::ifstream file(argv[2u], std::ios::binary);
   if (file.fail()) {
     std::cout << "ERROR: Failed to open ROM file" << std::endl;
@@ -51,6 +49,8 @@ int main(int argc, char **argv) {
   if (!success) {
     return false;
   }
+
+  std::cout << "Rendering " << frame_count << " frames." << std::endl;
 
   auto begin = std::chrono::steady_clock::now();
 
