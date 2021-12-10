@@ -88,10 +88,12 @@ void retro_get_system_info(struct retro_system_info *info) {
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info) {
-  memset(info, 0, sizeof(struct retro_system_av_info));
+  static const double cpu_cycles_per_second = 16777216.0;
+  static const double cycles_per_frame = 280896.0;
 
-  info->timing.fps = 16777216.0 / 280896.0;
-  info->timing.sample_rate = 32768.0;
+  memset(info, 0, sizeof(struct retro_system_av_info));
+  info->timing.fps = cpu_cycles_per_second / cycles_per_frame;
+  info->timing.sample_rate = cpu_cycles_per_second / 1024.0;
   info->geometry.base_width = BASE_WIDTH;
   info->geometry.base_height = BASE_HEIGHT;
   info->geometry.max_width = MAX_WIDTH;

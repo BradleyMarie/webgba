@@ -236,11 +236,13 @@ typedef union {
 } GbaSpuRegisters;
 
 struct _GbaSpu {
+  GbaSpuRenderAudioSampleRoutine render_routine;
+  int16_t current_samples[2];
+  int_fast16_t next_sample;
   GbaSpuRegisters registers;
   GbaDmaUnit *dma_unit;
   DirectSoundChannel *direct_sound_a;
   DirectSoundChannel *direct_sound_b;
-  GbaSpuRenderAudioSampleRoutine render_routine;
   bool xq_audio_enabled;
   uint16_t reference_count;
 };
@@ -647,7 +649,16 @@ bool GbaSpuAllocate(GbaDmaUnit *dma_unit, GbaSpu **spu, Memory **registers) {
 }
 
 void GbaSpuStep(GbaSpu *spu) {
-  // TODO
+  if (spu->next_sample < 1024) {
+    spu->next_sample += 1;
+    return;
+  }
+
+  spu->next_sample = 0;
+
+  if (spu->render_routine != NULL) {
+    spu->render_routine(spu->current_samples[0], spu->current_samples[1]);
+  }
 }
 
 void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
@@ -711,9 +722,8 @@ void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
     right = INT16_MAX;
   }
 
-  if (spu->render_routine != NULL) {
-    spu->render_routine(left, right);
-  }
+  spu->current_samples[0] = left;
+  spu->current_samples[1] = right;
 }
 
 void GbaSpuSetRenderAudioSampleRoutine(
