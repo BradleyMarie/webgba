@@ -649,7 +649,7 @@ bool GbaSpuAllocate(GbaDmaUnit *dma_unit, GbaSpu **spu, Memory **registers) {
 }
 
 void GbaSpuStep(GbaSpu *spu) {
-  if (spu->next_sample < 1024) {
+  if (spu->next_sample < 128) {
     spu->next_sample += 1;
     return;
   }
