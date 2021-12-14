@@ -6,333 +6,225 @@ extern "C" {
 
 class DirectSoundTest : public testing::Test {
  public:
-  void SetUp() override {
-    channel_ = DirectSoundChannelAllocate();
-    ASSERT_NE(nullptr, channel_);
-  }
-
-  void TearDown() override { DirectSoundChannelFree(channel_); }
+  void SetUp() override { memset(&channel_, 0, sizeof(DirectSoundChannel)); }
 
  protected:
-  DirectSoundChannel *channel_;
+  DirectSoundChannel channel_;
 };
 
-TEST_F(DirectSoundTest, EmptyPeek) {
-  uint32_t value = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, value);
-}
-
 TEST_F(DirectSoundTest, EmptyPop) {
-  int16_t value;
-  ASSERT_TRUE(DirectSoundChannelPop(channel_, &value));
+  int8_t value;
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
   EXPECT_EQ(0, value);
 }
 
-TEST_F(DirectSoundTest, FillBufferWith8BitSamples) {
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  uint32_t back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
+TEST_F(DirectSoundTest, PushPop) {
+  DirectSoundChannelPush(&channel_, 1);
 
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
-
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
-
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
-
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
-
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0u, back);
-
-  DirectSoundChannelPush8BitSamples(channel_, 0xFFFFFFFFu);
-  back = DirectSoundChannelPeekBack(channel_);
-  EXPECT_EQ(0xFFFFFFFFu, back);
+  int8_t value;
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(1, value);
 }
 
-TEST_F(DirectSoundTest, DrainBufferWith8BitSamples) {
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
+TEST_F(DirectSoundTest, PushToPastFull) {
+  for (int8_t i = 1; i <= 33; i++) {
+    DirectSoundChannelPush(&channel_, i);
+  }
 
-  int16_t sample;
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0, sample);
+  int8_t value;
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(2, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(3, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(4, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(5, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(6, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(7, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(8, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(9, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(10, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(11, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(12, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(13, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(14, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(15, value);
+  EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(16, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(17, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(18, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(19, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(20, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(21, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(22, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(23, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(24, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(25, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(26, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(27, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(28, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(29, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(30, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(31, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(32, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(33, value);
 }
 
-TEST_F(DirectSoundTest, FillAndDrainBufferWith16BitSamples) {
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush16BitSamples(channel_, 0x44332211u);
+TEST_F(DirectSoundTest, RepeatedPushAndPops) {
+  for (int i = 0; i < 100; i++) {
+    for (int8_t i = 1; i <= 33; i++) {
+      DirectSoundChannelPush(&channel_, i);
+    }
 
-  int16_t sample;
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
+    int8_t value;
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(2, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(3, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(4, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(5, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(6, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(7, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(8, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(9, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(10, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(11, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(12, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(13, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(14, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(15, value);
+    EXPECT_FALSE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(16, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(17, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(18, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(19, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(20, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(21, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(22, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(23, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(24, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(25, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(26, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(27, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(28, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(29, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(30, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(31, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(32, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(33, value);
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
+    for (int8_t i = 1; i <= 7; i++) {
+      DirectSoundChannelPush(&channel_, i);
+    }
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2211, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4433, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0, sample);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(1, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(2, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(3, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(4, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(5, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(6, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(7, value);
+    EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+    EXPECT_EQ(0, value);
+  }
 }
 
-TEST_F(DirectSoundTest, DrainBufferWith8BitSamplesWithRefill) {
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x44332211u);
+TEST_F(DirectSoundTest, PushTwo) {
+  DirectSoundChannelPushTwo(&channel_, 0x2211);
 
-  int16_t sample;
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
+  int8_t value;
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x11, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x22, value);
+}
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
+TEST_F(DirectSoundTest, PushFour) {
+  DirectSoundChannelPushFour(&channel_, 0x44332211);
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
+  int8_t value;
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x11, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x22, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x33, value);
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0x44, value);
+}
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
+TEST_F(DirectSoundTest, Clear) {
+  for (int8_t i = 1; i <= 33; i++) {
+    DirectSoundChannelPush(&channel_, i);
+  }
 
-  DirectSoundChannelPush8BitSamples(channel_, 0x88776655u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x88776655u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x88776655u);
-  DirectSoundChannelPush8BitSamples(channel_, 0x88776655u);
+  DirectSoundChannelClear(&channel_);
 
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x1100, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x2200, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x3300, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x4400, sample);
-
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x5500, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x6600, sample);
-  EXPECT_FALSE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x7700, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(-30720, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x5500, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x6600, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x7700, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(-30720, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x5500, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x6600, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x7700, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(-30720, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x5500, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x6600, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0x7700, sample);
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(-30720, sample);
-
-  EXPECT_TRUE(DirectSoundChannelPop(channel_, &sample));
-  EXPECT_EQ(0, sample);
+  int8_t value;
+  EXPECT_TRUE(DirectSoundChannelPop(&channel_, &value));
+  EXPECT_EQ(0, value);
 }
