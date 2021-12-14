@@ -5,7 +5,8 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y, uint16_t* color,
-                       uint8_t* priority, bool* semi_transparent) {
+                       uint8_t* priority, bool* semi_transparent,
+                       bool* on_obj_mask) {
   *priority = UINT8_MAX;
   bool found = false;
 
@@ -80,10 +81,27 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
     }
 
     unsigned short character_name =
-        memory->oam.object_attributes[object].character_name;
+        memory->oam.object_attributes[object].character_name >>
+        memory->oam.object_attributes[object].palette_mode;
+    unsigned short x_tile = lookup_x / 8u;
+    unsigned short y_tile = lookup_y / 8u;
+
+    unsigned short tile_index;
+    if (registers->dispcnt.object_mode) {
+      // One Dimensional Lookup
+      unsigned short x_size_tiles =
+          (internal_registers->object_coordinates[object].x_size / 8u);
+      tile_index = character_name + y_tile * x_size_tiles + x_tile;
+    } else {
+      // Two Dimensional Lookup
+      unsigned short row_width =
+          32u >> memory->oam.object_attributes[object].palette_mode;
+      tile_index = character_name + y_tile * row_width + x_tile;
+    }
+
     if (registers->dispcnt.mode >= 3u) {
       static const uint_least16_t minimum_index[2] = {
-          GBA_BITMAP_MODE_NUM_OBJECT_D_TILES,
+          GBA_BITMAP_MODE_NUM_OBJECT_S_TILES,
           GBA_BITMAP_MODE_NUM_OBJECT_D_TILES};
       if (character_name <
           minimum_index[memory->oam.object_attributes[object].palette_mode]) {
@@ -91,26 +109,12 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
       }
     }
 
-    unsigned short x_tile = lookup_x / 8u;
-    unsigned short y_tile = lookup_y / 8u;
-
-    unsigned short tile_index;
-    if (registers->dispcnt.object_mode) {
-      // One Dimensional Lookup
-      uint_fast8_t x_size_tiles =
-          internal_registers->object_coordinates[object].x_size / 8u;
-      tile_index = character_name + y_tile * x_size_tiles + x_tile;
-    } else {
-      // Two Dimensional Lookup
-      tile_index = character_name + y_tile * 32u + x_tile;
-    }
-
     uint_fast8_t x_tile_pixel = lookup_x & 0x7u;
     uint_fast8_t y_tile_pixel = lookup_y & 0x7u;
 
     uint16_t obj_color;
     if (memory->oam.object_attributes[object].palette_mode) {
-      uint8_t color_index = memory->vram.mode_012.obj.d_tiles[tile_index >> 1u]
+      uint8_t color_index = memory->vram.mode_012.obj.d_tiles[tile_index]
                                 .pixels[y_tile_pixel][x_tile_pixel];
       if (color_index == 0u) {
         continue;
@@ -134,6 +138,11 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
           memory->palette.obj
               .small_palettes[memory->oam.object_attributes[object].palette]
                              [color_index];
+    }
+
+    if (memory->oam.object_attributes[object].obj_mode == 2u) {
+      *on_obj_mask |= obj_color != 0u;
+      continue;
     }
 
     found = true;

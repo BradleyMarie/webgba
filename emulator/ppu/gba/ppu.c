@@ -251,20 +251,20 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
   if (!ppu->registers.dispcnt.forced_blank) {
     uint16_t obj_color;
     uint8_t obj_priority;
-    bool object_on_pixel, obj_semi_transparent;
+    bool object_on_pixel, obj_semi_transparent, on_obj_mask;
     if (ppu->registers.dispcnt.object_enable) {
       object_on_pixel = GbaPpuObjectPixel(
           &ppu->memory, &ppu->registers, &ppu->internal_registers,
           &ppu->object_visibility, ppu->x, ppu->registers.vcount, &obj_color,
-          &obj_priority, &obj_semi_transparent);
+          &obj_priority, &obj_semi_transparent, &on_obj_mask);
     } else {
       object_on_pixel = false;
     }
 
     bool draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3, enable_blending;
     GbaPpuWindowCheck(&ppu->registers, ppu->x, ppu->registers.vcount,
-                      object_on_pixel, &draw_obj, &draw_bg0, &draw_bg1,
-                      &draw_bg2, &draw_bg3, &enable_blending);
+                      on_obj_mask, &draw_obj, &draw_bg0, &draw_bg1, &draw_bg2,
+                      &draw_bg3, &enable_blending);
 
     if (object_on_pixel && draw_obj) {
       GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, obj_color,

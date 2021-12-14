@@ -18,7 +18,7 @@ static inline bool IsInsideWindow2D(const WindowBoundsRegister *winh,
 }
 
 void GbaPpuWindowCheck(const GbaPpuRegisters *registers, uint_fast8_t x,
-                       uint_fast8_t y, bool object_on_pixel, bool *draw_obj,
+                       uint_fast8_t y, bool on_obj_mask, bool *draw_obj,
                        bool *draw_bg0, bool *draw_bg1, bool *draw_bg2,
                        bool *draw_bg3, bool *enable_blending) {
   bool winout_enabled = false;
@@ -50,7 +50,7 @@ void GbaPpuWindowCheck(const GbaPpuRegisters *registers, uint_fast8_t x,
 
   if (registers->dispcnt.winobj_enable) {
     winout_enabled = true;
-    if (object_on_pixel) {
+    if (on_obj_mask) {
       *draw_obj = registers->winout.winobj.obj;
       *draw_bg0 = registers->winout.winobj.bg0;
       *draw_bg1 = registers->winout.winobj.bg1;
