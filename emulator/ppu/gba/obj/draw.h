@@ -10,6 +10,6 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y, uint16_t* color,
-                       uint8_t* priority, bool* semi_transparent);
+                       uint8_t* priority, bool* semi_transparent, bool *on_obj_mask);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OBJ_DRAW_
