@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define DIRECT_SOUND_CHANNEL_BUFFER_SIZE 64
+#define DIRECT_SOUND_CHANNEL_BUFFER_SIZE 32
 
 typedef struct _DirectSoundChannel {
   int8_t samples[DIRECT_SOUND_CHANNEL_BUFFER_SIZE];
