@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define GBA_GAME_MAX_SIZE 0x1000000u  // 32MB
+#define GBA_GAME_MAX_SIZE 0x2000000u  // 32MB
 
 typedef union {
   uint8_t bytes[GBA_GAME_MAX_SIZE];
