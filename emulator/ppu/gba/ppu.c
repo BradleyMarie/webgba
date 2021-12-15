@@ -258,6 +258,7 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
           &obj_priority, &obj_semi_transparent, &on_obj_mask);
     } else {
       object_on_pixel = false;
+      on_obj_mask = false;
     }
 
     bool draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3, enable_blending;
