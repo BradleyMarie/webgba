@@ -8,6 +8,7 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        uint8_t* priority, bool* semi_transparent,
                        bool* on_obj_mask) {
   *priority = UINT8_MAX;
+  *on_obj_mask = false;
   bool found = false;
 
   GbaPpuObjectSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
@@ -120,6 +121,11 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
         continue;
       }
 
+      if (memory->oam.object_attributes[object].obj_mode == 2u) {
+        *on_obj_mask = true;
+        continue;
+      }
+
       obj_color = memory->palette.obj.large_palette[color_index];
     } else {
       uint8_t color_index_pair = memory->vram.mode_012.obj.s_tiles[tile_index]
@@ -134,15 +140,15 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
         continue;
       }
 
+      if (memory->oam.object_attributes[object].obj_mode == 2u) {
+        *on_obj_mask = true;
+        continue;
+      }
+
       obj_color =
           memory->palette.obj
               .small_palettes[memory->oam.object_attributes[object].palette]
                              [color_index];
-    }
-
-    if (memory->oam.object_attributes[object].obj_mode == 2u) {
-      *on_obj_mask |= obj_color != 0u;
-      continue;
     }
 
     found = true;
