@@ -78,7 +78,7 @@ TEST_F(SoundTest, GbaSpuRegistersLoad32LEUnusedHigh) {
   uint32_t contents = 0xFFFFFFFFu;
   EXPECT_TRUE(Store16LE(regs_, SOUND4CNT_L_OFFSET, 16u));
   EXPECT_TRUE(Load32LE(regs_, SOUND4CNT_L_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(16u, contents);
 }
 
 TEST_F(SoundTest, GbaSpuRegistersLoad32LE) {

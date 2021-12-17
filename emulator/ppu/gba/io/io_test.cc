@@ -95,7 +95,7 @@ TEST_F(IoTest, GbaPpuRegistersLoad32LEUnusedHigh) {
   uint32_t contents = 0xFFFFFFFFu;
   EXPECT_TRUE(Store16LE(memory_, BLDCNT_OFFSET, 16u));
   EXPECT_TRUE(Load32LE(memory_, BLDCNT_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(16u, contents);
 }
 
 TEST_F(IoTest, GbaPpuRegistersLoad32LE) {

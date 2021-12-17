@@ -183,7 +183,7 @@ static bool GbaPlatformRegistersLoad32LEFunction(const void *context,
   if (high) {
     *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
-    *value = 0u;
+    *value = low_bits;
   }
 
   return true;

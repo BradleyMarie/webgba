@@ -302,7 +302,7 @@ TEST_F(PeripheralsTest, GbaPeripheralsRegistersLoad32LE) {
   // In Bounds
   EXPECT_TRUE(Store32LE(regs_, JOYCNT_OFFSET, 0x11223344u));
   EXPECT_TRUE(Load32LE(regs_, JOYCNT_OFFSET, &contents));
-  EXPECT_EQ(0u, contents);
+  EXPECT_EQ(13124u, contents);
 
   // Out of Bounds
   EXPECT_TRUE(Store32LE(regs_, JOYCNT_OFFSET + 4u, 0x11223344u));
