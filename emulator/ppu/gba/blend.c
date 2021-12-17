@@ -13,33 +13,31 @@ static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
     return;
   }
 
+  blend_unit->contains_object ^= blend_unit->is_object[1u];
+
   if (blend_unit->priorities[0u] > priority) {
     blend_unit->priorities[1u] = blend_unit->priorities[0u];
     blend_unit->layers[1u] = blend_unit->layers[0u];
     blend_unit->top[1u] = blend_unit->top[0u];
     blend_unit->bottom[1u] = blend_unit->bottom[0u];
+    blend_unit->is_object[1u] = blend_unit->is_object[0u];
     blend_unit->priorities[0u] = priority;
     blend_unit->layers[0u] = color;
     blend_unit->top[0u] = top;
     blend_unit->bottom[0u] = bottom;
+    blend_unit->is_object[0u] = false;
   } else {
     blend_unit->priorities[1u] = priority;
     blend_unit->layers[1u] = color;
     blend_unit->top[1u] = top;
     blend_unit->bottom[1u] = bottom;
+    blend_unit->is_object[1u] = false;
   }
 }
-
-static uint16_t GbaPpuBlendUnitNoBlendInternal(
+static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
     const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
-  return GbaPpuBlendUnitNoBlend(blend_unit);
-}
-
-static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
-                                             const GbaPpuRegisters* registers) {
-  if (!blend_unit->top[0u] || !blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitNoBlend(blend_unit);
-  }
+  assert(blend_unit->top[0u]);
+  assert(blend_unit->bottom[1u]);
 
   const static uint8_t clipped_weights[32u] = {
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u,
@@ -80,14 +78,34 @@ static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
   return s0 | s1 | s2;
 }
 
+static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
+                                             const GbaPpuRegisters* registers) {
+  if (!blend_unit->top[0u] | !blend_unit->bottom[1u]) {
+    return GbaPpuBlendUnitNoBlend(blend_unit);
+  }
+
+  return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+}
+
+static uint16_t GbaPpuBlendUnitNoBlendInternal(
+    const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
+  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+      blend_unit->top[0u] & blend_unit->bottom[1u]) {
+    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+  }
+
+  return GbaPpuBlendUnitNoBlend(blend_unit);
+}
+
 static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
                                       const GbaPpuRegisters* registers) {
   if (!blend_unit->top[0u]) {
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
-  if (blend_unit->obj_semi_transparent && blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitAdditiveBlend(blend_unit, registers);
+  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+      blend_unit->bottom[1u]) {
+    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
 
   const static uint8_t clipped_weights[32u] = {
@@ -111,8 +129,9 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
-  if (blend_unit->obj_semi_transparent && blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitAdditiveBlend(blend_unit, registers);
+  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+      blend_unit->bottom[1u]) {
+    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
 
   const static uint8_t clipped_weights[32u] = {
@@ -158,18 +177,12 @@ void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
   assert(blend_unit->priorities[0u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
   assert(blend_unit->priorities[1u] == GBA_PPU_LAYER_PRIORITY_NOT_SET);
 
-  bool top;
-  if (semi_transparent) {
-    priority = 0u;
-    top = true;
-  } else {
-    top = registers->bldcnt.a_obj;
-  }
-
   blend_unit->priorities[0u] = priority;
   blend_unit->layers[0u] = color;
-  blend_unit->top[0u] = top;
+  blend_unit->top[0u] = semi_transparent | registers->bldcnt.a_obj;
   blend_unit->bottom[0u] = registers->bldcnt.b_obj;
+  blend_unit->is_object[0u] = true;
+  blend_unit->contains_object = true;
   blend_unit->obj_semi_transparent = semi_transparent;
 }
 
