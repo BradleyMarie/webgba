@@ -92,6 +92,14 @@ static bool GbaDmaUnitIsActiveByIndex(const GbaDmaUnit *dma_unit,
   return dma_unit->active & bit_to_check;
 }
 
+static bool GbaDmaUnitIsFifoDma(const GbaDmaUnit *dma_unit,
+                                uint_fast8_t index) {
+  bool result =
+      (index == 1u || index == 2u) &&
+      dma_unit->registers.units[index].control.start_timing == GBA_DMA_SPECIAL;
+  return result;
+}
+
 static void GbaDmaUnitReloadSource(GbaDmaUnit *dma_unit, uint_fast8_t index) {
   assert(index < GBA_NUM_DMA_UNITS);
   static const uint32_t address_mask[GBA_NUM_DMA_UNITS] = {
@@ -112,6 +120,12 @@ static void GbaDmaUnitReloadDestination(GbaDmaUnit *dma_unit,
 static void GbaDmaUnitReloadTransferSize(GbaDmaUnit *dma_unit,
                                          uint_fast8_t index) {
   assert(index < GBA_NUM_DMA_UNITS);
+
+  if (GbaDmaUnitIsFifoDma(dma_unit, index)) {
+    dma_unit->transfers_remaining[index] = 4u;
+    return;
+  }
+
   static const uint16_t transfer_mask[GBA_NUM_DMA_UNITS] = {0x3FFFu, 0x3FFFu,
                                                             0x3FFFu, 0xFFFFu};
   dma_unit->transfers_remaining[index] =
@@ -281,9 +295,10 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
       continue;
     }
 
+    bool is_fifo_dma = GbaDmaUnitIsFifoDma(dma_unit, i);
+
     uint32_t transfer_size;
-    if (dma_unit->registers.units[i].control.transfer_word ||
-        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
+    if (dma_unit->registers.units[i].control.transfer_word || is_fifo_dma) {
       const static uint32_t address_mask = 0xFFFFFFFCu;
       uint32_t value;
       Load32LE(memory, dma_unit->current_source[i] & address_mask, &value);
@@ -306,7 +321,7 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
         break;
     }
 
-    if (dma_unit->registers.units[i].control.start_timing != GBA_DMA_SPECIAL) {
+    if (!is_fifo_dma) {
       switch (dma_unit->registers.units[i].control.dest_addr) {
         case GBA_DMA_ADDR_INCREMENT:
           dma_unit->current_destination[i] += transfer_size;
@@ -321,8 +336,7 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
     }
 
     dma_unit->transfers_remaining[i] -= 1u;
-    if (dma_unit->transfers_remaining[i] == 0u ||
-        dma_unit->registers.units[i].control.start_timing == GBA_DMA_SPECIAL) {
+    if (dma_unit->transfers_remaining[i] == 0u) {
       GbaDmaUnitClearActive(dma_unit, i);
       if (!dma_unit->registers.units[i].control.repeat) {
         dma_unit->registers.units[i].control.enabled = false;

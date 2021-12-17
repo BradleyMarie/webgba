@@ -802,12 +802,37 @@ TEST_F(DmaUnitTest, TestSpecialDma1) {
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(1u);
 
-  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x11111111u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 4u, 0x22222222u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 8u, 0x33333333u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 12u, 0x44444444u));
+
   DmaDoSteps(1u);
 
   uint32_t value;
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
-  EXPECT_EQ(0x12345678u, value);
+  EXPECT_EQ(0x11111111u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x22222222u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x33333333u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x44444444u, value);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
 }
@@ -828,12 +853,37 @@ TEST_F(DmaUnitTest, TestSpecialDma2) {
   EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
   CheckDmaIsEnabled(2u);
 
-  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x11111111u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 4u, 0x22222222u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 8u, 0x33333333u));
+  EXPECT_TRUE(Store32LEStatic(nullptr, 12u, 0x44444444u));
+
   DmaDoSteps(1u);
 
   uint32_t value;
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
-  EXPECT_EQ(0x12345678u, value);
+  EXPECT_EQ(0x11111111u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x22222222u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x33333333u, value);
+
+  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+
+  DmaDoSteps(1u);
+
+  EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
+  EXPECT_EQ(0x44444444u, value);
 
   EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
 }
