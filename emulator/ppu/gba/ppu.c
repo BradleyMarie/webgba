@@ -217,7 +217,6 @@ static void GbaPpuStepNoOp(GbaPpu *ppu, bool draw_bg0, bool draw_bg1,
 static void GbaPpuStartHBlank(GbaPpu *ppu) {
   ppu->registers.dispstat.hblank_status = true;
 
-  GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
   if (ppu->registers.dispstat.hblank_irq_enable) {
     GbaPlatformRaiseHBlankInterrupt(ppu->platform);
   }
@@ -291,6 +290,8 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
 
   if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
     GbaPpuStartHBlank(ppu);
+
+    GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
 
     if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
       ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
