@@ -64,6 +64,12 @@ bool ArmLDMDB(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size + 4u;
   bool success = true;
@@ -77,13 +83,21 @@ bool ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] -= size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] -= size;
+  }
   return success;
 }
 
 bool ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn] - size;
   bool success = true;
@@ -97,7 +111,9 @@ bool ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] -= size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] -= size;
+  }
   return success;
 }
 
@@ -140,6 +156,12 @@ bool ArmLDMIB(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
@@ -153,13 +175,21 @@ bool ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] += size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] += size;
+  }
   return success;
 }
 
 bool ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
                ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t address = registers->current.user.gprs.gprs[Rn];
   bool success = true;
@@ -173,7 +203,9 @@ bool ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
       break;
     }
   }
-  registers->current.user.gprs.gprs[Rn] += size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] += size;
+  }
   return success;
 }
 
@@ -264,6 +296,12 @@ bool ArmLDMSDB(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   bool loads_pc = register_list & (1u << REGISTER_R15);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !loads_pc && !is_usr_or_sys;
@@ -289,7 +327,9 @@ bool ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] -= size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] -= size;
+  }
 
   if (modify_banked_registers) {
     ArmLoadCPSR(registers, old_status);
@@ -307,6 +347,12 @@ bool ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMSDBW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   bool loads_pc = register_list & (1u << REGISTER_R15);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !loads_pc && !is_usr_or_sys;
@@ -332,7 +378,9 @@ bool ArmLDMSDBW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] -= size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] -= size;
+  }
 
   if (modify_banked_registers) {
     ArmLoadCPSR(registers, old_status);
@@ -432,6 +480,12 @@ bool ArmLDMSIB(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   bool loads_pc = register_list & (1u << REGISTER_R15);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !loads_pc && !is_usr_or_sys;
@@ -457,7 +511,9 @@ bool ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
     }
     address += 4u;
   }
-  registers->current.user.gprs.gprs[Rn] += size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] += size;
+  }
 
   if (modify_banked_registers) {
     ArmLoadCPSR(registers, old_status);
@@ -475,6 +531,12 @@ bool ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
 bool ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
                 ArmRegisterIndex Rn, uint_fast16_t register_list) {
   assert(register_list <= UINT16_MAX);
+
+  // Including the writeback register in the register list for a load store
+  // multiple causes undefined behavior in ARMv4. The ARM7TDMI handles this by
+  // ignoring the write to the writeback register.
+  bool skip_writeback = (1u << Rn) & register_list;
+
   bool loads_pc = register_list & (1u << REGISTER_R15);
   bool is_usr_or_sys = ArmModeIsUsrOrSys(registers->current.user.cpsr);
   bool modify_banked_registers = !loads_pc && !is_usr_or_sys;
@@ -500,7 +562,9 @@ bool ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
       break;
     }
   }
-  registers->current.user.gprs.gprs[Rn] += size;
+  if (!skip_writeback) {
+    registers->current.user.gprs.gprs[Rn] += size;
+  }
 
   if (modify_banked_registers) {
     ArmLoadCPSR(registers, old_status);
