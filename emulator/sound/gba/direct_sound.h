@@ -4,7 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define DIRECT_SOUND_CHANNEL_BUFFER_SIZE 32
+// TODO: Reduce this buffer size to 32 samples. This is a workaround for timing
+// issues in webgba that can cause the FIFO buffer to be refreshed too early,
+// causing audio issues when samples are dropped if the available buffer space
+// is too small to contain them. Setting this to 64 allows the buffer to contain
+// two extra frames of audio data without dropping.
+#define DIRECT_SOUND_CHANNEL_BUFFER_SIZE 64
 
 typedef struct _DirectSoundChannel {
   int8_t samples[DIRECT_SOUND_CHANNEL_BUFFER_SIZE];
