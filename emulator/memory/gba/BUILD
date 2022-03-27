@@ -22,7 +22,7 @@ cc_test(
     shard_count = 13,
     deps = [
         ":memory",
-        "//emulator/memory/gba/bios:bios_data",
+        "//tools/bios_data:data",
         "@com_google_googletest//:gtest_main",
     ],
 )

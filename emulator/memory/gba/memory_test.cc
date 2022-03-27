@@ -1,7 +1,6 @@
 extern "C" {
 #include "emulator/memory/gba/memory.h"
-
-#include "emulator/memory/gba/bios/bios_data.h"
+#include "tools/bios_data/data.h"
 }
 
 #include "googletest/include/gtest/gtest.h"
