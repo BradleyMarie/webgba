@@ -39,7 +39,7 @@ static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
   assert(blend_unit->top[0u]);
   assert(blend_unit->bottom[1u]);
 
-  const static uint8_t clipped_weights[32u] = {
+  static const uint8_t clipped_weights[32u] = {
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u,
       11u, 12u, 13u, 14u, 15u, 16u, 16u, 16u, 16u, 16u, 16u,
       16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u};
@@ -59,7 +59,7 @@ static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
   uint_fast32_t b1 = (((bottom & 0x03E0u) * evb) >> 5u);
   uint_fast32_t b2 = (((bottom & 0x7C00u) * evb) >> 10u);
 
-  const static uint8_t clipped_values[64u] = {
+  static const uint8_t clipped_values[64u] = {
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u, 11u, 12u,
       13u, 14u, 15u, 16u, 17u, 18u, 19u, 20u, 21u, 22u, 23u, 24u, 25u,
       26u, 27u, 28u, 29u, 30u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u,
@@ -108,7 +108,7 @@ static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
     return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
 
-  const static uint8_t clipped_weights[32u] = {
+  static const uint8_t clipped_weights[32u] = {
       16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
       0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
   assert(registers->bldy.evy < 32u);
@@ -134,7 +134,7 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
     return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
 
-  const static uint8_t clipped_weights[32u] = {
+  static const uint8_t clipped_weights[32u] = {
       16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
       0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
   assert(registers->bldy.evy < 32u);
@@ -151,7 +151,7 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
   uint_fast32_t w1 = w0;
   uint_fast32_t w2 = w1;
 
-  const static uint8_t clipped_values[64u] = {
+  static const uint8_t clipped_values[64u] = {
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u, 11u, 12u,
       13u, 14u, 15u, 16u, 17u, 18u, 19u, 20u, 21u, 22u, 23u, 24u, 25u,
       26u, 27u, 28u, 29u, 30u, 31u, 31u, 33u, 34u, 35u, 36u, 37u, 38u,
@@ -226,10 +226,12 @@ void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
                                        GBA_PPU_LAYER_PRIORITY_BACKDROP);
 }
 
+typedef uint16_t (*BlendFunction)(const GbaPpuBlendUnit*,
+                                  const GbaPpuRegisters*);
+
 uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
                               const GbaPpuRegisters* registers) {
-  static const uint16_t (*blend_table[])(const GbaPpuBlendUnit*,
-                                         const GbaPpuRegisters*) = {
+  static const BlendFunction blend_table[4u] = {
       GbaPpuBlendUnitNoBlendInternal, GbaPpuBlendUnitAdditiveBlend,
       GbaPpuBlendUnitBrighten, GbaPpuBlendUnitDarken};
   assert(registers->bldcnt.mode < 4u);

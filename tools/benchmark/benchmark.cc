@@ -13,7 +13,7 @@ extern "C" {
 int main(int argc, char **argv) {
   if (argc < 3) {
     std::cout << "Usage: benchmark <num-frames> <rom>" << std::endl;
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   int frame_count = 60u * 60u;  // 60 seconds * 60 frames per second.
@@ -21,14 +21,14 @@ int main(int argc, char **argv) {
     frame_count = std::atoi(argv[1u]);
     if (frame_count < 0) {
       std::cout << "ERROR: Negative frame count" << std::endl;
-      return -1;
+      return EXIT_FAILURE;
     }
   }
 
   std::ifstream file(argv[2u], std::ios::binary);
   if (file.fail()) {
     std::cout << "ERROR: Failed to open ROM file" << std::endl;
-    return -1;
+    return EXIT_FAILURE;
   }
 
   char c;
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
   if (buffer.empty()) {
     std::cout << "ERROR: Failed to read ROM file" << std::endl;
-    return -1;
+    return EXIT_FAILURE;
   }
 
   GbaEmulator *emulator;
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   bool success =
       GbaEmulatorAllocate(buffer.data(), buffer.size(), &emulator, &gamepad);
   if (!success) {
-    return false;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Rendering " << frame_count << " frames." << std::endl;
