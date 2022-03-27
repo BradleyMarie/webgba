@@ -40,7 +40,6 @@ cc_library(
         ":branch_link",
         ":condition",
         ":load",
-        ":opcode",
         ":operand",
         ":shift",
         "//emulator/cpu/arm7tdmi:exceptions",
@@ -53,6 +52,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi/instructions:signed_data_transfer",
         "//emulator/cpu/arm7tdmi/instructions:swi",
         "//emulator/memory",
+        "//tools/thumb_opcode_decoder:decoder",
     ],
 )
 
@@ -82,11 +82,6 @@ cc_test(
         ":load",
         "@com_google_googletest//:gtest_main",
     ],
-)
-
-cc_library(
-    name = "opcode",
-    hdrs = ["opcode.h"],
 )
 
 cc_library(
