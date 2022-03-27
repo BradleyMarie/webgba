@@ -1,6 +1,7 @@
 #include "emulator/gba.h"
 
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
@@ -14,7 +15,7 @@
 #include "emulator/timers/gba/timers.h"
 
 struct _GbaEmulator {
-  PowerState power_state;
+  atomic_uint_fast8_t power_state;
   Arm7Tdmi *cpu;
   Memory *memory;
   GbaDmaUnit *dma;
@@ -23,12 +24,13 @@ struct _GbaEmulator {
   GbaTimers *timers;
   GbaPeripherals *peripherals;
   GbaPlatform *platform;
-  uint16_t reference_count;
+  atomic_uint_least8_t reference_count;
 };
 
 static void GbaEmulatorPowerSet(void *context, PowerState power_state) {
   GbaEmulator *emulator = (GbaEmulator *)context;
-  emulator->power_state = power_state;
+  atomic_store_explicit(&emulator->power_state, power_state,
+                        memory_order_relaxed);
 }
 
 static void GbaEmulatorPowerFree(void *context) {
@@ -202,9 +204,8 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
 }
 
 void GbaEmulatorFree(GbaEmulator *emulator) {
-  assert(emulator->reference_count);
-  emulator->reference_count -= 1u;
-  if (emulator->reference_count == 0u) {
+  assert(atomic_load(&emulator->reference_count));
+  if (atomic_fetch_sub(&emulator->reference_count, 1) == 1u) {
     GbaPlatformRelease(emulator->platform);
     Arm7TdmiFree(emulator->cpu);
     MemoryFree(emulator->memory);
@@ -218,7 +219,8 @@ void GbaEmulatorFree(GbaEmulator *emulator) {
 }
 
 void GbaEmulatorStep(GbaEmulator *emulator) {
-  PowerState power_state = emulator->power_state;
+  uint_fast8_t power_state =
+      atomic_load_explicit(&emulator->power_state, memory_order_relaxed);
   if (power_state == POWER_STATE_RUN) {
     if (GbaDmaUnitIsActive(emulator->dma)) {
       GbaDmaUnitStep(emulator->dma, emulator->memory);
