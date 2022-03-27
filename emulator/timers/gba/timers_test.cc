@@ -20,13 +20,14 @@ extern "C" {
 class TimersTest : public testing::Test {
  public:
   void SetUp() override {
+    Power *power = PowerAllocate(nullptr, PowerSet, nullptr);
+    ASSERT_NE(power, nullptr);
     raised_ = false;
     InterruptLine *irq =
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
-    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
-    ASSERT_TRUE(
-        GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_registers_));
+    ASSERT_TRUE(GbaPlatformAllocate(power, irq, &plat_, &plat_regs_));
+    ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_registers_));
     ASSERT_TRUE(GbaSpuAllocate(dma_unit_, &spu_, &spu_registers_));
     ASSERT_TRUE(GbaTimersAllocate(plat_, spu_, &timers_, &regs_));
     ASSERT_TRUE(Store16LE(plat_regs_, IE_OFFSET, 0xFFFFu));
@@ -48,6 +49,10 @@ class TimersTest : public testing::Test {
  protected:
   static void InterruptSetLevel(void *context, bool raised) {
     raised_ = raised;
+  }
+
+  static void PowerSet(void *context, PowerState power_state) {
+    // Do Nothing
   }
 
   static bool raised_;

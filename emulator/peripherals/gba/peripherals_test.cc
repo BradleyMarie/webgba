@@ -30,11 +30,13 @@ extern "C" {
 class PeripheralsTest : public testing::Test {
  public:
   void SetUp() override {
+    Power *power = PowerAllocate(nullptr, PowerSet, nullptr);
+    ASSERT_NE(power, nullptr);
     raised_ = false;
     InterruptLine *irq =
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
-    ASSERT_TRUE(GbaPlatformAllocate(irq, &plat_, &plat_regs_));
+    ASSERT_TRUE(GbaPlatformAllocate(power, irq, &plat_, &plat_regs_));
     ASSERT_TRUE(
         GbaPeripheralsAllocate(plat_, &peripherals_, &gamepad_, &regs_));
 
@@ -54,6 +56,10 @@ class PeripheralsTest : public testing::Test {
  protected:
   static void InterruptSetLevel(void *context, bool raised) {
     raised_ = raised;
+  }
+
+  static void PowerSet(void *context, PowerState power_state) {
+    // Do Nothing
   }
 
   static bool raised_;
