@@ -24,7 +24,7 @@ struct _GbaEmulator {
   GbaTimers *timers;
   GbaPeripherals *peripherals;
   GbaPlatform *platform;
-  atomic_uint_least8_t reference_count;
+  atomic_uint_fast8_t reference_count;
 };
 
 static void GbaEmulatorPowerSet(void *context, PowerState power_state) {
@@ -204,7 +204,7 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
 }
 
 void GbaEmulatorFree(GbaEmulator *emulator) {
-  assert(atomic_load(&emulator->reference_count));
+  assert(atomic_load(&emulator->reference_count) != 0);
   if (atomic_fetch_sub(&emulator->reference_count, 1) == 1u) {
     GbaPlatformRelease(emulator->platform);
     Arm7TdmiFree(emulator->cpu);
