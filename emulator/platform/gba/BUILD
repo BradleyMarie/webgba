@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//emulator/cpu:interrupt_line",
         "//emulator/memory",
+        "//emulator/platform:power",
     ],
 )
 

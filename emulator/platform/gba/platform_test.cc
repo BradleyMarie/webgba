@@ -15,10 +15,12 @@ class PlatformTest : public testing::Test {
  public:
   void SetUp() override {
     raised_ = false;
+    Power *power = PowerAllocate(nullptr, PowerSet, nullptr);
+    ASSERT_NE(power, nullptr);
     InterruptLine *irq =
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
-    ASSERT_TRUE(GbaPlatformAllocate(irq, &platform_, &registers_));
+    ASSERT_TRUE(GbaPlatformAllocate(power, irq, &platform_, &registers_));
   }
 
   void TearDown() override {
@@ -26,16 +28,22 @@ class PlatformTest : public testing::Test {
     MemoryFree(registers_);
   }
 
+  static void PowerSet(void *context, PowerState power_state) {
+    power_state_ = power_state;
+  }
+
   static void InterruptSetLevel(void *context, bool raised) {
     raised_ = raised;
   }
 
+  static PowerState power_state_;
   static bool raised_;
 
   GbaPlatform *platform_;
   Memory *registers_;
 };
 
+PowerState PlatformTest::power_state_;
 bool PlatformTest::raised_ = false;
 
 TEST_F(PlatformTest, GbaPlatformInterruptMasterEnable) {
@@ -135,12 +143,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseVBlankInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseVBlankInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -194,12 +202,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseHBlankInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseHBlankInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -253,12 +261,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseVBlankCountInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseVBlankCountInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -312,12 +320,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer0InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_0);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -371,12 +379,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer1InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_1);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -430,12 +438,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer2InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_2);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -489,12 +497,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseTimer3InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseTimerInterrupt(platform_, GBA_TIMER_3);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -548,12 +556,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseSerialInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
-  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_STOP, power_state_);
 
   GbaPlatformRaiseSerialInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -607,12 +615,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma0InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseDmaInterrupt(platform_, GBA_DMA_0);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -666,12 +674,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma1InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseDmaInterrupt(platform_, GBA_DMA_1);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -725,12 +733,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma2InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseDmaInterrupt(platform_, GBA_DMA_2);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -784,12 +792,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseDma3InterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0u));
-  EXPECT_EQ(GBA_POWER_STATE_HALT, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_HALT, power_state_);
 
   GbaPlatformRaiseDmaInterrupt(platform_, GBA_DMA_3);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -843,12 +851,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseKeypadInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
-  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_STOP, power_state_);
 
   GbaPlatformRaiseKeypadInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));
@@ -902,12 +910,12 @@ TEST_F(PlatformTest, GbaPlatformRaiseCartridgeInterruptWakes) {
   EXPECT_FALSE(raised_);
 
   EXPECT_TRUE(Store8(registers_, HALTCNT_OFFSET, 0x80u));
-  EXPECT_EQ(GBA_POWER_STATE_STOP, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_STOP, power_state_);
 
   GbaPlatformRaiseCartridgeInterrupt(platform_);
   EXPECT_TRUE(raised_);
 
-  EXPECT_EQ(GBA_POWER_STATE_RUN, GbaPlatformPowerState(platform_));
+  EXPECT_EQ(POWER_STATE_RUN, power_state_);
 
   uint16_t value;
   EXPECT_TRUE(Load16LE(registers_, IF_OFFSET, &value));

@@ -5,11 +5,12 @@
 
 #include "emulator/cpu/interrupt_line.h"
 #include "emulator/memory/memory.h"
+#include "emulator/platform/power.h"
 
 typedef struct _GbaPlatform GbaPlatform;
 
-bool GbaPlatformAllocate(InterruptLine *irq_line, GbaPlatform **platform,
-                         Memory **registers);
+bool GbaPlatformAllocate(Power *power, InterruptLine *irq_line,
+                         GbaPlatform **platform, Memory **registers);
 
 // Interrupts
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform);
@@ -48,15 +49,6 @@ uint_fast8_t GbaPlatformRom2SecondAccessWaitCycles(const GbaPlatform *platform);
 
 // Rom Instruction Prefetching
 bool GbaPlatformRomPrefetch(const GbaPlatform *platform);
-
-// Power State
-typedef enum {
-  GBA_POWER_STATE_RUN = 0,
-  GBA_POWER_STATE_HALT = 1,
-  GBA_POWER_STATE_STOP = 2
-} GbaPowerState;
-
-GbaPowerState GbaPlatformPowerState(const GbaPlatform *platform);
 
 // Reference Counting
 void GbaPlatformRetain(GbaPlatform *platform);
