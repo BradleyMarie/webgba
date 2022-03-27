@@ -1,5 +1,6 @@
 #include "emulator/gba.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
@@ -13,7 +14,7 @@
 #include "emulator/timers/gba/timers.h"
 
 struct _GbaEmulator {
-  GbaPlatform *platform;
+  PowerState power_state;
   Arm7Tdmi *cpu;
   Memory *memory;
   GbaDmaUnit *dma;
@@ -21,7 +22,41 @@ struct _GbaEmulator {
   GbaSpu *spu;
   GbaTimers *timers;
   GbaPeripherals *peripherals;
+  GbaPlatform *platform;
+  uint16_t reference_count;
 };
+
+static void GbaEmulatorPowerSet(void *context, PowerState power_state) {
+  GbaEmulator *emulator = (GbaEmulator *)context;
+  emulator->power_state = power_state;
+}
+
+static void GbaEmulatorPowerFree(void *context) {
+  GbaEmulator *emulator = (GbaEmulator *)context;
+  GbaEmulatorFree(emulator);
+}
+
+static void GbaEmulatorStepRun(GbaEmulator *emulator) {
+  if (GbaDmaUnitIsActive(emulator->dma)) {
+    GbaDmaUnitStep(emulator->dma, emulator->memory);
+  } else {
+    Arm7TdmiStep(emulator->cpu, emulator->memory);
+  }
+
+  GbaTimersStep(emulator->timers);
+  GbaPpuStep(emulator->ppu);
+  GbaSpuStep(emulator->spu);
+}
+
+static void GbaEmulatorStepHalt(GbaEmulator *emulator) {
+  GbaTimersStep(emulator->timers);
+  GbaPpuStep(emulator->ppu);
+  GbaSpuStep(emulator->spu);
+}
+
+static void GbaEmulatorStepStop(GbaEmulator *emulator) {
+  // Do Nothing
+}
 
 bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad) {
@@ -29,6 +64,8 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   if (*emulator == NULL) {
     return false;
   }
+
+  (*emulator)->reference_count = 2;
 
   InterruptLine *rst;
   InterruptLine *fiq;
@@ -42,10 +79,20 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   InterruptLineFree(rst);
   InterruptLineFree(fiq);
 
+  Power *power =
+      PowerAllocate(*emulator, GbaEmulatorPowerSet, GbaEmulatorPowerFree);
+  if (power == NULL) {
+    Arm7TdmiFree((*emulator)->cpu);
+    InterruptLineFree(irq);
+    free(*emulator);
+    return false;
+  }
+
   Memory *platform_registers;
-  success =
-      GbaPlatformAllocate(irq, &(*emulator)->platform, &platform_registers);
+  success = GbaPlatformAllocate(power, irq, &(*emulator)->platform,
+                                &platform_registers);
   if (!success) {
+    PowerFree(power);
     Arm7TdmiFree((*emulator)->cpu);
     InterruptLineFree(irq);
     free(*emulator);
@@ -177,34 +224,26 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
 }
 
 void GbaEmulatorFree(GbaEmulator *emulator) {
-  GbaPlatformRelease(emulator->platform);
-  Arm7TdmiFree(emulator->cpu);
-  MemoryFree(emulator->memory);
-  GbaDmaUnitRelease(emulator->dma);
-  GbaPpuFree(emulator->ppu);
-  GbaSpuRelease(emulator->spu);
-  GbaTimersFree(emulator->timers);
-  GbaPeripheralsFree(emulator->peripherals);
-  free(emulator);
+  assert(emulator->reference_count);
+  emulator->reference_count -= 1u;
+  if (emulator->reference_count == 0u) {
+    GbaPlatformRelease(emulator->platform);
+    Arm7TdmiFree(emulator->cpu);
+    MemoryFree(emulator->memory);
+    GbaDmaUnitRelease(emulator->dma);
+    GbaPpuFree(emulator->ppu);
+    GbaSpuRelease(emulator->spu);
+    GbaTimersFree(emulator->timers);
+    GbaPeripheralsFree(emulator->peripherals);
+    free(emulator);
+  }
 }
 
 void GbaEmulatorStep(GbaEmulator *emulator) {
-  GbaPowerState power_state = GbaPlatformPowerState(emulator->platform);
-  if (power_state == GBA_POWER_STATE_STOP) {
-    return;
-  }
-
-  if (power_state == GBA_POWER_STATE_RUN) {
-    if (GbaDmaUnitIsActive(emulator->dma)) {
-      GbaDmaUnitStep(emulator->dma, emulator->memory);
-    } else {
-      Arm7TdmiStep(emulator->cpu, emulator->memory);
-    }
-  }
-
-  GbaTimersStep(emulator->timers);
-  GbaPpuStep(emulator->ppu);
-  GbaSpuStep(emulator->spu);
+  static const void (*step_routines[3u])(GbaEmulator *) = {
+      GbaEmulatorStepRun, GbaEmulatorStepHalt, GbaEmulatorStepStop};
+  assert(emulator->power_state < 3u);
+  step_routines[emulator->power_state](emulator);
 }
 
 void GbaEmulatorSetRenderAudioSample(
