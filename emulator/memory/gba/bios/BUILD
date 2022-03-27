@@ -3,17 +3,12 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//emulator/memory/gba:__subpackages__"])
 
 cc_library(
-    name = "bios_data",
-    hdrs = ["bios_data.h"],
-)
-
-cc_library(
     name = "bios",
     srcs = ["bios.c"],
     hdrs = ["bios.h"],
     deps = [
-        ":bios_data",
         "//emulator/memory",
+        "//tools/bios_data:data",
     ],
 )
 

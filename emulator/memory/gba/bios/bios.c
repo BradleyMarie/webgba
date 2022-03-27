@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "emulator/memory/gba/bios/bios_data.h"
+#include "tools/bios_data/data.h"
 
 static bool GBABiosLoad32LEFunction(const void *context, uint32_t address,
                                     uint32_t *value) {
