@@ -4,7 +4,6 @@
 #include "emulator/cpu/arm7tdmi/decoders/thumb/branch_link.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/condition.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/load.h"
-#include "emulator/cpu/arm7tdmi/decoders/thumb/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/operand.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/shift.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
@@ -17,6 +16,7 @@
 #include "emulator/cpu/arm7tdmi/instructions/signed_data_transfer.h"
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
 #include "emulator/memory/memory.h"
+#include "tools/thumb_opcode_decoder/decoder.h"
 
 static inline bool ThumbInstructionExecute(uint16_t next_instruction,
                                            ArmAllRegisters* registers,

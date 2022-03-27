@@ -3,7 +3,6 @@
 
 #include "emulator/cpu/arm7tdmi/decoders/arm/branch_link.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/condition.h"
-#include "emulator/cpu/arm7tdmi/decoders/arm/opcode.h"
 #include "emulator/cpu/arm7tdmi/decoders/arm/operand.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
@@ -21,6 +20,7 @@
 #include "emulator/cpu/arm7tdmi/instructions/single_data_swap.h"
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
 #include "emulator/memory/memory.h"
+#include "tools/arm_opcode_decoder/decoder.h"
 
 static inline bool ArmInstructionExecute(uint32_t next_instruction,
                                          ArmAllRegisters* registers,
