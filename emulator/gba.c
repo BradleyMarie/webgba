@@ -36,28 +36,6 @@ static void GbaEmulatorPowerFree(void *context) {
   GbaEmulatorFree(emulator);
 }
 
-static void GbaEmulatorStepRun(GbaEmulator *emulator) {
-  if (GbaDmaUnitIsActive(emulator->dma)) {
-    GbaDmaUnitStep(emulator->dma, emulator->memory);
-  } else {
-    Arm7TdmiStep(emulator->cpu, emulator->memory);
-  }
-
-  GbaTimersStep(emulator->timers);
-  GbaPpuStep(emulator->ppu);
-  GbaSpuStep(emulator->spu);
-}
-
-static void GbaEmulatorStepHalt(GbaEmulator *emulator) {
-  GbaTimersStep(emulator->timers);
-  GbaPpuStep(emulator->ppu);
-  GbaSpuStep(emulator->spu);
-}
-
-static void GbaEmulatorStepStop(GbaEmulator *emulator) {
-  // Do Nothing
-}
-
 bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad) {
   *emulator = malloc(sizeof(GbaEmulator));
@@ -240,10 +218,22 @@ void GbaEmulatorFree(GbaEmulator *emulator) {
 }
 
 void GbaEmulatorStep(GbaEmulator *emulator) {
-  static const void (*step_routines[3u])(GbaEmulator *) = {
-      GbaEmulatorStepRun, GbaEmulatorStepHalt, GbaEmulatorStepStop};
-  assert(emulator->power_state < 3u);
-  step_routines[emulator->power_state](emulator);
+  PowerState power_state = emulator->power_state;
+  if (power_state == POWER_STATE_RUN) {
+    if (GbaDmaUnitIsActive(emulator->dma)) {
+      GbaDmaUnitStep(emulator->dma, emulator->memory);
+    } else {
+      Arm7TdmiStep(emulator->cpu, emulator->memory);
+    }
+
+    GbaTimersStep(emulator->timers);
+    GbaPpuStep(emulator->ppu);
+    GbaSpuStep(emulator->spu);
+  } else if (power_state == POWER_STATE_HALT) {
+    GbaTimersStep(emulator->timers);
+    GbaPpuStep(emulator->ppu);
+    GbaSpuStep(emulator->spu);
+  }
 }
 
 void GbaEmulatorSetRenderAudioSample(
