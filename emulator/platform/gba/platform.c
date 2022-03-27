@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <threads.h>
 
 #define STOP_MASK 0x3080u
 
@@ -69,6 +70,7 @@ typedef struct {
 } GbaPlatformRegisters;
 
 struct _GbaPlatform {
+  mtx_t mutex;
   GbaPlatformRegisters registers;
   PowerState power_state;
   Power *power;
@@ -139,9 +141,9 @@ static void GbaPlatformRegisterWriteHaltCnt(GbaPlatform *platform,
   }
 }
 
-static bool GbaPlatformRegistersLoad16LEFunction(const void *context,
-                                                 uint32_t address,
-                                                 uint16_t *value) {
+static bool GbaPlatformRegistersLoad16LEImpl(const void *context,
+                                             uint32_t address,
+                                             uint16_t *value) {
   assert((address & 0x1u) == 0u);
 
   const GbaPlatform *platform = (const GbaPlatform *)context;
@@ -173,20 +175,20 @@ static bool GbaPlatformRegistersLoad16LEFunction(const void *context,
   return false;
 }
 
-static bool GbaPlatformRegistersLoad32LEFunction(const void *context,
-                                                 uint32_t address,
-                                                 uint32_t *value) {
+static bool GbaPlatformRegistersLoad32LEImpl(const void *context,
+                                             uint32_t address,
+                                             uint32_t *value) {
   assert((address & 0x3u) == 0u);
 
   uint16_t low_bits;
-  bool low = GbaPlatformRegistersLoad16LEFunction(context, address, &low_bits);
+  bool low = GbaPlatformRegistersLoad16LEImpl(context, address, &low_bits);
   if (!low) {
     return false;
   }
 
   uint16_t high_bits;
   bool high =
-      GbaPlatformRegistersLoad16LEFunction(context, address + 2u, &high_bits);
+      GbaPlatformRegistersLoad16LEImpl(context, address + 2u, &high_bits);
   if (high) {
     *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
@@ -196,9 +198,8 @@ static bool GbaPlatformRegistersLoad32LEFunction(const void *context,
   return true;
 }
 
-static bool GbaPlatformRegistersLoad8Function(const void *context,
-                                              uint32_t address,
-                                              uint8_t *value) {
+static bool GbaPlatformRegistersLoad8Impl(const void *context, uint32_t address,
+                                          uint8_t *value) {
   const GbaPlatform *platform = (const GbaPlatform *)context;
 
   if (address == POSTFLG_OFFSET) {
@@ -210,7 +211,7 @@ static bool GbaPlatformRegistersLoad8Function(const void *context,
 
   uint16_t value16;
   bool success =
-      GbaPlatformRegistersLoad16LEFunction(context, read_address, &value16);
+      GbaPlatformRegistersLoad16LEImpl(context, read_address, &value16);
   if (success) {
     *value = (address == read_address) ? value16 : value16 >> 8u;
   }
@@ -218,9 +219,8 @@ static bool GbaPlatformRegistersLoad8Function(const void *context,
   return success;
 }
 
-static bool GbaPlatformRegistersStore16LEFunction(void *context,
-                                                  uint32_t address,
-                                                  uint16_t value) {
+static bool GbaPlatformRegistersStore16LEImpl(void *context, uint32_t address,
+                                              uint16_t value) {
   assert((address & 0x1u) == 0u);
 
   GbaPlatform *platform = (GbaPlatform *)context;
@@ -259,19 +259,18 @@ static bool GbaPlatformRegistersStore16LEFunction(void *context,
   return true;
 }
 
-static bool GbaPlatformRegistersStore32LEFunction(void *context,
-                                                  uint32_t address,
-                                                  uint32_t value) {
+static bool GbaPlatformRegistersStore32LEImpl(void *context, uint32_t address,
+                                              uint32_t value) {
   assert((address & 0x3u) == 0u);
 
-  GbaPlatformRegistersStore16LEFunction(context, address, value);
-  GbaPlatformRegistersStore16LEFunction(context, address + 2u, value >> 16u);
+  GbaPlatformRegistersStore16LEImpl(context, address, value);
+  GbaPlatformRegistersStore16LEImpl(context, address + 2u, value >> 16u);
 
   return true;
 }
 
-static bool GbaPlatformRegistersStore8Function(void *context, uint32_t address,
-                                               uint8_t value) {
+static bool GbaPlatformRegistersStore8Impl(void *context, uint32_t address,
+                                           uint8_t value) {
   GbaPlatform *platform = (GbaPlatform *)context;
 
   switch (address) {
@@ -314,9 +313,75 @@ static bool GbaPlatformRegistersStore8Function(void *context, uint32_t address,
     value16 |= (uint16_t)value << 8u;
   }
 
-  GbaPlatformRegistersStore16LEFunction(context, read_address, value16);
+  GbaPlatformRegistersStore16LEImpl(context, read_address, value16);
 
   return true;
+}
+
+static bool GbaPlatformRegistersLoad32LE(const void *context, uint32_t address,
+                                         uint32_t *value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersLoad32LEImpl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
+}
+
+static bool GbaPlatformRegistersLoad16LE(const void *context, uint32_t address,
+                                         uint16_t *value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersLoad16LEImpl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
+}
+
+static bool GbaPlatformRegistersLoad8(const void *context, uint32_t address,
+                                      uint8_t *value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersLoad8Impl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
+}
+
+static bool GbaPlatformRegistersStore32LE(void *context, uint32_t address,
+                                          uint32_t value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersStore32LEImpl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
+}
+
+static bool GbaPlatformRegistersStore16LE(void *context, uint32_t address,
+                                          uint16_t value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersStore16LEImpl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
+}
+
+static bool GbaPlatformRegistersStore8(void *context, uint32_t address,
+                                       uint8_t value) {
+  GbaPlatform *platform = (GbaPlatform *)context;
+
+  mtx_lock(&platform->mutex);
+  bool result = GbaPlatformRegistersStore8Impl(context, address, value);
+  mtx_unlock(&platform->mutex);
+
+  return result;
 }
 
 void GbaPlatformRegistersFree(void *context) {
@@ -331,18 +396,23 @@ bool GbaPlatformAllocate(Power *power, InterruptLine *irq_line,
     return false;
   }
 
+  if (mtx_init(&(*platform)->mutex, mtx_plain) != thrd_success) {
+    free(*platform);
+    return false;
+  }
+
   (*platform)->power = power;
   (*platform)->interrupt_line = irq_line;
   (*platform)->reference_count = 2u;
 
   *registers = MemoryAllocate(
-      *platform, GbaPlatformRegistersLoad32LEFunction,
-      GbaPlatformRegistersLoad16LEFunction, GbaPlatformRegistersLoad8Function,
-      GbaPlatformRegistersStore32LEFunction,
-      GbaPlatformRegistersStore16LEFunction, GbaPlatformRegistersStore8Function,
+      *platform, GbaPlatformRegistersLoad32LE, GbaPlatformRegistersLoad16LE,
+      GbaPlatformRegistersLoad8, GbaPlatformRegistersStore32LE,
+      GbaPlatformRegistersStore16LE, GbaPlatformRegistersStore8,
       GbaPlatformRegistersFree);
 
   if (*registers == NULL) {
+    mtx_destroy(&(*platform)->mutex);
     free(*platform);
     return false;
   }
@@ -353,6 +423,8 @@ bool GbaPlatformAllocate(Power *power, InterruptLine *irq_line,
 }
 
 void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.vblank = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -361,9 +433,13 @@ void GbaPlatformRaiseVBlankInterrupt(GbaPlatform *platform) {
   if (platform->power_state == POWER_STATE_HALT && raised) {
     GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.hblank = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -372,9 +448,13 @@ void GbaPlatformRaiseHBlankInterrupt(GbaPlatform *platform) {
   if (platform->power_state == POWER_STATE_HALT && raised) {
     GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.vblank_count = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -383,10 +463,14 @@ void GbaPlatformRaiseVBlankCountInterrupt(GbaPlatform *platform) {
   if (platform->power_state == POWER_STATE_HALT && raised) {
     GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer) {
   assert(GBA_TIMER_0 <= timer && timer <= GBA_TIMER_3);
+
+  mtx_lock(&platform->mutex);
 
   platform->registers.interrupt_flags.timers |= 1u << timer;
 
@@ -396,9 +480,13 @@ void GbaPlatformRaiseTimerInterrupt(GbaPlatform *platform, GbaTimerId timer) {
   if (platform->power_state == POWER_STATE_HALT && raised) {
     GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.serial = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -413,10 +501,14 @@ void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
       GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
     }
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseDmaInterrupt(GbaPlatform *platform, GbaDmaId dma) {
   assert(GBA_DMA_0 <= dma && dma <= GBA_DMA_3);
+
+  mtx_lock(&platform->mutex);
 
   platform->registers.interrupt_flags.dmas |= 1u << dma;
 
@@ -426,9 +518,13 @@ void GbaPlatformRaiseDmaInterrupt(GbaPlatform *platform, GbaDmaId dma) {
   if (platform->power_state == POWER_STATE_HALT && raised) {
     GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.keypad = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -443,9 +539,13 @@ void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
       GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
     }
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
+  mtx_lock(&platform->mutex);
+
   platform->registers.interrupt_flags.cartridge = true;
 
   bool raised = GbaIrqLineIsRaisedFunction(platform);
@@ -460,6 +560,8 @@ void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
       GbaPlatformSetPowerState(platform, POWER_STATE_RUN);
     }
   }
+
+  mtx_unlock(&platform->mutex);
 }
 
 uint_fast8_t GbaPlatformSramWaitStateCycles(const GbaPlatform *platform) {
@@ -510,15 +612,23 @@ bool GbaPlatformRomPrefetch(const GbaPlatform *platform) {
 
 void GbaPlatformRetain(GbaPlatform *platform) {
   assert(platform->reference_count != UINT16_MAX);
+
+  mtx_lock(&platform->mutex);
   platform->reference_count += 1u;
+  mtx_unlock(&platform->mutex);
 }
 
 void GbaPlatformRelease(GbaPlatform *platform) {
-  assert(platform->reference_count);
+  assert(platform->reference_count != 0);
+
+  mtx_lock(&platform->mutex);
   platform->reference_count -= 1u;
   if (platform->reference_count == 0u) {
     PowerFree(platform->power);
     InterruptLineFree(platform->interrupt_line);
+    mtx_destroy(&platform->mutex);
     free(platform);
+  } else {
+    mtx_unlock(&platform->mutex);
   }
 }

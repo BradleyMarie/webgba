@@ -2,7 +2,7 @@ cc_binary(
     name = "webgba.so",
     srcs = ["webgba.c"],
     linkopts = [
-        "-Wl,-lGL,--version-script",
+        "-Wl,-lGL,-lpthread,--version-script",
         "$(location :webgba.lds)",
     ],
     linkshared = 1,
