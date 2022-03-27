@@ -32,10 +32,13 @@ extern "C" {
 class SoundTest : public testing::Test {
  public:
   void SetUp() override {
+    Power *power = PowerAllocate(nullptr, PowerSet, nullptr);
+    ASSERT_NE(power, nullptr);
     InterruptLine *irq =
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
-    ASSERT_TRUE(GbaPlatformAllocate(irq, &platform_, &platform_registers_));
+    ASSERT_TRUE(
+        GbaPlatformAllocate(power, irq, &platform_, &platform_registers_));
     ASSERT_TRUE(
         GbaDmaUnitAllocate(platform_, &dma_unit_, &dma_unit_registers_));
     ASSERT_TRUE(GbaSpuAllocate(dma_unit_, &spu_, &regs_));
@@ -51,6 +54,10 @@ class SoundTest : public testing::Test {
   }
 
   static void InterruptSetLevel(void *context, bool raised) {
+    // Do Nothing
+  }
+
+  static void PowerSet(void *context, PowerState power_state) {
     // Do Nothing
   }
 
