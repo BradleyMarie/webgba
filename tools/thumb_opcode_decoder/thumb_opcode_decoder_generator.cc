@@ -568,7 +568,8 @@ int main(int argc, char* argv[]) {
   sorted_opcodes.erase("THUMB=OPCODE=UNDEF");
 
   std::cout << "#ifndef _TOOLS_THUMB_OPCODE_DECODER_DECODER_" << std::endl;
-  std::cout << "#define _TOOLS_THUMB_OPCODE_DECODER_DECODER_" << std::endl;
+  std::cout << "#define _TOOLS_THUMB_OPCODE_DECODER_DECODER_" << std::endl
+            << std::endl;
 
   std::cout << "#include <assert.h>" << std::endl;
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
@@ -601,7 +602,7 @@ int main(int argc, char* argv[]) {
   std::cout << "  assert(opcode_index < 1024);" << std::endl << std::endl;
 
   std::cout << "  return (ThumbOpcode)opcode_table[opcode_index];" << std::endl;
-  std::cout << "}" << std::endl;
+  std::cout << "}" << std::endl << std::endl;
 
   std::cout << "#endif  // _TOOLS_THUMB_OPCODE_DECODER_DECODER_" << std::endl;
 
