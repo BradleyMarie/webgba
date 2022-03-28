@@ -474,7 +474,7 @@ int main(int argc, char* argv[]) {
     instruction[27] = bits[11];
     std::string opcode = MatchInstruction(instruction);
     if (opcode.empty()) {
-      return -1;
+      return EXIT_FAILURE;
     }
     std::replace(opcode.begin(), opcode.end(), '_', '=');
     opcodes.push_back(opcode);
@@ -485,7 +485,7 @@ int main(int argc, char* argv[]) {
 
   if (UINT8_MAX < sorted_opcodes.size()) {
     std::cout << "ERROR: Cannot represent opcodes in a uint8_t" << std::endl;
-    return -1;
+    return EXIT_FAILURE;
   }
 
   std::map<std::string, uint32_t> opcode_number;
@@ -531,5 +531,5 @@ int main(int argc, char* argv[]) {
   std::cout << "  return (ArmOpcode)opcode_table[opcode_index];" << std::endl;
   std::cout << "}" << std::endl;
 
-  return 0;
+  return EXIT_SUCCESS;
 }

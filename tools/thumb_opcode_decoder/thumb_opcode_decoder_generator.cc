@@ -550,7 +550,7 @@ int main(int argc, char* argv[]) {
     instruction[15] = bits[9];
     std::string opcode = MatchInstruction(instruction);
     if (opcode.empty()) {
-      return -1;
+      return EXIT_FAILURE;
     }
     std::replace(opcode.begin(), opcode.end(), '_', '=');
     opcodes.push_back(opcode);
@@ -561,7 +561,7 @@ int main(int argc, char* argv[]) {
 
   if (UINT8_MAX < sorted_opcodes.size()) {
     std::cout << "ERROR: Cannot represent opcodes in a uint8_t" << std::endl;
-    return -1;
+    return EXIT_FAILURE;
   }
 
   std::map<std::string, uint32_t> opcode_number;
@@ -595,10 +595,10 @@ int main(int argc, char* argv[]) {
   std::cout << "  };" << std::endl << std::endl;
 
   std::cout << "  uint_fast16_t opcode_index = instruction >> 6u;" << std::endl;
-  std::cout << "  assert(opcode_index <= 1024);" << std::endl << std::endl;
+  std::cout << "  assert(opcode_index < 1024);" << std::endl << std::endl;
 
   std::cout << "  return (ThumbOpcode)opcode_table[opcode_index];" << std::endl;
   std::cout << "}" << std::endl;
 
-  return 0;
+  return EXIT_SUCCESS;
 }
