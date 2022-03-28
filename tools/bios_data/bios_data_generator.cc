@@ -16,7 +16,7 @@ std::vector<unsigned char> ReadFile() {
 int main(int argc, char* argv[]) {
   std::vector<unsigned char> bytes = ReadFile();
   std::cout << "#ifndef _TOOLS_BIOS_DATA_DATA_" << std::endl;
-  std::cout << "#define _TOOLS_BIOS_DATA_DATA_" << std::endl;
+  std::cout << "#define _TOOLS_BIOS_DATA_DATA_" << std::endl << std::endl;
 
   std::cout << "#include <stdint.h>" << std::endl << std::endl;
 
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
   for (unsigned char byte : bytes) {
     std::cout << "  " << (unsigned)byte << "u," << std::endl;
   }
-  std::cout << "};" << std::endl;
+  std::cout << "};" << std::endl << std::endl;
 
   std::cout << "#endif  // _TOOLS_BIOS_DATA_DATA_" << std::endl;
 
