@@ -10,6 +10,8 @@ extern "C" {
 #include "emulator/gba.h"
 }
 
+void NoOpAudioCallback(int16_t left, int16_t right) {}
+
 int main(int argc, char **argv) {
   if (argc < 3) {
     std::cout << "Usage: benchmark <num-frames> <rom>" << std::endl;
@@ -56,9 +58,8 @@ int main(int argc, char **argv) {
 
   ProfilerStart("benchmark.profile");
   for (int i = 0; i < frame_count; i++) {
-    for (uint32_t i = 0u; i < 280896u; i++) {
-      GbaEmulatorStep(emulator);
-    }
+    GbaEmulatorStep(emulator, /*framebuffer=*/0, /*scale_factor=*/1,
+                    NoOpAudioCallback);
   }
   ProfilerStop();
 

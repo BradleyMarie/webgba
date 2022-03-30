@@ -203,8 +203,44 @@ bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
   return true;
 }
 
+void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
+                     GbaEmulatorRenderAudioSample audio_sample_callback) {
+  assert(scale_factor != 0);
+  assert(audio_sample_callback != NULL);
+
+  bool frame_rendered = false;
+  while (!frame_rendered) {
+    uint_fast8_t power_state =
+        atomic_load_explicit(&emulator->power_state, memory_order_relaxed);
+
+    if (power_state == POWER_STATE_RUN) {
+      if (GbaDmaUnitIsActive(emulator->dma)) {
+        GbaDmaUnitStep(emulator->dma, emulator->memory);
+      } else {
+        Arm7TdmiStep(emulator->cpu, emulator->memory);
+      }
+
+      GbaTimersStep(emulator->timers);
+      frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
+      GbaSpuStep(emulator->spu, audio_sample_callback);
+    } else if (power_state == POWER_STATE_HALT) {
+      GbaTimersStep(emulator->timers);
+      frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
+      GbaSpuStep(emulator->spu, audio_sample_callback);
+    } else {
+      // TODO: Blank screen
+      break;
+    }
+  }
+}
+
+void GbaEmulatorReloadContext(GbaEmulator *emulator) {
+  GbaPpuReloadContext(emulator->ppu);
+}
+
 void GbaEmulatorFree(GbaEmulator *emulator) {
   assert(atomic_load(&emulator->reference_count) != 0);
+
   if (atomic_fetch_sub(&emulator->reference_count, 1) == 1u) {
     GbaPlatformRelease(emulator->platform);
     Arm7TdmiFree(emulator->cpu);
@@ -216,46 +252,4 @@ void GbaEmulatorFree(GbaEmulator *emulator) {
     GbaPeripheralsFree(emulator->peripherals);
     free(emulator);
   }
-}
-
-void GbaEmulatorStep(GbaEmulator *emulator) {
-  uint_fast8_t power_state =
-      atomic_load_explicit(&emulator->power_state, memory_order_relaxed);
-  if (power_state == POWER_STATE_RUN) {
-    if (GbaDmaUnitIsActive(emulator->dma)) {
-      GbaDmaUnitStep(emulator->dma, emulator->memory);
-    } else {
-      Arm7TdmiStep(emulator->cpu, emulator->memory);
-    }
-
-    GbaTimersStep(emulator->timers);
-    GbaPpuStep(emulator->ppu);
-    GbaSpuStep(emulator->spu);
-  } else if (power_state == POWER_STATE_HALT) {
-    GbaTimersStep(emulator->timers);
-    GbaPpuStep(emulator->ppu);
-    GbaSpuStep(emulator->spu);
-  }
-}
-
-void GbaEmulatorSetRenderAudioSample(
-    GbaEmulator *emulator, GbaEmulatorRenderAudioSampleRoutine render_routine) {
-  GbaSpuSetRenderAudioSampleRoutine(emulator->spu, render_routine);
-}
-
-void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer) {
-  GbaPpuSetRenderOutput(emulator->ppu, framebuffer);
-}
-
-void GbaEmulatorSetRenderScale(GbaEmulator *emulator, uint8_t scale_factor) {
-  GbaPpuSetRenderScale(emulator->ppu, scale_factor);
-}
-
-void GbaEmulatorSetRenderDoneCallback(
-    GbaEmulator *emulator, GbaEmulatorRenderDoneFunction frame_done) {
-  GbaPpuSetRenderDoneCallback(emulator->ppu, frame_done);
-}
-
-void GbaEmulatorReloadContext(GbaEmulator *emulator) {
-  GbaPpuReloadContext(emulator->ppu);
 }

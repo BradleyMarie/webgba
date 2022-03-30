@@ -11,24 +11,17 @@ typedef struct _GbaEmulator GbaEmulator;
 // TODO: Make ROMs reloadable without tearing down emulator.
 bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad);
-void GbaEmulatorFree(GbaEmulator *emulator);
 
-void GbaEmulatorStep(GbaEmulator *emulator);
+// Callback type for one sample's worth of audio data
+typedef void (*GbaEmulatorRenderAudioSample)(int16_t left, int16_t right);
 
-// Sound Output Management
-typedef void (*GbaEmulatorRenderAudioSampleRoutine)(int16_t left,
-                                                    int16_t right);
-void GbaEmulatorSetRenderAudioSample(
-    GbaEmulator *emulator, GbaEmulatorRenderAudioSampleRoutine render_routine);
-
-// Render Output Management
-typedef void (*GbaEmulatorRenderDoneFunction)(uint32_t width, uint32_t height);
-void GbaEmulatorSetRenderOutput(GbaEmulator *emulator, GLuint framebuffer);
-void GbaEmulatorSetRenderScale(GbaEmulator *emulator, uint8_t scale_factor);
-void GbaEmulatorSetRenderDoneCallback(GbaEmulator *emulator,
-                                      GbaEmulatorRenderDoneFunction frame_done);
+// Advance emulation by one frame
+void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
+                     GbaEmulatorRenderAudioSample audio_sample_callback);
 
 // Context Loss Recovery
 void GbaEmulatorReloadContext(GbaEmulator *emulator);
+
+void GbaEmulatorFree(GbaEmulator *emulator);
 
 #endif  // _WEBGBA_EMULATOR_GBA_
