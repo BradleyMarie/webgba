@@ -10,10 +10,13 @@
 #define MAX_WIDTH 3120u
 #define MAX_HEIGHT 2160u
 
+void NoOpAudioCallback(int16_t left, int16_t right) {}
+void NoOpVideoCallback(const void *data, unsigned int width,
+                       unsigned int height, size_t pitch) {}
+
 static struct retro_hw_render_callback hw_render;
 static retro_video_refresh_t video_cb;
 static retro_audio_sample_t audio_cb;
-static retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
@@ -64,10 +67,6 @@ static void PollInput() {
                                              RETRO_DEVICE_ID_JOYPAD_START));
   GamePadToggleSelect(gamepad, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0,
                                               RETRO_DEVICE_ID_JOYPAD_SELECT));
-}
-
-static void FrameDoneCallback(uint32_t width, uint32_t height) {
-  video_cb(RETRO_HW_FRAME_BUFFER_VALID, width, height, 0);
 }
 
 void retro_init() {}
@@ -131,7 +130,7 @@ void retro_set_environment(retro_environment_t cb) {
 void retro_set_audio_sample(retro_audio_sample_t cb) { audio_cb = cb; }
 
 void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) {
-  audio_batch_cb = cb;
+  // Do Nothing
 }
 
 void retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
@@ -148,13 +147,9 @@ void retro_run() {
     UpdateVariables();
   }
 
-  GbaEmulatorSetRenderAudioSample(emulator, audio_cb);
-  GbaEmulatorSetRenderOutput(emulator, hw_render.get_current_framebuffer());
-  GbaEmulatorSetRenderScale(emulator, render_scale);
-  GbaEmulatorSetRenderDoneCallback(emulator, FrameDoneCallback);
-  for (uint32_t i = 0u; i < 280896u; i++) {
-    GbaEmulatorStep(emulator);
-  }
+  GbaEmulatorStep(emulator, /*fbo=*/hw_render.get_current_framebuffer(),
+                  /*scale_factor=*/render_scale, audio_cb);
+  video_cb(RETRO_HW_FRAME_BUFFER_VALID, BASE_WIDTH, BASE_HEIGHT, 0);
 }
 
 static bool retro_init_hw_context() {

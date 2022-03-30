@@ -8,13 +8,12 @@ typedef struct _GbaSpu GbaSpu;
 
 bool GbaSpuAllocate(GbaDmaUnit* dma_unit, GbaSpu **spu, Memory **registers);
 
-void GbaSpuStep(GbaSpu *spu);
+// Callback type for one sample's worth of audio data
+typedef void (*GbaSpuRenderAudioSample)(int16_t left, int16_t right);
+
+void GbaSpuStep(GbaSpu *spu, GbaSpuRenderAudioSample audio_sample_callback);
 
 void GbaSpuTimerTick(GbaSpu *spu, bool timer_index);
-
-typedef void (*GbaSpuRenderAudioSampleRoutine)(int16_t left, int16_t right);
-void GbaSpuSetRenderAudioSampleRoutine(
-    GbaSpu *spu, GbaSpuRenderAudioSampleRoutine render_routine);
 
 void GbaSpuRetain(GbaSpu *spu);
 

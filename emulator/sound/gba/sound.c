@@ -241,7 +241,6 @@ struct _GbaSpu {
   int_fast16_t cycle_counter;
   int8_t current_fifo_a;
   int8_t current_fifo_b;
-  GbaSpuRenderAudioSampleRoutine render_routine;
   int8_t last_fifo_a;
   int8_t last_fifo_b;
   GbaSpuRegisters registers;
@@ -492,7 +491,7 @@ bool GbaSpuAllocate(GbaDmaUnit *dma_unit, GbaSpu **spu, Memory **registers) {
   return true;
 }
 
-void GbaSpuStep(GbaSpu *spu) {
+void GbaSpuStep(GbaSpu *spu, GbaSpuRenderAudioSample audio_sample_callback) {
   if (spu->cycle_counter & 0x7Fu) {
     spu->cycle_counter += 1;
     return;
@@ -561,9 +560,7 @@ void GbaSpuStep(GbaSpu *spu) {
       break;
   }
 
-  if (spu->render_routine != NULL) {
-    spu->render_routine(left << 5, right << 5);
-  }
+  audio_sample_callback(left << 5, right << 5);
 }
 
 void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
@@ -586,11 +583,6 @@ void GbaSpuTimerTick(GbaSpu *spu, bool timer_index) {
       GbaDmaUnitSignalFifoRefresh(spu->dma_unit, 0x40000A4u);
     }
   }
-}
-
-void GbaSpuSetRenderAudioSampleRoutine(
-    GbaSpu *spu, GbaSpuRenderAudioSampleRoutine render_routine) {
-  spu->render_routine = render_routine;
 }
 
 void GbaSpuRetain(GbaSpu *spu) {

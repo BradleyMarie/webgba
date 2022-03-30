@@ -14,17 +14,11 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
                     Memory **pram, Memory **vram, Memory **oam,
                     Memory **registers);
 
-void GbaPpuStep(GbaPpu *ppu);
-
-void GbaPpuFree(GbaPpu *ppu);
-
-// Render Output Configuration
-typedef void (*PpuRenderDoneFunction)(uint32_t width, uint32_t height);
-void GbaPpuSetRenderOutput(GbaPpu *ppu, GLuint framebuffer);
-void GbaPpuSetRenderScale(GbaPpu *ppu, uint8_t scale_factor);
-void GbaPpuSetRenderDoneCallback(GbaPpu *ppu, PpuRenderDoneFunction frame_done);
+bool GbaPpuStep(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor);
 
 // Context Loss Recovery
 void GbaPpuReloadContext(GbaPpu *ppu);
+
+void GbaPpuFree(GbaPpu *ppu);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_PPU_

@@ -33,7 +33,8 @@
 typedef void (*GbaPpuDrawPixelRoutine)(GbaPpu *ppu, bool draw_bg0,
                                        bool draw_bg1, bool draw_bg2,
                                        bool draw_bg3);
-typedef void (*GbaPpuStepRoutine)(GbaPpu *ppu);
+typedef bool (*GbaPpuStepRoutine)(GbaPpu *ppu, GLuint fbo,
+                                  uint8_t scale_factor);
 
 struct _GbaPpu {
   GbaDmaUnit *dma_unit;
@@ -44,9 +45,7 @@ struct _GbaPpu {
   GbaPpuRegisters registers;
   GbaPpuInternalRegisters internal_registers;
   GbaPpuObjectVisibility object_visibility;
-  GLuint fbo;
   bool hardware_render;
-  PpuRenderDoneFunction frame_done;
   GbaPpuStepRoutine next_wake_routine;
   uint_fast8_t x;
   uint32_t cycle_count;
@@ -236,13 +235,16 @@ static void GbaPpuEndHBlank(GbaPpu *ppu, uint16_t next_row) {
   }
 }
 
-static void GbaPpuPreVBlank(GbaPpu *ppu);
-static void GbaPpuPostVBlank(GbaPpu *ppu);
-static void GbaPpuPostDrawnHBlank(GbaPpu *ppu);
-static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu);
-static void GbaPpuPostOffScreenHBlank(GbaPpu *ppu);
+static bool GbaPpuPreVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor);
+static bool GbaPpuPostVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor);
+static bool GbaPpuPostDrawnHBlank(GbaPpu *ppu, GLuint fbo,
+                                  uint8_t scale_factor);
+static bool GbaPpuPreOffScreenHBlank(GbaPpu *ppu, GLuint fbo,
+                                     uint8_t scale_factor);
+static bool GbaPpuPostOffScreenHBlank(GbaPpu *ppu, GLuint fbo,
+                                      uint8_t scale_factor);
 
-static void GbaPpuDrawPixel(GbaPpu *ppu) {
+static bool GbaPpuDrawPixel(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   GbaPpuBlendUnitReset(&ppu->blend_unit);
 
   uint16_t color = 0u;
@@ -316,18 +318,23 @@ static void GbaPpuDrawPixel(GbaPpu *ppu) {
   }
 
   ppu->cycle_count += 1;
+
+  return false;
 }
 
-static void GbaPpuPostDrawnHBlank(GbaPpu *ppu) {
+static bool GbaPpuPostDrawnHBlank(GbaPpu *ppu, GLuint fbo,
+                                  uint8_t scale_factor) {
   GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
 
   ppu->next_wake_routine = GbaPpuDrawPixel;
   ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
 
   ppu->cycle_count += 1;
+
+  return false;
 }
 
-static void GbaPpuPreVBlank(GbaPpu *ppu) {
+static bool GbaPpuPreVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
 
   ppu->registers.dispstat.vblank_status = true;
@@ -339,20 +346,19 @@ static void GbaPpuPreVBlank(GbaPpu *ppu) {
   GbaDmaUnitSignalVBlank(ppu->dma_unit);
 
   if (!ppu->hardware_render) {
-    GbaPpuScreenRenderToFbo(&ppu->screen, ppu->fbo);
-  }
-
-  if (ppu->frame_done != NULL) {
-    ppu->frame_done(GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
+    GbaPpuScreenRenderToFbo(&ppu->screen, fbo);
   }
 
   ppu->next_wake_routine = GbaPpuPreOffScreenHBlank;
   ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
 
   ppu->cycle_count += 1;
+
+  return true;
 }
 
-static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu) {
+static bool GbaPpuPreOffScreenHBlank(GbaPpu *ppu, GLuint fbo,
+                                     uint8_t scale_factor) {
   GbaPpuStartHBlank(ppu);
 
   if (ppu->registers.vcount == GBA_PPU_SCANLINES_PER_REFRESH - 1) {
@@ -364,18 +370,23 @@ static void GbaPpuPreOffScreenHBlank(GbaPpu *ppu) {
   ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
 
   ppu->cycle_count += 1;
+
+  return false;
 }
 
-static void GbaPpuPostOffScreenHBlank(GbaPpu *ppu) {
+static bool GbaPpuPostOffScreenHBlank(GbaPpu *ppu, GLuint fbo,
+                                      uint8_t scale_factor) {
   GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
 
   ppu->next_wake_routine = GbaPpuPreOffScreenHBlank;
   ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
 
   ppu->cycle_count += 1;
+
+  return false;
 }
 
-static void GbaPpuPostVBlank(GbaPpu *ppu) {
+static bool GbaPpuPostVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   GbaPpuEndHBlank(ppu, 0u);
 
   ppu->registers.dispstat.vblank_status = false;
@@ -384,6 +395,8 @@ static void GbaPpuPostVBlank(GbaPpu *ppu) {
   ppu->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
 
   ppu->cycle_count = 0u;
+
+  return false;
 }
 
 //
@@ -457,18 +470,21 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
                                 &(*ppu)->object_visibility);
   }
 
+  GbaPpuScreenInitialize(&(*ppu)->screen);
+
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
 
   return true;
 }
 
-void GbaPpuStep(GbaPpu *ppu) {
+bool GbaPpuStep(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   if (ppu->cycle_count != ppu->next_wake) {
     ppu->cycle_count += 1u;
-  } else {
-    ppu->next_wake_routine(ppu);
+    return false;
   }
+
+  return ppu->next_wake_routine(ppu, fbo, scale_factor);
 }
 
 void GbaPpuFree(GbaPpu *ppu) {
@@ -479,19 +495,6 @@ void GbaPpuFree(GbaPpu *ppu) {
     GbaPpuScreenDestroy(&ppu->screen);
     free(ppu);
   }
-}
-
-void GbaPpuSetRenderOutput(GbaPpu *ppu, GLuint framebuffer) {
-  ppu->fbo = framebuffer;
-}
-
-void GbaPpuSetRenderScale(GbaPpu *ppu, uint8_t scale_factor) {
-  assert(scale_factor != 0);
-}
-
-void GbaPpuSetRenderDoneCallback(GbaPpu *ppu,
-                                 PpuRenderDoneFunction frame_done) {
-  ppu->frame_done = frame_done;
 }
 
 void GbaPpuReloadContext(GbaPpu *ppu) {
