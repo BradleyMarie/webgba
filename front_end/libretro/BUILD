@@ -1,6 +1,9 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 cc_binary(
     name = "webgba.so",
     srcs = ["webgba.c"],
+    visibility = ["//third_party/sdlarch:__subpackages__"],
     linkopts = [
         "-Wl,-lGL,-lpthread,--version-script",
         "$(location :webgba.lds)",
