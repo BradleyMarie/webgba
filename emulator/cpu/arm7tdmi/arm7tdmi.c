@@ -1,7 +1,6 @@
 #include "emulator/cpu/arm7tdmi/arm7tdmi.h"
 
 #include <assert.h>
-#include <stdatomic.h>
 #include <stdlib.h>
 
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
@@ -18,9 +17,9 @@ typedef void (*StepRoutine)(Arm7Tdmi*, Memory*);
 
 struct _Arm7Tdmi {
   const StepRoutine* step_routines;
-  atomic_uint_fast8_t step_routine_index;
+  uint_fast8_t step_routine_index;
   ArmAllRegisters registers;
-  atomic_uint_fast8_t reference_count;
+  uint_fast8_t reference_count;
 };
 
 //
@@ -29,41 +28,17 @@ struct _Arm7Tdmi {
 
 static void Arm7TdmiSetLevelRst(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-
-  uint_fast8_t previous, next;
-  do {
-    previous =
-        atomic_load_explicit(&cpu->step_routine_index, memory_order_relaxed);
-    next = (previous & 3u) | (raised << 2u);
-  } while (!atomic_compare_exchange_weak_explicit(
-      &cpu->step_routine_index, &previous, next, memory_order_relaxed,
-      memory_order_relaxed));
+  cpu->step_routine_index = (cpu->step_routine_index & 3u) | (raised << 2u);
 }
 
 static void Arm7TdmiSetLevelFiq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-
-  uint_fast8_t previous, next;
-  do {
-    previous =
-        atomic_load_explicit(&cpu->step_routine_index, memory_order_relaxed);
-    next = (previous & 5u) | (raised << 1u);
-  } while (!atomic_compare_exchange_weak_explicit(
-      &cpu->step_routine_index, &previous, next, memory_order_relaxed,
-      memory_order_relaxed));
+  cpu->step_routine_index = (cpu->step_routine_index & 5u) | (raised << 1u);
 }
 
 static void Arm7TdmiSetLevelIrq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-
-  uint_fast8_t previous, next;
-  do {
-    previous =
-        atomic_load_explicit(&cpu->step_routine_index, memory_order_relaxed);
-    next = (previous & 6u) | raised;
-  } while (!atomic_compare_exchange_weak_explicit(
-      &cpu->step_routine_index, &previous, next, memory_order_relaxed,
-      memory_order_relaxed));
+  cpu->step_routine_index = (cpu->step_routine_index & 6u) | raised;
 }
 
 static void Arm7TdmiInterruptLineFree(void* context) {
@@ -276,16 +251,16 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  uint_fast8_t index =
-      atomic_load_explicit(&cpu->step_routine_index, memory_order_relaxed);
+  uint_fast8_t index = cpu->step_routine_index;
   assert(index < 8u);
 
   cpu->step_routines[index](cpu, memory);
 }
 
 void Arm7TdmiFree(Arm7Tdmi* cpu) {
-  assert(atomic_load(&cpu->reference_count) != 0);
-  if (atomic_fetch_sub(&cpu->reference_count, 1) == 1u) {
+  assert(cpu->reference_count != 0);
+  cpu->reference_count -= 1u;
+  if (cpu->reference_count == 0u) {
     free(cpu);
   }
 }

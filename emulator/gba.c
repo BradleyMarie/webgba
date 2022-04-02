@@ -15,7 +15,7 @@
 #include "emulator/timers/gba/timers.h"
 
 struct _GbaEmulator {
-  atomic_uint_fast8_t power_state;
+  PowerState power_state;
   Arm7Tdmi *cpu;
   Memory *memory;
   GbaDmaUnit *dma;
@@ -24,13 +24,12 @@ struct _GbaEmulator {
   GbaTimers *timers;
   GbaPeripherals *peripherals;
   GbaPlatform *platform;
-  atomic_uint_fast8_t reference_count;
+  uint_fast8_t reference_count;
 };
 
 static void GbaEmulatorPowerSet(void *context, PowerState power_state) {
   GbaEmulator *emulator = (GbaEmulator *)context;
-  atomic_store_explicit(&emulator->power_state, power_state,
-                        memory_order_relaxed);
+  emulator->power_state = power_state;
 }
 
 static void GbaEmulatorPowerFree(void *context) {
@@ -210,10 +209,7 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
 
   bool frame_rendered = false;
   while (!frame_rendered) {
-    uint_fast8_t power_state =
-        atomic_load_explicit(&emulator->power_state, memory_order_relaxed);
-
-    if (power_state == POWER_STATE_RUN) {
+    if (emulator->power_state == POWER_STATE_RUN) {
       if (GbaDmaUnitIsActive(emulator->dma)) {
         GbaDmaUnitStep(emulator->dma, emulator->memory);
       } else {
@@ -223,7 +219,7 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
       GbaTimersStep(emulator->timers);
       frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
       GbaSpuStep(emulator->spu, audio_sample_callback);
-    } else if (power_state == POWER_STATE_HALT) {
+    } else if (emulator->power_state == POWER_STATE_HALT) {
       GbaTimersStep(emulator->timers);
       frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
       GbaSpuStep(emulator->spu, audio_sample_callback);
@@ -239,9 +235,9 @@ void GbaEmulatorReloadContext(GbaEmulator *emulator) {
 }
 
 void GbaEmulatorFree(GbaEmulator *emulator) {
-  assert(atomic_load(&emulator->reference_count) != 0);
-
-  if (atomic_fetch_sub(&emulator->reference_count, 1) == 1u) {
+  assert(emulator->reference_count != 0);
+  emulator->reference_count -= 1u;
+  if (emulator->reference_count == 0u) {
     GbaPlatformRelease(emulator->platform);
     Arm7TdmiFree(emulator->cpu);
     MemoryFree(emulator->memory);

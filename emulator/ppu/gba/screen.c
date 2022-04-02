@@ -2,18 +2,12 @@
 
 #include <string.h>
 
-void GbaPpuScreenInitialize(GbaPpuScreen* screen) {
-  mtx_init(&screen->resource_mutex, mtx_plain);
-}
-
 void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
   for (uint_fast8_t y = 0u; y < GBA_SCREEN_HEIGHT; y++) {
     for (uint_fast8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
       screen->pixels[y][x] <<= 1u;
     }
   }
-
-  mtx_lock(&screen->resource_mutex);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, screen->texture);
@@ -26,13 +20,9 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
   glViewport(0, 0, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
   glUseProgram(screen->program);
   glDrawArrays(GL_TRIANGLES, 0, 3u);
-
-  mtx_unlock(&screen->resource_mutex);
 }
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
-  mtx_lock(&screen->resource_mutex);
-
   screen->program = glCreateProgram();
 
   static const char* vertex_shader_source[9u] = {
@@ -89,12 +79,9 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
-
-  mtx_unlock(&screen->resource_mutex);
 }
 
 void GbaPpuScreenDestroy(GbaPpuScreen* screen) {
-  mtx_destroy(&screen->resource_mutex);
   glDeleteProgram(screen->program);
   glDeleteTextures(1u, &screen->texture);
 }

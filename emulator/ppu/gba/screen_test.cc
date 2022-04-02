@@ -6,10 +6,7 @@ extern "C" {
 
 class ScreenTest : public testing::Test {
  public:
-  void SetUp() override {
-    GbaPpuScreenInitialize(&screen_);
-    GbaPpuScreenReloadContext(&screen_);
-  }
+  void SetUp() override { GbaPpuScreenReloadContext(&screen_); }
 
   void TearDown() override { GbaPpuScreenDestroy(&screen_); }
 

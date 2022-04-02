@@ -4,7 +4,6 @@ cc_binary(
     linkopts = [
         "-lGL",
         "-lprofiler",
-        "-lpthread",
     ],
     deps = [
         "//emulator:gba",
