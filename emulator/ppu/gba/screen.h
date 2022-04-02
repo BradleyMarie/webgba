@@ -3,7 +3,6 @@
 
 #include <GLES2/gl2.h>
 #include <assert.h>
-#include <threads.h>
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
@@ -13,12 +12,9 @@
 
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
-  mtx_t resource_mutex;
   GLuint program;
   GLuint texture;
 } GbaPpuScreen;
-
-void GbaPpuScreenInitialize(GbaPpuScreen* screen);
 
 static inline void GbaPpuScreenSet(GbaPpuScreen* screen, uint_fast8_t x,
                                    uint_fast8_t y, uint16_t value) {

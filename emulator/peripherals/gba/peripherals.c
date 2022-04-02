@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <threads.h>
 
 #define SIODATA32S_OFFSET 0x00u
 #define SIOMULTI0_OFFSET 0x00u
@@ -94,18 +93,14 @@ typedef union {
 } GbaPeripheralRegisters;
 
 struct _GbaPeripherals {
-  mtx_t mutex;
   GbaPeripheralRegisters registers;
   GbaPlatform *platform;
   uint16_t reference_count;
 };
 
-static bool GbaPeripheralsRegistersLoad16LEImpl(const void *context,
-                                                uint32_t address,
-                                                uint16_t *value) {
+static bool GbaPeripheralsRegistersLoad16LEImpl(
+    const GbaPeripherals *peripherals, uint32_t address, uint16_t *value) {
   assert((address & 0x1u) == 0u);
-
-  const GbaPeripherals *peripherals = (const GbaPeripherals *)context;
 
   switch (address) {
     case SIOMULTI0_OFFSET:
@@ -161,20 +156,20 @@ static bool GbaPeripheralsRegistersLoad16LEImpl(const void *context,
   return false;
 }
 
-static bool GbaPeripheralsRegistersLoad32LEImpl(const void *context,
-                                                uint32_t address,
-                                                uint32_t *value) {
+static bool GbaPeripheralsRegistersLoad32LEImpl(
+    const GbaPeripherals *peripherals, uint32_t address, uint32_t *value) {
   assert((address & 0x3u) == 0u);
 
   uint16_t low_bits;
-  bool low = GbaPeripheralsRegistersLoad16LEImpl(context, address, &low_bits);
+  bool low =
+      GbaPeripheralsRegistersLoad16LEImpl(peripherals, address, &low_bits);
   if (!low) {
     return false;
   }
 
   uint16_t high_bits;
-  bool high =
-      GbaPeripheralsRegistersLoad16LEImpl(context, address + 2u, &high_bits);
+  bool high = GbaPeripheralsRegistersLoad16LEImpl(peripherals, address + 2u,
+                                                  &high_bits);
   if (high) {
     *value = (((uint32_t)high_bits) << 16u) | (uint32_t)low_bits;
   } else {
@@ -184,13 +179,13 @@ static bool GbaPeripheralsRegistersLoad32LEImpl(const void *context,
   return true;
 }
 
-static bool GbaPeripheralsRegistersLoad8Impl(const void *context,
+static bool GbaPeripheralsRegistersLoad8Impl(const GbaPeripherals *peripherals,
                                              uint32_t address, uint8_t *value) {
   uint32_t read_address = address & 0xFFFFFFFEu;
 
   uint16_t value16;
   bool success =
-      GbaPeripheralsRegistersLoad16LEImpl(context, read_address, &value16);
+      GbaPeripheralsRegistersLoad16LEImpl(peripherals, read_address, &value16);
   if (success) {
     *value = (address == read_address) ? value16 : value16 >> 8u;
   }
@@ -198,12 +193,10 @@ static bool GbaPeripheralsRegistersLoad8Impl(const void *context,
   return success;
 }
 
-static bool GbaPeripheralsRegistersStore16LEImpl(void *context,
+static bool GbaPeripheralsRegistersStore16LEImpl(GbaPeripherals *peripherals,
                                                  uint32_t address,
                                                  uint16_t value) {
   assert((address & 0x1u) == 0u);
-
-  GbaPeripherals *peripherals = (GbaPeripherals *)context;
 
   if (address >= GBA_PERIPHERALS_REGISTERS_SIZE || address == KEYINPUT_OFFSET) {
     return true;
@@ -214,21 +207,19 @@ static bool GbaPeripheralsRegistersStore16LEImpl(void *context,
   return true;
 }
 
-static bool GbaPeripheralsRegistersStore32LEImpl(void *context,
+static bool GbaPeripheralsRegistersStore32LEImpl(GbaPeripherals *peripherals,
                                                  uint32_t address,
                                                  uint32_t value) {
   assert((address & 0x3u) == 0u);
 
-  GbaPeripheralsRegistersStore16LEImpl(context, address, value);
-  GbaPeripheralsRegistersStore16LEImpl(context, address + 2u, value >> 16u);
+  GbaPeripheralsRegistersStore16LEImpl(peripherals, address, value);
+  GbaPeripheralsRegistersStore16LEImpl(peripherals, address + 2u, value >> 16u);
 
   return true;
 }
 
-static bool GbaPeripheralsRegistersStore8Impl(void *context, uint32_t address,
-                                              uint8_t value) {
-  GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
+static bool GbaPeripheralsRegistersStore8Impl(GbaPeripherals *peripherals,
+                                              uint32_t address, uint8_t value) {
   if (address >= GBA_PERIPHERALS_REGISTERS_SIZE || address == KEYINPUT_OFFSET ||
       address == KEYINPUT_OFFSET + 1u) {
     return true;
@@ -242,66 +233,46 @@ static bool GbaPeripheralsRegistersStore8Impl(void *context, uint32_t address,
 static bool GbaPeripheralsRegistersLoad32LE(const void *context,
                                             uint32_t address, uint32_t *value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersLoad32LEImpl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result =
+      GbaPeripheralsRegistersLoad32LEImpl(peripherals, address, value);
   return result;
 }
 
 static bool GbaPeripheralsRegistersLoad16LE(const void *context,
                                             uint32_t address, uint16_t *value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersLoad16LEImpl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result =
+      GbaPeripheralsRegistersLoad16LEImpl(peripherals, address, value);
   return result;
 }
 
 static bool GbaPeripheralsRegistersLoad8(const void *context, uint32_t address,
                                          uint8_t *value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersLoad8Impl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result = GbaPeripheralsRegistersLoad8Impl(peripherals, address, value);
   return result;
 }
 
 static bool GbaPeripheralsRegistersStore32LE(void *context, uint32_t address,
                                              uint32_t value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersStore32LEImpl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result =
+      GbaPeripheralsRegistersStore32LEImpl(peripherals, address, value);
   return result;
 }
 
 static bool GbaPeripheralsRegistersStore16LE(void *context, uint32_t address,
                                              uint16_t value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersStore16LEImpl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result =
+      GbaPeripheralsRegistersStore16LEImpl(peripherals, address, value);
   return result;
 }
 
 static bool GbaPeripheralsRegistersStore8(void *context, uint32_t address,
                                           uint8_t value) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
-  bool result = GbaPeripheralsRegistersStore8Impl(context, address, value);
-  mtx_unlock(&peripherals->mutex);
-
+  bool result = GbaPeripheralsRegistersStore8Impl(peripherals, address, value);
   return result;
 }
 
@@ -333,141 +304,101 @@ static void GbaPeripheralsMaybeSendKeypadInterrupt(
 static void GbaGamePadToggleUp(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
 
-  mtx_lock(&peripherals->mutex);
-
   pressed = !pressed;
   if (peripherals->registers.keyinput.up != pressed) {
     peripherals->registers.keyinput.up = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleDown(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.down != pressed) {
     peripherals->registers.keyinput.down = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleLeft(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.left != pressed) {
     peripherals->registers.keyinput.left = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleRight(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.right != pressed) {
     peripherals->registers.keyinput.right = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleA(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.a != pressed) {
     peripherals->registers.keyinput.a = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleB(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.b != pressed) {
     peripherals->registers.keyinput.b = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleL(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.l != pressed) {
     peripherals->registers.keyinput.l = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleR(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.r != pressed) {
     peripherals->registers.keyinput.r = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleStart(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.start != pressed) {
     peripherals->registers.keyinput.start = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaGamePadToggleSelect(void *context, bool pressed) {
   GbaPeripherals *peripherals = (GbaPeripherals *)context;
-
-  mtx_lock(&peripherals->mutex);
 
   pressed = !pressed;
   if (peripherals->registers.keyinput.select != pressed) {
     peripherals->registers.keyinput.select = pressed;
     GbaPeripheralsMaybeSendKeypadInterrupt(peripherals);
   }
-
-  mtx_unlock(&peripherals->mutex);
 }
 
 static void GbaPeripheralsMemoryFree(void *context) {
@@ -482,18 +413,12 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
     return false;
   }
 
-  if (mtx_init(&(*peripherals)->mutex, mtx_plain) != thrd_success) {
-    free(peripherals);
-    return false;
-  }
-
   *gamepad = GamePadAllocate(
       *peripherals, GbaGamePadToggleUp, GbaGamePadToggleDown,
       GbaGamePadToggleLeft, GbaGamePadToggleRight, GbaGamePadToggleA,
       GbaGamePadToggleB, GbaGamePadToggleL, GbaGamePadToggleR,
       GbaGamePadToggleStart, GbaGamePadToggleSelect, GbaPeripheralsMemoryFree);
   if (*gamepad == NULL) {
-    mtx_destroy(&(*peripherals)->mutex);
     free(*peripherals);
     return false;
   }
@@ -507,7 +432,6 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
       GbaPeripheralsRegistersStore8, GbaPeripheralsMemoryFree);
   if (*registers == NULL) {
     GamePadFree(*gamepad);
-    mtx_destroy(&(*peripherals)->mutex);
     free(*peripherals);
     return false;
   }
@@ -532,13 +456,9 @@ bool GbaPeripheralsAllocate(GbaPlatform *platform, GbaPeripherals **peripherals,
 
 void GbaPeripheralsFree(GbaPeripherals *peripherals) {
   assert(peripherals->reference_count != 0u);
-  mtx_lock(&peripherals->mutex);
   peripherals->reference_count -= 1u;
   if (peripherals->reference_count == 0u) {
-    mtx_destroy(&peripherals->mutex);
     free(peripherals);
-  } else {
-    mtx_unlock(&peripherals->mutex);
   }
 }
 

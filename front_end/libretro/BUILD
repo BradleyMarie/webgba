@@ -5,7 +5,7 @@ cc_binary(
     srcs = ["webgba.c"],
     visibility = ["//third_party/sdlarch:__subpackages__"],
     linkopts = [
-        "-Wl,-lGL,-lpthread,--version-script",
+        "-Wl,-lGL,--version-script",
         "$(location :webgba.lds)",
     ],
     linkshared = 1,

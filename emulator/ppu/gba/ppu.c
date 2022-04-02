@@ -470,8 +470,6 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
                                 &(*ppu)->object_visibility);
   }
 
-  GbaPpuScreenInitialize(&(*ppu)->screen);
-
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
 
