@@ -1,98 +1,24 @@
-#if __EMSCRIPTEN__
-#include <emscripten/emscripten.h>
-#endif  // __EMSCRIPTEN__
-
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "emulator/gba.h"
 
 static GLuint g_fbo_texture = 0;
 static GLuint g_fbo = 0;
 static GLuint g_program = 0;
-static SDL_Surface *g_screen = NULL;
+static SDL_Window *g_window = NULL;
+static SDL_GLContext *g_glcontext = NULL;
+static SDL_AudioDeviceID g_audiodevice = 0;
 static GbaEmulator *g_emulator = NULL;
 static GamePad *g_gamepad = NULL;
 
-#define AUDIO_BUFFER_SIZE 32768
-static int16_t g_audio_buffer[AUDIO_BUFFER_SIZE];
-static size_t g_audio_buffer_start = 0;
-static size_t g_audio_buffer_end = 0;
-static bool g_buffer_full = false;
-
-static void AddSample(int16_t sample) {
-  g_audio_buffer[g_audio_buffer_end] = sample;
-
-  size_t new_end = (g_audio_buffer_end + 1) % AUDIO_BUFFER_SIZE;
-  if (g_audio_buffer_start == g_audio_buffer_end && g_buffer_full) {
-    g_audio_buffer_start = new_end;
-    g_audio_buffer_end = new_end;
-  } else {
-    g_audio_buffer_end = new_end;
-  }
-
-  if (g_audio_buffer_start == g_audio_buffer_end) {
-    g_buffer_full = true;
-  }
-}
-
-static int16_t RemoveSample() {
-  if (g_audio_buffer_start == g_audio_buffer_end && !g_buffer_full) {
-    return 0;
-  }
-
-  int16_t result = g_audio_buffer[g_audio_buffer_start];
-  g_audio_buffer_start = (g_audio_buffer_start + 1) % AUDIO_BUFFER_SIZE;
-
-  if (g_audio_buffer_start == g_audio_buffer_end) {
-    g_buffer_full = false;
-  }
-
-  return result;
-}
-
 static void RenderAudioSample(int16_t left, int16_t right) {
-  AddSample(left);
-  AddSample(right);
+  int16_t buffer[2] = {left, right};
+  SDL_QueueAudio(g_audiodevice, buffer, sizeof(buffer));
 }
 
-static void AudioCallback(void *userdata, Uint8 *stream, int len) {
-  while (len != 0) {
-    int16_t sample = RemoveSample();
-
-    int bytes_to_copy = sizeof(int16_t);
-    if (len < bytes_to_copy) {
-      bytes_to_copy = len;
-    }
-
-    memcpy(stream, &sample, bytes_to_copy);
-
-    stream += bytes_to_copy;
-    len -= bytes_to_copy;
-  }
-}
-
-#if __EMSCRIPTEN__
-typedef void ReturnType;
-#else
-typedef bool ReturnType;
-#endif  // __EMSCRIPTEN__
-
-static bool SetVideoMode(int width, int height) {
-  SDL_Surface *new_surface = SDL_SetVideoMode(
-      /*width=*/width, /*height=*/height, 0, SDL_RESIZABLE | SDL_OPENGL);
-  if (new_surface == NULL) {
-    return false;
-  }
-
-  g_screen = new_surface;
-
-  return true;
-}
-
-static ReturnType RenderNextFrame() {
+static bool RenderNextFrame() {
   //
   // Check for events
   //
@@ -101,23 +27,15 @@ static ReturnType RenderNextFrame() {
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
       case SDL_QUIT:
-#if __EMSCRIPTEN__
-        emscripten_cancel_main_loop();
-        return;
-#else
         return false;
-#endif  // __EMSCRIPTEN__
-      case SDL_VIDEORESIZE:
-        if (!SetVideoMode(/*width=*/event.resize.w,
-                          /*height=*/event.resize.h)) {
-#if __EMSCRIPTEN__
-          emscripten_cancel_main_loop();
-          return;
-#else
-          return false;
-#endif  // __EMSCRIPTEN__
+      case SDL_WINDOWEVENT:
+        switch (event.window.event) {
+          case SDL_WINDOWEVENT_CLOSE:
+            return false;
+          case SDL_WINDOWEVENT_RESIZED:
+            // TODO
+            break;
         }
-        break;
     }
   }
 
@@ -125,22 +43,17 @@ static ReturnType RenderNextFrame() {
   // Update gamepad
   //
 
-#if __EMSCRIPTEN__
-  const Uint8 *key_state = SDL_GetKeyboardState(NULL);
-#else
-  const Uint8 *key_state = SDL_GetKeyState(NULL);
-#endif  // __EMSCRIPTEN__
-
-  GamePadToggleA(g_gamepad, key_state[SDLK_x] != 0);
-  GamePadToggleB(g_gamepad, key_state[SDLK_z] != 0);
-  GamePadToggleL(g_gamepad, key_state[SDLK_a] != 0);
-  GamePadToggleR(g_gamepad, key_state[SDLK_s] != 0);
-  GamePadToggleStart(g_gamepad, key_state[SDLK_RETURN] != 0);
-  GamePadToggleSelect(g_gamepad, key_state[SDLK_BACKSPACE] != 0);
-  GamePadToggleUp(g_gamepad, key_state[SDLK_UP] != 0);
-  GamePadToggleDown(g_gamepad, key_state[SDLK_DOWN] != 0);
-  GamePadToggleLeft(g_gamepad, key_state[SDLK_LEFT] != 0);
-  GamePadToggleRight(g_gamepad, key_state[SDLK_RIGHT] != 0);
+  const Uint8 *keyboard_state = SDL_GetKeyboardState(NULL);
+  GamePadToggleA(g_gamepad, keyboard_state[SDL_SCANCODE_X] != 0);
+  GamePadToggleB(g_gamepad, keyboard_state[SDL_SCANCODE_Z] != 0);
+  GamePadToggleL(g_gamepad, keyboard_state[SDL_SCANCODE_A] != 0);
+  GamePadToggleR(g_gamepad, keyboard_state[SDL_SCANCODE_S] != 0);
+  GamePadToggleStart(g_gamepad, keyboard_state[SDL_SCANCODE_RETURN] != 0);
+  GamePadToggleSelect(g_gamepad, keyboard_state[SDL_SCANCODE_BACKSPACE] != 0);
+  GamePadToggleUp(g_gamepad, keyboard_state[SDL_SCANCODE_UP] != 0);
+  GamePadToggleDown(g_gamepad, keyboard_state[SDL_SCANCODE_DOWN] != 0);
+  GamePadToggleLeft(g_gamepad, keyboard_state[SDL_SCANCODE_LEFT] != 0);
+  GamePadToggleRight(g_gamepad, keyboard_state[SDL_SCANCODE_RIGHT] != 0);
 
   //
   // Run emulation
@@ -156,8 +69,11 @@ static ReturnType RenderNextFrame() {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, g_fbo_texture);
 
+  int width, height;
+  SDL_GetWindowSize(g_window, &width, &height);
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, g_screen->w, g_screen->h);
+  glViewport(0, 0, width, height);
   glUseProgram(g_program);
   glDrawArrays(GL_TRIANGLES, 0, 3u);
 
@@ -165,11 +81,9 @@ static ReturnType RenderNextFrame() {
   // Flip framebuffer
   //
 
-  SDL_GL_SwapBuffers();
+  SDL_GL_SwapWindow(g_window);
 
-#ifndef __EMSCRIPTEN__
   return true;
-#endif  // __EMSCRIPTEN__
 }
 
 int main(int argc, char *argv[]) {
@@ -182,7 +96,7 @@ int main(int argc, char *argv[]) {
   // Initialize SDL
   //
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) < 0) {
     fprintf(stderr, "ERROR: Failed to initialize SDL\n");
     return EXIT_FAILURE;
   }
@@ -193,36 +107,29 @@ int main(int argc, char *argv[]) {
 
   SDL_RWops *file = SDL_RWFromFile(argv[1], "rb");
   if (file == NULL) {
-    fprintf(stderr, "ERROR: Failed to load game file\n");
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load game file\n");
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  Sint64 size = SDL_RWseek(file, 0, RW_SEEK_END);
+  Sint64 size = SDL_RWsize(file);
   if (size < 0) {
-    fprintf(stderr, "ERROR: Failed to get game file size\n");
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to get game file size\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
   if (size > SIZE_MAX) {
-    fprintf(stderr, "ERROR: Out of memory\n");
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  if (SDL_RWseek(file, 0, RW_SEEK_SET) < 0) {
-    fprintf(stderr, "ERROR: Failed to read game file\n");
-    SDL_RWclose(file);
-    SDL_Quit();
-    return EXIT_FAILURE;
-  }
-
-  void *game = malloc((size_t)size);
+  void *game = SDL_malloc((size_t)size);
   if (!game) {
-    fprintf(stderr, "ERROR: Out of memory\n");
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
@@ -232,8 +139,8 @@ int main(int argc, char *argv[]) {
   SDL_RWclose(file);
 
   if (objects_read != 1) {
-    fprintf(stderr, "ERROR: Failed to read game file\n");
-    free(game);
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to read game file\n");
+    SDL_free(game);
     SDL_Quit();
     return EXIT_FAILURE;
   }
@@ -243,10 +150,10 @@ int main(int argc, char *argv[]) {
   //
 
   bool success = GbaEmulatorAllocate(game, size, &g_emulator, &g_gamepad);
-  free(game);
+  SDL_free(game);
 
   if (!success) {
-    fprintf(stderr, "ERROR: Out of memory\n");
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Out of memory\n");
     SDL_Quit();
     return EXIT_FAILURE;
   }
@@ -259,19 +166,36 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_RESET_NOTIFICATION,
+                      SDL_GL_CONTEXT_RESET_LOSE_CONTEXT);
 
-#ifndef __EMSCRIPTEN__
-  SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
-#endif  // __EMSCRIPTEN__
+  g_window = SDL_CreateWindow(
+      "WebGBA", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      /*width=*/240, /*height=*/160, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
-  SDL_WM_SetCaption("WebGBA", "game");
-  if (!SetVideoMode(/*width=*/240, /*height=*/160)) {
-    fprintf(stderr, "ERROR: Failed to create window\n");
+  if (g_window == NULL) {
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create window\n");
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
     SDL_Quit();
     return EXIT_FAILURE;
   }
+
+  g_glcontext = SDL_GL_CreateContext(g_window);
+  if (g_glcontext == NULL) {
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create GL context\n");
+    SDL_DestroyWindow(g_window);
+    GbaEmulatorFree(g_emulator);
+    GamePadFree(g_gamepad);
+    SDL_Quit();
+    return EXIT_FAILURE;
+  }
+
+  SDL_GL_MakeCurrent(g_window, g_glcontext);
+  SDL_GL_SetSwapInterval(1);
 
   //
   // Configure Audio Device
@@ -279,23 +203,27 @@ int main(int argc, char *argv[]) {
 
   SDL_AudioSpec want;
 
-  memset(&want, 0, sizeof(want));
+  SDL_memset(&want, 0, sizeof(want));
   want.format = AUDIO_S16;
   want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
   want.channels = 2;
   want.samples = 4096;
-  want.callback = AudioCallback;
 
   SDL_AudioSpec have;
-  if (SDL_OpenAudio(&want, &have) != 0) {
-    fprintf(stderr, "ERROR: Failed to open audio device\n");
+  g_audiodevice =
+      SDL_OpenAudioDevice(/*device=*/NULL, /*iscapture=*/0, &want, &have,
+                          /*allowed_changes=*/0);
+  if (g_audiodevice == 0) {
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open audio device\n");
+    SDL_GL_DeleteContext(g_glcontext);
+    SDL_DestroyWindow(g_window);
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  SDL_PauseAudio(/*pause_on=*/0);
+  SDL_PauseAudioDevice(g_audiodevice, /*pause_on=*/0);
 
   //
   // Create Emulator Framebuffer
@@ -369,21 +297,18 @@ int main(int argc, char *argv[]) {
   // Run
   //
 
-#if __EMSCRIPTEN__
-  emscripten_set_main_loop(RenderNextFrame, /*fps=*/60,
-                           /*simulate_infinite_loop=*/true);
-#else
   bool running = true;
   while (running) {
     running = RenderNextFrame();
   }
-#endif  // __EMSCRIPTEN__
 
   //
   // Cleanup
   //
 
-  SDL_CloseAudio();
+  SDL_CloseAudioDevice(g_audiodevice);
+  SDL_DestroyWindow(g_window);
+  SDL_GL_DeleteContext(g_glcontext);
 
   GbaEmulatorFree(g_emulator);
   GamePadFree(g_gamepad);
