@@ -9,6 +9,17 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
     }
   }
 
+  glUseProgram(screen->program);
+
+  GLuint coord_attrib = glGetAttribLocation(screen->program, "coord");
+  glBindBuffer(GL_ARRAY_BUFFER, screen->vertices);
+  glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(coord_attrib);
+
+  GLint texture_location = glGetUniformLocation(screen->program, "image");
+  glUniform1i(texture_location, 0);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, screen->texture);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
@@ -18,37 +29,35 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glViewport(0, 0, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
-  glUseProgram(screen->program);
-  glDrawArrays(GL_TRIANGLES, 0, 3u);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
 }
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   screen->program = glCreateProgram();
 
-  static const char* vertex_shader_source[9u] = {
-      "#version 130\n",
-      "out vec2 texCoord;\n",
+  static const char* vertex_shader_source[8u] = {
+      "#version 100\n",
+      "attribute highp vec2 coord;\n",
+      "varying mediump vec2 texcoord;\n",
       "void main() {\n",
-      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n",
-      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n",
-      "  texCoord.x = (x+1.0)*0.5;\n",
-      "  texCoord.y = (y-1.0)*-0.5;\n",
-      "  gl_Position = vec4(x, y, 0.0, 1.0);\n",
+      "  texcoord.x = (coord.x + 1.0) * 0.5;\n",
+      "  texcoord.y = (coord.y - 1.0) * -0.5;\n",
+      "  gl_Position = vec4(coord, 0.0, 1.0);\n",
       "}\n",
   };
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 9u, vertex_shader_source, NULL);
+  glShaderSource(vertex_shader, 8u, vertex_shader_source, NULL);
   glCompileShader(vertex_shader);
   glAttachShader(screen->program, vertex_shader);
   glDeleteShader(vertex_shader);
 
   static const char* fragment_shader_source[7u] = {
-      "#version 130\n",
-      "uniform sampler2D image;\n",
-      "in vec2 texCoord;\n",
+      "#version 100\n",
+      "uniform lowp sampler2D image;\n",
+      "varying mediump vec2 texcoord;\n",
       "void main() {\n",
-      "  vec4 color = textureLod(image, texCoord, 0.0);\n",
+      "  lowp vec4 color = texture2D(image, texcoord);\n",
       "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n",
       "}\n",
   };
@@ -61,11 +70,13 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
 
   glLinkProgram(screen->program);
 
-  GLint texture_location = glGetUniformLocation(screen->program, "image");
+  const static GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
+                                       1.0,  1.0,  1.0,  -1.0};
 
-  glUseProgram(screen->program);
-  glUniform1i(texture_location, 0);
-  glUseProgram(0);
+  glGenBuffers(1, &screen->vertices);
+  glBindBuffer(GL_ARRAY_BUFFER, screen->vertices);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glGenTextures(1u, &screen->texture);
   glBindTexture(GL_TEXTURE_2D, screen->texture);
@@ -73,7 +84,7 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
                /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                /*border=*/0, /*format=*/GL_RGBA,
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
@@ -83,5 +94,6 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
 
 void GbaPpuScreenDestroy(GbaPpuScreen* screen) {
   glDeleteProgram(screen->program);
+  glDeleteBuffers(1u, &screen->vertices);
   glDeleteTextures(1u, &screen->texture);
 }

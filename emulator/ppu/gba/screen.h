@@ -13,6 +13,7 @@
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
   GLuint program;
+  GLuint vertices;
   GLuint texture;
 } GbaPpuScreen;
 
