@@ -55,10 +55,12 @@ static int16_t RemoveSample() {
 }
 
 static void RenderAudioSample(int16_t left, int16_t right) {
+#if __EMSCRIPTEN__
   static int skip_samples = 0;
   if (skip_samples++ % 4 != 0) {
     return;
   }
+#endif  // __EMSCRIPTEN__
 
   AddSample(left);
   AddSample(right);
@@ -297,7 +299,11 @@ int main(int argc, char *argv[]) {
 
   memset(&want, 0, sizeof(want));
   want.format = AUDIO_S16;
+#if __EMSCRIPTEN__
   want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0) / 4.0;
+#else
+  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
+#endif  // __EMSCRIPTEN__
   want.channels = 2;
   want.samples = 4096;
   want.callback = AudioCallback;
