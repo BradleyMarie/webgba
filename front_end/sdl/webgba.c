@@ -12,6 +12,7 @@
 static GLuint g_fbo_texture = 0;
 static GLuint g_fbo = 0;
 static GLuint g_program = 0;
+static GLuint g_vertices = 0;
 static SDL_Surface *g_screen = NULL;
 static GbaEmulator *g_emulator = NULL;
 static GamePad *g_gamepad = NULL;
@@ -54,6 +55,11 @@ static int16_t RemoveSample() {
 }
 
 static void RenderAudioSample(int16_t left, int16_t right) {
+  static int skip_samples = 0;
+  if (skip_samples++ % 4 != 0) {
+    return;
+  }
+
   AddSample(left);
   AddSample(right);
 }
@@ -153,13 +159,23 @@ static ReturnType RenderNextFrame() {
   // Render result
   //
 
+  glUseProgram(g_program);
+
+  GLuint coord_attrib = glGetAttribLocation(g_program, "coord");
+  glBindBuffer(GL_ARRAY_BUFFER, g_vertices);
+  glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(coord_attrib);
+
+  GLint texture_location = glGetUniformLocation(g_program, "image");
+  glUniform1i(texture_location, 0);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, g_fbo_texture);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, g_screen->w, g_screen->h);
-  glUseProgram(g_program);
-  glDrawArrays(GL_TRIANGLES, 0, 3u);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
 
   //
   // Flip framebuffer
@@ -281,7 +297,7 @@ int main(int argc, char *argv[]) {
 
   memset(&want, 0, sizeof(want));
   want.format = AUDIO_S16;
-  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
+  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0) / 4.0;
   want.channels = 2;
   want.samples = 4096;
   want.callback = AudioCallback;
@@ -305,7 +321,9 @@ int main(int argc, char *argv[]) {
   glBindTexture(GL_TEXTURE_2D, g_fbo_texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
                /*width=*/240, /*height=*/160, /*border=*/0,
                /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/NULL);
@@ -323,30 +341,29 @@ int main(int argc, char *argv[]) {
 
   g_program = glCreateProgram();
 
-  static const char *vertex_shader_source[9u] = {
-      "#version 130\n",
-      "out vec2 texCoord;\n",
+  static const char *vertex_shader_source[8u] = {
+      "#version 100\n",
+      "attribute highp vec2 coord;\n",
+      "varying mediump vec2 texcoord;\n",
       "void main() {\n",
-      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n",
-      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n",
-      "  texCoord.x = (x+1.0)*0.5;\n",
-      "  texCoord.y = (y+1.0)*0.5;\n",
-      "  gl_Position = vec4(x, y, 0.0, 1.0);\n",
+      "  texcoord.x = (coord.x + 1.0) * 0.5;\n",
+      "  texcoord.y = (coord.y + 1.0) * 0.5;\n",
+      "  gl_Position = vec4(coord, 0.0, 1.0);\n",
       "}\n",
   };
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 9u, vertex_shader_source, NULL);
+  glShaderSource(vertex_shader, 8u, vertex_shader_source, NULL);
   glCompileShader(vertex_shader);
   glAttachShader(g_program, vertex_shader);
   glDeleteShader(vertex_shader);
 
   static const char *fragment_shader_source[7u] = {
-      "#version 130\n",
-      "uniform sampler2D image;\n",
-      "in vec2 texCoord;\n",
+      "#version 100\n",
+      "uniform lowp sampler2D image;\n",
+      "varying mediump vec2 texcoord;\n",
       "void main() {\n",
-      "  vec4 color = textureLod(image, texCoord, 0.0);\n",
+      "  lowp vec4 color = texture2D(image, texcoord);\n",
       "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n",
       "}\n",
   };
@@ -360,7 +377,19 @@ int main(int argc, char *argv[]) {
   glLinkProgram(g_program);
 
   //
-  // Load emulator OpenGL context
+  // Create Vertices
+  //
+
+  const static GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
+                                       1.0,  1.0,  1.0,  -1.0};
+
+  glGenBuffers(1, &g_vertices);
+  glBindBuffer(GL_ARRAY_BUFFER, g_vertices);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  //
+  // Load Emulator OpenGL Context
   //
 
   GbaEmulatorReloadContext(g_emulator);
@@ -370,7 +399,7 @@ int main(int argc, char *argv[]) {
   //
 
 #if __EMSCRIPTEN__
-  emscripten_set_main_loop(RenderNextFrame, /*fps=*/60,
+  emscripten_set_main_loop(RenderNextFrame, /*fps=*/0,
                            /*simulate_infinite_loop=*/true);
 #else
   bool running = true;
