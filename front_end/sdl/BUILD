@@ -7,6 +7,7 @@ cc_binary(
     linkopts = ["-lSDL"],
     deps = [
         "//emulator:gba",
+        "//third_party/libsamplerate:libsamplerate",
     ],
 )
 

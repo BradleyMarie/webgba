@@ -6,7 +6,10 @@ cc_library(
     name = "libsamplerate",
     defines = [
         'PACKAGE=\\"libsamplerate\\"',
-        'VERSION=\\"0.22.0\\"'
+        'VERSION=\\"0.22.0\\"',
+        'ENABLE_SINC_FAST_CONVERTER',
+        'ENABLE_SINC_MEDIUM_CONVERTER',
+        'ENABLE_SINC_BEST_CONVERTER',
     ],
     hdrs = ["samplerate.h"],
     srcs = [

@@ -8,7 +8,10 @@
 #include <string.h>
 
 #include "emulator/gba.h"
+#include "third_party/libsamplerate/samplerate.h"
 
+static SRC_STATE *g_src_state = NULL;
+static double g_src_ratio = 1.0;
 static GLuint g_fbo_texture = 0;
 static GLuint g_fbo = 0;
 static GLuint g_program = 0;
@@ -18,7 +21,7 @@ static GbaEmulator *g_emulator = NULL;
 static GamePad *g_gamepad = NULL;
 
 #define AUDIO_BUFFER_SIZE 32768
-static int16_t g_audio_buffer[AUDIO_BUFFER_SIZE];
+static float g_audio_buffer[AUDIO_BUFFER_SIZE];
 static size_t g_audio_buffer_start = 0;
 static size_t g_audio_buffer_end = 0;
 static bool g_buffer_full = false;
@@ -55,15 +58,32 @@ static int16_t RemoveSample() {
 }
 
 static void RenderAudioSample(int16_t left, int16_t right) {
-#if __EMSCRIPTEN__
-  static int skip_samples = 0;
-  if (skip_samples++ % 4 != 0) {
+  float input_samples[2];
+  src_short_to_float_array(&left, &input_samples[0], 1);
+  src_short_to_float_array(&right, &input_samples[1], 1);
+
+  float output_samples[128];
+  SRC_DATA data;
+  data.data_in = input_samples;
+  data.input_frames = 1;
+  data.data_out = output_samples;
+  data.output_frames = 64;
+  data.end_of_input = false;
+  data.src_ratio = g_src_ratio;
+
+  if (src_process(g_src_state, &data) != 0) {
     return;
   }
-#endif  // __EMSCRIPTEN__
 
-  AddSample(left);
-  AddSample(right);
+  SDL_LockAudio();
+
+  for (long i = 0; i < data.output_frames_gen * 2; i++) {
+    int16_t sample;
+    src_float_to_short_array(&output_samples[i], &sample, 1);
+    AddSample(sample);
+  }
+
+  SDL_UnlockAudio();
 }
 
 static void AudioCallback(void *userdata, Uint8 *stream, int len) {
@@ -300,7 +320,7 @@ int main(int argc, char *argv[]) {
   memset(&want, 0, sizeof(want));
   want.format = AUDIO_S16;
 #if __EMSCRIPTEN__
-  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0) / 4.0;
+  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0) / 2.0;
 #else
   want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
 #endif  // __EMSCRIPTEN__
@@ -311,6 +331,18 @@ int main(int argc, char *argv[]) {
   SDL_AudioSpec have;
   if (SDL_OpenAudio(&want, &have) != 0) {
     fprintf(stderr, "ERROR: Failed to open audio device\n");
+    GbaEmulatorFree(g_emulator);
+    GamePadFree(g_gamepad);
+    SDL_Quit();
+    return EXIT_FAILURE;
+  }
+
+  g_src_ratio = (double)have.freq / (131072.0 * 60.0 / (16777216.0 / 280896.0));
+
+  g_src_state = src_new(SRC_SINC_FASTEST, /*channels=*/2, /*error=*/NULL);
+  if (g_src_state == NULL) {
+    fprintf(stderr, "ERROR: Failed to open allocate resampler\n");
+    SDL_CloseAudio();
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
     SDL_Quit();
@@ -418,6 +450,7 @@ int main(int argc, char *argv[]) {
   // Cleanup
   //
 
+  src_delete(g_src_state);
   SDL_CloseAudio();
 
   GbaEmulatorFree(g_emulator);
