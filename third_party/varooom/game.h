@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-extern const unsigned char game_data[7957428];
+extern const unsigned char game_data[];
 extern const uint32_t game_size;
 
 #endif  // _THIRD_PARTY_VAROOOM_GAME_
