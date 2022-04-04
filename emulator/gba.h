@@ -9,7 +9,7 @@
 typedef struct _GbaEmulator GbaEmulator;
 
 // TODO: Make ROMs reloadable without tearing down emulator.
-bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
+bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad);
 
 // Callback type for one sample's worth of audio data

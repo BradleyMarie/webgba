@@ -10,6 +10,10 @@
 #include "emulator/gba.h"
 #include "third_party/libsamplerate/samplerate.h"
 
+#if __EMSCRIPTEN__
+#include "third_party/varooom/game.h"
+#endif  // __EMSCRIPTEN__
+
 static SRC_STATE *g_src_state = NULL;
 static double g_src_ratio = 1.0;
 static GLuint g_fbo_texture = 0;
@@ -211,10 +215,12 @@ static ReturnType RenderNextFrame() {
 }
 
 int main(int argc, char *argv[]) {
+#ifndef __EMSCRIPTEN__
   if (argc < 2) {
     printf("usage: webgba <game>");
     return EXIT_SUCCESS;
   }
+#endif  // __EMSCRIPTEN__
 
   //
   // Initialize SDL
@@ -229,6 +235,7 @@ int main(int argc, char *argv[]) {
   // Load Game
   //
 
+#ifndef __EMSCRIPTEN__
   SDL_RWops *file = SDL_RWFromFile(argv[1], "rb");
   if (file == NULL) {
     fprintf(stderr, "ERROR: Failed to load game file\n");
@@ -236,15 +243,15 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  Sint64 size = SDL_RWseek(file, 0, RW_SEEK_END);
-  if (size < 0) {
+  Sint64 game_size = SDL_RWseek(file, 0, RW_SEEK_END);
+  if (game_size < 0) {
     fprintf(stderr, "ERROR: Failed to get game file size\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  if (size > SIZE_MAX) {
+  if (game_size > SIZE_MAX) {
     fprintf(stderr, "ERROR: Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
@@ -258,30 +265,35 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  void *game = malloc((size_t)size);
-  if (!game) {
+  void *game_data = malloc((size_t)game_size);
+  if (game_data == NULL) {
     fprintf(stderr, "ERROR: Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  size_t objects_read = SDL_RWread(file, game, size, /*maxnum=*/1);
+  size_t objects_read = SDL_RWread(file, game_data, game_size, /*maxnum=*/1);
   SDL_RWclose(file);
 
   if (objects_read != 1) {
     fprintf(stderr, "ERROR: Failed to read game file\n");
-    free(game);
+    free(game_data);
     SDL_Quit();
     return EXIT_FAILURE;
   }
+#endif  // __EMSCRIPTEN__
 
   //
   // Create Emulator
   //
 
-  bool success = GbaEmulatorAllocate(game, size, &g_emulator, &g_gamepad);
-  free(game);
+  bool success =
+      GbaEmulatorAllocate(game_data, game_size, &g_emulator, &g_gamepad);
+
+#ifndef __EMSCRIPTEN__
+  free(game_data);
+#endif  // __EMSCRIPTEN__
 
   if (!success) {
     fprintf(stderr, "ERROR: Out of memory\n");

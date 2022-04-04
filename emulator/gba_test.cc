@@ -7,7 +7,7 @@ extern "C" {
 class GbaEmulatorTest : public testing::Test {
  public:
   void SetUp() override {
-    static const char rom[100] = {};
+    static const unsigned char rom[100] = {};
     ASSERT_TRUE(GbaEmulatorAllocate(rom, 100u, &gba_, &gamepad_));
   }
 
