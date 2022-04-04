@@ -17,10 +17,17 @@ cc_binary(
             "-s ALLOW_MEMORY_GROWTH=1"
         ],
     }),
-    deps = [
-        "//emulator:gba",
-        "//third_party/libsamplerate:libsamplerate",
-    ],
+    deps = select({
+        "//conditions:default": [
+            "//emulator:gba",
+            "//third_party/libsamplerate:libsamplerate",
+        ],
+        ":wasm_build": [
+            "//emulator:gba",
+            "//third_party/libsamplerate:libsamplerate",
+            "//third_party/varooom:game",
+        ],
+    }),
 )
 
 wasm_cc_binary(

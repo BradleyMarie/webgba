@@ -61,7 +61,7 @@ void GbaGameFree(void *context) {
   free(gamepak);
 }
 
-bool GbaGameLoad(const char *rom_data, uint32_t rom_size,
+bool GbaGameLoad(const unsigned char *rom_data, uint32_t rom_size,
                  SaveStorageType *save_storage_type, Memory **game_rom) {
   if (rom_size > GBA_GAME_MAX_SIZE) {
     return false;

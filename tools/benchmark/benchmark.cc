@@ -34,9 +34,9 @@ int main(int argc, char **argv) {
   }
 
   char c;
-  std::vector<char> buffer;
-  while (file.read(&c, sizeof(char))) {
-    buffer.push_back(c);
+  std::vector<unsigned char> buffer;
+  while (file.read(&c, sizeof(unsigned char))) {
+    buffer.push_back(static_cast<unsigned char>(c));
   }
 
   if (buffer.empty()) {

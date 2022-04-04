@@ -37,7 +37,7 @@ static void GbaEmulatorPowerFree(void *context) {
   GbaEmulatorFree(emulator);
 }
 
-bool GbaEmulatorAllocate(const char *rom_data, uint32_t rom_size,
+bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
                          GbaEmulator **emulator, GamePad **gamepad) {
   *emulator = malloc(sizeof(GbaEmulator));
   if (*emulator == NULL) {
