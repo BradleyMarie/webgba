@@ -332,7 +332,7 @@ int main(int argc, char *argv[]) {
   memset(&want, 0, sizeof(want));
   want.format = AUDIO_S16;
 #if __EMSCRIPTEN__
-  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0) / 2.0;
+  want.freq = 96000;
 #else
   want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
 #endif  // __EMSCRIPTEN__
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
 
   g_src_ratio = (double)have.freq / (131072.0 * 60.0 / (16777216.0 / 280896.0));
 
-  g_src_state = src_new(SRC_SINC_FASTEST, /*channels=*/2, /*error=*/NULL);
+  g_src_state = src_new(SRC_ZERO_ORDER_HOLD, /*channels=*/2, /*error=*/NULL);
   if (g_src_state == NULL) {
     fprintf(stderr, "ERROR: Failed to open allocate resampler\n");
     SDL_CloseAudio();
