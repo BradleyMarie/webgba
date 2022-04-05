@@ -53,6 +53,35 @@ TEST_F(ObjectSetTest, RemoveHighDoesNotDisturb) {
   EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
 }
 
+TEST_F(ObjectSetTest, FillAndRemove) {
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
+  for (uint_fast8_t i = 0; i < 128; i++) {
+    GbaPpuObjectSetAdd(&set_, i);
+    EXPECT_FALSE(GbaPpuObjectSetEmpty(&set_));
+  }
+
+  for (uint_fast8_t i = 0; i < 128; i++) {
+    EXPECT_FALSE(GbaPpuObjectSetEmpty(&set_));
+    GbaPpuObjectSetRemove(&set_, i);
+  }
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
+}
+
+TEST_F(ObjectSetTest, FillAndPop) {
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
+  for (uint_fast8_t i = 0; i < 128; i++) {
+    GbaPpuObjectSetAdd(&set_, i);
+    EXPECT_FALSE(GbaPpuObjectSetEmpty(&set_));
+  }
+
+  for (uint_fast8_t i = 0; i < 128; i++) {
+    EXPECT_FALSE(GbaPpuObjectSetEmpty(&set_));
+    uint_fast8_t popped = GbaPpuObjectSetPop(&set_);
+    EXPECT_EQ(popped, i);
+  }
+  EXPECT_TRUE(GbaPpuObjectSetEmpty(&set_));
+}
+
 TEST_F(ObjectSetTest, PopMultiple) {
   GbaPpuObjectSetAdd(&set_, 127u);
   GbaPpuObjectSetAdd(&set_, 39u);
