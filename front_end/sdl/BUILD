@@ -14,7 +14,7 @@ cc_binary(
         ":wasm_build": [
             "--oformat=html",
             "-s MINIFY_HTML=0",
-            "-s INITIAL_MEMORY=67108864"
+            "-s INITIAL_MEMORY=134217728",
         ],
     }),
     deps = select({
