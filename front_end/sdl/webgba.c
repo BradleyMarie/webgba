@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  if (game_size > SIZE_MAX) {
+  if ((uint64_t)game_size > SIZE_MAX) {
     fprintf(stderr, "ERROR: Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
@@ -430,7 +430,7 @@ int main(int argc, char *argv[]) {
   // Create Vertices
   //
 
-  const static GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
+  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
                                        1.0,  1.0,  1.0,  -1.0};
 
   glGenBuffers(1, &g_vertices);

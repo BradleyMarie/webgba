@@ -299,13 +299,13 @@ void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
 
     uint32_t transfer_size;
     if (dma_unit->registers.units[i].control.transfer_word || is_fifo_dma) {
-      const static uint32_t address_mask = 0xFFFFFFFCu;
+      static const uint32_t address_mask = 0xFFFFFFFCu;
       uint32_t value;
       Load32LE(memory, dma_unit->current_source[i] & address_mask, &value);
       Store32LE(memory, dma_unit->current_destination[i] & address_mask, value);
       transfer_size = 4u;
     } else {
-      const static uint32_t address_mask = 0xFFFFFFFEu;
+      static const uint32_t address_mask = 0xFFFFFFFEu;
       uint16_t value;
       Load16LE(memory, dma_unit->current_source[i] & address_mask, &value);
       Store16LE(memory, dma_unit->current_destination[i] & address_mask, value);

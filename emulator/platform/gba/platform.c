@@ -437,7 +437,7 @@ void GbaPlatformRaiseSerialInterrupt(GbaPlatform *platform) {
   InterruptLineSetLevel(platform->interrupt_line, raised);
 
   if (platform->power_state != POWER_STATE_RUN) {
-    const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
+    static const uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
     if (platform->registers.interrupt_enable.value &
         platform->registers.interrupt_flags.value &
@@ -467,7 +467,7 @@ void GbaPlatformRaiseKeypadInterrupt(GbaPlatform *platform) {
   InterruptLineSetLevel(platform->interrupt_line, raised);
 
   if (platform->power_state != POWER_STATE_RUN) {
-    const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
+    static const uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
     if (platform->registers.interrupt_enable.value &
         platform->registers.interrupt_flags.value &
@@ -484,7 +484,7 @@ void GbaPlatformRaiseCartridgeInterrupt(GbaPlatform *platform) {
   InterruptLineSetLevel(platform->interrupt_line, raised);
 
   if (platform->power_state != POWER_STATE_RUN) {
-    const static uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
+    static const uint16_t masks[3] = {0xFFu, 0xFFu, STOP_MASK};
     assert(platform->power_state < 3u);
     if (platform->registers.interrupt_enable.value &
         platform->registers.interrupt_flags.value &

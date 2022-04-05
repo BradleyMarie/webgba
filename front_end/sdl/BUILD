@@ -15,6 +15,7 @@ cc_binary(
             "--oformat=html",
             "-s MINIFY_HTML=0",
             "-s INITIAL_MEMORY=134217728",
+            "-s ASSERTIONS=1",
         ],
     }),
     deps = select({
