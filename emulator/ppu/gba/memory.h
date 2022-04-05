@@ -102,8 +102,8 @@ typedef struct {
   TileModeObjectMemory obj;
 } TileModeMemory;
 
-#define GBA_FULL_FRAME_WIDTH 240u
-#define GBA_FULL_FRAME_HEIGHT 160u
+#define GBA_FULL_FRAME_WIDTH 240
+#define GBA_FULL_FRAME_HEIGHT 160
 
 typedef struct {
   uint16_t pixels[GBA_FULL_FRAME_HEIGHT][GBA_FULL_FRAME_WIDTH];
@@ -137,8 +137,8 @@ typedef struct {
   BitmapModeObjectMemory obj;
 } BitmapMode4Memory;
 
-#define GBA_REDUCED_FRAME_WIDTH 160u
-#define GBA_REDUCED_FRAME_HEIGHT 128u
+#define GBA_REDUCED_FRAME_WIDTH 160
+#define GBA_REDUCED_FRAME_HEIGHT 128
 
 typedef struct {
   uint16_t pixels[GBA_REDUCED_FRAME_HEIGHT][GBA_REDUCED_FRAME_WIDTH];

@@ -25,11 +25,11 @@ bool GbaPpuAffineBackgroundPixel(
     lookup_y -= lookup_y % (registers->mosaic.bg_vert + 1u);
   }
 
-  static const uint_fast16_t screen_sizes_pixels[4] = {128u, 256u, 512u, 1024u};
+  static const int_fast16_t screen_sizes_pixels[4] = {128u, 256u, 512u, 1024u};
   static const uint_fast16_t screen_sizes_tiles[4] = {16u, 32u, 64u, 128u};
 
   BgCntRegister bgcnt = GetBgCnt(registers, background);
-  uint_fast16_t screen_size = screen_sizes_pixels[bgcnt.size];
+  int_fast16_t screen_size = screen_sizes_pixels[bgcnt.size];
 
   if (bgcnt.wraparound) {
     static const uint_fast16_t screen_size_masks[4] = {0x07Fu, 0x0FFu, 0x1FFu,

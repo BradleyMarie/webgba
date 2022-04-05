@@ -231,7 +231,7 @@ static inline void ArmOperandLoadStoreImmediate(uint32_t instruction,
   *Rn = (ArmRegisterIndex)((instruction >> 16u) & 0xFu);
   *Rd = (ArmRegisterIndex)((instruction >> 12u) & 0xFu);
   *value = instruction & 0xFFFu;
-  assert(0u <= *value && *value <= 4095u);
+  assert(*value <= 4095u);
 }
 
 static inline void ArmOperandLoadStoreAddressMode(

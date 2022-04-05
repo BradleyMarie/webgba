@@ -1,13 +1,13 @@
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
 static inline uint32_t ArmNextInstruction(ArmAllRegisters* registers) {
-  const static uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
+  static const uint_fast8_t next_instruction_pc_offset[2] = {4, 2};
   return registers->current.user.gprs.pc -
          next_instruction_pc_offset[registers->current.user.cpsr.thumb];
 }
 
 static inline uint32_t ArmCurrentInstruction(ArmAllRegisters* registers) {
-  const static uint_fast8_t current_instruction_pc_offset[2] = {8, 4};
+  static const uint_fast8_t current_instruction_pc_offset[2] = {8, 4};
   return registers->current.user.gprs.pc -
          current_instruction_pc_offset[registers->current.user.cpsr.thumb];
 }

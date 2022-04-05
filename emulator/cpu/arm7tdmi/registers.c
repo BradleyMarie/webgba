@@ -13,7 +13,7 @@
 
 static inline uint_fast8_t ArmModeToBankIndex(unsigned mode) {
   assert(mode <= MODE_SYS);
-  const static uint8_t bank_index[32] = {
+  static const uint8_t bank_index[32] = {
       INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
       INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,
       INVALID_BANK,   INVALID_BANK,   INVALID_BANK,   INVALID_BANK,

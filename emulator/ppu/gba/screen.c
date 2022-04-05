@@ -70,7 +70,7 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
 
   glLinkProgram(screen->program);
 
-  const static GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
+  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
                                        1.0,  1.0,  1.0,  -1.0};
 
   glGenBuffers(1, &screen->vertices);

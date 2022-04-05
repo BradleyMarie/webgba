@@ -30,7 +30,7 @@ static inline bool GbaPpuObjectSetEmpty(const GbaPpuObjectSet* object_set) {
 
 static inline uint_fast8_t GbaPpuObjectSetPop(GbaPpuObjectSet* object_set) {
   assert(!GbaPpuObjectSetEmpty(object_set));
-  const static int base[2u] = {0, 64};
+  static const int base[2u] = {0, 64};
   bool set_index = !object_set->objects[0u];
   int set_bit_index = __builtin_ctzll(object_set->objects[set_index]);
   object_set->objects[set_index] ^= 1ull << set_bit_index;
