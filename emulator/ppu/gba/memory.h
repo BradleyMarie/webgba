@@ -170,7 +170,7 @@ static_assert(sizeof(GbaPpuVideoMemory) == VRAM_SIZE,
 
 typedef struct {
   union {
-    char y_coordinate;
+    signed char y_coordinate;
     unsigned char y_coordinate_u;
   };
   bool affine : 1u;
