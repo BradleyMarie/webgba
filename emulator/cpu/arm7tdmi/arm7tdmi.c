@@ -102,10 +102,10 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 //
 
 static inline void Arm7TdmiStepFinish(Arm7Tdmi* cpu, bool thumb,
-                                      bool modified_pc) {
+                                      bool pc_unmodified) {
   cpu->execution_mode = cpu->execution_mode->next_execution_mode[thumb];
   cpu->registers.current.user.gprs.pc +=
-      cpu->execution_mode->next_instruction_offset[modified_pc];
+      cpu->execution_mode->next_instruction_offset[pc_unmodified];
   cpu->registers.current.user.gprs.pc &=
       cpu->execution_mode->next_instruction_mask;
 }
@@ -116,7 +116,7 @@ static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionFIQ(&cpu->registers);
-  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*pc_unmodified=*/false);
 
   return true;
 }
@@ -127,7 +127,7 @@ static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionIRQ(&cpu->registers);
-  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*pc_unmodified=*/false);
 
   return true;
 }
@@ -142,13 +142,13 @@ static void Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory) {
   uint32_t next_instruction;
   bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
   if (success) {
-    bool modified_pc =
+    bool pc_unmodified =
         ArmInstructionExecute(next_instruction, &cpu->registers, memory);
     Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
-                       /*modified_pc=*/modified_pc);
+                       /*pc_unmodified=*/pc_unmodified);
   } else {
     ArmExceptionPrefetchABT(&cpu->registers);
-    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
+    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*pc_unmodified=*/false);
   }
 }
 
@@ -158,13 +158,13 @@ static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
   uint16_t next_instruction;
   bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
   if (success) {
-    bool modified_pc =
+    bool pc_unmodified =
         ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
     Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
-                       /*modified_pc=*/modified_pc);
+                       /*pc_unmodified=*/pc_unmodified);
   } else {
     ArmExceptionPrefetchABT(&cpu->registers);
-    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
+    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*pc_unmodified=*/false);
   }
 }
 
@@ -226,7 +226,7 @@ static void Arm7TdmiStepFiqIrqThumb(Arm7Tdmi* cpu, Memory* memory) {
 
 static void Arm7TdmiStepRst(Arm7Tdmi* cpu, Memory* memory) {
   ArmExceptionRST(&cpu->registers);
-  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*pc_unmodified=*/false);
 }
 
 //
@@ -237,82 +237,82 @@ static const ExecutionMode execution_modes[16] = {
     {Arm7TdmiStepThumb,
      {&execution_modes[EXECUTION_MODE_ARM],
       &execution_modes[EXECUTION_MODE_THUMB]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepArm,
      {&execution_modes[EXECUTION_MODE_ARM],
       &execution_modes[EXECUTION_MODE_THUMB]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepIrqThumb,
      {&execution_modes[EXECUTION_MODE_ARM_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_IRQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepIrqArm,
      {&execution_modes[EXECUTION_MODE_ARM_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_IRQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepFiqThumb,
      {&execution_modes[EXECUTION_MODE_ARM_FIQ],
       &execution_modes[EXECUTION_MODE_THUMB_FIQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepFiqArm,
      {&execution_modes[EXECUTION_MODE_ARM_FIQ],
       &execution_modes[EXECUTION_MODE_THUMB_FIQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepFiqIrqThumb,
      {&execution_modes[EXECUTION_MODE_ARM_FIQ_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_FIQ_IRQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepFiqIrqArm,
      {&execution_modes[EXECUTION_MODE_ARM_FIQ_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_FIQ_IRQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST],
       &execution_modes[EXECUTION_MODE_THUMB_RST]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST],
       &execution_modes[EXECUTION_MODE_THUMB_RST]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_IRQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_IRQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ_IRQ]},
-     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     {THUMB_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_SIZE},
      0xFFFFFFFEu},
     {Arm7TdmiStepRst,
      {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ_IRQ],
       &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ_IRQ]},
-     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     {ARM_INSTRUCTION_OFFSET, ARM_INSTRUCTION_SIZE},
      0xFFFFFFFCu}};
 
 //
