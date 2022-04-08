@@ -26,92 +26,94 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
   uint_fast8_t condition, immediate_8, offset_8;
   uint_fast16_t branch_offset_16, immediate_16, offset_16, register_list;
 
-  bool modified_pc, load_store_success;
+  bool pc_unmodified;
   ThumbOpcode opcode = ThumbDecodeOpcode(next_instruction);
   switch (opcode) {
     case THUMB_OPCODE_ADCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmADCS(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADD_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
       ArmADD(&registers->current.user.gprs, rd, rd,
              registers->current.user.gprs.gprs[rm]);
-      modified_pc = (rd == REGISTER_R15);
+      pc_unmodified = (rd != REGISTER_R15);
       break;
     case THUMB_OPCODE_ADD_PC:
       ThumbOperandAddToSPOrPC(next_instruction, &rd, &immediate_16);
       ArmADD(&registers->current.user.gprs, rd, REGISTER_R15, immediate_16);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADD_SP:
       ThumbOperandAddToSPOrPC(next_instruction, &rd, &immediate_16);
       ArmADD(&registers->current.user.gprs, rd, REGISTER_R13, immediate_16);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADD_SP_I7:
       ThumbOperandAdjustStackPointer(next_instruction, &immediate_16);
       ArmADD(&registers->current.user.gprs, REGISTER_R13, REGISTER_R13,
              immediate_16);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADDS:
       ThumbOperandAddSubtractRegister(next_instruction, &rd, &rn, &rm);
       ArmADDS(registers, rd, rn, registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADDS_I3:
       ThumbOperandAddSubtractImmediate(next_instruction, &rd, &rn,
                                        &immediate_8);
       ArmADDS(registers, rd, rn, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ADDS_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rd,
                                                   &immediate_8);
       ArmADDS(registers, rd, rd, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ANDS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmANDS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ASRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ThumbASRS_R(&registers->current.user, rd, rm);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ASRS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
       ThumbASRS_I(&registers->current.user, rd, rm, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_B_FWD:
       ThumbOperandForwardBranch(next_instruction, &branch_offset_32);
       ArmB(&registers->current.user.gprs, branch_offset_32);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
     case THUMB_OPCODE_B_FWD_COND:
       ThumbOperandConditionalForwardBranch(next_instruction, &condition,
                                            &branch_offset_32);
-      modified_pc = ThumbShouldBranch(registers->current.user.cpsr, condition);
-      if (modified_pc) {
+      pc_unmodified =
+          !ThumbShouldBranch(registers->current.user.cpsr, condition);
+      if (!pc_unmodified) {
         ArmB(&registers->current.user.gprs, branch_offset_32);
       }
       break;
     case THUMB_OPCODE_B_REV:
       ThumbOperandReverseBranch(next_instruction, &branch_offset_32);
       ArmB(&registers->current.user.gprs, branch_offset_32);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
     case THUMB_OPCODE_B_REV_COND:
       ThumbOperandConditionalReverseBranch(next_instruction, &condition,
                                            &branch_offset_32);
-      modified_pc = ThumbShouldBranch(registers->current.user.cpsr, condition);
-      if (modified_pc) {
+      pc_unmodified =
+          !ThumbShouldBranch(registers->current.user.cpsr, condition);
+      if (!pc_unmodified) {
         ArmB(&registers->current.user.gprs, branch_offset_32);
       }
       break;
@@ -119,292 +121,268 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmBICS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_BL:
       ThumbOperandBranchLink(next_instruction, &branch_offset_16);
       ThumbBL2(&registers->current.user.gprs, branch_offset_16);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
     case THUMB_OPCODE_BL_FWD:
       ThumbOperandForwardBranchLink(next_instruction, &branch_offset_32);
       ThumbBL1(&registers->current.user.gprs, branch_offset_32);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_BL_REV:
       ThumbOperandReverseBranchLink(next_instruction, &branch_offset_32);
       ThumbBL1(&registers->current.user.gprs, branch_offset_32);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_BX:
       ThumbOperandBranchExchange(next_instruction, &rm);
       ArmBX(&registers->current.user, rm);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
     case THUMB_OPCODE_CMN:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
       ArmCMN(&registers->current.user, rn,
              registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_CMP:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
       ArmCMP(&registers->current.user, rn,
              registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_CMP_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rn,
                                                   &immediate_8);
       ArmCMP(&registers->current.user, rn, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_CMP_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rn, &rm);
       ArmCMP(&registers->current.user, rn,
              registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_EORS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmEORS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_LDMIA:
       ThumbOperandLoadStoreMultiple(next_instruction, &rn, &register_list);
       if (register_list & (1u << rn)) {
-        load_store_success = ArmLDMIA(registers, memory, rn, register_list);
+        pc_unmodified = ArmLDMIA(registers, memory, rn, register_list);
       } else {
-        load_store_success = ArmLDMIAW(registers, memory, rn, register_list);
+        pc_unmodified = ArmLDMIAW(registers, memory, rn, register_list);
       }
-      modified_pc = !load_store_success;
       break;
     case THUMB_OPCODE_LDR:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmLDR_IB(registers, memory, rd, rn,
-                                     registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDR_IB(registers, memory, rd, rn,
+                                registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_LDR_I5:
       ThumbOperandLoadStoreWordImmediateOffset(next_instruction, &rd, &rn,
                                                &offset_8);
-      load_store_success = ArmLDR_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDR_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_LDR_PC_OFFSET_I8:
       ThumbOperandLoadPCRelative(next_instruction, &rd, &offset_16);
-      load_store_success = ThumbLDR_PC_IB(registers, memory, rd, offset_16);
-      modified_pc = !load_store_success;
+      pc_unmodified = ThumbLDR_PC_IB(registers, memory, rd, offset_16);
       break;
     case THUMB_OPCODE_LDR_SP_OFFSET_I8:
       ThumbOperandLoadStoreSPRelative(next_instruction, &rd, &offset_16);
-      load_store_success =
-          ArmLDR_IB(registers, memory, rd, REGISTER_R13, offset_16);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDR_IB(registers, memory, rd, REGISTER_R13, offset_16);
       break;
     case THUMB_OPCODE_LDRB:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmLDRB_IB(registers, memory, rd, rn,
-                                      registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRB_IB(registers, memory, rd, rn,
+                                 registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_LDRB_I5:
       ThumbOperandLoadStoreByteImmediateOffset(next_instruction, &rd, &rn,
                                                &offset_8);
-      load_store_success = ArmLDRB_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRB_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_LDRH:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmLDRH_IB(registers, memory, rd, rn,
-                                      registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRH_IB(registers, memory, rd, rn,
+                                 registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_LDRH_I5:
       ThumbOperandLoadStoreHalfWordImmediateOffset(next_instruction, &rd, &rn,
                                                    &offset_8);
-      load_store_success = ArmLDRH_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRH_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_LDRSB:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmLDRSB_IB(registers, memory, rd, rn,
-                                       registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRSB_IB(registers, memory, rd, rn,
+                                  registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_LDRSH:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmLDRSH_IB(registers, memory, rd, rn,
-                                       registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmLDRSH_IB(registers, memory, rd, rn,
+                                  registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_LSLS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ThumbLSLS_R(&registers->current.user, rd, rm);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_LSLS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
       ThumbLSLS_I(&registers->current.user, rd, rm, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_LSRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ThumbLSRS_R(&registers->current.user, rd, rm);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_LSRS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
       ThumbLSRS_I(&registers->current.user, rd, rm, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_MOV_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
       ArmMOV(&registers->current.user.gprs, rd,
              registers->current.user.gprs.gprs[rm]);
-      modified_pc = (rd == REGISTER_R15);
+      pc_unmodified = (rd != REGISTER_R15);
       break;
     case THUMB_OPCODE_MOVS_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rd,
                                                   &immediate_8);
       ArmMOVS(registers, rd, immediate_8, registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_MULS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmMULS(&registers->current.user, rd, rd, rm);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_MVNS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmMVNS(registers, rd, registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_NEGS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmRSBS(registers, rd, rm, 0u);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_ORRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmORRS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_POP:
       ThumbOperandPopRegisterList(next_instruction, &register_list);
-      load_store_success =
-          ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
-      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
+      pc_unmodified = ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
+      pc_unmodified &= (~register_list >> REGISTER_R15);
       break;
     case THUMB_OPCODE_PUSH:
       ThumbOperandPushRegisterList(next_instruction, &register_list);
-      load_store_success =
-          ArmSTMDBW(registers, memory, REGISTER_R13, register_list);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTMDBW(registers, memory, REGISTER_R13, register_list);
       break;
     case THUMB_OPCODE_RORS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ThumbRORS(&registers->current.user, rd, rm);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_SBCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
       ArmSBCS(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_STMIA:
       ThumbOperandLoadStoreMultiple(next_instruction, &rd, &register_list);
-      load_store_success = ArmSTMIAW(registers, memory, rd, register_list);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTMIAW(registers, memory, rd, register_list);
       break;
     case THUMB_OPCODE_STR:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmSTR_IB(registers, memory, rd, rn,
-                                     registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTR_IB(registers, memory, rd, rn,
+                                registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_STR_I5:
       ThumbOperandLoadStoreWordImmediateOffset(next_instruction, &rd, &rn,
                                                &offset_8);
-      load_store_success = ArmSTR_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTR_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_STR_SP_OFFSET_I8:
       ThumbOperandLoadStoreSPRelative(next_instruction, &rd, &offset_16);
-      load_store_success =
-          ArmSTR_IB(registers, memory, rd, REGISTER_R13, offset_16);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTR_IB(registers, memory, rd, REGISTER_R13, offset_16);
       break;
     case THUMB_OPCODE_STRB:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmSTRB_IB(registers, memory, rd, rn,
-                                      registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTRB_IB(registers, memory, rd, rn,
+                                 registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_STRB_I5:
       ThumbOperandLoadStoreByteImmediateOffset(next_instruction, &rd, &rn,
                                                &offset_8);
-      load_store_success = ArmSTRB_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTRB_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_STRH:
       ThumbOperandLoadStoreRegisterOffset(next_instruction, &rd, &rn, &rm);
-      load_store_success = ArmSTRH_IB(registers, memory, rd, rn,
-                                      registers->current.user.gprs.gprs[rm]);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTRH_IB(registers, memory, rd, rn,
+                                 registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_STRH_I5:
       ThumbOperandLoadStoreHalfWordImmediateOffset(next_instruction, &rd, &rn,
                                                    &offset_8);
-      load_store_success = ArmSTRH_IB(registers, memory, rd, rn, offset_8);
-      modified_pc = !load_store_success;
+      pc_unmodified = ArmSTRH_IB(registers, memory, rd, rn, offset_8);
       break;
     case THUMB_OPCODE_SUB_SP_I7:
       ThumbOperandAdjustStackPointer(next_instruction, &immediate_16);
       ArmSUB(&registers->current.user.gprs, REGISTER_R13, REGISTER_R13,
              immediate_16);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_SUBS:
       ThumbOperandAddSubtractRegister(next_instruction, &rd, &rn, &rm);
       ArmSUBS(registers, rd, rn, registers->current.user.gprs.gprs[rm]);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_SUBS_I3:
       ThumbOperandAddSubtractImmediate(next_instruction, &rd, &rn,
                                        &immediate_8);
       ArmSUBS(registers, rd, rn, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_SUBS_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rd,
                                                   &immediate_8);
       ArmSUBS(registers, rd, rd, immediate_8);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     case THUMB_OPCODE_SWI:
       ArmSWI(registers);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
     case THUMB_OPCODE_TST:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
       ArmTST(&registers->current.user, rn,
              registers->current.user.gprs.gprs[rm],
              registers->current.user.cpsr.carry);
-      modified_pc = false;
+      pc_unmodified = true;
       break;
     default:
       assert(false);
     case THUMB_OPCODE_UNDEF:
       ArmExceptionUND(registers);
-      modified_pc = true;
+      pc_unmodified = false;
       break;
   }
 
-  return modified_pc;
+  return pc_unmodified;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_EXECUTE_
