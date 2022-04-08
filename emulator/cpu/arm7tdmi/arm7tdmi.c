@@ -13,32 +13,83 @@
 #define THUMB_INSTRUCTION_OFFSET 4u
 #define THUMB_INSTRUCTION_SIZE 2u
 
-typedef void (*StepRoutine)(Arm7Tdmi*, Memory*);
+#define EXECUTION_MODE_THUMB 0u
+#define EXECUTION_MODE_ARM 1u
+#define EXECUTION_MODE_THUMB_IRQ 2u
+#define EXECUTION_MODE_ARM_IRQ 3u
+#define EXECUTION_MODE_THUMB_FIQ 4u
+#define EXECUTION_MODE_ARM_FIQ 5u
+#define EXECUTION_MODE_THUMB_FIQ_IRQ 6u
+#define EXECUTION_MODE_ARM_FIQ_IRQ 7u
+#define EXECUTION_MODE_THUMB_RST 8u
+#define EXECUTION_MODE_ARM_RST 9u
+#define EXECUTION_MODE_THUMB_RST_IRQ 10u
+#define EXECUTION_MODE_ARM_RST_IRQ 11u
+#define EXECUTION_MODE_THUMB_RST_FIQ 12u
+#define EXECUTION_MODE_ARM_RST_FIQ 13u
+#define EXECUTION_MODE_THUMB_RST_FIQ_IRQ 13u
+#define EXECUTION_MODE_ARM_RST_FIQ_IRQ 15u
+#define EXECUTION_MODE_COUNT 16u
+#define EXCEUTION_MODE_MASK EXECUTION_MODE_ARM_RST_FIQ_IRQ
+
+#define IRQ_BIT_INDEX 1u
+#define FIQ_BIT_INDEX 2u
+#define RST_BIT_INDEX 3u
+
+typedef struct _ExecutionMode {
+  void (*step_routine)(Arm7Tdmi*, Memory*);
+  const struct _ExecutionMode* next_execution_mode[2];
+  uint32_t next_instruction_offset[2];
+  uint32_t next_instruction_mask;
+} ExecutionMode;
 
 struct _Arm7Tdmi {
-  const StepRoutine* step_routines;
-  uint_fast8_t step_routine_index;
+  const ExecutionMode* execution_mode;
   ArmAllRegisters registers;
-  uint_fast8_t reference_count;
+  uint16_t reference_count;
 };
 
 //
 // Interrupt Line
 //
 
+static const ExecutionMode execution_modes[EXECUTION_MODE_COUNT];
+
+static inline size_t Arm7TdmiGetExecutionModeIndex(const Arm7Tdmi* cpu) {
+  return cpu->execution_mode - execution_modes;
+}
+
 static void Arm7TdmiSetLevelRst(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->step_routine_index = (cpu->step_routine_index & 3u) | (raised << 2u);
+  size_t current_mode_index = Arm7TdmiGetExecutionModeIndex(cpu);
+  size_t next_mode_index =
+      (current_mode_index & (EXCEUTION_MODE_MASK ^ (1u << RST_BIT_INDEX))) |
+      (raised << RST_BIT_INDEX);
+  assert(next_mode_index < EXECUTION_MODE_COUNT);
+
+  cpu->execution_mode = &execution_modes[next_mode_index];
 }
 
 static void Arm7TdmiSetLevelFiq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->step_routine_index = (cpu->step_routine_index & 5u) | (raised << 1u);
+  size_t current_mode_index = Arm7TdmiGetExecutionModeIndex(cpu);
+  size_t next_mode_index =
+      (current_mode_index & (EXCEUTION_MODE_MASK ^ (1u << FIQ_BIT_INDEX))) |
+      (raised << FIQ_BIT_INDEX);
+  assert(next_mode_index < EXECUTION_MODE_COUNT);
+
+  cpu->execution_mode = &execution_modes[next_mode_index];
 }
 
 static void Arm7TdmiSetLevelIrq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->step_routine_index = (cpu->step_routine_index & 6u) | raised;
+  size_t current_mode_index = Arm7TdmiGetExecutionModeIndex(cpu);
+  size_t next_mode_index =
+      (current_mode_index & (EXCEUTION_MODE_MASK ^ (1u << IRQ_BIT_INDEX))) |
+      (raised << IRQ_BIT_INDEX);
+  assert(next_mode_index < EXECUTION_MODE_COUNT);
+
+  cpu->execution_mode = &execution_modes[next_mode_index];
 }
 
 static void Arm7TdmiInterruptLineFree(void* context) {
@@ -50,10 +101,13 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 // Common Functions
 //
 
-static const StepRoutine step_routines[2][8];
-
-static inline void Arm7TdmiSetThumbMode(Arm7Tdmi* cpu, bool thumb) {
-  cpu->step_routines = step_routines[thumb];
+static inline void Arm7TdmiStepFinish(Arm7Tdmi* cpu, bool thumb,
+                                      bool modified_pc) {
+  cpu->execution_mode = cpu->execution_mode->next_execution_mode[thumb];
+  cpu->registers.current.user.gprs.pc +=
+      cpu->execution_mode->next_instruction_offset[modified_pc];
+  cpu->registers.current.user.gprs.pc &=
+      cpu->execution_mode->next_instruction_mask;
 }
 
 static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
@@ -62,8 +116,7 @@ static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionFIQ(&cpu->registers);
-  Arm7TdmiSetThumbMode(cpu, false);
-  cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
 
   return true;
 }
@@ -74,8 +127,7 @@ static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   }
 
   ArmExceptionIRQ(&cpu->registers);
-  Arm7TdmiSetThumbMode(cpu, false);
-  cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
 
   return true;
 }
@@ -85,55 +137,37 @@ static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
 //
 
 static void Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory) {
-  cpu->registers.current.user.gprs.pc &= 0xFFFFFFFCu;
-
   uint32_t next_instruction_addr =
       cpu->registers.current.user.gprs.pc - ARM_INSTRUCTION_OFFSET;
   uint32_t next_instruction;
   bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
   if (!success) {
     ArmExceptionPrefetchABT(&cpu->registers);
-    Arm7TdmiSetThumbMode(cpu, false);
-    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
     return;
   }
 
   bool modified_pc =
       ArmInstructionExecute(next_instruction, &cpu->registers, memory);
-  bool thumb = cpu->registers.current.user.cpsr.thumb;
-
-  static const uint8_t pc_offset[2u][2u] = {
-      {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
-      {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
-  cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
-
-  Arm7TdmiSetThumbMode(cpu, thumb);
+  Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
+                     /*modified_pc=*/modified_pc);
 }
 
 static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
-  cpu->registers.current.user.gprs.pc &= 0xFFFFFFFEu;
-
   uint32_t next_instruction_addr =
       cpu->registers.current.user.gprs.pc - THUMB_INSTRUCTION_OFFSET;
   uint16_t next_instruction;
   bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
   if (!success) {
     ArmExceptionPrefetchABT(&cpu->registers);
-    Arm7TdmiSetThumbMode(cpu, false);
-    cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+    Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
     return;
   }
 
   bool modified_pc =
       ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
-  bool thumb = cpu->registers.current.user.cpsr.thumb;
-
-  static const uint8_t pc_offset[2u][2u] = {
-      {ARM_INSTRUCTION_SIZE, THUMB_INSTRUCTION_SIZE},
-      {ARM_INSTRUCTION_OFFSET, THUMB_INSTRUCTION_OFFSET}};
-  cpu->registers.current.user.gprs.pc += pc_offset[modified_pc][thumb];
-
-  Arm7TdmiSetThumbMode(cpu, thumb);
+  Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
+                     /*modified_pc=*/modified_pc);
 }
 
 static void Arm7TdmiStepIrqArm(Arm7Tdmi* cpu, Memory* memory) {
@@ -194,21 +228,94 @@ static void Arm7TdmiStepFiqIrqThumb(Arm7Tdmi* cpu, Memory* memory) {
 
 static void Arm7TdmiStepRst(Arm7Tdmi* cpu, Memory* memory) {
   ArmExceptionRST(&cpu->registers);
-  Arm7TdmiSetThumbMode(cpu, false);
-  cpu->registers.current.user.gprs.pc += ARM_INSTRUCTION_OFFSET;
+  Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
 }
 
 //
 // Static Data
 //
 
-static const StepRoutine step_routines[2][8] = {
-    {Arm7TdmiStepArm, Arm7TdmiStepIrqArm, Arm7TdmiStepFiqArm,
-     Arm7TdmiStepFiqIrqArm, Arm7TdmiStepRst, Arm7TdmiStepRst, Arm7TdmiStepRst,
-     Arm7TdmiStepRst},
-    {Arm7TdmiStepThumb, Arm7TdmiStepIrqThumb, Arm7TdmiStepFiqThumb,
-     Arm7TdmiStepFiqIrqThumb, Arm7TdmiStepRst, Arm7TdmiStepRst, Arm7TdmiStepRst,
-     Arm7TdmiStepRst}};
+static const ExecutionMode execution_modes[16] = {
+    {Arm7TdmiStepThumb,
+     {&execution_modes[EXECUTION_MODE_ARM],
+      &execution_modes[EXECUTION_MODE_THUMB]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepArm,
+     {&execution_modes[EXECUTION_MODE_ARM],
+      &execution_modes[EXECUTION_MODE_THUMB]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepIrqThumb,
+     {&execution_modes[EXECUTION_MODE_ARM_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_IRQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepIrqArm,
+     {&execution_modes[EXECUTION_MODE_ARM_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_IRQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepFiqThumb,
+     {&execution_modes[EXECUTION_MODE_ARM_FIQ],
+      &execution_modes[EXECUTION_MODE_THUMB_FIQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepFiqArm,
+     {&execution_modes[EXECUTION_MODE_ARM_FIQ],
+      &execution_modes[EXECUTION_MODE_THUMB_FIQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepFiqIrqThumb,
+     {&execution_modes[EXECUTION_MODE_ARM_FIQ_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_FIQ_IRQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepFiqIrqArm,
+     {&execution_modes[EXECUTION_MODE_ARM_FIQ_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_FIQ_IRQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST],
+      &execution_modes[EXECUTION_MODE_THUMB_RST]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST],
+      &execution_modes[EXECUTION_MODE_THUMB_RST]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_IRQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_IRQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ_IRQ]},
+     {THUMB_INSTRUCTION_SIZE, THUMB_INSTRUCTION_OFFSET},
+     0xFFFFFFFEu},
+    {Arm7TdmiStepRst,
+     {&execution_modes[EXECUTION_MODE_ARM_RST_FIQ_IRQ],
+      &execution_modes[EXECUTION_MODE_THUMB_RST_FIQ_IRQ]},
+     {ARM_INSTRUCTION_SIZE, ARM_INSTRUCTION_OFFSET},
+     0xFFFFFFFCu}};
 
 //
 // Public Functions
@@ -221,7 +328,7 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
     return false;
   }
 
-  Arm7TdmiSetThumbMode(*cpu, false);
+  (*cpu)->execution_mode = &execution_modes[EXECUTION_MODE_ARM];
   (*cpu)->registers.current.user.cpsr.mode = MODE_SVC;
   (*cpu)->registers.current.user.gprs.pc = 0x8u;
   (*cpu)->reference_count = 4u;
@@ -251,10 +358,7 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  uint_fast8_t index = cpu->step_routine_index;
-  assert(index < 8u);
-
-  cpu->step_routines[index](cpu, memory);
+  cpu->execution_mode->step_routine(cpu, memory);
 }
 
 void Arm7TdmiFree(Arm7Tdmi* cpu) {
