@@ -245,105 +245,89 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
     case ARM_OPCODE_LDMDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMDA(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMDAW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMDB(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMDBW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMIA(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMIAW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMIB(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMIBW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSDA(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSDAW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSDB(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSDBW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSIA(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSIAW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSIB(registers, memory, rn, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case ARM_OPCODE_LDMSIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
       load_store_success = ArmLDMSIBW(registers, memory, rn, register_list);
-      modified_pc = !load_store_success |
-                    !!(register_list & (1u << REGISTER_R15)) |
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15) |
                     (rn == REGISTER_R15);
       break;
     case ARM_OPCODE_LDR_DAW:

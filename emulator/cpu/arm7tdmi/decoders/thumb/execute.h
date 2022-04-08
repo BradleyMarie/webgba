@@ -297,8 +297,7 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       ThumbOperandPopRegisterList(next_instruction, &register_list);
       load_store_success =
           ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
-      modified_pc =
-          !load_store_success | !!(register_list & (1u << REGISTER_R15));
+      modified_pc = (!load_store_success) | (register_list >> REGISTER_R15);
       break;
     case THUMB_OPCODE_PUSH:
       ThumbOperandPushRegisterList(next_instruction, &register_list);
