@@ -141,16 +141,15 @@ static void Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory) {
       cpu->registers.current.user.gprs.pc - ARM_INSTRUCTION_OFFSET;
   uint32_t next_instruction;
   bool success = Load32LE(memory, next_instruction_addr, &next_instruction);
-  if (!success) {
+  if (success) {
+    bool modified_pc =
+        ArmInstructionExecute(next_instruction, &cpu->registers, memory);
+    Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
+                       /*modified_pc=*/modified_pc);
+  } else {
     ArmExceptionPrefetchABT(&cpu->registers);
     Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
-    return;
   }
-
-  bool modified_pc =
-      ArmInstructionExecute(next_instruction, &cpu->registers, memory);
-  Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
-                     /*modified_pc=*/modified_pc);
 }
 
 static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
@@ -158,16 +157,15 @@ static void Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory) {
       cpu->registers.current.user.gprs.pc - THUMB_INSTRUCTION_OFFSET;
   uint16_t next_instruction;
   bool success = Load16LE(memory, next_instruction_addr, &next_instruction);
-  if (!success) {
+  if (success) {
+    bool modified_pc =
+        ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
+    Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
+                       /*modified_pc=*/modified_pc);
+  } else {
     ArmExceptionPrefetchABT(&cpu->registers);
     Arm7TdmiStepFinish(cpu, /*thumb=*/false, /*modified_pc=*/true);
-    return;
   }
-
-  bool modified_pc =
-      ThumbInstructionExecute(next_instruction, &cpu->registers, memory);
-  Arm7TdmiStepFinish(cpu, /*thumb=*/cpu->registers.current.user.cpsr.thumb,
-                     /*modified_pc=*/modified_pc);
 }
 
 static void Arm7TdmiStepIrqArm(Arm7Tdmi* cpu, Memory* memory) {
