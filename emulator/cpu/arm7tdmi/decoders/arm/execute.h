@@ -175,7 +175,7 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_BX:
       ArmOperandBranchExchange(next_instruction, &rm);
-      ArmBX(&registers->current.user, rm);
+      ArmBX(registers, rm);
       pc_unmodified = false;
       break;
     case ARM_OPCODE_CDP:
