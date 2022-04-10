@@ -140,7 +140,7 @@ static inline bool ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_BX:
       ThumbOperandBranchExchange(next_instruction, &rm);
-      ArmBX(&registers->current.user, rm);
+      ArmBX(registers, rm);
       pc_unmodified = false;
       break;
     case THUMB_OPCODE_CMN:

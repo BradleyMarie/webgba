@@ -63,4 +63,5 @@ void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr) {
   }
 
   registers->current.user.cpsr = cpsr;
+  registers->execution_control.thumb = cpsr.thumb;
 }

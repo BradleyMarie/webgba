@@ -133,11 +133,23 @@ typedef struct {
   ArmProgramStatusRegister spsr;
 } ArmPrivilegedRegisters;
 
+// Non-architectural state used to control execution
+typedef union {
+  struct {
+    bool thumb : 1;
+    bool irq : 1;
+    bool fiq : 1;
+    bool rst : 1;
+  };
+  uint_fast8_t value;
+} ArmExecutionControl;
+
 typedef struct {
   ArmPrivilegedRegisters current;
   uint32_t banked_splrs[6][2];
   uint32_t banked_fiq_gprs[5];
   ArmProgramStatusRegister banked_spsrs[6];
+  ArmExecutionControl execution_control;
 } ArmAllRegisters;
 
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);

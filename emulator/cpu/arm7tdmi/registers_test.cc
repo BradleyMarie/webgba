@@ -88,6 +88,11 @@ class ArmLoadCPSRTest : public testing::TestWithParam<unsigned> {
     registers_.banked_fiq_gprs[BANKED_R10_INDEX] = (MODE_FIQ << 4) | 10u;
     registers_.banked_fiq_gprs[BANKED_R11_INDEX] = (MODE_FIQ << 4) | 11u;
     registers_.banked_fiq_gprs[BANKED_R12_INDEX] = (MODE_FIQ << 4) | 12u;
+
+    registers_.execution_control.thumb = false;
+    registers_.execution_control.irq = true;
+    registers_.execution_control.fiq = true;
+    registers_.execution_control.rst = true;
   }
 
   void ValidateBanksUnmodifiedExcept(unsigned new_mode) {
@@ -199,6 +204,7 @@ class ArmLoadCPSRTest : public testing::TestWithParam<unsigned> {
 TEST_P(ArmLoadCPSRTest, ToUSR) {
   ArmProgramStatusRegister next_cpsr;
   next_cpsr.mode = MODE_USR;
+  next_cpsr.thumb = true;
   ArmLoadCPSR(&registers_, next_cpsr);
 
   // Unmodified Registers
@@ -244,6 +250,9 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
+
+  // Execution Mode
+  EXPECT_EQ(15u, registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_USR);
 }
@@ -297,6 +306,9 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
 
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
+
   ValidateBanksUnmodifiedExcept(MODE_SYS);
 }
 
@@ -344,6 +356,9 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
 
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
+
   ValidateBanksUnmodifiedExcept(MODE_ABT);
 }
 
@@ -387,6 +402,9 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
+
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_FIQ);
 }
@@ -435,6 +453,9 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
 
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
+
   ValidateBanksUnmodifiedExcept(MODE_IRQ);
 }
 
@@ -482,6 +503,9 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
 
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
+
   ValidateBanksUnmodifiedExcept(MODE_SVC);
 }
 
@@ -528,6 +552,9 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
     EXPECT_EQ(14u, registers_.current.user.gprs.r14);
     EXPECT_EQ(65535u, registers_.current.spsr.value);
   }
+
+  // Execution Mode
+  EXPECT_EQ(14u, registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_UND);
 }
