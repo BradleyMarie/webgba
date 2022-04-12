@@ -1,29 +1,30 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/branch.h"
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <cstring>
 
 #include "googletest/include/gtest/gtest.h"
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
+ArmAllRegisters CreateArmAllRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
   return registers;
 }
 
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
+bool ArmArmAllRegistersAreZero(const ArmAllRegisters& regs) {
+  auto zero = CreateArmAllRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 TEST(ArmB, Branch) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.pc = 208u;
+  registers.current.user.gprs.pc = 208u;
   ArmB(&registers, 100u);
-  EXPECT_EQ(308u, registers.pc);
+  EXPECT_EQ(308u, ArmNextInstruction(&registers));
 
-  registers.pc = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmArmAllRegistersAreZero(registers));
 }

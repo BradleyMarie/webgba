@@ -22,6 +22,7 @@ cc_test(
     srcs = ["arm7tdmi_test.cc"],
     deps = [
         ":arm7tdmi",
+        ":program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -32,6 +33,7 @@ cc_library(
     hdrs = ["exceptions.h"],
     visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
     deps = [
+        ":program_counter",
         ":registers",
     ],
 )
@@ -41,6 +43,7 @@ cc_test(
     srcs = ["exceptions_test.cc"],
     deps = [
         ":exceptions",
+        ":program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -66,6 +69,24 @@ cc_test(
     srcs = ["memory_test.cc"],
     deps = [
         ":memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "program_counter",
+    hdrs = ["program_counter.h"],
+    visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"],
+    deps = [
+        ":registers",
+    ],
+)
+
+cc_test(
+    name = "program_counter_test",
+    srcs = ["program_counter_test.cc"],
+    deps = [
+        ":program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )

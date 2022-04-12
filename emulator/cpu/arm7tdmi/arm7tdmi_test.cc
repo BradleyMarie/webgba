@@ -223,11 +223,14 @@ TEST_F(ExecuteTest, DoFIQ) {
 
   AddInstruction(0x1Cu, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x20u, "0x00D08DE5");  // str sp, [sp]
-  Run(3u);
+  AddInstruction(0x24u, "0x04E08DE5");  // str lr, [sp,#4]
+  Run(4u);
 
   uint32_t value;
   EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
   EXPECT_EQ(0x300u, value);
+  EXPECT_TRUE(Load32LE(memory_, 0x304u, &value));
+  EXPECT_EQ(0x104u, value);
 }
 
 TEST_F(ExecuteTest, DoIRQ) {
@@ -235,11 +238,14 @@ TEST_F(ExecuteTest, DoIRQ) {
 
   AddInstruction(0x18u, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x1Cu, "0x00D08DE5");  // str sp, [sp]
-  Run(3u);
+  AddInstruction(0x20u, "0x04E08DE5");  // str lr, [sp,#4]
+  Run(4u);
 
   uint32_t value;
   EXPECT_TRUE(Load32LE(memory_, 0x300u, &value));
   EXPECT_EQ(0x300u, value);
+  EXPECT_TRUE(Load32LE(memory_, 0x304u, &value));
+  EXPECT_EQ(0x104u, value);
 }
 
 TEST_F(ExecuteTest, FIQPreemptsIRQ) {

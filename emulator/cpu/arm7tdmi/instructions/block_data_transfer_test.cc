@@ -1,5 +1,7 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
+
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <cstring>
@@ -118,11 +120,21 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
     for (uint32_t i = 0u; i < 16u; i++) {
       uint32_t index = 15u - i;
       if (register_list & (1u << index)) {
-        EXPECT_EQ(expected_value--, registers.current.user.gprs.gprs[index]);
+        if (index == REGISTER_PC) {
+          EXPECT_EQ((expected_value-- >> 2u) << 2u,
+                    ArmNextInstruction(&registers));
+        } else {
+          EXPECT_EQ(expected_value--, registers.current.user.gprs.gprs[index]);
+        }
       } else {
         if (index == address_register) {
-          EXPECT_EQ(address_register_expected_value,
-                    registers.current.user.gprs.gprs[index]);
+          if (index == REGISTER_PC) {
+            EXPECT_EQ(address_register_expected_value,
+                      ArmNextInstruction(&registers));
+          } else {
+            EXPECT_EQ(address_register_expected_value,
+                      registers.current.user.gprs.gprs[index]);
+          }
         } else {
           EXPECT_EQ(0u, registers.current.user.gprs.gprs[index]);
         }
@@ -136,11 +148,21 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
     uint32_t expected_value = 1u;
     for (uint32_t i = 0u; i < 16u; i++) {
       if (register_list & (1u << i)) {
-        EXPECT_EQ(expected_value++, registers.current.user.gprs.gprs[i]);
+        if (i == REGISTER_PC) {
+          EXPECT_EQ((expected_value++ >> 2u) << 2u,
+                    ArmNextInstruction(&registers));
+        } else {
+          EXPECT_EQ(expected_value++, registers.current.user.gprs.gprs[i]);
+        }
       } else {
         if (i == address_register) {
-          EXPECT_EQ(address_register_expected_value,
-                    registers.current.user.gprs.gprs[i]);
+          if (i == REGISTER_PC) {
+            EXPECT_EQ(address_register_expected_value,
+                      ArmNextInstruction(&registers));
+          } else {
+            EXPECT_EQ(address_register_expected_value,
+                      registers.current.user.gprs.gprs[i]);
+          }
         } else {
           EXPECT_EQ(0u, registers.current.user.gprs.gprs[i]);
         }
@@ -158,7 +180,7 @@ TEST_P(LdmTest, ArmLDMDA) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x13Cu, GetParam());
@@ -168,7 +190,7 @@ TEST_P(LdmTest, ArmLDMDB) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x140u, GetParam());
@@ -178,7 +200,7 @@ TEST_P(LdmTest, ArmLDMDAW) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -196,7 +218,7 @@ TEST_P(LdmTest, ArmLDMDBW) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -214,7 +236,7 @@ TEST_P(LdmTest, ArmLDMIA) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0,
                                                   0x100u, GetParam());
@@ -224,7 +246,7 @@ TEST_P(LdmTest, ArmLDMIB) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0, 0xFCu,
                                                   GetParam());
@@ -234,7 +256,7 @@ TEST_P(LdmTest, ArmLDMIAW) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -252,7 +274,7 @@ TEST_P(LdmTest, ArmLDMIBW) {
   auto registers = CreateArmAllRegisters();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -271,7 +293,7 @@ TEST_P(LdmTest, ArmLDMSDA) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x13Cu, GetParam());
@@ -299,7 +321,7 @@ TEST_P(LdmTest, ArmLDMSDB) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x140u, GetParam());
@@ -327,7 +349,7 @@ TEST_P(LdmTest, ArmLDMSDAW) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -363,7 +385,7 @@ TEST_P(LdmTest, ArmLDMSDBW) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -399,7 +421,7 @@ TEST_P(LdmTest, ArmLDMSIA) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0,
                                                   0x100u, GetParam());
@@ -427,7 +449,7 @@ TEST_P(LdmTest, ArmLDMSIB) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0, 0xFCu,
                                                   GetParam());
@@ -455,7 +477,7 @@ TEST_P(LdmTest, ArmLDMSIAW) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -491,7 +513,7 @@ TEST_P(LdmTest, ArmLDMSIBW) {
   registers.current.user.cpsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -527,7 +549,7 @@ TEST_P(LdmTest, SysArmLDMSDA) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x13Cu, GetParam());
@@ -555,7 +577,7 @@ TEST_P(LdmTest, SysArmLDMSDB) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsDescending(registers, REGISTER_R0,
                                                    0x140u, GetParam());
@@ -583,7 +605,7 @@ TEST_P(LdmTest, SysArmLDMSDAW) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -619,7 +641,7 @@ TEST_P(LdmTest, SysArmLDMSDBW) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -655,7 +677,7 @@ TEST_P(LdmTest, SysArmLDMSIA) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0,
                                                   0x100u, GetParam());
@@ -683,7 +705,7 @@ TEST_P(LdmTest, SysArmLDMSIB) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam());
 
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0, 0xFCu,
                                                   GetParam());
@@ -711,7 +733,7 @@ TEST_P(LdmTest, SysArmLDMSIAW) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -747,7 +769,7 @@ TEST_P(LdmTest, SysArmLDMSIBW) {
   registers.current.user.cpsr.mode = MODE_SYS;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   uint32_t address_register_expected_value;
@@ -784,7 +806,7 @@ TEST_P(LdmTest, SvcArmLDMSDA) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -809,7 +831,7 @@ TEST_P(LdmTest, SvcArmLDMSDB) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -834,7 +856,7 @@ TEST_P(LdmTest, SvcArmLDMSDAW) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -868,7 +890,7 @@ TEST_P(LdmTest, SvcArmLDMSDBW) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -902,7 +924,7 @@ TEST_P(LdmTest, SvcArmLDMSIA) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -927,7 +949,7 @@ TEST_P(LdmTest, SvcArmLDMSIB) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -956,7 +978,7 @@ TEST_P(LdmTest, SvcArmLDMSIAW) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -986,7 +1008,7 @@ TEST_P(LdmTest, SvcArmLDMSIBW) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam());
   if (GetParam() & (1u << REGISTER_R15)) {
     EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
     ArmProgramStatusRegister new_status = registers.current.user.cpsr;
@@ -1179,7 +1201,7 @@ std::vector<char> StmTest::memory_space_(384, 0);
 
 TEST_P(StmTest, ArmSTMDA) {
   registers_.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmSTMDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x13Cu, GetParam());
   ValidateRegisters(REGISTER_R0, 0x13Cu);
@@ -1187,7 +1209,7 @@ TEST_P(StmTest, ArmSTMDA) {
 
 TEST_P(StmTest, ArmSTMDB) {
   registers_.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmSTMDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x140u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x140u);
@@ -1199,7 +1221,7 @@ TEST_P(StmTest, ArmSTMDAW) {
   }
 
   registers_.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_TRUE(ArmSTMDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1213,7 +1235,7 @@ TEST_P(StmTest, ArmSTMDBW) {
   }
 
   registers_.current.user.gprs.r0 = 0x140u;
-  EXPECT_TRUE(ArmSTMDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1223,7 +1245,7 @@ TEST_P(StmTest, ArmSTMDBW) {
 
 TEST_P(StmTest, ArmSTMIA) {
   registers_.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmSTMIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0x100u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x100u);
@@ -1231,7 +1253,7 @@ TEST_P(StmTest, ArmSTMIA) {
 
 TEST_P(StmTest, ArmSTMIB) {
   registers_.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmSTMIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0xFCu, GetParam());
   ValidateRegisters(REGISTER_R0, 0xFCu);
@@ -1243,7 +1265,7 @@ TEST_P(StmTest, ArmSTMIAW) {
   }
 
   registers_.current.user.gprs.r0 = 0x100u;
-  EXPECT_TRUE(ArmSTMIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1256,7 +1278,7 @@ TEST_P(StmTest, ArmSTMIBW) {
   }
 
   registers_.current.user.gprs.r0 = 0xFCu;
-  EXPECT_TRUE(ArmSTMIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1266,7 +1288,7 @@ TEST_P(StmTest, ArmSTMIBW) {
 TEST_P(StmTest, ArmSTMSDA) {
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x13Cu, GetParam());
   ValidateRegisters(REGISTER_R0, 0x13Cu);
@@ -1275,7 +1297,7 @@ TEST_P(StmTest, ArmSTMSDA) {
 TEST_P(StmTest, ArmSTMSDB) {
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x140u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x140u);
@@ -1288,7 +1310,7 @@ TEST_P(StmTest, ArmSTMSDAW) {
 
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1303,7 +1325,7 @@ TEST_P(StmTest, ArmSTMSDBW) {
 
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1314,7 +1336,7 @@ TEST_P(StmTest, ArmSTMSDBW) {
 TEST_P(StmTest, ArmSTMSIA) {
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0x100u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x100u);
@@ -1323,7 +1345,7 @@ TEST_P(StmTest, ArmSTMSIA) {
 TEST_P(StmTest, ArmSTMSIB) {
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0xFCu, GetParam());
   ValidateRegisters(REGISTER_R0, 0xFCu);
@@ -1336,7 +1358,7 @@ TEST_P(StmTest, ArmSTMSIAW) {
 
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1350,7 +1372,7 @@ TEST_P(StmTest, ArmSTMSIBW) {
 
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_TRUE(ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1360,7 +1382,7 @@ TEST_P(StmTest, ArmSTMSIBW) {
 TEST_P(StmTest, SysArmSTMSDA) {
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x13Cu, GetParam());
   ValidateRegisters(REGISTER_R0, 0x13Cu);
@@ -1369,7 +1391,7 @@ TEST_P(StmTest, SysArmSTMSDA) {
 TEST_P(StmTest, SysArmSTMSDB) {
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, 0x140u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x140u);
@@ -1382,7 +1404,7 @@ TEST_P(StmTest, SysArmSTMSDAW) {
 
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1397,7 +1419,7 @@ TEST_P(StmTest, SysArmSTMSDBW) {
 
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
@@ -1408,7 +1430,7 @@ TEST_P(StmTest, SysArmSTMSDBW) {
 TEST_P(StmTest, SysArmSTMSIA) {
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0x100u, GetParam());
   ValidateRegisters(REGISTER_R0, 0x100u);
@@ -1417,7 +1439,7 @@ TEST_P(StmTest, SysArmSTMSIA) {
 TEST_P(StmTest, SysArmSTMSIB) {
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam());
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, 0xFCu, GetParam());
   ValidateRegisters(REGISTER_R0, 0xFCu);
@@ -1430,7 +1452,7 @@ TEST_P(StmTest, SysArmSTMSIAW) {
 
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1444,7 +1466,7 @@ TEST_P(StmTest, SysArmSTMSIBW) {
 
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_SYS;
-  EXPECT_TRUE(ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
@@ -1458,7 +1480,7 @@ TEST_P(StmTest, SvcArmSTMSDA) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1473,7 +1495,7 @@ TEST_P(StmTest, SvcArmSTMSDB) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1492,7 +1514,7 @@ TEST_P(StmTest, SvcArmSTMSDAW) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1513,7 +1535,7 @@ TEST_P(StmTest, SvcArmSTMSDBW) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1530,7 +1552,7 @@ TEST_P(StmTest, SvcArmSTMSIA) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1545,7 +1567,7 @@ TEST_P(StmTest, SvcArmSTMSIB) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1564,7 +1586,7 @@ TEST_P(StmTest, SvcArmSTMSIAW) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1584,7 +1606,7 @@ TEST_P(StmTest, SvcArmSTMSIBW) {
   new_status.mode = MODE_SVC;
   ArmLoadCPSR(&registers_, new_status);
 
-  EXPECT_TRUE(ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
@@ -1659,8 +1681,7 @@ class MemoryFailsTest : public testing::TestWithParam<uint16_t> {
   }
 
   bool ArmIsDataAbort(const ArmAllRegisters &regs) {
-    return regs.current.user.cpsr.mode == MODE_ABT &&
-           regs.current.user.gprs.pc == 0x10u;
+    return regs.current.user.cpsr.mode == MODE_ABT;
   }
 
   Memory *memory_;
@@ -1675,7 +1696,7 @@ TEST_P(MemoryFailsTest, ArmLDMDA) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmLDMDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDA(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x13Cu, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1689,7 +1710,7 @@ TEST_P(MemoryFailsTest, ArmLDMDB) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmLDMDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDB(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x140u, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1703,7 +1724,7 @@ TEST_P(MemoryFailsTest, ArmLDMDAW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmLDMDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1718,7 +1739,7 @@ TEST_P(MemoryFailsTest, ArmLDMDBW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmLDMDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMDBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1733,7 +1754,7 @@ TEST_P(MemoryFailsTest, ArmLDMIA) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmLDMIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIA(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x100u, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1747,7 +1768,7 @@ TEST_P(MemoryFailsTest, ArmLDMIB) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmLDMIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIB(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0xFCu, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1761,7 +1782,7 @@ TEST_P(MemoryFailsTest, ArmLDMIAW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmLDMIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1776,7 +1797,7 @@ TEST_P(MemoryFailsTest, ArmLDMIBW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmLDMIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMIBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1791,7 +1812,7 @@ TEST_P(MemoryFailsTest, ArmLDMSDA) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDA(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x13Cu, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1805,7 +1826,7 @@ TEST_P(MemoryFailsTest, ArmLDMSDB) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDB(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x140u, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1819,7 +1840,7 @@ TEST_P(MemoryFailsTest, ArmLDMSDAW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1834,7 +1855,7 @@ TEST_P(MemoryFailsTest, ArmLDMSDBW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSDBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1849,7 +1870,7 @@ TEST_P(MemoryFailsTest, ArmLDMSIA) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIA(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x100u, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1863,7 +1884,7 @@ TEST_P(MemoryFailsTest, ArmLDMSIB) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIB(&registers, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0xFCu, registers.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
@@ -1878,7 +1899,7 @@ TEST_P(MemoryFailsTest, ArmLDMSIAW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIAW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1894,7 +1915,7 @@ TEST_P(MemoryFailsTest, ArmLDMSIBW) {
   auto registers = CreateArmAllRegistersInMode();
 
   registers.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam()));
+  ArmLDMSIBW(&registers, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers.current.user.gprs.r0);
 
@@ -1907,7 +1928,7 @@ TEST_P(MemoryFailsTest, ArmSTMDA) {
   }
 
   registers_.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmSTMDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDA(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x13Cu, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -1919,7 +1940,7 @@ TEST_P(MemoryFailsTest, ArmSTMDB) {
   }
 
   registers_.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmSTMDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDB(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x140u, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -1931,7 +1952,7 @@ TEST_P(MemoryFailsTest, ArmSTMDAW) {
   }
 
   registers_.current.user.gprs.r0 = 0x13Cu;
-  EXPECT_FALSE(ArmSTMDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -1944,7 +1965,7 @@ TEST_P(MemoryFailsTest, ArmSTMDBW) {
   }
 
   registers_.current.user.gprs.r0 = 0x140u;
-  EXPECT_FALSE(ArmSTMDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMDBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -1957,7 +1978,7 @@ TEST_P(MemoryFailsTest, ArmSTMIA) {
   }
 
   registers_.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmSTMIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIA(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x100u, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -1969,7 +1990,7 @@ TEST_P(MemoryFailsTest, ArmSTMIB) {
   }
 
   registers_.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmSTMIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIB(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0xFCu, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -1981,7 +2002,7 @@ TEST_P(MemoryFailsTest, ArmSTMIAW) {
   }
 
   registers_.current.user.gprs.r0 = 0x100u;
-  EXPECT_FALSE(ArmSTMIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -1994,7 +2015,7 @@ TEST_P(MemoryFailsTest, ArmSTMIBW) {
   }
 
   registers_.current.user.gprs.r0 = 0xFCu;
-  EXPECT_FALSE(ArmSTMIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -2008,7 +2029,7 @@ TEST_P(MemoryFailsTest, ArmSTMSDA) {
 
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDA(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x13Cu, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -2021,7 +2042,7 @@ TEST_P(MemoryFailsTest, ArmSTMSDB) {
 
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDB(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x140u, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -2034,7 +2055,7 @@ TEST_P(MemoryFailsTest, ArmSTMSDAW) {
 
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -2048,7 +2069,7 @@ TEST_P(MemoryFailsTest, ArmSTMSDBW) {
 
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -2062,7 +2083,7 @@ TEST_P(MemoryFailsTest, ArmSTMSIA) {
 
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIA(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0x100u, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -2075,7 +2096,7 @@ TEST_P(MemoryFailsTest, ArmSTMSIB) {
 
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIB(&registers_, memory_, REGISTER_R0, GetParam());
   EXPECT_EQ(0xFCu, registers_.current.user.gprs.r0);
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
@@ -2088,7 +2109,7 @@ TEST_P(MemoryFailsTest, ArmSTMSIAW) {
 
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 
@@ -2102,7 +2123,7 @@ TEST_P(MemoryFailsTest, ArmSTMSIBW) {
 
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_USR;
-  EXPECT_FALSE(ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam()));
+  ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
 

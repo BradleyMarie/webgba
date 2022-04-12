@@ -37,7 +37,7 @@ TEST(ThumbBL2, BranchLink2) {
   registers.lr = 308u;
   ThumbBL2(&registers, 100);
   EXPECT_EQ(207u, registers.lr);
-  EXPECT_EQ(408u, registers.pc);
+  EXPECT_EQ(410u, registers.pc);
 
   registers.pc = 0u;
   registers.lr = 0u;

@@ -14,7 +14,7 @@ static inline void ThumbBL2(ArmGeneralPurposeRegisters *registers,
                             uint_fast16_t offset) {
   assert(offset <= 4094u);
   uint32_t pc = registers->pc;
-  registers->pc = registers->lr + offset;
+  registers->pc = registers->lr + offset + 2u;
   registers->lr = pc - 1;
 }
 

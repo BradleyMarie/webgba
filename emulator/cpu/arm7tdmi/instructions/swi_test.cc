@@ -1,5 +1,6 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <strings.h>
@@ -29,7 +30,7 @@ TEST(ArmSWI, SoftwareInterrupt) {
   ArmSWI(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, registers.current.user.gprs.pc);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -57,7 +58,7 @@ TEST(ArmSWI, SoftwareInterruptThumb) {
   ArmSWI(&registers);
   EXPECT_EQ(102u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, registers.current.user.gprs.pc);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);

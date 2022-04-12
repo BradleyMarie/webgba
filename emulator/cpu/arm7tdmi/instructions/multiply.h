@@ -4,32 +4,37 @@
 #include "emulator/cpu/arm7tdmi/flags.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline void ArmMUL(ArmGeneralPurposeRegisters *registers,
-                          ArmRegisterIndex Rd, ArmRegisterIndex Rm,
-                          ArmRegisterIndex Rs) {
-  registers->gprs[Rd] = registers->gprs[Rm] * registers->gprs[Rs];
+static inline uint32_t ArmMUL(ArmAllRegisters *registers, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
+  uint32_t product = registers->current.user.gprs.gprs[Rm] *
+                     registers->current.user.gprs.gprs[Rs];
+  ArmLoadGPSR(registers, Rd, product);
+  return product;
 }
 
-static inline void ArmMULS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+static inline void ArmMULS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
-  ArmMUL(&registers->gprs, Rd, Rm, Rs);
-  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  uint32_t product = ArmMUL(registers, Rd, Rm, Rs);
+  registers->current.user.cpsr.zero = ArmZeroFlagUInt32(product);
+  registers->current.user.cpsr.negative = ArmNegativeFlagUInt32(product);
 }
 
-static inline void ArmMLA(ArmGeneralPurposeRegisters *registers,
-                          ArmRegisterIndex Rd, ArmRegisterIndex Rm,
-                          ArmRegisterIndex Rs, ArmRegisterIndex Rn) {
-  registers->gprs[Rd] =
-      registers->gprs[Rn] + (registers->gprs[Rm] * registers->gprs[Rs]);
+static inline uint32_t ArmMLA(ArmAllRegisters *registers, ArmRegisterIndex Rd,
+                              ArmRegisterIndex Rm, ArmRegisterIndex Rs,
+                              ArmRegisterIndex Rn) {
+  uint32_t product = registers->current.user.gprs.gprs[Rn] +
+                     (registers->current.user.gprs.gprs[Rm] *
+                      registers->current.user.gprs.gprs[Rs]);
+  ArmLoadGPSR(registers, Rd, product);
+  return product;
 }
 
-static inline void ArmMLAS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
+static inline void ArmMLAS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
                            ArmRegisterIndex Rm, ArmRegisterIndex Rs,
                            ArmRegisterIndex Rn) {
-  ArmMLA(&registers->gprs, Rd, Rm, Rs, Rn);
-  registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  uint32_t product = ArmMLA(registers, Rd, Rm, Rs, Rn);
+  registers->current.user.cpsr.zero = ArmZeroFlagUInt32(product);
+  registers->current.user.cpsr.negative = ArmNegativeFlagUInt32(product);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_MULTIPLY_
