@@ -133,8 +133,7 @@ class MemoryTest : public testing::Test {
   }
 
   bool ArmIsDataAbort(const ArmAllRegisters &regs) {
-    return regs.current.user.cpsr.mode == MODE_ABT &&
-           regs.current.user.gprs.pc == 0x10u;
+    return regs.current.user.cpsr.mode == MODE_ABT;
   }
 
   static std::vector<char> memory_space_;
@@ -151,8 +150,7 @@ TEST_F(MemoryTest, ArmSWP) {
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 0xCAFEBABE;
-  EXPECT_TRUE(
-      ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0));
+  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r2);
@@ -177,8 +175,7 @@ TEST_F(MemoryTest, ArmSWPLoadFails) {
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 0xCAFEBABE;
-  EXPECT_FALSE(ArmSWP(&registers, memory_no_loads_, REGISTER_R2, REGISTER_R1,
-                      REGISTER_R0));
+  ArmSWP(&registers, memory_no_loads_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r2);
@@ -203,8 +200,7 @@ TEST_F(MemoryTest, ArmSWPStoreFails) {
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 0xCAFEBABE;
-  EXPECT_FALSE(ArmSWP(&registers, memory_no_stores_, REGISTER_R2, REGISTER_R1,
-                      REGISTER_R0));
+  ArmSWP(&registers, memory_no_stores_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r2);
@@ -228,8 +224,7 @@ TEST_F(MemoryTest, ArmSWPB) {
   ASSERT_TRUE(Store8(nullptr, 8u, 16u));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 32u;
-  EXPECT_TRUE(
-      ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0));
+  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r2);
@@ -254,8 +249,7 @@ TEST_F(MemoryTest, ArmSWPBLoadFails) {
   ASSERT_TRUE(Store8(nullptr, 8u, 16u));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 32u;
-  EXPECT_FALSE(ArmSWP(&registers, memory_no_loads_, REGISTER_R2, REGISTER_R1,
-                      REGISTER_R0));
+  ArmSWP(&registers, memory_no_loads_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r2);
@@ -280,8 +274,7 @@ TEST_F(MemoryTest, ArmSWPBStoreFails) {
   ASSERT_TRUE(Store8(nullptr, 8u, 16u));
   registers.current.user.gprs.r0 = 8u;
   registers.current.user.gprs.r1 = 32u;
-  EXPECT_FALSE(ArmSWP(&registers, memory_no_stores_, REGISTER_R2, REGISTER_R1,
-                      REGISTER_R0));
+  ArmSWP(&registers, memory_no_stores_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r2);

@@ -22,13 +22,12 @@
 #include "emulator/memory/memory.h"
 #include "tools/arm_opcode_decoder/decoder.h"
 
-static inline bool ArmInstructionExecute(uint32_t next_instruction,
+static inline void ArmInstructionExecute(uint32_t next_instruction,
                                          ArmAllRegisters* registers,
                                          Memory* memory) {
-  bool should_execute = ArmInstructionShouldExecute(
-      registers->current.user.cpsr, next_instruction);
-  if (!should_execute) {
-    return true;
+  if (!ArmInstructionShouldExecute(registers->current.user.cpsr,
+                                   next_instruction)) {
+    return;
   }
 
   ArmRegisterIndex rd_msw, rd_lsw, rd, rn, rm, rs;
@@ -38,1345 +37,1130 @@ static inline bool ArmInstructionExecute(uint32_t next_instruction,
   uint_fast8_t offset_8;
   bool shifter_carry_out, control, flags;
 
-  bool pc_unmodified;
   ArmOpcode opcode = ArmDecodeOpcode(next_instruction);
   switch (opcode) {
     case ARM_OPCODE_ADC:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmADC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmADC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ADC_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmADC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmADC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ADCS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmADCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ADCS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmADCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ADD:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmADD(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmADD(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ADD_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmADD(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmADD(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ADDS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmADDS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ADDS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmADDS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_AND:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmAND(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmAND(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_AND_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmAND(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmAND(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ANDS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmANDS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ANDS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmANDS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_B_FWD:
       ArmOperandBranchForward(next_instruction, &branch_offset);
-      ArmB(&registers->current.user.gprs, branch_offset);
-      pc_unmodified = false;
+      ArmB(registers, branch_offset);
       break;
     case ARM_OPCODE_B_REV:
       ArmOperandBranchReverse(next_instruction, &branch_offset);
-      ArmB(&registers->current.user.gprs, branch_offset);
-      pc_unmodified = false;
+      ArmB(registers, branch_offset);
       break;
     case ARM_OPCODE_BIC:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmBIC(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmBIC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_BIC_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmBIC(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmBIC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_BICS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmBICS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_BICS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmBICS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_BL_FWD:
       ArmOperandBranchForward(next_instruction, &branch_offset);
       ArmBL(&registers->current.user.gprs, branch_offset);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_BL_REV:
       ArmOperandBranchReverse(next_instruction, &branch_offset);
       ArmBL(&registers->current.user.gprs, branch_offset);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_BX:
       ArmOperandBranchExchange(next_instruction, &rm);
       ArmBX(registers, rm);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_CDP:
       ArmCDP(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_CMN:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmCMN(&registers->current.user, rn, operand2);
-      pc_unmodified = true;
+      ArmCMN(registers, rn, operand2);
       break;
     case ARM_OPCODE_CMN_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmCMN(&registers->current.user, rn, operand2);
-      pc_unmodified = true;
+      ArmCMN(registers, rn, operand2);
       break;
     case ARM_OPCODE_CMP:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmCMP(&registers->current.user, rn, operand2);
-      pc_unmodified = true;
+      ArmCMP(registers, rn, operand2);
       break;
     case ARM_OPCODE_CMP_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmCMP(&registers->current.user, rn, operand2);
-      pc_unmodified = true;
+      ArmCMP(registers, rn, operand2);
       break;
     case ARM_OPCODE_EOR:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmEOR(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmEOR(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_EOR_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmEOR(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmEOR(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_EORS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmEORS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_EORS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmEORS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_LDC:
       ArmLDC(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_LDMDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMDA(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMDA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMDAW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMDAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMDB(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMDB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMDBW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMDBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMIA(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMIA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMIAW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMIAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMIB(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMIB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMIBW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMIBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSDA(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMSDA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSDAW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMSDAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSDB(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMSDB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSDBW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMSDBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSIA(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMSIA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSIAW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMSIAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSIB(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15);
+      ArmLDMSIB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDMSIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmLDMSIBW(registers, memory, rn, register_list);
-      pc_unmodified &= (~register_list >> REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDMSIBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_LDR_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDR_DB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_DB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDR_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_DB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_DB(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDR_DB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDR_DBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_DBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDR_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDR_IB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_IB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDR_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_IB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_IB(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDR_IB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDR_IBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDR_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDR_IBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_IBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_IBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRB_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_DB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_DB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRB_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_DB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRB_DB(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRB_DB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_DBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDR_DBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDR_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRB_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_IB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_IB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRB_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_IB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRB_IB(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRB_IB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_IBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRB_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRB_IBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRB_IBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRB_IBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRBT_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRBT_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRBT_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRBT_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRBT_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRBT_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRBT_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRBT_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRBT_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRBT_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRBT_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRBT_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRH_DAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_DAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_DAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_DAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRH_DB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_DB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRH_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_DB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_DB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRH_DB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRH_DBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_DBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_DBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_DBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRH_IAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_IAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_IAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_IAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRH_IB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_IB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRH_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_IB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_IB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRH_IB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRH_IBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRH_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRH_IBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRH_IBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRH_IBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_DAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_DAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_DAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_DAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_DB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_DB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSB_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_DB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_DB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSB_DB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_DBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_DBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_DBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_DBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_IAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_IAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_IAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_IAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_IB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_IB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSB_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_IB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_IB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSB_IB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSB_IBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSB_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSB_IBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSB_IBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSB_IBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_DAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_DAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_DAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_DAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_DB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_DB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSH_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_DB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_DB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSH_DB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_DBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_DBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_DBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_DBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_IAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_IAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_IAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_IAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_IB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_IB(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSH_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_IB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_IB(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmLDRSH_IB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRSH_IBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmLDRSH_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRSH_IBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmLDRSH_IBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRSH_IBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_LDRT_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRT_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRT_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRT_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRT_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRT_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRT_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmLDRT_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRT_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_LDRT_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmLDRT_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rd != REGISTER_R15) & (rn != REGISTER_R15);
+      ArmLDRT_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_MCR:
       ArmMCR(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_MLA:
       ArmOperandMultiplyAccumulate(next_instruction, &rd, &rm, &rs, &rn);
-      ArmMLA(&registers->current.user.gprs, rd, rm, rs, rn);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMLA(registers, rd, rm, rs, rn);
       break;
     case ARM_OPCODE_MLAS:
       ArmOperandMultiplyAccumulate(next_instruction, &rd, &rm, &rs, &rn);
-      ArmMLAS(&registers->current.user, rd, rm, rs, rn);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMLAS(registers, rd, rm, rs, rn);
       break;
     case ARM_OPCODE_MOV:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmMOV(&registers->current.user.gprs, rd, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMOV(registers, rd, operand2);
       break;
     case ARM_OPCODE_MOV_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmMOV(&registers->current.user.gprs, rd, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMOV(registers, rd, operand2);
       break;
     case ARM_OPCODE_MOVS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmMOVS(registers, rd, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_MOVS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmMOVS(registers, rd, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_MRC:
       ArmMRC(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_MRS_CPSR:
       ArmOperandMoveFromStatusRegister(next_instruction, &rd);
-      ArmMRS_CPSR(&registers->current.user, rd);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMRS_CPSR(registers, rd);
       break;
     case ARM_OPCODE_MRS_SPSR:
       ArmOperandMoveFromStatusRegister(next_instruction, &rd);
-      ArmMRS_SPSR(&registers->current, rd);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMRS_SPSR(registers, rd);
       break;
     case ARM_OPCODE_MSR_CPSR:
       ArmOperandMoveToStatusRegisterRegister(next_instruction,
                                              &registers->current.user.gprs,
                                              &control, &flags, &operand2);
       ArmMSR_CPSR(registers, control, flags, operand2);
-      pc_unmodified = true;
       break;
     case ARM_OPCODE_MSR_CPSR_I8:
       ArmOperandMoveToStatusRegisterImmediate(next_instruction, &control,
                                               &flags, &operand2);
       ArmMSR_CPSR(registers, control, flags, operand2);
-      pc_unmodified = true;
       break;
     case ARM_OPCODE_MSR_SPSR:
       ArmOperandMoveToStatusRegisterRegister(next_instruction,
                                              &registers->current.user.gprs,
                                              &control, &flags, &operand2);
-      ArmMSR_SPSR(&registers->current, control, flags, operand2);
-      pc_unmodified = true;
+      ArmMSR_SPSR(registers, control, flags, operand2);
       break;
     case ARM_OPCODE_MSR_SPSR_I8:
       ArmOperandMoveToStatusRegisterImmediate(next_instruction, &control,
                                               &flags, &operand2);
-      ArmMSR_SPSR(&registers->current, control, flags, operand2);
-      pc_unmodified = true;
+      ArmMSR_SPSR(registers, control, flags, operand2);
       break;
     case ARM_OPCODE_MUL:
       ArmOperandMultiply(next_instruction, &rd, &rm, &rs);
-      ArmMUL(&registers->current.user.gprs, rd, rm, rs);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMUL(registers, rd, rm, rs);
       break;
     case ARM_OPCODE_MULS:
       ArmOperandMultiply(next_instruction, &rd, &rm, &rs);
-      ArmMULS(&registers->current.user, rd, rm, rs);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMULS(registers, rd, rm, rs);
       break;
     case ARM_OPCODE_MVN:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmMVN(&registers->current.user.gprs, rd, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMVN(registers, rd, operand2);
       break;
     case ARM_OPCODE_MVN_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmMVN(&registers->current.user.gprs, rd, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmMVN(registers, rd, operand2);
       break;
     case ARM_OPCODE_MVNS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmMVNS(registers, rd, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_MVNS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmMVNS(registers, rd, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ORR:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmORR(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmORR(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ORR_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmORR(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmORR(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_ORRS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmORRS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_ORRS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmORRS(registers, rd, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_RSB:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmRSB(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmRSB(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_RSB_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmRSB(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmRSB(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_RSBS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmRSBS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_RSBS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmRSBS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_RSC:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmRSC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmRSC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_RSC_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmRSC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmRSC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_RSCS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmRSCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_RSCS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmRSCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_SBC:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmSBC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmSBC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_SBC_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmSBC(&registers->current.user, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmSBC(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_SBCS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmSBCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_SBCS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmSBCS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_SMLAL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmSMLAL(&registers->current.user.gprs, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmSMLAL(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_SMLALS:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmSMLALS(&registers->current.user, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmSMLALS(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_SMULL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmSMULL(&registers->current.user.gprs, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmSMULL(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_SMULLS:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmSMULLS(&registers->current.user, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmSMULLS(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_STC:
       ArmSTC(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_STMDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMDA(registers, memory, rn, register_list);
+      ArmSTMDA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMDAW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMDAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMDB(registers, memory, rn, register_list);
+      ArmSTMDB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMDBW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMDBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMIA(registers, memory, rn, register_list);
+      ArmSTMIA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMIAW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMIAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMIB(registers, memory, rn, register_list);
+      ArmSTMIB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMIBW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMIBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSDA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSDA(registers, memory, rn, register_list);
+      ArmSTMSDA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSDA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSDAW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMSDAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSDB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSDB(registers, memory, rn, register_list);
+      ArmSTMSDB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSDB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSDBW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMSDBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSIA:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSIA(registers, memory, rn, register_list);
+      ArmSTMSIA(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSIA_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSIAW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMSIAW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSIB:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSIB(registers, memory, rn, register_list);
+      ArmSTMSIB(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STMSIB_W:
       ArmOperandRegisterAndRegisterList(next_instruction, &rn, &register_list);
-      pc_unmodified = ArmSTMSIBW(registers, memory, rn, register_list);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTMSIBW(registers, memory, rn, register_list);
       break;
     case ARM_OPCODE_STR_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STR_DB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_DB(registers, memory, rd, rn, offset_32);
+      ArmSTR_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_DB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_DB(registers, memory, rd, rn, offset_16);
+      ArmSTR_DB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STR_DBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_DBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STR_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STR_IB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_IB(registers, memory, rd, rn, offset_32);
+      ArmSTR_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_IB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_IB(registers, memory, rd, rn, offset_16);
+      ArmSTR_IB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STR_IBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTR_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STR_IBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_IBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_IBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRB_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_DB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_DB(registers, memory, rd, rn, offset_32);
+      ArmSTRB_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_DB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRB_DB(registers, memory, rd, rn, offset_16);
+      ArmSTRB_DB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_DBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTR_DBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTR_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRB_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_IB:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_IB(registers, memory, rd, rn, offset_32);
+      ArmSTRB_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_IB_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRB_IB(registers, memory, rd, rn, offset_16);
+      ArmSTRB_IB(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_IBW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRB_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRB_IBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRB_IBW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRB_IBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRBT_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRBT_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRBT_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRBT_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRBT_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRBT_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRBT_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRBT_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRBT_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRBT_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRBT_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRBT_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRH_DAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_DAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_DAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_DAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRH_DB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_DB(registers, memory, rd, rn, offset_32);
+      ArmSTRH_DB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_DB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_DB(registers, memory, rd, rn, offset_8);
+      ArmSTRH_DB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRH_DBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_DBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_DBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_DBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_DBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_DBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRH_IAW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_IAW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_IAW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_IAW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRH_IB:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_IB(registers, memory, rd, rn, offset_32);
+      ArmSTRH_IB(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_IB_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_IB(registers, memory, rd, rn, offset_8);
+      ArmSTRH_IB(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRH_IBW:
       ArmOperandHalfwordAddressMode(next_instruction,
                                     &registers->current.user.gprs, &rd, &rn,
                                     &offset_32);
-      pc_unmodified = ArmSTRH_IBW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_IBW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRH_IBW_I8:
       ArmOperandHalfwordImmediate(next_instruction, &rd, &rn, &offset_8);
-      pc_unmodified = ArmSTRH_IBW(registers, memory, rd, rn, offset_8);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRH_IBW(registers, memory, rd, rn, offset_8);
       break;
     case ARM_OPCODE_STRT_DAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRT_DAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRT_DAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRT_DAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRT_DAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRT_DAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRT_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
                                      &rd, &rn, &offset_32);
-      pc_unmodified = ArmSTRT_IAW(registers, memory, rd, rn, offset_32);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRT_IAW(registers, memory, rd, rn, offset_32);
       break;
     case ARM_OPCODE_STRT_IAW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      pc_unmodified = ArmSTRT_IAW(registers, memory, rd, rn, offset_16);
-      pc_unmodified &= (rn != REGISTER_R15);
+      ArmSTRT_IAW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_SUB:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmSUB(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmSUB(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_SUB_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmSUB(&registers->current.user.gprs, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmSUB(registers, rd, rn, operand2);
       break;
     case ARM_OPCODE_SUBS:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
       ArmSUBS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_SUBS_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
       ArmSUBS(registers, rd, rn, operand2);
-      pc_unmodified = (rd != REGISTER_R15);
       break;
     case ARM_OPCODE_SWI:
       ArmSWI(registers);
-      pc_unmodified = false;
       break;
     case ARM_OPCODE_SWP:
       ArmOperandSingleDataSwap(next_instruction, &rd, &rm, &rn);
-      pc_unmodified = ArmSWP(registers, memory, rd, rm, rn);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmSWP(registers, memory, rd, rm, rn);
       break;
     case ARM_OPCODE_SWPB:
       ArmOperandSingleDataSwap(next_instruction, &rd, &rm, &rn);
-      pc_unmodified = ArmSWPB(registers, memory, rd, rm, rn);
-      pc_unmodified &= (rd != REGISTER_R15);
+      ArmSWPB(registers, memory, rd, rm, rn);
       break;
     case ARM_OPCODE_TEQ:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmTEQ(&registers->current.user, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmTEQ(registers, rn, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TEQ_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmTEQ(&registers->current.user, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmTEQ(registers, rn, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TST:
       ArmOperandDataProcessingOperand2(next_instruction,
                                        &registers->current.user, &rd, &rn,
                                        &shifter_carry_out, &operand2);
-      ArmTST(&registers->current.user, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmTST(registers, rn, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TST_I32:
       ArmOperandDataProcessingImmediate(next_instruction,
                                         &registers->current.user, &rd, &rn,
                                         &shifter_carry_out, &operand2);
-      ArmTST(&registers->current.user, rn, operand2, shifter_carry_out);
-      pc_unmodified = (rd != REGISTER_R15);
+      ArmTST(registers, rn, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_UMLAL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmUMLAL(&registers->current.user.gprs, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmUMLAL(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_UMLALS:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmUMLALS(&registers->current.user, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmUMLALS(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_UMULL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmUMULL(&registers->current.user.gprs, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmUMULL(registers, rd_lsw, rd_msw, rm, rs);
       break;
     case ARM_OPCODE_UMULLS:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
-      ArmUMULLS(&registers->current.user, rd_lsw, rd_msw, rm, rs);
-      pc_unmodified = (rd_lsw != REGISTER_R15) & (rd_msw != REGISTER_R15);
+      ArmUMULLS(registers, rd_lsw, rd_msw, rm, rs);
       break;
     default:
       assert(false);
     case ARM_OPCODE_UNDEF:
       ArmExceptionUND(registers);
-      pc_unmodified = false;
       break;
   }
-
-  return pc_unmodified;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_EXECUTE_

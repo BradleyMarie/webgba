@@ -18,6 +18,7 @@ cc_test(
     srcs = ["block_data_transfer_test.cc"],
     deps = [
         ":block_data_transfer",
+        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -33,6 +34,7 @@ cc_test(
     srcs = ["branch_exchange_test.cc"],
     deps = [
         ":branch_exchange",
+        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -48,6 +50,7 @@ cc_test(
     srcs = ["branch_test.cc"],
     deps = [
         ":branch",
+        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -111,6 +114,7 @@ cc_test(
     srcs = ["data_processing_test.cc"],
     deps = [
         ":data_processing",
+        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -234,6 +238,7 @@ cc_test(
     srcs = ["swi_test.cc"],
     deps = [
         ":swi",
+        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )

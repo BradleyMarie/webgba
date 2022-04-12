@@ -1,5 +1,6 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <strings.h>
@@ -22,7 +23,7 @@ TEST(ArmBX, BranchExchange) {
 
   registers.current.user.gprs.r0 = 65536u;
   ArmBX(&registers, REGISTER_R0);
-  EXPECT_EQ(65536u, registers.current.user.gprs.pc);
+  EXPECT_EQ(65536u, ArmNextInstruction(&registers));
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_FALSE(registers.execution_control.thumb);
 
@@ -36,7 +37,7 @@ TEST(ArmBX, BranchExchangeThumb) {
 
   registers.current.user.gprs.r0 = 65537u;
   ArmBX(&registers, REGISTER_R0);
-  EXPECT_EQ(65536u, registers.current.user.gprs.pc);
+  EXPECT_EQ(65536u, ArmNextInstruction(&registers));
   EXPECT_TRUE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.execution_control.thumb);
 

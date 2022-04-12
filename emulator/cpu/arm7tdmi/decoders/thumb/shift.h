@@ -8,7 +8,10 @@
 
 static inline void ThumbASRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rm, uint_fast8_t shift_amount) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
+
   if (shift_amount == 0u) {
     if (registers->gprs.gprs[Rm] >> 31u) {
       registers->cpsr.carry = true;
@@ -24,12 +27,15 @@ static inline void ThumbASRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->gprs.gprs_s[Rd] = registers->gprs.gprs_s[Rm] >> shift_amount;
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbASRS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rs) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rs <= REGISTER_R7);
+
   uint8_t shift_amount = registers->gprs.gprs_s[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
     registers->cpsr.carry =
@@ -46,13 +52,16 @@ static inline void ThumbASRS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     }
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbLSLS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rm, uint_fast8_t shift_amount) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
+
   if (shift_amount == 0u) {
     registers->gprs.gprs[Rd] = registers->gprs.gprs[Rm];
   } else {
@@ -61,12 +70,15 @@ static inline void ThumbLSLS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->gprs.gprs[Rd] = registers->gprs.gprs[Rm] << shift_amount;
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbLSLS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rs) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rs <= REGISTER_R7);
+
   uint8_t shift_amount = registers->gprs.gprs_s[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
     registers->cpsr.carry =
@@ -80,13 +92,16 @@ static inline void ThumbLSLS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->gprs.gprs[Rd] = 0u;
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbLSRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rm, uint_fast8_t shift_amount) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
+
   if (shift_amount == 0u) {
     registers->cpsr.carry = (registers->gprs.gprs[Rm] >> 31u) & 0x1u;
     registers->gprs.gprs[Rd] = 0u;
@@ -96,12 +111,15 @@ static inline void ThumbLSRS_I(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->gprs.gprs[Rd] = registers->gprs.gprs[Rm] >> shift_amount;
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbLSRS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                                ArmRegisterIndex Rm) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rm <= REGISTER_R7);
+
   uint8_t shift_amount = registers->gprs.gprs_s[Rm];
   if (shift_amount != 0u && shift_amount < 32u) {
     registers->cpsr.carry =
@@ -115,12 +133,15 @@ static inline void ThumbLSRS_R(ArmUserRegisters *registers, ArmRegisterIndex Rd,
     registers->gprs.gprs[Rd] = 0u;
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 
 static inline void ThumbRORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
                              ArmRegisterIndex Rm) {
+  assert(Rd <= REGISTER_R7);
+  assert(Rm <= REGISTER_R7);
+
   uint8_t shift_amount = registers->gprs.gprs_s[Rm];
   if (shift_amount == 0) {
     return;
@@ -137,7 +158,7 @@ static inline void ThumbRORS(ArmUserRegisters *registers, ArmRegisterIndex Rd,
         (registers->gprs.gprs[Rd] << (32u - shift_amount));
   }
 
-  registers->cpsr.negative = ArmNegativeFlag(registers->gprs.gprs[Rd]);
+  registers->cpsr.negative = ArmNegativeFlagUInt32(registers->gprs.gprs[Rd]);
   registers->cpsr.zero = ArmZeroFlagUInt32(registers->gprs.gprs[Rd]);
 }
 

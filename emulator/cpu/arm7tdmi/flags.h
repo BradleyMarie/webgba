@@ -4,7 +4,15 @@
 #include <assert.h>
 #include <stdint.h>
 
-static inline bool ArmNegativeFlag(uint32_t result) { return result >> 31; }
+static inline bool ArmNegativeFlagUInt32(uint32_t result) {
+  return result >> 31;
+}
+
+static inline bool ArmNegativeFlagUInt64(uint64_t result) {
+  return result >> 63;
+}
+
+static inline bool ArmNegativeFlagInt64(int64_t result) { return result < 0; }
 
 static inline bool ArmZeroFlagInt32(int32_t result) { return result == 0; }
 

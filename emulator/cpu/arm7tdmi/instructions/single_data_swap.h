@@ -5,7 +5,7 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline bool ArmSWP(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSWP(ArmAllRegisters *registers, Memory *memory,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,
                           ArmRegisterIndex Rn) {
   uint32_t temp;
@@ -13,39 +13,37 @@ static inline bool ArmSWP(ArmAllRegisters *registers, Memory *memory,
       ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn], &temp);
   if (!success) {
     ArmExceptionDataABT(registers);
-    return false;
+    return;
   }
 
   success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
                          registers->current.user.gprs.gprs[Rm]);
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmSWPB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSWPB(ArmAllRegisters *registers, Memory *memory,
                            ArmRegisterIndex Rd, ArmRegisterIndex Rm,
                            ArmRegisterIndex Rn) {
   uint8_t temp;
   bool success = Load8(memory, registers->current.user.gprs.gprs[Rn], &temp);
   if (!success) {
     ArmExceptionDataABT(registers);
-    return false;
+    return;
   }
 
   success = Store8(memory, registers->current.user.gprs.gprs[Rn],
                    (uint8_t)registers->current.user.gprs.gprs[Rm]);
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_SINGLE_DATA_SWAP_

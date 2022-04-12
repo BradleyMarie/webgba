@@ -23,7 +23,7 @@ TEST(ArmBL, BranchLink) {
   registers.pc = 208u;
   ArmBL(&registers, 100u);
   EXPECT_EQ(204u, registers.lr);
-  EXPECT_EQ(308u, registers.pc);
+  EXPECT_EQ(312u, registers.pc);
 
   registers.pc = 0u;
   registers.lr = 0u;

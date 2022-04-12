@@ -3,14 +3,14 @@
 
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline void ArmMRS_CPSR(ArmUserRegisters *registers,
+static inline void ArmMRS_CPSR(ArmAllRegisters *registers,
                                ArmRegisterIndex Rd) {
-  registers->gprs.gprs[Rd] = registers->cpsr.value;
+  ArmLoadGPSR(registers, Rd, registers->current.user.cpsr.value);
 }
 
-static inline void ArmMRS_SPSR(ArmPrivilegedRegisters *registers,
+static inline void ArmMRS_SPSR(ArmAllRegisters *registers,
                                ArmRegisterIndex Rd) {
-  registers->user.gprs.gprs[Rd] = registers->spsr.value;
+  ArmLoadGPSR(registers, Rd, registers->current.spsr.value);
 }
 
 static inline void ArmMSR_CPSR(ArmAllRegisters *registers, bool control,
@@ -38,21 +38,23 @@ static inline void ArmMSR_CPSR(ArmAllRegisters *registers, bool control,
   ArmLoadCPSR(registers, next_status);
 }
 
-static inline void ArmMSR_SPSR(ArmPrivilegedRegisters *registers, bool control,
+static inline void ArmMSR_SPSR(ArmAllRegisters *registers, bool control,
                                bool flags, uint32_t value) {
   ArmProgramStatusRegister next_status;
   next_status.value = value;
+
   if (control) {
-    registers->spsr.mode = next_status.mode;
-    registers->spsr.thumb = next_status.thumb;
-    registers->spsr.fiq_disable = next_status.fiq_disable;
-    registers->spsr.irq_disable = next_status.irq_disable;
+    registers->current.spsr.mode = next_status.mode;
+    registers->current.spsr.thumb = next_status.thumb;
+    registers->current.spsr.fiq_disable = next_status.fiq_disable;
+    registers->current.spsr.irq_disable = next_status.irq_disable;
   }
+
   if (flags) {
-    registers->spsr.overflow = next_status.overflow;
-    registers->spsr.carry = next_status.carry;
-    registers->spsr.zero = next_status.zero;
-    registers->spsr.negative = next_status.negative;
+    registers->current.spsr.overflow = next_status.overflow;
+    registers->current.spsr.carry = next_status.carry;
+    registers->current.spsr.zero = next_status.zero;
+    registers->current.spsr.negative = next_status.negative;
   }
 }
 

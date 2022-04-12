@@ -5,79 +5,101 @@
 #include "emulator/cpu/arm7tdmi/memory.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 
-static inline bool ArmLDR_DAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_DAW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
                              &registers->current.user.gprs.gprs[Rd]);
   registers->current.user.gprs.gprs[Rn] -= offset;
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDR_DB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_DB(ArmAllRegisters *registers, const Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   bool success =
       ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn] - offset,
                   &registers->current.user.gprs.gprs[Rd]);
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDR_DBW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_DBW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] -= offset;
   bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
                              &registers->current.user.gprs.gprs[Rd]);
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDR_IAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_IAW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
                              &registers->current.user.gprs.gprs[Rd]);
   registers->current.user.gprs.gprs[Rn] += offset;
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDR_IB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_IB(ArmAllRegisters *registers, const Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   bool success =
       ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn] + offset,
                   &registers->current.user.gprs.gprs[Rd]);
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDR_IBW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDR_IBW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] += offset;
   bool success = ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn],
                              &registers->current.user.gprs.gprs[Rd]);
+
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
-  return success;
+
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, registers->current.user.gprs.gprs[Rd]);
 }
 
-static inline bool ArmLDRT_DAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRT_DAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -94,14 +116,14 @@ static inline bool ArmLDRT_DAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRT_DB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRT_DB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -116,14 +138,13 @@ static inline bool ArmLDRT_DB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRT_IAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRT_IAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -140,14 +161,14 @@ static inline bool ArmLDRT_IAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRT_IB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRT_IB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -162,14 +183,13 @@ static inline bool ArmLDRT_IB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRB_DAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_DAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   uint8_t temp;
@@ -178,14 +198,14 @@ static inline bool ArmLDRB_DAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRB_DB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_DB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint8_t temp;
@@ -194,14 +214,13 @@ static inline bool ArmLDRB_DB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRB_DBW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_DBW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] -= offset;
@@ -210,14 +229,14 @@ static inline bool ArmLDRB_DBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRB_IAW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_IAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   uint8_t temp;
@@ -226,14 +245,14 @@ static inline bool ArmLDRB_IAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRB_IB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_IB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint8_t temp;
@@ -242,14 +261,13 @@ static inline bool ArmLDRB_IB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRB_IBW(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRB_IBW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] += offset;
@@ -258,14 +276,14 @@ static inline bool ArmLDRB_IBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = temp;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, temp);
 }
 
-static inline bool ArmLDRBT_DAW(ArmAllRegisters *registers,
+static inline void ArmLDRBT_DAW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -282,14 +300,14 @@ static inline bool ArmLDRBT_DAW(ArmAllRegisters *registers,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRBT_DB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRBT_DB(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -304,14 +322,13 @@ static inline bool ArmLDRBT_DB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRBT_IAW(ArmAllRegisters *registers,
+static inline void ArmLDRBT_IAW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -328,14 +345,14 @@ static inline bool ArmLDRBT_IAW(ArmAllRegisters *registers,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmLDRBT_IB(ArmAllRegisters *registers, const Memory *memory,
+static inline void ArmLDRBT_IB(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -350,14 +367,13 @@ static inline bool ArmLDRBT_IB(ArmAllRegisters *registers, const Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
-  } else {
-    registers->current.user.gprs.gprs[Rd] = value;
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rd, value);
 }
 
-static inline bool ArmSTR_DAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_DAW(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
@@ -366,12 +382,13 @@ static inline bool ArmSTR_DAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTR_DB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_DB(ArmAllRegisters *registers, Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   bool success =
@@ -380,11 +397,9 @@ static inline bool ArmSTR_DB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTR_DBW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_DBW(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] -= offset;
@@ -392,12 +407,13 @@ static inline bool ArmSTR_DBW(ArmAllRegisters *registers, Memory *memory,
                               registers->current.user.gprs.gprs[Rd]);
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTR_IAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_IAW(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   bool success = ArmStore32LE(memory, registers->current.user.gprs.gprs[Rn],
@@ -406,12 +422,13 @@ static inline bool ArmSTR_IAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTR_IB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_IB(ArmAllRegisters *registers, Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   bool success =
@@ -420,11 +437,9 @@ static inline bool ArmSTR_IB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTR_IBW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTR_IBW(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] += offset;
@@ -432,12 +447,13 @@ static inline bool ArmSTR_IBW(ArmAllRegisters *registers, Memory *memory,
                               registers->current.user.gprs.gprs[Rd]);
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRT_DAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRT_DAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -454,12 +470,13 @@ static inline bool ArmSTRT_DAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRT_DB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRT_DB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -475,11 +492,9 @@ static inline bool ArmSTRT_DB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTRT_IB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRT_IB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -495,11 +510,9 @@ static inline bool ArmSTRT_IB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTRT_IAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRT_IAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -515,12 +528,13 @@ static inline bool ArmSTRT_IAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRB_DAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_DAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   uint8_t temp = registers->current.user.gprs.gprs[Rd];
@@ -529,12 +543,13 @@ static inline bool ArmSTRB_DAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRB_DB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_DB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint8_t temp = registers->current.user.gprs.gprs[Rd];
@@ -544,11 +559,9 @@ static inline bool ArmSTRB_DB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTRB_DBW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_DBW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] -= offset;
@@ -557,12 +570,13 @@ static inline bool ArmSTRB_DBW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRB_IAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_IAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   uint8_t temp = registers->current.user.gprs.gprs[Rd];
@@ -571,12 +585,13 @@ static inline bool ArmSTRB_IAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRB_IB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_IB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint8_t temp = registers->current.user.gprs.gprs[Rd];
@@ -586,11 +601,9 @@ static inline bool ArmSTRB_IB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTRB_IBW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRB_IBW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast16_t offset) {
   registers->current.user.gprs.gprs[Rn] += offset;
@@ -599,12 +612,13 @@ static inline bool ArmSTRB_IBW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRBT_DAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRBT_DAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -621,12 +635,13 @@ static inline bool ArmSTRBT_DAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRBT_DB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRBT_DB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -642,11 +657,9 @@ static inline bool ArmSTRBT_DB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
-static inline bool ArmSTRBT_IAW(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRBT_IAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast16_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -663,12 +676,13 @@ static inline bool ArmSTRBT_IAW(ArmAllRegisters *registers, Memory *memory,
 
   if (!success) {
     ArmExceptionDataABT(registers);
+    return;
   }
 
-  return success;
+  ArmLoadGPSR(registers, Rn, registers->current.user.gprs.gprs[Rn]);
 }
 
-static inline bool ArmSTRBT_IB(ArmAllRegisters *registers, Memory *memory,
+static inline void ArmSTRBT_IB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   ArmProgramStatusRegister current_status = registers->current.user.cpsr;
@@ -684,8 +698,6 @@ static inline bool ArmSTRBT_IB(ArmAllRegisters *registers, Memory *memory,
   if (!success) {
     ArmExceptionDataABT(registers);
   }
-
-  return success;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTRUCTIONS_LOAD_STORE_REGISTER_BYTE_

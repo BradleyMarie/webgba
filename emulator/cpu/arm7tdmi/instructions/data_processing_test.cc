@@ -1,41 +1,15 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/data_processing.h"
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <strings.h>
 
 #include "googletest/include/gtest/gtest.h"
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
-  return registers;
-}
-
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
-}
-
-ArmUserRegisters CreateArmUserRegisters() {
-  ArmUserRegisters registers;
-  memset(&registers, 0, sizeof(ArmUserRegisters));
-  return registers;
-}
-
-bool ArmUserRegistersAreZero(const ArmUserRegisters& regs) {
-  auto zero = CreateArmUserRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmUserRegisters));
-}
-
-ArmPrivilegedRegisters CreateArmPrivilegedRegisters() {
-  ArmPrivilegedRegisters registers;
-  memset(&registers, 0, sizeof(ArmPrivilegedRegisters));
-  return registers;
-}
-
 bool ArmPrivilegedRegistersAreZero(const ArmPrivilegedRegisters& regs) {
-  auto zero = CreateArmPrivilegedRegisters();
+  ArmPrivilegedRegisters zero;
+  memset(&zero, 0, sizeof(ArmPrivilegedRegisters));
   return !memcmp(&zero, &regs, sizeof(ArmPrivilegedRegisters));
 }
 
@@ -51,42 +25,42 @@ bool ArmAllRegistersAreZero(const ArmAllRegisters& regs) {
 }
 
 TEST(ArmADC, Compute) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmADC(&registers, REGISTER_R1, REGISTER_R0, 2u);
-  EXPECT_EQ(3u, registers.gprs.r1);
-  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_EQ(3u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmADC, ComputeWithCarry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
-  registers.cpsr.carry = true;
+  registers.current.user.gprs.r0 = 1u;
+  registers.current.user.cpsr.carry = true;
   ArmADC(&registers, REGISTER_R1, REGISTER_R0, 2u);
-  EXPECT_EQ(4u, registers.gprs.r1);
-  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmADC, SameSourceAndDest) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 2u;
+  registers.current.user.gprs.r0 = 2u;
   ArmADC(&registers, REGISTER_R0, REGISTER_R0, 2u);
-  EXPECT_EQ(4u, registers.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmADCS, Compute) {
@@ -107,9 +81,9 @@ TEST(ArmADCS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 1u;
-  ArmADCS(&registers, REGISTER_R15, REGISTER_R15, 2u);
-  EXPECT_EQ(3u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 4u;
+  ArmADCS(&registers, REGISTER_R15, REGISTER_R15, 8u);
+  EXPECT_EQ(12u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -259,27 +233,27 @@ TEST(ArmADCS, Underflow) {
 }
 
 TEST(ArmADD, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmADD(&registers, REGISTER_R1, REGISTER_R0, 2u);
-  EXPECT_EQ(3u, registers.r1);
-  EXPECT_EQ(1u, registers.r0);
+  EXPECT_EQ(3u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmADD, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 2u;
+  registers.current.user.gprs.r0 = 2u;
   ArmADD(&registers, REGISTER_R0, REGISTER_R0, 2u);
-  EXPECT_EQ(4u, registers.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmADDS, Compute) {
@@ -311,9 +285,9 @@ TEST(ArmADDS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 1u;
-  ArmADDS(&registers, REGISTER_R15, REGISTER_R15, 2u);
-  EXPECT_EQ(3u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 4u;
+  ArmADDS(&registers, REGISTER_R15, REGISTER_R15, 8u);
+  EXPECT_EQ(12u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -392,27 +366,27 @@ TEST(ArmADDS, Underflow) {
 }
 
 TEST(ArmAND, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmAND(&registers, REGISTER_R1, REGISTER_R0, 23u);
-  EXPECT_EQ(7u, registers.r1);
-  EXPECT_EQ(15u, registers.r0);
+  EXPECT_EQ(7u, registers.current.user.gprs.r1);
+  EXPECT_EQ(15u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmAND, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmAND(&registers, REGISTER_R0, REGISTER_R0, 23u);
-  EXPECT_EQ(7u, registers.r0);
+  EXPECT_EQ(7u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmANDS, Compute) {
@@ -444,9 +418,9 @@ TEST(ArmANDS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 1u;
-  ArmANDS(&registers, REGISTER_R15, REGISTER_R15, 3u, false);
-  EXPECT_EQ(1u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 0xEFu;
+  ArmANDS(&registers, REGISTER_R15, REGISTER_R15, 0xF0u, false);
+  EXPECT_EQ(0xE0u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -492,27 +466,27 @@ TEST(ArmANDS, Carry) {
 }
 
 TEST(ArmBIC, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmBIC(&registers, REGISTER_R1, REGISTER_R0, 1u);
-  EXPECT_EQ(14u, registers.r1);
-  EXPECT_EQ(15u, registers.r0);
+  EXPECT_EQ(14u, registers.current.user.gprs.r1);
+  EXPECT_EQ(15u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmBIC, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmBIC(&registers, REGISTER_R0, REGISTER_R0, 1u);
-  EXPECT_EQ(14u, registers.r0);
+  EXPECT_EQ(14u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmBICS, Compute) {
@@ -545,8 +519,8 @@ TEST(ArmBICS, R15ToUSR) {
   registers.current.spsr.mode = MODE_USR;
 
   registers.current.user.gprs.r15 = 15u;
-  ArmBICS(&registers, REGISTER_R15, REGISTER_R15, 1u, false);
-  EXPECT_EQ(14u, registers.current.user.gprs.r15);
+  ArmBICS(&registers, REGISTER_R15, REGISTER_R15, 3u, false);
+  EXPECT_EQ(12u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -594,167 +568,167 @@ TEST(ArmBICS, Carry) {
 }
 
 TEST(ArmCMN, Zero) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 0u;
+  registers.current.user.gprs.r0 = 0u;
   ArmCMN(&registers, REGISTER_R0, 0u);
-  EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.zero = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMN, Negative) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = INT32_MIN;
+  registers.current.user.gprs.r0_s = INT32_MIN;
   ArmCMN(&registers, REGISTER_R0, 0);
-  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_EQ(INT32_MIN, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.negative = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMN, Carry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = UINT32_MAX;
+  registers.current.user.gprs.r0 = UINT32_MAX;
   ArmCMN(&registers, REGISTER_R0, 1);
-  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.carry);
-  EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_EQ(UINT32_MAX, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.carry = false;
-  registers.cpsr.zero = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMN, Overflow) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = INT32_MAX;
+  registers.current.user.gprs.r0_s = INT32_MAX;
   ArmCMN(&registers, REGISTER_R0, 1);
-  EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.overflow);
-  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_EQ(INT32_MAX, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.overflow = false;
-  registers.cpsr.negative = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMN, Underflow) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = -1;
+  registers.current.user.gprs.r0_s = -1;
   ArmCMN(&registers, REGISTER_R0, INT32_MIN);
-  EXPECT_EQ(-1, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.overflow);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_EQ(-1, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.overflow = false;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMP, Zero) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmCMP(&registers, REGISTER_R0, 1u);
-  EXPECT_TRUE(registers.cpsr.zero);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.zero = false;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.zero = false;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMP, Negative) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = INT32_MIN;
+  registers.current.user.gprs.r0_s = INT32_MIN;
   ArmCMP(&registers, REGISTER_R0, 0);
-  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.negative);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_EQ(INT32_MIN, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.negative = false;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.negative = false;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMP, NotCarry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmCMP(&registers, REGISTER_R0, UINT32_MAX);
-  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMP, Overflow) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = INT32_MAX;
+  registers.current.user.gprs.r0_s = INT32_MAX;
   ArmCMP(&registers, REGISTER_R0, UINT32_MAX);
-  EXPECT_EQ(INT32_MAX, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.overflow);
-  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_EQ(INT32_MAX, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.overflow = false;
-  registers.cpsr.negative = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmCMP, Underflow) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0_s = INT32_MIN;
+  registers.current.user.gprs.r0_s = INT32_MIN;
   ArmCMP(&registers, REGISTER_R0, 1);
-  EXPECT_EQ(INT32_MIN, registers.gprs.r0_s);
-  EXPECT_TRUE(registers.cpsr.overflow);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_EQ(INT32_MIN, registers.current.user.gprs.r0_s);
+  EXPECT_TRUE(registers.current.user.cpsr.overflow);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0_s = 0;
-  registers.cpsr.overflow = false;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0_s = 0;
+  registers.current.user.cpsr.overflow = false;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmEOR, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmEOR(&registers, REGISTER_R1, REGISTER_R0, 3u);
-  EXPECT_EQ(6u, registers.r1);
-  EXPECT_EQ(5u, registers.r0);
+  EXPECT_EQ(6u, registers.current.user.gprs.r1);
+  EXPECT_EQ(5u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmEOR, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmEOR(&registers, REGISTER_R0, REGISTER_R0, 3u);
-  EXPECT_EQ(6u, registers.r0);
+  EXPECT_EQ(6u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmEORS, Compute) {
@@ -786,9 +760,9 @@ TEST(ArmEORS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 5u;
+  registers.current.user.gprs.r15 = 7u;
   ArmEORS(&registers, REGISTER_R15, REGISTER_R15, 3u, false);
-  EXPECT_EQ(6u, registers.current.user.gprs.r15);
+  EXPECT_EQ(4u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -834,13 +808,13 @@ TEST(ArmEORS, Carry) {
 }
 
 TEST(ArmMOV, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
   ArmMOV(&registers, REGISTER_R0, 3u);
-  EXPECT_EQ(3u, registers.r0);
+  EXPECT_EQ(3u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmMOVS, Compute) {
@@ -897,8 +871,8 @@ TEST(ArmMOVS, R15ToUSR) {
   registers.current.user.gprs.r14 = 28u;
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
-  ArmMOVS(&registers, REGISTER_R15, 15u, true);
-  EXPECT_EQ(15u, registers.current.user.gprs.r15);
+  ArmMOVS(&registers, REGISTER_R15, 16u, true);
+  EXPECT_EQ(16u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -907,14 +881,14 @@ TEST(ArmMOVS, R15ToUSR) {
 }
 
 TEST(ArmMVN, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmMVN(&registers, REGISTER_R0, UINT32_MAX - 1u);
-  EXPECT_EQ(1u, registers.r0);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmMVNS, Compute) {
@@ -972,8 +946,8 @@ TEST(ArmMVNS, R15ToUSR) {
   registers.current.user.gprs.r14 = 28u;
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
-  ArmMVNS(&registers, REGISTER_R15, ~15u, true);
-  EXPECT_EQ(15u, registers.current.user.gprs.r15);
+  ArmMVNS(&registers, REGISTER_R15, ~16u, true);
+  EXPECT_EQ(16u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -982,27 +956,27 @@ TEST(ArmMVNS, R15ToUSR) {
 }
 
 TEST(ArmORR, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmORR(&registers, REGISTER_R1, REGISTER_R0, 3u);
-  EXPECT_EQ(7u, registers.r1);
-  EXPECT_EQ(5u, registers.r0);
+  EXPECT_EQ(7u, registers.current.user.gprs.r1);
+  EXPECT_EQ(5u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmORR, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmORR(&registers, REGISTER_R0, REGISTER_R0, 3u);
-  EXPECT_EQ(7u, registers.r0);
+  EXPECT_EQ(7u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmORRS, Compute) {
@@ -1034,9 +1008,9 @@ TEST(ArmORRS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 5u;
-  ArmORRS(&registers, REGISTER_R15, REGISTER_R15, 3u, false);
-  EXPECT_EQ(7u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 4u;
+  ArmORRS(&registers, REGISTER_R15, REGISTER_R15, 8u, false);
+  EXPECT_EQ(12u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -1082,27 +1056,27 @@ TEST(ArmORRS, Carry) {
 }
 
 TEST(ArmRSB, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmRSB(&registers, REGISTER_R1, REGISTER_R0, 3u);
-  EXPECT_EQ(2u, registers.r1);
-  EXPECT_EQ(1u, registers.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmRSB, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 2u;
+  registers.current.user.gprs.r0 = 2u;
   ArmRSB(&registers, REGISTER_R0, REGISTER_R0, 4u);
-  EXPECT_EQ(2u, registers.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmRSBS, Compute) {
@@ -1138,9 +1112,9 @@ TEST(ArmRSBS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 2u;
-  ArmRSBS(&registers, REGISTER_R15, REGISTER_R15, 4u);
-  EXPECT_EQ(2u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 4u;
+  ArmRSBS(&registers, REGISTER_R15, REGISTER_R15, 12u);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -1221,42 +1195,42 @@ TEST(ArmRSBS, Underflow) {
 }
 
 TEST(ArmRSC, Compute) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmRSC(&registers, REGISTER_R1, REGISTER_R0, 4u);
-  EXPECT_EQ(2u, registers.gprs.r1);
-  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmRSC, ComputeWithCarry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
-  registers.cpsr.carry = true;
+  registers.current.user.gprs.r0 = 1u;
+  registers.current.user.cpsr.carry = true;
   ArmRSC(&registers, REGISTER_R1, REGISTER_R0, 6u);
-  EXPECT_EQ(5u, registers.gprs.r1);
-  EXPECT_EQ(1u, registers.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r1);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmRSC, SameSourceAndDest) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 2u;
+  registers.current.user.gprs.r0 = 2u;
   ArmRSC(&registers, REGISTER_R0, REGISTER_R0, 6u);
-  EXPECT_EQ(3u, registers.gprs.r0);
+  EXPECT_EQ(3u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmRSCS, Compute) {
@@ -1303,14 +1277,14 @@ TEST(ArmRSCS, SameSourceAndDest) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
-TEST(ArmASCS, R15ToUSR) {
+TEST(ArmRSCS, R15ToUSR) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 2u;
-  ArmRSCS(&registers, REGISTER_R15, REGISTER_R15, 6u);
-  EXPECT_EQ(3u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 4u;
+  ArmRSCS(&registers, REGISTER_R15, REGISTER_R15, 13u);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -1443,42 +1417,42 @@ TEST(ArmRSCS, UnderflowWithCarry) {
 }
 
 TEST(ArmSBC, Compute) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 4u;
+  registers.current.user.gprs.r0 = 4u;
   ArmSBC(&registers, REGISTER_R1, REGISTER_R0, 1u);
-  EXPECT_EQ(2u, registers.gprs.r1);
-  EXPECT_EQ(4u, registers.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmSBC, ComputeWithCarry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 6u;
-  registers.cpsr.carry = true;
+  registers.current.user.gprs.r0 = 6u;
+  registers.current.user.cpsr.carry = true;
   ArmSBC(&registers, REGISTER_R1, REGISTER_R0, 1u);
-  EXPECT_EQ(5u, registers.gprs.r1);
-  EXPECT_EQ(6u, registers.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r1);
+  EXPECT_EQ(6u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  registers.gprs.r1 = 0u;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmSBC, SameSourceAndDest) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 6u;
+  registers.current.user.gprs.r0 = 6u;
   ArmSBC(&registers, REGISTER_R0, REGISTER_R0, 2u);
-  EXPECT_EQ(3u, registers.gprs.r0);
+  EXPECT_EQ(3u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmSBCS, Compute) {
@@ -1530,9 +1504,9 @@ TEST(ArmSBCS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 6u;
-  ArmSBCS(&registers, REGISTER_R15, REGISTER_R15, 2u);
-  EXPECT_EQ(3u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 13u;
+  ArmSBCS(&registers, REGISTER_R15, REGISTER_R15, 4u);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -1666,27 +1640,27 @@ TEST(ArmSBCS, UnderflowWithCarry) {
 }
 
 TEST(ArmSUB, Compute) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 3u;
+  registers.current.user.gprs.r0 = 3u;
   ArmSUB(&registers, REGISTER_R1, REGISTER_R0, 1u);
-  EXPECT_EQ(2u, registers.r1);
-  EXPECT_EQ(3u, registers.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r1);
+  EXPECT_EQ(3u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  registers.r1 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmSUB, SameSourceAndDest) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.r0 = 4u;
+  registers.current.user.gprs.r0 = 4u;
   ArmSUB(&registers, REGISTER_R0, REGISTER_R0, 2u);
-  EXPECT_EQ(2u, registers.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.r0);
 
-  registers.r0 = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmSUBS, Compute) {
@@ -1722,9 +1696,9 @@ TEST(ArmSUBS, R15ToUSR) {
   registers.current.user.cpsr.mode = MODE_SVC;
   registers.current.spsr.mode = MODE_USR;
 
-  registers.current.user.gprs.r15 = 4u;
-  ArmSUBS(&registers, REGISTER_R15, REGISTER_R15, 2u);
-  EXPECT_EQ(2u, registers.current.user.gprs.r15);
+  registers.current.user.gprs.r15 = 12u;
+  ArmSUBS(&registers, REGISTER_R15, REGISTER_R15, 4u);
+  EXPECT_EQ(8u, ArmNextInstruction(&registers));
   EXPECT_EQ(MODE_USR, registers.current.user.cpsr.mode);
 
   registers.current.user.gprs.r15 = 0u;
@@ -1805,123 +1779,123 @@ TEST(ArmSUBS, Underflow) {
 }
 
 TEST(ArmTEQ, Compute) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmTEQ(&registers, REGISTER_R0, 3u, false);
-  EXPECT_EQ(5u, registers.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTEQ, SameSourceAndDest) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 5u;
+  registers.current.user.gprs.r0 = 5u;
   ArmTEQ(&registers, REGISTER_R0, 3u, false);
-  EXPECT_EQ(5u, registers.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTEQ, Zero) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmTEQ(&registers, REGISTER_R0, 1u, false);
-  EXPECT_EQ(1u, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.zero = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTEQ, Negative) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = UINT32_MAX;
+  registers.current.user.gprs.r0 = UINT32_MAX;
   ArmTEQ(&registers, REGISTER_R0, 0u, false);
-  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_EQ(UINT32_MAX, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.negative = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTEQ, Carry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = UINT32_MAX;
+  registers.current.user.gprs.r0 = UINT32_MAX;
   ArmTEQ(&registers, REGISTER_R0, UINT32_MAX - 1, true);
-  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_EQ(UINT32_MAX, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTST, Compute) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmTST(&registers, REGISTER_R0, 23u, false);
-  EXPECT_EQ(15u, registers.gprs.r0);
+  EXPECT_EQ(15u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTST, SameSourceAndDest) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 15u;
+  registers.current.user.gprs.r0 = 15u;
   ArmTST(&registers, REGISTER_R0, 23u, false);
-  EXPECT_EQ(15u, registers.gprs.r0);
+  EXPECT_EQ(15u, registers.current.user.gprs.r0);
 
-  registers.gprs.r0 = 0u;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTST, Zero) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = 1u;
+  registers.current.user.gprs.r0 = 1u;
   ArmTST(&registers, REGISTER_R0, 2u, false);
-  EXPECT_EQ(1u, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.zero);
+  EXPECT_EQ(1u, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.zero);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.zero = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTST, Negative) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = UINT32_MAX;
+  registers.current.user.gprs.r0 = UINT32_MAX;
   ArmTST(&registers, REGISTER_R0, UINT32_MAX, false);
-  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.negative);
+  EXPECT_EQ(UINT32_MAX, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.negative);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.negative = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ArmTST, Carry) {
-  auto registers = CreateArmUserRegisters();
+  auto registers = CreateArmAllRegisters();
 
-  registers.gprs.r0 = UINT32_MAX;
+  registers.current.user.gprs.r0 = UINT32_MAX;
   ArmTST(&registers, REGISTER_R0, 1u, true);
-  EXPECT_EQ(UINT32_MAX, registers.gprs.r0);
-  EXPECT_TRUE(registers.cpsr.carry);
+  EXPECT_EQ(UINT32_MAX, registers.current.user.gprs.r0);
+  EXPECT_TRUE(registers.current.user.cpsr.carry);
 
-  registers.gprs.r0 = 0u;
-  registers.cpsr.carry = false;
-  EXPECT_TRUE(ArmUserRegistersAreZero(registers));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }

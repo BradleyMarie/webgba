@@ -1,6 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_CPU_ARM7TDMI_REGISTERS_
 #define _WEBGBA_EMULATOR_CPU_ARM7TDMI_REGISTERS_
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -153,5 +154,31 @@ typedef struct {
 } ArmAllRegisters;
 
 void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
+
+static inline void ArmLoadProgramCounter(ArmAllRegisters* registers,
+                                         uint32_t address) {
+  assert(registers->current.user.cpsr.thumb || (address & 0x2u) == 0u);
+  assert((address & 0x1u) == 0u);
+
+  // Point to one instruction past the provided address so that when the program
+  // counter is incremented it is two instructions past the instruction as
+  // expected
+  registers->current.user.gprs.pc =
+      address + (4u >> registers->current.user.cpsr.thumb);
+}
+
+// This function only needs to be used if it cannot be guaranteed that the
+// program counter might be loaded by an instruction
+static inline void ArmLoadGPSR(ArmAllRegisters* registers,
+                               ArmRegisterIndex register_index,
+                               uint32_t value) {
+  if (register_index != REGISTER_PC) {
+    registers->current.user.gprs.gprs[register_index] = value;
+  } else {
+    uint_fast8_t shift_size =
+        2u - (uint_fast8_t)registers->current.user.cpsr.thumb;
+    ArmLoadProgramCounter(registers, (value >> shift_size) << shift_size);
+  }
+}
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_REGISTERS_
