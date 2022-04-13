@@ -1155,11 +1155,11 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
       ArmUMULLS(registers, rd_lsw, rd_msw, rm, rs);
       break;
-    default:
-      assert(false);
     case ARM_OPCODE_UNDEF:
       ArmExceptionUND(registers);
       break;
+    default:
+      __builtin_unreachable();
   }
 }
 
