@@ -319,11 +319,11 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       ArmTST(registers, rn, registers->current.user.gprs.gprs[rm],
              registers->current.user.cpsr.carry);
       break;
-    default:
-      assert(false);
     case THUMB_OPCODE_UNDEF:
       ArmExceptionUND(registers);
       break;
+    default:
+      __builtin_unreachable();
   }
 }
 
