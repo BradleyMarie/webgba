@@ -42,6 +42,8 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 //
 
 static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
+  assert(cpu->registers.execution_control.fiq);
+
   if (cpu->registers.current.user.cpsr.fiq_disable) {
     return false;
   }
@@ -52,6 +54,8 @@ static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
 }
 
 static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
+  assert(cpu->registers.execution_control.irq);
+
   if (cpu->registers.current.user.cpsr.irq_disable) {
     return false;
   }
@@ -110,16 +114,16 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
         break;
       }
-      goto arm_irq;
+      goto arm_execute;
     case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM:
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
         break;
       }
-    arm_irq:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM:
       if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
         break;
       }
+    arm_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
       cpu->registers.current.user.gprs.pc += 4u;
       next_instruction_addr = cpu->registers.current.user.gprs.pc - 8u;
@@ -136,16 +140,16 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
         break;
       }
-      goto thumb_irq;
+      goto thumb_execute;
     case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB:
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
         break;
       }
-    thumb_irq:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB:
       if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
         break;
       }
+    thumb_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
       cpu->registers.current.user.gprs.pc += 2u;
       next_instruction_addr = cpu->registers.current.user.gprs.pc - 4u;
