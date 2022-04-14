@@ -14,6 +14,14 @@
 #include "third_party/varooom/game.h"
 #endif  // __EMSCRIPTEN__
 
+#define XINPUT_A 0
+#define XINPUT_B 1
+#define XINPUT_L 4
+#define XINPUT_R 5
+#define XINPUT_START 7
+#define XINPUT_SELECT 6
+
+static SDL_Joystick *g_joystick = NULL;
 static SRC_STATE *g_src_state = NULL;
 static double g_src_ratio = 1.0;
 static GLuint g_fbo_texture = 0;
@@ -163,16 +171,105 @@ static ReturnType RenderNextFrame() {
   const Uint8 *key_state = SDL_GetKeyState(NULL);
 #endif  // __EMSCRIPTEN__
 
-  GamePadToggleA(g_gamepad, key_state[SDLK_x] != 0);
-  GamePadToggleB(g_gamepad, key_state[SDLK_z] != 0);
-  GamePadToggleL(g_gamepad, key_state[SDLK_a] != 0);
-  GamePadToggleR(g_gamepad, key_state[SDLK_s] != 0);
-  GamePadToggleStart(g_gamepad, key_state[SDLK_RETURN] != 0);
-  GamePadToggleSelect(g_gamepad, key_state[SDLK_BACKSPACE] != 0);
-  GamePadToggleUp(g_gamepad, key_state[SDLK_UP] != 0);
-  GamePadToggleDown(g_gamepad, key_state[SDLK_DOWN] != 0);
-  GamePadToggleLeft(g_gamepad, key_state[SDLK_LEFT] != 0);
-  GamePadToggleRight(g_gamepad, key_state[SDLK_RIGHT] != 0);
+  bool a_pressed = key_state[SDLK_x] != 0;
+  bool b_pressed = key_state[SDLK_z] != 0;
+  bool l_pressed = key_state[SDLK_a] != 0;
+  bool r_pressed = key_state[SDLK_s] != 0;
+  bool start_pressed = key_state[SDLK_RETURN] != 0;
+  bool select_pressed = key_state[SDLK_BACKSPACE] != 0;
+  bool up_pressed = key_state[SDLK_UP] != 0;
+  bool down_pressed = key_state[SDLK_DOWN] != 0;
+  bool left_pressed = key_state[SDLK_LEFT] != 0;
+  bool right_pressed = key_state[SDLK_RIGHT] != 0;
+
+  if (g_joystick) {
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_A)) {
+      a_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_B)) {
+      b_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_L)) {
+      l_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_R)) {
+      r_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_START)) {
+      start_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, XINPUT_SELECT)) {
+      select_pressed = true;
+    }
+
+    Uint8 hat_state = SDL_JoystickGetHat(g_joystick, 0);
+    switch (hat_state) {
+      case SDL_HAT_UP:
+        up_pressed = true;
+        down_pressed = false;
+        left_pressed = false;
+        right_pressed = false;
+        break;
+      case SDL_HAT_DOWN:
+        up_pressed = false;
+        down_pressed = true;
+        left_pressed = false;
+        right_pressed = false;
+        break;
+      case SDL_HAT_LEFT:
+        up_pressed = false;
+        down_pressed = false;
+        left_pressed = true;
+        right_pressed = false;
+        break;
+      case SDL_HAT_RIGHT:
+        up_pressed = false;
+        down_pressed = false;
+        left_pressed = false;
+        right_pressed = true;
+        break;
+      case SDL_HAT_RIGHTUP:
+        up_pressed = true;
+        down_pressed = false;
+        left_pressed = false;
+        right_pressed = true;
+        break;
+      case SDL_HAT_RIGHTDOWN:
+        up_pressed = false;
+        down_pressed = true;
+        left_pressed = false;
+        right_pressed = true;
+        break;
+      case SDL_HAT_LEFTUP:
+        up_pressed = true;
+        down_pressed = false;
+        left_pressed = true;
+        right_pressed = false;
+        break;
+      case SDL_HAT_LEFTDOWN:
+        up_pressed = false;
+        down_pressed = true;
+        left_pressed = true;
+        right_pressed = false;
+        break;
+    }
+  }
+
+  GamePadToggleA(g_gamepad, a_pressed);
+  GamePadToggleB(g_gamepad, b_pressed);
+  GamePadToggleL(g_gamepad, l_pressed);
+  GamePadToggleR(g_gamepad, r_pressed);
+  GamePadToggleStart(g_gamepad, start_pressed);
+  GamePadToggleSelect(g_gamepad, select_pressed);
+  GamePadToggleUp(g_gamepad, up_pressed);
+  GamePadToggleDown(g_gamepad, down_pressed);
+  GamePadToggleLeft(g_gamepad, left_pressed);
+  GamePadToggleRight(g_gamepad, right_pressed);
 
   //
   // Run emulation
@@ -226,7 +323,7 @@ int main(int argc, char *argv[]) {
   // Initialize SDL
   //
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
     fprintf(stderr, "ERROR: Failed to initialize SDL\n");
     return EXIT_FAILURE;
   }
@@ -364,6 +461,19 @@ int main(int argc, char *argv[]) {
   SDL_PauseAudio(/*pause_on=*/0);
 
   //
+  // Enable Joystick If Available
+  //
+
+  if (SDL_NumJoysticks() > 0) {
+    g_joystick = SDL_JoystickOpen(0);
+    if (!g_joystick) {
+      fprintf(stderr, "ERROR: Failed to open joystick\n");
+    } else {
+      SDL_JoystickEventState(SDL_ENABLE);
+    }
+  }
+
+  //
   // Create Emulator Framebuffer
   //
 
@@ -461,6 +571,10 @@ int main(int argc, char *argv[]) {
   //
   // Cleanup
   //
+
+  if (g_joystick) {
+    SDL_JoystickClose(g_joystick);
+  }
 
   src_delete(g_src_state);
   SDL_CloseAudio();
