@@ -57,6 +57,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi/instructions:swi",
         "//emulator/memory",
         "//tools/arm_opcode_decoder:decoder",
+        "//util:macros",
     ],
 )
 
