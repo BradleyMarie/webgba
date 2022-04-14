@@ -134,6 +134,25 @@ typedef struct {
   ArmProgramStatusRegister spsr;
 } ArmPrivilegedRegisters;
 
+typedef enum {
+  ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM = 0u,
+  ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB = 1u,
+  ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM = 2u,
+  ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB = 3u,
+  ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM = 4u,
+  ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB = 5u,
+  ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM = 6u,
+  ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB = 7u,
+  ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM = 8u,
+  ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB = 9u,
+  ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM = 10u,
+  ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB = 11u,
+  ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM = 12u,
+  ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB = 13u,
+  ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM = 14u,
+  ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB = 15u,
+} ArmExecutionMode;
+
 // Non-architectural state used to control execution
 typedef union {
   struct {
@@ -142,7 +161,7 @@ typedef union {
     bool fiq : 1;
     bool rst : 1;
   };
-  uint_fast8_t value;
+  ArmExecutionMode mode;
 } ArmExecutionControl;
 
 typedef struct {
