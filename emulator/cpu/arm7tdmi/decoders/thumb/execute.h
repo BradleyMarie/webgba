@@ -17,10 +17,13 @@
 #include "emulator/cpu/arm7tdmi/instructions/swi.h"
 #include "emulator/memory/memory.h"
 #include "tools/thumb_opcode_decoder/decoder.h"
+#include "util/macros.h"
 
 static inline void ThumbInstructionExecute(uint16_t next_instruction,
                                            ArmAllRegisters* registers,
                                            Memory* memory) {
+  codegen_assert(registers->current.user.cpsr.thumb);
+
   ArmRegisterIndex rd, rn, rm;
   uint_fast32_t branch_offset_32;
   uint_fast8_t condition, immediate_8, offset_8;
@@ -319,11 +322,11 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       ArmTST(registers, rn, registers->current.user.gprs.gprs[rm],
              registers->current.user.cpsr.carry);
       break;
+    default:
+      codegen_assert(false);
     case THUMB_OPCODE_UNDEF:
       ArmExceptionUND(registers);
       break;
-    default:
-      __builtin_unreachable();
   }
 }
 

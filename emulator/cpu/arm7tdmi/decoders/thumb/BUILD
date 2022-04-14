@@ -53,6 +53,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi/instructions:swi",
         "//emulator/memory",
         "//tools/thumb_opcode_decoder:decoder",
+        "//util:macros",
     ],
 )
 
@@ -88,7 +89,10 @@ cc_test(
 cc_library(
     name = "operand",
     hdrs = ["operand.h"],
-    deps = ["//emulator/cpu/arm7tdmi:registers"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
+    ],
 )
 
 cc_test(
