@@ -10,10 +10,6 @@
 #include "emulator/gba.h"
 #include "third_party/libsamplerate/samplerate.h"
 
-#if __EMSCRIPTEN__
-#include "third_party/varooom/game.h"
-#endif  // __EMSCRIPTEN__
-
 #define XINPUT_A 0
 #define XINPUT_B 1
 #define XINPUT_L 4
@@ -332,32 +328,36 @@ int main(int argc, char *argv[]) {
   // Load Game
   //
 
-#ifndef __EMSCRIPTEN__
-  SDL_RWops *file = SDL_RWFromFile(argv[1], "rb");
+#ifdef __EMSCRIPTEN__
+  FILE *file = fopen("/game.gba", "rb");
+#else
+  FILE *file = fopen(argv[1], "rb");
+#endif  // __EMSCRIPTEN__
+
   if (file == NULL) {
     fprintf(stderr, "ERROR: Failed to load game file\n");
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  Sint64 game_size = SDL_RWseek(file, 0, RW_SEEK_END);
-  if (game_size < 0) {
-    fprintf(stderr, "ERROR: Failed to get game file size\n");
-    SDL_RWclose(file);
-    SDL_Quit();
-    return EXIT_FAILURE;
-  }
-
-  if ((uint64_t)game_size > SIZE_MAX) {
-    fprintf(stderr, "ERROR: Out of memory\n");
-    SDL_RWclose(file);
-    SDL_Quit();
-    return EXIT_FAILURE;
-  }
-
-  if (SDL_RWseek(file, 0, RW_SEEK_SET) < 0) {
+  if (fseek(file, 0, SEEK_END) != 0) {
     fprintf(stderr, "ERROR: Failed to read game file\n");
-    SDL_RWclose(file);
+    fclose(file);
+    SDL_Quit();
+    return EXIT_FAILURE;
+  }
+
+  long int game_size = ftell(file);
+  if (game_size < 0) {
+    fprintf(stderr, "ERROR: Failed to read game file\n");
+    fclose(file);
+    SDL_Quit();
+    return EXIT_FAILURE;
+  }
+
+  if (fseek(file, 0, SEEK_SET) != 0) {
+    fprintf(stderr, "ERROR: Failed to read game file\n");
+    fclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
@@ -365,13 +365,13 @@ int main(int argc, char *argv[]) {
   void *game_data = malloc((size_t)game_size);
   if (game_data == NULL) {
     fprintf(stderr, "ERROR: Out of memory\n");
-    SDL_RWclose(file);
+    fclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  size_t objects_read = SDL_RWread(file, game_data, game_size, /*maxnum=*/1);
-  SDL_RWclose(file);
+  size_t objects_read = fread(game_data, game_size, /*count=*/1, file);
+  fclose(file);
 
   if (objects_read != 1) {
     fprintf(stderr, "ERROR: Failed to read game file\n");
@@ -379,7 +379,6 @@ int main(int argc, char *argv[]) {
     SDL_Quit();
     return EXIT_FAILURE;
   }
-#endif  // __EMSCRIPTEN__
 
   //
   // Create Emulator
@@ -388,9 +387,7 @@ int main(int argc, char *argv[]) {
   bool success =
       GbaEmulatorAllocate(game_data, game_size, &g_emulator, &g_gamepad);
 
-#ifndef __EMSCRIPTEN__
   free(game_data);
-#endif  // __EMSCRIPTEN__
 
   if (!success) {
     fprintf(stderr, "ERROR: Out of memory\n");
