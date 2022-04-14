@@ -4,6 +4,7 @@
 
 #include "emulator/gba.h"
 
+static SDL_GameController *g_gamecontroller = NULL;
 static GLuint g_fbo_texture = 0;
 static GLuint g_fbo = 0;
 static GLuint g_program = 0;
@@ -45,17 +46,104 @@ static bool RenderNextFrame() {
   //
 
   const Uint8 *keyboard_state = SDL_GetKeyboardState(NULL);
-  GamePadToggleA(g_gamepad, keyboard_state[SDL_SCANCODE_X] != 0);
-  GamePadToggleB(g_gamepad, keyboard_state[SDL_SCANCODE_Z] != 0);
-  GamePadToggleL(g_gamepad, keyboard_state[SDL_SCANCODE_A] != 0);
-  GamePadToggleR(g_gamepad, keyboard_state[SDL_SCANCODE_S] != 0);
-  GamePadToggleStart(g_gamepad, keyboard_state[SDL_SCANCODE_RETURN] != 0);
-  GamePadToggleSelect(g_gamepad, keyboard_state[SDL_SCANCODE_BACKSPACE] != 0);
-  GamePadToggleUp(g_gamepad, keyboard_state[SDL_SCANCODE_UP] != 0);
-  GamePadToggleDown(g_gamepad, keyboard_state[SDL_SCANCODE_DOWN] != 0);
-  GamePadToggleLeft(g_gamepad, keyboard_state[SDL_SCANCODE_LEFT] != 0);
-  GamePadToggleRight(g_gamepad, keyboard_state[SDL_SCANCODE_RIGHT] != 0);
+  bool a_pressed = keyboard_state[SDL_SCANCODE_X] != 0;
+  bool b_pressed = keyboard_state[SDL_SCANCODE_Z] != 0;
+  bool l_pressed = keyboard_state[SDL_SCANCODE_A] != 0;
+  bool r_pressed = keyboard_state[SDL_SCANCODE_S] != 0;
+  bool start_pressed = keyboard_state[SDL_SCANCODE_RETURN] != 0;
+  bool select_pressed = keyboard_state[SDL_SCANCODE_BACKSPACE] != 0;
+  bool up_pressed = keyboard_state[SDL_SCANCODE_UP] != 0;
+  bool down_pressed = keyboard_state[SDL_SCANCODE_DOWN] != 0;
+  bool left_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
+  bool right_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
 
+  if (g_gamecontroller) {
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_A)) {
+      a_pressed = true;
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_B)) {
+      b_pressed = true;
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) {
+      l_pressed = true;
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)) {
+      r_pressed = true;
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_START)) {
+      start_pressed = true;
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_BACK)) {
+      select_pressed = true;
+    }
+
+    bool update_dpad = false;
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_DPAD_UP)) {
+      up_pressed = true;
+      if (!update_dpad) {
+        down_pressed = false;
+        left_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_DPAD_DOWN)) {
+      down_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        left_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_DPAD_LEFT)) {
+      left_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        down_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_GameControllerGetButton(g_gamecontroller,
+                                    SDL_CONTROLLER_BUTTON_DPAD_RIGHT)) {
+      right_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        down_pressed = false;
+        left_pressed = false;
+        update_dpad = true;
+      }
+    }
+  }
+
+  GamePadToggleA(g_gamepad, a_pressed);
+  GamePadToggleB(g_gamepad, b_pressed);
+  GamePadToggleL(g_gamepad, l_pressed);
+  GamePadToggleR(g_gamepad, r_pressed);
+  GamePadToggleStart(g_gamepad, start_pressed);
+  GamePadToggleSelect(g_gamepad, select_pressed);
+  GamePadToggleUp(g_gamepad, up_pressed);
+  GamePadToggleDown(g_gamepad, down_pressed);
+  GamePadToggleLeft(g_gamepad, left_pressed);
+  GamePadToggleRight(g_gamepad, right_pressed);
   //
   // Run emulation
   //
@@ -107,7 +195,8 @@ int main(int argc, char *argv[]) {
   // Initialize SDL
   //
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
+               SDL_INIT_EVENTS) < 0) {
     fprintf(stderr, "ERROR: Failed to initialize SDL\n");
     return EXIT_FAILURE;
   }
@@ -237,6 +326,23 @@ int main(int argc, char *argv[]) {
   SDL_PauseAudioDevice(g_audiodevice, /*pause_on=*/0);
 
   //
+  // Enable Joystick If Available
+  //
+
+  if (SDL_NumJoysticks() > 0) {
+    for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+      if (SDL_IsGameController(i)) {
+        g_gamecontroller = SDL_GameControllerOpen(i);
+        if (!g_gamecontroller) {
+          fprintf(stderr, "ERROR: Failed to open game controller\n");
+        }
+
+        break;
+      }
+    }
+  }
+
+  //
   // Create Emulator Framebuffer
   //
 
@@ -329,6 +435,10 @@ int main(int argc, char *argv[]) {
   //
   // Cleanup
   //
+
+  if (g_gamecontroller) {
+    SDL_GameControllerClose(g_gamecontroller);
+  }
 
   SDL_CloseAudioDevice(g_audiodevice);
   SDL_DestroyWindow(g_window);
