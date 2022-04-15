@@ -172,7 +172,19 @@ typedef struct {
   ArmExecutionControl execution_control;
 } ArmAllRegisters;
 
-void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
+static inline uint32_t ArmNextInstruction(const ArmAllRegisters* registers) {
+  return registers->current.user.gprs.pc -
+         (4u >> registers->current.user.cpsr.thumb);
+}
+
+static inline uint32_t ArmCurrentInstruction(const ArmAllRegisters* registers) {
+  return registers->current.user.gprs.pc -
+         (8u >> registers->current.user.cpsr.thumb);
+}
+
+static inline void ArmAdvanceProgramCounter(ArmAllRegisters* registers) {
+  registers->current.user.gprs.pc += 4u >> registers->current.user.cpsr.thumb;
+}
 
 static inline void ArmLoadProgramCounter(ArmAllRegisters* registers,
                                          uint32_t address) {
@@ -199,5 +211,7 @@ static inline void ArmLoadGPSR(ArmAllRegisters* registers,
     ArmLoadProgramCounter(registers, (value >> shift_size) << shift_size);
   }
 }
+
+void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr);
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_REGISTERS_

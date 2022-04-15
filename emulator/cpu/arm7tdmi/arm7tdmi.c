@@ -6,7 +6,6 @@
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
-#include "emulator/cpu/arm7tdmi/program_counter.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
 #include "util/macros.h"
 

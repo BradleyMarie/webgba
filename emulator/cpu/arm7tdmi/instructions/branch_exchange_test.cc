@@ -1,6 +1,5 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/branch_exchange.h"
-#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <strings.h>
