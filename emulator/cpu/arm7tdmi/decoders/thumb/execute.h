@@ -107,15 +107,15 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_BL:
       ThumbOperandBranchLink(next_instruction, &branch_offset_16);
-      ThumbBL2(&registers->current.user.gprs, branch_offset_16);
+      ThumbBL2(registers, branch_offset_16);
       break;
     case THUMB_OPCODE_BL_FWD:
       ThumbOperandForwardBranchLink(next_instruction, &branch_offset_32);
-      ThumbBL1(&registers->current.user.gprs, branch_offset_32);
+      ThumbBL1(registers, branch_offset_32);
       break;
     case THUMB_OPCODE_BL_REV:
       ThumbOperandReverseBranchLink(next_instruction, &branch_offset_32);
-      ThumbBL1(&registers->current.user.gprs, branch_offset_32);
+      ThumbBL1(registers, branch_offset_32);
       break;
     case THUMB_OPCODE_BX:
       ThumbOperandBranchExchange(next_instruction, &rm);

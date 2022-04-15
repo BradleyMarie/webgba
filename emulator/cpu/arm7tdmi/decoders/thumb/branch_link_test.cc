@@ -6,40 +6,44 @@ extern "C" {
 
 #include "googletest/include/gtest/gtest.h"
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
+ArmAllRegisters CreateArmAllRegistersRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
   return registers;
 }
 
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
+bool ArmAllRegistersAreZero(const ArmAllRegisters& regs) {
+  auto zero = CreateArmAllRegistersRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 TEST(ThumbBL1, BranchLink1) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegistersRegisters();
 
-  registers.pc = 208u;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.pc = 208u;
   ThumbBL1(&registers, 100);
-  EXPECT_EQ(308u, registers.lr);
-  EXPECT_EQ(208u, registers.pc);
+  EXPECT_EQ(308u, registers.current.user.gprs.lr);
+  EXPECT_EQ(208u, registers.current.user.gprs.pc);
 
-  registers.pc = 0u;
-  registers.lr = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.cpsr.thumb = false;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.gprs.lr = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbBL2, BranchLink2) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegistersRegisters();
 
-  registers.pc = 208u;
-  registers.lr = 308u;
+  registers.current.user.cpsr.thumb = true;
+  registers.current.user.gprs.pc = 208u;
+  registers.current.user.gprs.lr = 308u;
   ThumbBL2(&registers, 100);
-  EXPECT_EQ(207u, registers.lr);
-  EXPECT_EQ(410u, registers.pc);
+  EXPECT_EQ(207u, registers.current.user.gprs.lr);
+  EXPECT_EQ(410u, registers.current.user.gprs.pc);
 
-  registers.pc = 0u;
-  registers.lr = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.cpsr.thumb = false;
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.gprs.lr = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
