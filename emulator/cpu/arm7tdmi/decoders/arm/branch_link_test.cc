@@ -6,26 +6,26 @@ extern "C" {
 
 #include "googletest/include/gtest/gtest.h"
 
-ArmGeneralPurposeRegisters CreateArmGeneralPurposeRegistersRegisters() {
-  ArmGeneralPurposeRegisters registers;
-  memset(&registers, 0, sizeof(ArmGeneralPurposeRegisters));
+ArmAllRegisters CreateArmAllRegistersRegisters() {
+  ArmAllRegisters registers;
+  memset(&registers, 0, sizeof(ArmAllRegisters));
   return registers;
 }
 
-bool ArmGeneralPurposeRegistersAreZero(const ArmGeneralPurposeRegisters& regs) {
-  auto zero = CreateArmGeneralPurposeRegistersRegisters();
-  return !memcmp(&zero, &regs, sizeof(ArmGeneralPurposeRegisters));
+bool ArmAllRegistersAreZero(const ArmAllRegisters& regs) {
+  auto zero = CreateArmAllRegistersRegisters();
+  return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
 TEST(ArmBL, BranchLink) {
-  auto registers = CreateArmGeneralPurposeRegistersRegisters();
+  auto registers = CreateArmAllRegistersRegisters();
 
-  registers.pc = 208u;
+  registers.current.user.gprs.pc = 208u;
   ArmBL(&registers, 100u);
-  EXPECT_EQ(204u, registers.lr);
-  EXPECT_EQ(312u, registers.pc);
+  EXPECT_EQ(204u, registers.current.user.gprs.lr);
+  EXPECT_EQ(312u, registers.current.user.gprs.pc);
 
-  registers.pc = 0u;
-  registers.lr = 0u;
-  EXPECT_TRUE(ArmGeneralPurposeRegistersAreZero(registers));
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.gprs.lr = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }

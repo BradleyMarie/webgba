@@ -148,11 +148,11 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_BL_FWD:
       ArmOperandBranchForward(next_instruction, &branch_offset);
-      ArmBL(&registers->current.user.gprs, branch_offset);
+      ArmBL(registers, branch_offset);
       break;
     case ARM_OPCODE_BL_REV:
       ArmOperandBranchReverse(next_instruction, &branch_offset);
-      ArmBL(&registers->current.user.gprs, branch_offset);
+      ArmBL(registers, branch_offset);
       break;
     case ARM_OPCODE_BX:
       ArmOperandBranchExchange(next_instruction, &rm);
