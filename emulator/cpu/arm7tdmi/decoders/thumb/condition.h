@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/registers.h"
+#include "util/macros.h"
 
 static inline bool ThumbShouldBranch(ArmProgramStatusRegister cpsr,
                                      uint_fast8_t condition) {
@@ -34,12 +35,13 @@ static inline bool ThumbShouldBranch(ArmProgramStatusRegister cpsr,
       return cpsr.negative != cpsr.overflow;
     case 12u:  // THUMB_CONDITION_GT
       return !cpsr.zero & (cpsr.negative == cpsr.overflow);
+    case 14u:  // ARM_CONDITION_AL
+    case 15u:  // ARM_CONDITION_NV
+    default:
+      codegen_assert(false);
     case 13u:  // THUMB_CONDITION_LE
       return cpsr.zero | (cpsr.negative != cpsr.overflow);
   }
-
-  assert(false);
-  return false;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_THUMB_CONDITION_

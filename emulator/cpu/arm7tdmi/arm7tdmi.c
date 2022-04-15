@@ -6,7 +6,9 @@
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
 #include "emulator/cpu/arm7tdmi/decoders/thumb/execute.h"
 #include "emulator/cpu/arm7tdmi/exceptions.h"
+#include "emulator/cpu/arm7tdmi/program_counter.h"
 #include "emulator/cpu/arm7tdmi/registers.h"
+#include "util/macros.h"
 
 struct _Arm7Tdmi {
   ArmAllRegisters registers;
@@ -125,8 +127,10 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
       }
     arm_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
-      cpu->registers.current.user.gprs.pc += 4u;
-      next_instruction_addr = cpu->registers.current.user.gprs.pc - 8u;
+      codegen_assert(!cpu->registers.current.user.cpsr.thumb);
+
+      ArmAdvanceProgramCounter(&cpu->registers);
+      next_instruction_addr = ArmCurrentInstruction(&cpu->registers);
 
       success = Load32LE(memory, next_instruction_addr, &next_instruction_32);
       if (!success) {
@@ -151,8 +155,10 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
       }
     thumb_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
-      cpu->registers.current.user.gprs.pc += 2u;
-      next_instruction_addr = cpu->registers.current.user.gprs.pc - 4u;
+      codegen_assert(cpu->registers.current.user.cpsr.thumb);
+
+      ArmAdvanceProgramCounter(&cpu->registers);
+      next_instruction_addr = ArmCurrentInstruction(&cpu->registers);
 
       success = Load16LE(memory, next_instruction_addr, &next_instruction_16);
       if (!success) {

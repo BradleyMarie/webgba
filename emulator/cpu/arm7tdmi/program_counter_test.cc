@@ -35,3 +35,18 @@ TEST(ProgramCounterTest, ArmCurrentInstructionThumb) {
   registers.current.user.cpsr.thumb = true;
   EXPECT_EQ(0x100u, ArmCurrentInstruction(&registers));
 }
+
+TEST(ProgramCounterTest, ArmAdvanceProgramCounterArm) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x108u;
+  ArmAdvanceProgramCounter(&registers);
+  EXPECT_EQ(0x104u, ArmCurrentInstruction(&registers));
+}
+
+TEST(ProgramCounterTest, ArmAdvanceProgramCounterThumb) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x104u;
+  registers.current.user.cpsr.thumb = true;
+  ArmAdvanceProgramCounter(&registers);
+  EXPECT_EQ(0x102u, ArmCurrentInstruction(&registers));
+}

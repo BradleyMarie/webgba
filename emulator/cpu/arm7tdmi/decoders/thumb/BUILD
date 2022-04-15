@@ -20,7 +20,10 @@ cc_test(
 cc_library(
     name = "condition",
     hdrs = ["condition.h"],
-    deps = ["//emulator/cpu/arm7tdmi:registers"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
+    ],
 )
 
 cc_test(
