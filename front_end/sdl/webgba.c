@@ -10,12 +10,25 @@
 #include "emulator/gba.h"
 #include "third_party/libsamplerate/samplerate.h"
 
+#if __EMSCRIPTEN__
+#define WEB_INPUT_A 0
+#define WEB_INPUT_B 1
+#define WEB_INPUT_L 4
+#define WEB_INPUT_R 5
+#define WEB_INPUT_START 8
+#define WEB_INPUT_SELECT 9
+#define WEB_INPUT_UP 12
+#define WEB_INPUT_DOWN 13
+#define WEB_INPUT_LEFT 14
+#define WEB_INPUT_RIGHT 15
+#else
 #define XINPUT_A 0
 #define XINPUT_B 1
 #define XINPUT_L 4
 #define XINPUT_R 5
 #define XINPUT_START 7
 #define XINPUT_SELECT 6
+#endif  // __EMSCRIPTEN__
 
 static SDL_Joystick *g_joystick = NULL;
 static SRC_STATE *g_src_state = NULL;
@@ -178,7 +191,77 @@ static ReturnType RenderNextFrame() {
   bool left_pressed = key_state[SDLK_LEFT] != 0;
   bool right_pressed = key_state[SDLK_RIGHT] != 0;
 
+  if (!g_joystick && SDL_NumJoysticks() > 0) {
+    g_joystick = SDL_JoystickOpen(0);
+  }
+
   if (g_joystick) {
+#if __EMSCRIPTEN__
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_A)) {
+      a_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_B)) {
+      b_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_L)) {
+      l_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_R)) {
+      r_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_START)) {
+      start_pressed = true;
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_SELECT)) {
+      select_pressed = true;
+    }
+
+    bool update_dpad = false;
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_UP)) {
+      up_pressed = true;
+      if (!update_dpad) {
+        down_pressed = false;
+        left_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_DOWN)) {
+      down_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        left_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_LEFT)) {
+      left_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        down_pressed = false;
+        right_pressed = false;
+        update_dpad = true;
+      }
+    }
+
+    if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_RIGHT)) {
+      right_pressed = true;
+      if (!update_dpad) {
+        up_pressed = false;
+        down_pressed = false;
+        left_pressed = false;
+        update_dpad = true;
+      }
+    }
+#else
     if (SDL_JoystickGetButton(g_joystick, XINPUT_A)) {
       a_pressed = true;
     }
@@ -254,6 +337,7 @@ static ReturnType RenderNextFrame() {
         right_pressed = false;
         break;
     }
+#endif  // __EMSCRIPTEN__
   }
 
   GamePadToggleA(g_gamepad, a_pressed);
@@ -461,13 +545,9 @@ int main(int argc, char *argv[]) {
   // Enable Joystick If Available
   //
 
+  SDL_JoystickEventState(SDL_ENABLE);
   if (SDL_NumJoysticks() > 0) {
     g_joystick = SDL_JoystickOpen(0);
-    if (!g_joystick) {
-      fprintf(stderr, "ERROR: Failed to open joystick\n");
-    } else {
-      SDL_JoystickEventState(SDL_ENABLE);
-    }
   }
 
   //
