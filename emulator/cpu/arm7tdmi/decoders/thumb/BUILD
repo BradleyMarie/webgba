@@ -116,6 +116,7 @@ cc_library(
     deps = [
         "//emulator/cpu/arm7tdmi:flags",
         "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
     ],
 )
 

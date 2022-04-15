@@ -72,11 +72,11 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_ASRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ThumbASRS_R(&registers->current.user, rd, rm);
+      ThumbASRS_R(registers, rd, rm);
       break;
     case THUMB_OPCODE_ASRS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
-      ThumbASRS_I(&registers->current.user, rd, rm, immediate_8);
+      ThumbASRS_I(registers, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_B_FWD:
       ThumbOperandForwardBranch(next_instruction, &branch_offset_32);
@@ -201,19 +201,19 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_LSLS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ThumbLSLS_R(&registers->current.user, rd, rm);
+      ThumbLSLS_R(registers, rd, rm);
       break;
     case THUMB_OPCODE_LSLS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
-      ThumbLSLS_I(&registers->current.user, rd, rm, immediate_8);
+      ThumbLSLS_I(registers, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_LSRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ThumbLSRS_R(&registers->current.user, rd, rm);
+      ThumbLSRS_R(registers, rd, rm);
       break;
     case THUMB_OPCODE_LSRS_I5:
       ThumbOperandShiftByImmediate(next_instruction, &rd, &rm, &immediate_8);
-      ThumbLSRS_I(&registers->current.user, rd, rm, immediate_8);
+      ThumbLSRS_I(registers, rd, rm, immediate_8);
       break;
     case THUMB_OPCODE_MOV_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
@@ -252,7 +252,7 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_RORS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ThumbRORS(&registers->current.user, rd, rm);
+      ThumbRORS(registers, rd, rm);
       break;
     case THUMB_OPCODE_SBCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
