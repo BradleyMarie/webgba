@@ -5,7 +5,10 @@ package(default_visibility = ["//visibility:private"])
 cc_library(
     name = "branch_link",
     hdrs = ["branch_link.h"],
-    deps = ["//emulator/cpu/arm7tdmi:registers"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
+    ],
 )
 
 cc_test(
