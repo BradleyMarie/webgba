@@ -57,6 +57,15 @@ static bool RenderNextFrame() {
   bool left_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
   bool right_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
 
+  if (!g_gamecontroller && SDL_NumJoysticks() > 0) {
+    for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+      if (SDL_IsGameController(i)) {
+        g_gamecontroller = SDL_GameControllerOpen(i);
+        break;
+      }
+    }
+  }
+
   if (g_gamecontroller) {
     if (SDL_GameControllerGetButton(g_gamecontroller,
                                     SDL_CONTROLLER_BUTTON_A)) {
@@ -329,14 +338,11 @@ int main(int argc, char *argv[]) {
   // Enable Joystick If Available
   //
 
+  SDL_JoystickEventState(SDL_ENABLE);
   if (SDL_NumJoysticks() > 0) {
     for (int i = 0; i < SDL_NumJoysticks(); ++i) {
       if (SDL_IsGameController(i)) {
         g_gamecontroller = SDL_GameControllerOpen(i);
-        if (!g_gamecontroller) {
-          fprintf(stderr, "ERROR: Failed to open game controller\n");
-        }
-
         break;
       }
     }
