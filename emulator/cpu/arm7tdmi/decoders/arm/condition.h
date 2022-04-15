@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/registers.h"
+#include "util/macros.h"
 
 static inline bool ArmInstructionShouldExecute(ArmProgramStatusRegister cpsr,
                                                uint32_t instruction) {
@@ -40,12 +41,11 @@ static inline bool ArmInstructionShouldExecute(ArmProgramStatusRegister cpsr,
       return !cpsr.zero & (cpsr.negative == cpsr.overflow);
     case 13u:  // 1ARM_CONDITION_LE
       return cpsr.zero | (cpsr.negative != cpsr.overflow);
+    default:
+      codegen_assert(false);
     case 15u:  // ARM_CONDITION_NV
       return false;
   }
-
-  assert(false);
-  return false;
 }
 
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_DECODERS_ARM_CONDITION_
