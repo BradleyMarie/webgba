@@ -1,7 +1,5 @@
 #include "emulator/cpu/arm7tdmi/exceptions.h"
 
-#include "emulator/cpu/arm7tdmi/program_counter.h"
-
 void ArmExceptionDataABT(ArmAllRegisters* registers) {
   uint32_t aborted_instruction = ArmCurrentInstruction(registers);
 

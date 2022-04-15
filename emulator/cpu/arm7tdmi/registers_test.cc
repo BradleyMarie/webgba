@@ -608,3 +608,44 @@ TEST(ArmLoadGPSRTest, PCThumbMode) {
   ArmLoadGPSR(&registers, REGISTER_PC, 0x100u);
   EXPECT_EQ(0x102u, registers.current.user.gprs.pc);
 }
+
+TEST(ArmNextInstructionTest, ArmNextInstructionArm) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x108u;
+  EXPECT_EQ(0x104u, ArmNextInstruction(&registers));
+}
+
+TEST(ArmNextInstructionTest, ArmNextInstructionThumb) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x104u;
+  registers.current.user.cpsr.thumb = true;
+  EXPECT_EQ(0x102u, ArmNextInstruction(&registers));
+}
+
+TEST(ArmCurrentInstructionTest, ArmCurrentInstructionArm) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x108u;
+  EXPECT_EQ(0x100u, ArmCurrentInstruction(&registers));
+}
+
+TEST(ArmCurrentInstructionTest, ArmCurrentInstructionThumb) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x104u;
+  registers.current.user.cpsr.thumb = true;
+  EXPECT_EQ(0x100u, ArmCurrentInstruction(&registers));
+}
+
+TEST(ArmAdvanceProgramCounterTest, ArmAdvanceProgramCounterArm) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x108u;
+  ArmAdvanceProgramCounter(&registers);
+  EXPECT_EQ(0x104u, ArmCurrentInstruction(&registers));
+}
+
+TEST(ArmAdvanceProgramCounterTest, ArmAdvanceProgramCounterThumb) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.pc = 0x104u;
+  registers.current.user.cpsr.thumb = true;
+  ArmAdvanceProgramCounter(&registers);
+  EXPECT_EQ(0x102u, ArmCurrentInstruction(&registers));
+}

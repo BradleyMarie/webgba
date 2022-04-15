@@ -69,7 +69,6 @@ cc_test(
     srcs = ["execute_test.cc"],
     deps = [
         ":execute",
-        "//emulator/cpu/arm7tdmi:program_counter",
         "@com_google_googletest//:gtest_main",
     ],
 )

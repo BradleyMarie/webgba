@@ -1,7 +1,5 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/instructions/block_data_transfer.h"
-
-#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <cstring>

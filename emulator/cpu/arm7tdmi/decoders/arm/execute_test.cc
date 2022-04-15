@@ -1,6 +1,5 @@
 extern "C" {
 #include "emulator/cpu/arm7tdmi/decoders/arm/execute.h"
-#include "emulator/cpu/arm7tdmi/program_counter.h"
 }
 
 #include <cstring>
