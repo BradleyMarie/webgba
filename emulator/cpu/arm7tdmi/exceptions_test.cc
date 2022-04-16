@@ -46,7 +46,7 @@ TEST(ArmExceptionDataABT, ArmMode) {
   ArmExceptionDataABT(&registers);
   EXPECT_EQ(108u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x10u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x10u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -74,7 +74,7 @@ TEST(ArmExceptionDataABT, ThumbMode) {
   ArmExceptionDataABT(&registers);
   EXPECT_EQ(108u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x10u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x10u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -101,7 +101,7 @@ TEST(ArmExceptionPrefetchABT, ArmMode) {
   ArmExceptionPrefetchABT(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0xCu, ArmNextInstruction(&registers));
+  EXPECT_EQ(0xCu, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -129,7 +129,7 @@ TEST(ArmExceptionPrefetchABT, ThumbMode) {
   ArmExceptionPrefetchABT(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0xCu, ArmNextInstruction(&registers));
+  EXPECT_EQ(0xCu, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_ABT, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -154,9 +154,9 @@ TEST(ArmExceptionFIQ, ArmMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionFIQ(&registers);
-  EXPECT_EQ(108u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x1Cu, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x1Cu, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -184,9 +184,9 @@ TEST(ArmExceptionFIQ, ThumbMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionFIQ(&registers);
-  EXPECT_EQ(106u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x1Cu, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x1Cu, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_FIQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -213,9 +213,9 @@ TEST(ArmExceptionIRQ, ArmMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionIRQ(&registers);
-  EXPECT_EQ(108u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x18u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x18u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -241,9 +241,9 @@ TEST(ArmExceptionIRQ, ThumbMode) {
   auto old_cpsr = registers.current.user.cpsr;
 
   ArmExceptionIRQ(&registers);
-  EXPECT_EQ(106u, registers.current.user.gprs.r14);
+  EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(0x18u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x18u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_IRQ, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -267,7 +267,7 @@ TEST(ArmExceptionRST, ArmMode) {
   registers.current.user.gprs.r14 = 14u;
 
   ArmExceptionRST(&registers);
-  EXPECT_EQ(0x0u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x0u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -294,7 +294,7 @@ TEST(ArmExceptionRST, ThumbMode) {
   registers.current.spsr.zero = true;
 
   ArmExceptionRST(&registers);
-  EXPECT_EQ(0x0u, ArmNextInstruction(&registers));
+  EXPECT_EQ(0x0u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -323,7 +323,7 @@ TEST(ArmExceptionSWI, ArmMode) {
   ArmExceptionSWI(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, ArmNextInstruction(&registers));
+  EXPECT_EQ(8u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -351,7 +351,7 @@ TEST(ArmExceptionSWI, ThumbMode) {
   ArmExceptionSWI(&registers);
   EXPECT_EQ(102u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, ArmNextInstruction(&registers));
+  EXPECT_EQ(8u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -378,7 +378,7 @@ TEST(ArmExceptionUND, ArmMode) {
   ArmExceptionUND(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(4u, ArmNextInstruction(&registers));
+  EXPECT_EQ(4u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -406,7 +406,7 @@ TEST(ArmExceptionUND, ThumbMode) {
   ArmExceptionUND(&registers);
   EXPECT_EQ(102u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(4u, ArmNextInstruction(&registers));
+  EXPECT_EQ(4u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_UND, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);

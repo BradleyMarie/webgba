@@ -58,6 +58,8 @@ void ArmLDMDA(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -83,6 +85,8 @@ void ArmLDMDB(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -122,6 +126,8 @@ void ArmLDMDAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -161,6 +167,8 @@ void ArmLDMDBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -185,6 +193,8 @@ void ArmLDMIA(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -209,6 +219,8 @@ void ArmLDMIB(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -248,6 +260,8 @@ void ArmLDMIAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -287,6 +301,8 @@ void ArmLDMIBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -334,6 +350,8 @@ void ArmLDMSDA(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -381,6 +399,8 @@ void ArmLDMSDB(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -437,6 +457,8 @@ void ArmLDMSDAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -493,6 +515,8 @@ void ArmLDMSDBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -539,6 +563,8 @@ void ArmLDMSIA(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -585,6 +611,8 @@ void ArmLDMSIB(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -641,6 +669,8 @@ void ArmLDMSIAW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -697,6 +727,8 @@ void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -717,6 +749,8 @@ void ArmSTMDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     }
     address += 4u;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -736,6 +770,8 @@ void ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     }
     address += 4u;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -767,6 +803,8 @@ void ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -799,6 +837,8 @@ void ArmSTMDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -818,6 +858,8 @@ void ArmSTMIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     }
     address += 4u;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -836,6 +878,8 @@ void ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
       return;
     }
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -866,6 +910,8 @@ void ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -898,6 +944,8 @@ void ArmSTMIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -937,6 +985,8 @@ void ArmSTMSDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     ArmExceptionDataABT(registers);
     return;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -975,6 +1025,8 @@ void ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     ArmExceptionDataABT(registers);
     return;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -1020,6 +1072,8 @@ void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -1066,6 +1120,8 @@ void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -1104,6 +1160,8 @@ void ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     ArmExceptionDataABT(registers);
     return;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -1141,6 +1199,8 @@ void ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
     ArmExceptionDataABT(registers);
     return;
   }
+
+  ArmAdvanceProgramCounter(registers);
 }
 
 void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
@@ -1186,6 +1246,8 @@ void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }
 
@@ -1232,5 +1294,7 @@ void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   if (updates_pc) {
     ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+  } else {
+    ArmAdvanceProgramCounter(registers);
   }
 }

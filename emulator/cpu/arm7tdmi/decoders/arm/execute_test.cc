@@ -164,6 +164,7 @@ TEST_F(ExecuteTest, ExecutionSkipped) {
   registers_.current.user.gprs.r0 = 1u;
   RunInstruction("0x00008000");  // addeq r0, r0, r0
   EXPECT_EQ(1u, registers_.current.user.gprs.r0);
+  EXPECT_EQ(0x104u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, ADC) {
@@ -294,12 +295,12 @@ TEST_F(ExecuteTest, ANDS_I32) {
 
 TEST_F(ExecuteTest, B_FWD) {
   RunInstruction("0x3E0000EA");  // b #0x100
-  EXPECT_EQ(0x200u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x200u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, B_REV) {
   RunInstruction("0xFDFFFFEA");  // b #-4
-  EXPECT_EQ(0x0FCu, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x0FCu, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, BIC) {
@@ -344,20 +345,20 @@ TEST_F(ExecuteTest, BICS_I32) {
 
 TEST_F(ExecuteTest, BL_FWD) {
   RunInstruction("0x3E0000EB");  // bl #0x100
-  EXPECT_EQ(0x200u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x200u, ArmCurrentInstruction(&registers_));
   EXPECT_EQ(0x104u, registers_.current.user.gprs.lr);
 }
 
 TEST_F(ExecuteTest, BL_REV) {
   RunInstruction("0xFDFFFFEB");  // bl #-4
-  EXPECT_EQ(0x0FCu, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x0FCu, ArmCurrentInstruction(&registers_));
   EXPECT_EQ(0x104u, registers_.current.user.gprs.lr);
 }
 
 TEST_F(ExecuteTest, BX) {
   registers_.current.user.gprs.r0 = 0x80u;
   RunInstruction("0x10FF2FE1");  // bx r0
-  EXPECT_EQ(0x80u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x80u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, CDP) {

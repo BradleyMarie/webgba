@@ -573,14 +573,14 @@ INSTANTIATE_TEST_SUITE_P(ArmLoadCPSRModule, ArmLoadCPSRTest,
 TEST(ArmLoadProgramCounterTest, ArmMode) {
   auto registers = CreateArmAllRegisters();
   ArmLoadProgramCounter(&registers, 0x100u);
-  EXPECT_EQ(0x104u, registers.current.user.gprs.pc);
+  EXPECT_EQ(0x108u, registers.current.user.gprs.pc);
 }
 
 TEST(ArmLoadProgramCounterTest, ThumbMode) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.cpsr.thumb = true;
   ArmLoadProgramCounter(&registers, 0x100u);
-  EXPECT_EQ(0x102u, registers.current.user.gprs.pc);
+  EXPECT_EQ(0x104u, registers.current.user.gprs.pc);
 }
 
 TEST(ArmLoadGPSRTest, GPSRArmMode) {
@@ -599,14 +599,14 @@ TEST(ArmLoadGPSRTest, GPSRThumbMode) {
 TEST(ArmLoadGPSRTest, PCArmMode) {
   auto registers = CreateArmAllRegisters();
   ArmLoadGPSR(&registers, REGISTER_PC, 0x100u);
-  EXPECT_EQ(0x104u, registers.current.user.gprs.pc);
+  EXPECT_EQ(0x108u, registers.current.user.gprs.pc);
 }
 
 TEST(ArmLoadGPSRTest, PCThumbMode) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.cpsr.thumb = true;
   ArmLoadGPSR(&registers, REGISTER_PC, 0x100u);
-  EXPECT_EQ(0x102u, registers.current.user.gprs.pc);
+  EXPECT_EQ(0x104u, registers.current.user.gprs.pc);
 }
 
 TEST(ArmNextInstructionTest, ArmNextInstructionArm) {

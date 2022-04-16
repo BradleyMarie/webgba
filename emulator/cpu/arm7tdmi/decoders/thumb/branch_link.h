@@ -9,6 +9,7 @@
 static inline void ThumbBL1(ArmAllRegisters *registers, uint_fast32_t offset) {
   codegen_assert(registers->current.user.cpsr.thumb);
   registers->current.user.gprs.lr = registers->current.user.gprs.pc + offset;
+  ArmAdvanceProgramCounter(registers);
 }
 
 static inline void ThumbBL2(ArmAllRegisters *registers, uint_fast16_t offset) {

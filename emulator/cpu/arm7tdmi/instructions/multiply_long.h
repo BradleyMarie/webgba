@@ -9,6 +9,7 @@ static inline uint64_t ArmUMULL(ArmAllRegisters *registers,
                                 ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
   uint64_t product = (uint64_t)registers->current.user.gprs.gprs[Rm] *
                      (uint64_t)registers->current.user.gprs.gprs[Rs];
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, RdLo, product);
   ArmLoadGPSR(registers, RdHi, product >> 32u);
   return product;
@@ -29,6 +30,7 @@ static inline uint64_t ArmUMLAL(ArmAllRegisters *registers,
                     (uint64_t)registers->current.user.gprs.gprs[RdLo];
   result += (uint64_t)registers->current.user.gprs.gprs[Rm] *
             (uint64_t)registers->current.user.gprs.gprs[Rs];
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, RdLo, result);
   ArmLoadGPSR(registers, RdHi, result >> 32u);
   return result;
@@ -47,6 +49,7 @@ static inline int64_t ArmSMULL(ArmAllRegisters *registers,
                                ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
   int64_t product = (int64_t)registers->current.user.gprs.gprs_s[Rm] *
                     (int64_t)registers->current.user.gprs.gprs_s[Rs];
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, RdLo, (uint64_t)product);
   ArmLoadGPSR(registers, RdHi, (uint64_t)product >> 32u);
   return product;
@@ -68,6 +71,7 @@ static inline int64_t ArmSMLAL(ArmAllRegisters *registers,
                 (uint64_t)registers->current.user.gprs.gprs[RdLo]);
   result += (int64_t)registers->current.user.gprs.gprs_s[Rm] *
             (int64_t)registers->current.user.gprs.gprs_s[Rs];
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, RdLo, (uint64_t)result);
   ArmLoadGPSR(registers, RdHi, (uint64_t)result >> 32u);
   return result;

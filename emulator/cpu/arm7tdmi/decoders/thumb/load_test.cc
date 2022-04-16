@@ -92,6 +92,7 @@ std::vector<char> MemoryTest::memory_space_(1024, 0);
 ArmAllRegisters CreateArmAllRegisters() {
   ArmAllRegisters registers;
   memset(&registers, 0, sizeof(ArmAllRegisters));
+  registers.current.user.cpsr.thumb = true;
   return registers;
 }
 
@@ -106,7 +107,7 @@ TEST_F(MemoryTest, LoadAligned) {
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
   ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
   EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
-  EXPECT_EQ(48u, registers.current.user.gprs.pc);
+  EXPECT_EQ(50u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.pc = 0u;
   registers.current.user.gprs.r0 = 0;
@@ -119,7 +120,7 @@ TEST_F(MemoryTest, LoadUnaligned) {
   ASSERT_TRUE(Store32LE(nullptr, 152u, 0xAABBCCDDu));
   ThumbLDR_PC_IB(&registers, memory_, REGISTER_R0, 104u);
   EXPECT_EQ(0xAABBCCDDu, registers.current.user.gprs.r0);
-  EXPECT_EQ(50u, registers.current.user.gprs.pc);
+  EXPECT_EQ(52u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.pc = 0u;
   registers.current.user.gprs.r0 = 0;
@@ -164,6 +165,7 @@ class MemoryFailsTest : public testing::Test {
   ArmAllRegisters CreateArmAllRegistersInMode() {
     ArmAllRegisters registers;
     memset(&registers, 0, sizeof(ArmAllRegisters));
+    registers.current.user.cpsr.thumb = true;
     registers.current.user.cpsr.mode = MODE_USR;
     return registers;
   }

@@ -24,7 +24,7 @@ TEST(ThumbBL1, BranchLink1) {
   registers.current.user.gprs.pc = 208u;
   ThumbBL1(&registers, 100);
   EXPECT_EQ(308u, registers.current.user.gprs.lr);
-  EXPECT_EQ(208u, registers.current.user.gprs.pc);
+  EXPECT_EQ(206u, ArmCurrentInstruction(&registers));
 
   registers.current.user.cpsr.thumb = false;
   registers.current.user.gprs.pc = 0u;
@@ -40,7 +40,7 @@ TEST(ThumbBL2, BranchLink2) {
   registers.current.user.gprs.lr = 308u;
   ThumbBL2(&registers, 100);
   EXPECT_EQ(207u, registers.current.user.gprs.lr);
-  EXPECT_EQ(410u, registers.current.user.gprs.pc);
+  EXPECT_EQ(408u, ArmCurrentInstruction(&registers));
 
   registers.current.user.cpsr.thumb = false;
   registers.current.user.gprs.pc = 0u;

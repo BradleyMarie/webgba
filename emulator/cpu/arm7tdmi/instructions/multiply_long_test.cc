@@ -27,11 +27,13 @@ TEST(ArmUMULL, Compute) {
   EXPECT_EQ(65539u, registers.current.user.gprs.r1);
   EXPECT_EQ(1u, registers.current.user.gprs.r2);
   EXPECT_EQ(262147u, registers.current.user.gprs.r3);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
   registers.current.user.gprs.r3 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -43,9 +45,11 @@ TEST(ArmUMULL, ReuseSourceAndDest) {
   ArmUMULL(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(262147u, registers.current.user.gprs.r0);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -59,11 +63,13 @@ TEST(ArmUMULLS, Compute) {
   EXPECT_EQ(65539u, registers.current.user.gprs.r1);
   EXPECT_EQ(1u, registers.current.user.gprs.r2);
   EXPECT_EQ(262147u, registers.current.user.gprs.r3);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
   registers.current.user.gprs.r3 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -75,9 +81,11 @@ TEST(ArmUMULLS, ReuseSourceAndDest) {
   ArmUMULLS(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(262147u, registers.current.user.gprs.r0);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -87,9 +95,11 @@ TEST(ArmUMULLS, Zero) {
   registers.current.user.gprs.r0 = 65537u;
   ArmUMULLS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(65537u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.zero = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -101,10 +111,12 @@ TEST(ArmUMULLS, Negative) {
   ArmUMULLS(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R0, REGISTER_R0);
   EXPECT_EQ(0xFFFFFFFE, registers.current.user.gprs.r0);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.negative = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -121,11 +133,13 @@ TEST(ArmUMLAL, Compute) {
   EXPECT_EQ(65539u, registers.current.user.gprs.r1);
   EXPECT_EQ(2u, registers.current.user.gprs.r2);
   EXPECT_EQ(262148u, registers.current.user.gprs.r3);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
   registers.current.user.gprs.r3 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -137,9 +151,11 @@ TEST(ArmUMLAL, ReuseSourceAndDest) {
   ArmUMLAL(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(131074u, registers.current.user.gprs.r0);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -155,11 +171,13 @@ TEST(ArmUMLALS, Compute) {
   EXPECT_EQ(65539u, registers.current.user.gprs.r1);
   EXPECT_EQ(2u, registers.current.user.gprs.r2);
   EXPECT_EQ(262148u, registers.current.user.gprs.r3);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
   registers.current.user.gprs.r3 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -170,10 +188,12 @@ TEST(ArmUMLALS, ReuseSourceAndDest) {
   registers.current.user.gprs.r1 = 1u;
   ArmUMLALS(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(131074u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -183,9 +203,11 @@ TEST(ArmUMLALS, Zero) {
   registers.current.user.gprs.r0 = 65537u;
   ArmUMLALS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(65537u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.zero = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -196,9 +218,11 @@ TEST(ArmUMLALS, Negative) {
   registers.current.user.gprs.r0 = 0xFFFFFFFF;
   ArmUMLALS(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R2, REGISTER_R3);
   EXPECT_EQ(0xFFFFFFFF, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
 
   registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.negative = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -213,11 +237,13 @@ TEST(ArmSMULL, Compute) {
   EXPECT_EQ(-1, registers.current.user.gprs.r1_s);
   EXPECT_EQ(-1, registers.current.user.gprs.r2_s);
   EXPECT_EQ(-65537, registers.current.user.gprs.r3_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
   registers.current.user.gprs.r2_s = 0;
   registers.current.user.gprs.r3_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -229,9 +255,11 @@ TEST(ArmSMULL, ReuseSourceAndDest) {
   ArmSMULL(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(-65537, registers.current.user.gprs.r1_s);
   EXPECT_EQ(-1, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -245,11 +273,13 @@ TEST(ArmSMULLS, Compute) {
   EXPECT_EQ(65539, registers.current.user.gprs.r1_s);
   EXPECT_EQ(1, registers.current.user.gprs.r2_s);
   EXPECT_EQ(262147, registers.current.user.gprs.r3_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
   registers.current.user.gprs.r2_s = 0;
   registers.current.user.gprs.r3_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -261,9 +291,11 @@ TEST(ArmSMULLS, ReuseSourceAndDest) {
   ArmSMULLS(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(262147, registers.current.user.gprs.r0_s);
   EXPECT_EQ(1, registers.current.user.gprs.r1_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -273,9 +305,11 @@ TEST(ArmSMULLS, Zero) {
   registers.current.user.gprs.r0_s = 65537u;
   ArmSMULLS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(65537u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0_s = 0;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.zero = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -288,10 +322,12 @@ TEST(ArmSMULLS, Negative) {
   ArmSMULLS(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(-1, registers.current.user.gprs.r0_s);
   EXPECT_EQ(-1, registers.current.user.gprs.r1_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.negative = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -308,11 +344,13 @@ TEST(ArmSMLAL, Compute) {
   EXPECT_EQ(-1, registers.current.user.gprs.r1_s);
   EXPECT_EQ(-2, registers.current.user.gprs.r2_s);
   EXPECT_EQ(-65538, registers.current.user.gprs.r3_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
   registers.current.user.gprs.r2_s = 0;
   registers.current.user.gprs.r3_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -324,9 +362,11 @@ TEST(ArmSMLAL, ReuseSourceAndDest) {
   ArmSMLAL(&registers, REGISTER_R1, REGISTER_R0, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(-65538, registers.current.user.gprs.r1_s);
   EXPECT_EQ(65537, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -342,11 +382,13 @@ TEST(ArmSMLALS, Compute) {
   EXPECT_EQ(-1, registers.current.user.gprs.r1_s);
   EXPECT_EQ(65537, registers.current.user.gprs.r2_s);
   EXPECT_EQ(0, registers.current.user.gprs.r3_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
   registers.current.user.gprs.r2_s = 0;
   registers.current.user.gprs.r3_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -358,9 +400,11 @@ TEST(ArmSMLALS, ReuseSourceAndDest) {
   ArmSMLALS(&registers, REGISTER_R0, REGISTER_R1, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(131074, registers.current.user.gprs.r0_s);
   EXPECT_EQ(1, registers.current.user.gprs.r1_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -370,9 +414,11 @@ TEST(ArmSMLALS, Zero) {
   registers.current.user.gprs.r0_s = 65537;
   ArmSMLALS(&registers, REGISTER_R3, REGISTER_R2, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(65537u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0_s = 0;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.zero = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
@@ -387,11 +433,13 @@ TEST(ArmSMLALS, Negative) {
   EXPECT_EQ(-1, registers.current.user.gprs.r0_s);
   EXPECT_EQ(-2, registers.current.user.gprs.r1_s);
   EXPECT_EQ(1, registers.current.user.gprs.r2_s);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
 
   registers.current.user.gprs.r0_s = 0;
   registers.current.user.gprs.r1_s = 0;
   registers.current.user.gprs.r2_s = 0;
+  registers.current.user.gprs.pc = 0u;
   registers.current.user.cpsr.negative = false;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }

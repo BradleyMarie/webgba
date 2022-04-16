@@ -29,7 +29,7 @@ TEST(ArmSWI, SoftwareInterrupt) {
   ArmSWI(&registers);
   EXPECT_EQ(104u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, ArmNextInstruction(&registers));
+  EXPECT_EQ(8u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);
@@ -57,7 +57,7 @@ TEST(ArmSWI, SoftwareInterruptThumb) {
   ArmSWI(&registers);
   EXPECT_EQ(102u, registers.current.user.gprs.r14);
   EXPECT_EQ(old_cpsr.value, registers.current.spsr.value);
-  EXPECT_EQ(8u, ArmNextInstruction(&registers));
+  EXPECT_EQ(8u, ArmCurrentInstruction(&registers));
   EXPECT_EQ(MODE_SVC, registers.current.user.cpsr.mode);
   EXPECT_FALSE(registers.current.user.cpsr.thumb);
   EXPECT_TRUE(registers.current.user.cpsr.irq_disable);

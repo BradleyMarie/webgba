@@ -23,7 +23,7 @@ TEST(ArmBL, BranchLink) {
   registers.current.user.gprs.pc = 208u;
   ArmBL(&registers, 100u);
   EXPECT_EQ(204u, registers.current.user.gprs.lr);
-  EXPECT_EQ(312u, registers.current.user.gprs.pc);
+  EXPECT_EQ(308u, ArmCurrentInstruction(&registers));
 
   registers.current.user.gprs.pc = 0u;
   registers.current.user.gprs.lr = 0u;

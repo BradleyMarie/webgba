@@ -154,6 +154,7 @@ TEST_F(MemoryTest, ArmSWP) {
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r2);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   uint32_t memory_contents;
   ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
@@ -163,6 +164,7 @@ TEST_F(MemoryTest, ArmSWP) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -188,6 +190,7 @@ TEST_F(MemoryTest, ArmSWPLoadFails) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -213,6 +216,7 @@ TEST_F(MemoryTest, ArmSWPStoreFails) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -228,6 +232,7 @@ TEST_F(MemoryTest, ArmSWPB) {
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r2);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
 
   uint8_t memory_contents;
   ASSERT_TRUE(Load8(nullptr, 8u, &memory_contents));
@@ -237,6 +242,7 @@ TEST_F(MemoryTest, ArmSWPB) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -262,6 +268,7 @@ TEST_F(MemoryTest, ArmSWPBLoadFails) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -287,6 +294,7 @@ TEST_F(MemoryTest, ArmSWPBStoreFails) {
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmIsDataAbort(registers));
   EXPECT_TRUE(MemoryIsZero());
