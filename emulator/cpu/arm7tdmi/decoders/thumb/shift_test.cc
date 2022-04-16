@@ -15,7 +15,6 @@ ArmAllRegisters CreateArmAllRegisters() {
 
 bool ArmAllRegistersAreZero(const ArmAllRegisters& regs) {
   auto zero = CreateArmAllRegisters();
-  zero.current.user.cpsr.thumb = true;
   return !memcmp(&zero, &regs, sizeof(ArmAllRegisters));
 }
 
@@ -31,7 +30,9 @@ TEST(ThumbASRS_I, NonZero) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_I, Negative) {
@@ -46,7 +47,10 @@ TEST(ThumbASRS_I, Negative) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_I, Positive) {
@@ -61,7 +65,9 @@ TEST(ThumbASRS_I, Positive) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_R, Zero) {
@@ -71,13 +77,16 @@ TEST(ThumbASRS_R, Zero) {
   ThumbASRS_R(&registers, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(-16, registers.current.user.gprs.r1_s);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_R, NonZero) {
@@ -87,13 +96,16 @@ TEST(ThumbASRS_R, NonZero) {
   ThumbASRS_R(&registers, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(-8, registers.current.user.gprs.r1_s);
   EXPECT_EQ(1u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_R, Negative) {
@@ -103,13 +115,17 @@ TEST(ThumbASRS_R, Negative) {
   ThumbASRS_R(&registers, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(-1, registers.current.user.gprs.r1_s);
   EXPECT_EQ(32u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbASRS_R, Positive) {
@@ -119,13 +135,16 @@ TEST(ThumbASRS_R, Positive) {
   ThumbASRS_R(&registers, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(0, registers.current.user.gprs.r1_s);
   EXPECT_EQ(32u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_I, NonZero) {
@@ -134,13 +153,15 @@ TEST(ThumbLSLS_I, NonZero) {
   ThumbLSLS_I(&registers, REGISTER_R1, REGISTER_R0, 1u);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_I, Zero) {
@@ -149,13 +170,15 @@ TEST(ThumbLSLS_I, Zero) {
   ThumbLSLS_I(&registers, REGISTER_R1, REGISTER_R0, 0u);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_I, CarryAndNegative) {
@@ -164,13 +187,17 @@ TEST(ThumbLSLS_I, CarryAndNegative) {
   ThumbLSLS_I(&registers, REGISTER_R1, REGISTER_R0, 1u);
   EXPECT_EQ(0xFFFFFFFEu, registers.current.user.gprs.r1);
   EXPECT_EQ(0xFFFFFFFFu, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_I, ZeroFlag) {
@@ -179,13 +206,16 @@ TEST(ThumbLSLS_I, ZeroFlag) {
   ThumbLSLS_I(&registers, REGISTER_R1, REGISTER_R0, 31u);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(0xFFFFFFF0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_R, NonZero) {
@@ -195,29 +225,34 @@ TEST(ThumbLSLS_R, NonZero) {
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
   EXPECT_EQ(32u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_R, Zero) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_R, CarryAndNegative) {
@@ -227,13 +262,17 @@ TEST(ThumbLSLS_R, CarryAndNegative) {
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
   EXPECT_EQ(0xFFFFFFFEu, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_R, ZeroFlag) {
@@ -243,13 +282,17 @@ TEST(ThumbLSLS_R, ZeroFlag) {
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSLS_R, Large) {
@@ -259,13 +302,16 @@ TEST(ThumbLSLS_R, Large) {
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(33u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_I, NonZero) {
@@ -274,13 +320,15 @@ TEST(ThumbLSRS_I, NonZero) {
   ThumbLSRS_I(&registers, REGISTER_R1, REGISTER_R0, 1u);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_I, Zero) {
@@ -289,13 +337,16 @@ TEST(ThumbLSRS_I, Zero) {
   ThumbLSRS_I(&registers, REGISTER_R1, REGISTER_R0, 0u);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_I, Carry) {
@@ -304,13 +355,16 @@ TEST(ThumbLSRS_I, Carry) {
   ThumbLSRS_I(&registers, REGISTER_R1, REGISTER_R0, 1u);
   EXPECT_EQ(0x7FFFFFFFu, registers.current.user.gprs.r1);
   EXPECT_EQ(0xFFFFFFFFu, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_R, NonZero) {
@@ -320,29 +374,34 @@ TEST(ThumbLSRS_R, NonZero) {
   ThumbLSRS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
   EXPECT_EQ(8u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_R, Zero) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   ThumbLSRS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_R, ThirtyTwo) {
@@ -352,13 +411,17 @@ TEST(ThumbLSRS_R, ThirtyTwo) {
   ThumbLSRS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbLSRS_R, Large) {
@@ -368,13 +431,16 @@ TEST(ThumbLSRS_R, Large) {
   ThumbLSRS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(33u, registers.current.user.gprs.r1);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_TRUE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.zero = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbRORS, NonZero) {
@@ -384,29 +450,36 @@ TEST(ThumbRORS, NonZero) {
   ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(1u, registers.current.user.gprs.r1);
   EXPECT_EQ(0xF8000007, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbRORS, Zero) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_FALSE(registers.current.user.cpsr.carry);
   EXPECT_FALSE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbRORS, ThirtyOne) {
@@ -416,13 +489,17 @@ TEST(ThumbRORS, ThirtyOne) {
   ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(31u, registers.current.user.gprs.r1);
   EXPECT_EQ(0xE000001Fu, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
 TEST(ThumbRORS, ThirtyTwo) {
@@ -432,11 +509,15 @@ TEST(ThumbRORS, ThirtyTwo) {
   ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(32u, registers.current.user.gprs.r1);
   EXPECT_EQ(0xF000000Fu, registers.current.user.gprs.r0);
+  EXPECT_EQ(2u, registers.current.user.gprs.pc);
   EXPECT_TRUE(registers.current.user.cpsr.carry);
   EXPECT_TRUE(registers.current.user.cpsr.negative);
   EXPECT_FALSE(registers.current.user.cpsr.zero);
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
-  ArmAllRegistersAreZero(registers);
+  registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.carry = false;
+  registers.current.user.cpsr.negative = false;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }

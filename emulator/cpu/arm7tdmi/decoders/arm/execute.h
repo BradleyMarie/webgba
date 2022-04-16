@@ -30,6 +30,7 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
 
   if (!ArmInstructionShouldExecute(registers->current.user.cpsr,
                                    next_instruction)) {
+    ArmAdvanceProgramCounter(registers);
     return;
   }
 

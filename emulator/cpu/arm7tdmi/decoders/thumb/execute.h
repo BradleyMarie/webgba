@@ -87,6 +87,8 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
                                            &branch_offset_32);
       if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
         ArmB(registers, branch_offset_32);
+      } else {
+        ArmAdvanceProgramCounter(registers);
       }
       break;
     case THUMB_OPCODE_B_REV:
@@ -98,6 +100,8 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
                                            &branch_offset_32);
       if (ThumbShouldBranch(registers->current.user.cpsr, condition)) {
         ArmB(registers, branch_offset_32);
+      } else {
+        ArmAdvanceProgramCounter(registers);
       }
       break;
     case THUMB_OPCODE_BICS:

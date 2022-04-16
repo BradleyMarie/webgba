@@ -199,7 +199,7 @@ TEST_F(ExecuteTest, THUMB_OPCODE_ADD_ANY) {
   RunInstruction("0xD144");  // add r9, r10
   EXPECT_EQ(2u, registers_.current.user.gprs.r9);
   RunInstruction("0xCF44");  // add pc, r9
-  EXPECT_EQ(0x10Au, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x10Cu, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC) {
@@ -264,34 +264,34 @@ TEST_F(ExecuteTest, THUMB_OPCODE_ASRS_I5) {
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_FWD) {
   RunInstruction("0xFDE3");  // b #2046
-  EXPECT_EQ(2306u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(2306u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_FWD_COND_TAKEN) {
   registers_.current.user.cpsr.zero = true;
   RunInstruction("0x7DDD");  // ble #254
-  EXPECT_EQ(514u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(514u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_FWD_COND_NOT_TAKEN) {
   RunInstruction("0x7DDD");  // ble #254
-  EXPECT_EQ(0x108u, registers_.current.user.gprs.pc);
+  EXPECT_EQ(0x106u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_REV) {
   RunInstruction("0xF6E7");  // b #-16
-  EXPECT_EQ(0x0F4u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x0F4u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_REV_COND_TAKEN) {
   registers_.current.user.cpsr.zero = true;
   RunInstruction("0xF6DD");  // ble #-16
-  EXPECT_EQ(0x0F4u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x0F4u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_B_REV_COND_NOT_TAKEN) {
   RunInstruction("0xF6DD");  // ble #-16
-  EXPECT_EQ(0x108u, registers_.current.user.gprs.pc);
+  EXPECT_EQ(0x106u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_BICS) {
@@ -310,9 +310,8 @@ TEST_F(ExecuteTest, THUMB_OPCODE_BL_FWD) {
   // bl #0x80000
   registers_.current.user.gprs.pc = 0x80000004u;
   RunInstruction("0x7FF0");
-  registers_.current.user.gprs.pc += 2u;
   RunInstruction("0xFEFF");
-  EXPECT_EQ(0x80080000u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x80080000u, ArmCurrentInstruction(&registers_));
   EXPECT_EQ(0x80000005u, registers_.current.user.gprs.lr);
 }
 
@@ -320,16 +319,15 @@ TEST_F(ExecuteTest, THUMB_OPCODE_BL_REV) {
   // bl #-0x80000
   registers_.current.user.gprs.pc = 0x80000004u;
   RunInstruction("0x7FF7");
-  registers_.current.user.gprs.pc += 2u;
   RunInstruction("0xFEFF");
-  EXPECT_EQ(0x7FF80000u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x7FF80000u, ArmCurrentInstruction(&registers_));
   EXPECT_EQ(0x80000005u, registers_.current.user.gprs.lr);
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_BX) {
   registers_.current.user.gprs.r7 = 0x1000u;
   RunInstruction("0x3847");  // bx r7
-  EXPECT_EQ(0x1000u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0x1000u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_CMN) {
@@ -513,7 +511,7 @@ TEST_F(ExecuteTest, THUMB_OPCODE_MOV_ANY) {
   RunInstruction("0xEE46");  // mov lr, r13
   EXPECT_EQ(0xF000000Eu, registers_.current.user.gprs.lr);
   RunInstruction("0xF746");  // mov pc, lr
-  EXPECT_EQ(0xF000000Eu, ArmNextInstruction(&registers_));
+  EXPECT_EQ(0xF000000Eu, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_MOVS_I8) {
@@ -596,7 +594,7 @@ TEST_F(ExecuteTest, THUMB_OPCODE_POP_PC) {
   EXPECT_EQ(6u, registers_.current.user.gprs.r5);
   EXPECT_EQ(7u, registers_.current.user.gprs.r6);
   EXPECT_EQ(8u, registers_.current.user.gprs.r7);
-  EXPECT_EQ(10u, ArmNextInstruction(&registers_));
+  EXPECT_EQ(10u, ArmCurrentInstruction(&registers_));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_PUSH) {

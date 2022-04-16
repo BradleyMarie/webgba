@@ -14,6 +14,8 @@ static inline void ThumbASRS_I(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
 
+  ArmAdvanceProgramCounter(registers);
+
   if (shift_amount == 0u) {
     if (registers->current.user.gprs.gprs[Rm] >> 31u) {
       registers->current.user.cpsr.carry = true;
@@ -41,6 +43,8 @@ static inline void ThumbASRS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
   assert(Rs <= REGISTER_R7);
+
+  ArmAdvanceProgramCounter(registers);
 
   uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
@@ -71,6 +75,8 @@ static inline void ThumbLSLS_I(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
 
+  ArmAdvanceProgramCounter(registers);
+
   if (shift_amount == 0u) {
     registers->current.user.gprs.gprs[Rd] =
         registers->current.user.gprs.gprs[Rm];
@@ -92,6 +98,8 @@ static inline void ThumbLSLS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
   assert(Rs <= REGISTER_R7);
+
+  ArmAdvanceProgramCounter(registers);
 
   uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
@@ -120,6 +128,8 @@ static inline void ThumbLSRS_I(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   assert(Rm <= REGISTER_R7);
   assert(shift_amount < 32u);
 
+  ArmAdvanceProgramCounter(registers);
+
   if (shift_amount == 0u) {
     registers->current.user.cpsr.carry =
         (registers->current.user.gprs.gprs[Rm] >> 31u) & 0x1u;
@@ -142,6 +152,8 @@ static inline void ThumbLSRS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
   assert(Rm <= REGISTER_R7);
+
+  ArmAdvanceProgramCounter(registers);
 
   uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rm];
   if (shift_amount != 0u && shift_amount < 32u) {
@@ -168,6 +180,8 @@ static inline void ThumbRORS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
   assert(Rm <= REGISTER_R7);
+
+  ArmAdvanceProgramCounter(registers);
 
   uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rm];
   if (shift_amount == 0) {

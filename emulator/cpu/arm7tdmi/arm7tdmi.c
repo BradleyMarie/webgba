@@ -106,7 +106,7 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
 }
 
 void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  uint32_t next_instruction_32, next_instruction_addr;
+  uint32_t next_instruction_32;
   uint16_t next_instruction_16;
   bool success;
 
@@ -127,11 +127,8 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
     arm_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
       codegen_assert(!cpu->registers.current.user.cpsr.thumb);
-
-      ArmAdvanceProgramCounter(&cpu->registers);
-      next_instruction_addr = ArmCurrentInstruction(&cpu->registers);
-
-      success = Load32LE(memory, next_instruction_addr, &next_instruction_32);
+      success = Load32LE(memory, ArmCurrentInstruction(&cpu->registers),
+                         &next_instruction_32);
       if (!success) {
         ArmExceptionPrefetchABT(&cpu->registers);
         break;
@@ -155,11 +152,8 @@ void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
     thumb_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
       codegen_assert(cpu->registers.current.user.cpsr.thumb);
-
-      ArmAdvanceProgramCounter(&cpu->registers);
-      next_instruction_addr = ArmCurrentInstruction(&cpu->registers);
-
-      success = Load16LE(memory, next_instruction_addr, &next_instruction_16);
+      success = Load16LE(memory, ArmCurrentInstruction(&cpu->registers),
+                         &next_instruction_16);
       if (!success) {
         ArmExceptionPrefetchABT(&cpu->registers);
         break;

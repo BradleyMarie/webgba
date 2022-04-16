@@ -190,12 +190,8 @@ static inline void ArmLoadProgramCounter(ArmAllRegisters* registers,
                                          uint32_t address) {
   assert(registers->current.user.cpsr.thumb || (address & 0x2u) == 0u);
   assert((address & 0x1u) == 0u);
-
-  // Point to one instruction past the provided address so that when the program
-  // counter is incremented it is two instructions past the instruction as
-  // expected
   registers->current.user.gprs.pc =
-      address + (4u >> registers->current.user.cpsr.thumb);
+      address + (8u >> registers->current.user.cpsr.thumb);
 }
 
 // This function only needs to be used if it cannot be guaranteed that the

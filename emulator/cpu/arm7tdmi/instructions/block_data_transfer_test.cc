@@ -120,7 +120,7 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
       if (register_list & (1u << index)) {
         if (index == REGISTER_PC) {
           EXPECT_EQ((expected_value-- >> 2u) << 2u,
-                    ArmNextInstruction(&registers));
+                    ArmCurrentInstruction(&registers));
         } else {
           EXPECT_EQ(expected_value--, registers.current.user.gprs.gprs[index]);
         }
@@ -128,13 +128,17 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
         if (index == address_register) {
           if (index == REGISTER_PC) {
             EXPECT_EQ(address_register_expected_value,
-                      ArmNextInstruction(&registers));
+                      ArmCurrentInstruction(&registers));
           } else {
             EXPECT_EQ(address_register_expected_value,
                       registers.current.user.gprs.gprs[index]);
           }
         } else {
-          EXPECT_EQ(0u, registers.current.user.gprs.gprs[index]);
+          if (index == REGISTER_PC) {
+            EXPECT_EQ(4u, registers.current.user.gprs.gprs[index]);
+          } else {
+            EXPECT_EQ(0u, registers.current.user.gprs.gprs[index]);
+          }
         }
       }
     }
@@ -148,7 +152,7 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
       if (register_list & (1u << i)) {
         if (i == REGISTER_PC) {
           EXPECT_EQ((expected_value++ >> 2u) << 2u,
-                    ArmNextInstruction(&registers));
+                    ArmCurrentInstruction(&registers));
         } else {
           EXPECT_EQ(expected_value++, registers.current.user.gprs.gprs[i]);
         }
@@ -156,13 +160,17 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
         if (i == address_register) {
           if (i == REGISTER_PC) {
             EXPECT_EQ(address_register_expected_value,
-                      ArmNextInstruction(&registers));
+                      ArmCurrentInstruction(&registers));
           } else {
             EXPECT_EQ(address_register_expected_value,
                       registers.current.user.gprs.gprs[i]);
           }
         } else {
-          EXPECT_EQ(0u, registers.current.user.gprs.gprs[i]);
+          if (i == REGISTER_PC) {
+            EXPECT_EQ(4u, registers.current.user.gprs.gprs[i]);
+          } else {
+            EXPECT_EQ(0u, registers.current.user.gprs.gprs[i]);
+          }
         }
       }
     }
@@ -1184,6 +1192,8 @@ class StmTest : public testing::TestWithParam<uint16_t> {
     for (uint_fast8_t i = 0u; i < 16u; i++) {
       if (i == address_register) {
         EXPECT_EQ(address, registers_.current.user.gprs.gprs[i]);
+      } else if (i == REGISTER_PC) {
+        EXPECT_EQ(i + 5u, registers_.current.user.gprs.gprs[i]);
       } else {
         EXPECT_EQ(i + 1u, registers_.current.user.gprs.gprs[i]);
       }

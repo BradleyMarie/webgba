@@ -106,12 +106,14 @@ TEST_F(MemoryTest, ArmLDRH_IB) {
   registers.current.user.gprs.r0 = 8u;
   ArmLDRH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
   EXPECT_EQ(137u, memory_contents);
 
   registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -124,6 +126,7 @@ TEST_F(MemoryTest, ArmLDRH_DB) {
   ArmLDRH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -131,6 +134,7 @@ TEST_F(MemoryTest, ArmLDRH_DB) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -142,6 +146,7 @@ TEST_F(MemoryTest, ArmLDRH_DBW) {
   ArmLDRH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -149,6 +154,7 @@ TEST_F(MemoryTest, ArmLDRH_DBW) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -160,6 +166,7 @@ TEST_F(MemoryTest, ArmLDRH_DAW) {
   ArmLDRH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(6u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -167,6 +174,7 @@ TEST_F(MemoryTest, ArmLDRH_DAW) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -178,6 +186,7 @@ TEST_F(MemoryTest, ArmLDRH_IBW) {
   ArmLDRH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -185,6 +194,7 @@ TEST_F(MemoryTest, ArmLDRH_IBW) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -196,6 +206,7 @@ TEST_F(MemoryTest, ArmLDRH_IAW) {
   ArmLDRH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(10u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -203,6 +214,7 @@ TEST_F(MemoryTest, ArmLDRH_IAW) {
 
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -213,12 +225,14 @@ TEST_F(MemoryTest, ArmLDRSB_IB) {
   registers.current.user.gprs.r0_s = 8u;
   ArmLDRSB_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
   EXPECT_EQ(-65, memory_contents);
 
   registers.current.user.gprs.r0_s = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -231,6 +245,7 @@ TEST_F(MemoryTest, ArmLDRSB_DB) {
   ArmLDRSB_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -238,6 +253,7 @@ TEST_F(MemoryTest, ArmLDRSB_DB) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -249,6 +265,7 @@ TEST_F(MemoryTest, ArmLDRSB_DBW) {
   ArmLDRSB_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -256,6 +273,7 @@ TEST_F(MemoryTest, ArmLDRSB_DBW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -267,6 +285,7 @@ TEST_F(MemoryTest, ArmLDRSB_DAW) {
   ArmLDRSB_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(6u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -274,6 +293,7 @@ TEST_F(MemoryTest, ArmLDRSB_DAW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -285,6 +305,7 @@ TEST_F(MemoryTest, ArmLDRSB_IBW) {
   ArmLDRSB_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -292,6 +313,7 @@ TEST_F(MemoryTest, ArmLDRSB_IBW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -303,6 +325,7 @@ TEST_F(MemoryTest, ArmLDRSB_IAW) {
   ArmLDRSB_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(10u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -310,6 +333,7 @@ TEST_F(MemoryTest, ArmLDRSB_IAW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -320,12 +344,14 @@ TEST_F(MemoryTest, ArmLDRSH_IB) {
   registers.current.user.gprs.r0_s = 8u;
   ArmLDRSH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
   EXPECT_EQ(-65, memory_contents);
 
   registers.current.user.gprs.r0_s = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -338,6 +364,7 @@ TEST_F(MemoryTest, ArmLDRSH_DB) {
   ArmLDRSH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -345,6 +372,7 @@ TEST_F(MemoryTest, ArmLDRSH_DB) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -356,6 +384,7 @@ TEST_F(MemoryTest, ArmLDRSH_DBW) {
   ArmLDRSH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -363,6 +392,7 @@ TEST_F(MemoryTest, ArmLDRSH_DBW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -374,6 +404,7 @@ TEST_F(MemoryTest, ArmLDRSH_DAW) {
   ArmLDRSH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(6u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -381,6 +412,7 @@ TEST_F(MemoryTest, ArmLDRSH_DAW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -392,6 +424,7 @@ TEST_F(MemoryTest, ArmLDRSH_IBW) {
   ArmLDRSH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -399,6 +432,7 @@ TEST_F(MemoryTest, ArmLDRSH_IBW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -410,6 +444,7 @@ TEST_F(MemoryTest, ArmLDRSH_IAW) {
   ArmLDRSH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 2u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(10u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -417,6 +452,7 @@ TEST_F(MemoryTest, ArmLDRSH_IAW) {
 
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
@@ -426,6 +462,7 @@ TEST_F(MemoryTest, ArmSTRH_IB) {
   registers.current.user.gprs.r0 = 137u;
   ArmSTRH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -443,6 +480,7 @@ TEST_F(MemoryTest, ArmSTRH_DB) {
   ArmSTRH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -460,6 +498,7 @@ TEST_F(MemoryTest, ArmSTRH_DBW) {
   ArmSTRH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -468,6 +507,7 @@ TEST_F(MemoryTest, ArmSTRH_DBW) {
   ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -481,6 +521,7 @@ TEST_F(MemoryTest, ArmSTRH_DAW) {
   ArmSTRH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(4u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -489,6 +530,7 @@ TEST_F(MemoryTest, ArmSTRH_DAW) {
   ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -502,6 +544,7 @@ TEST_F(MemoryTest, ArmSTRH_IBW) {
   ArmSTRH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -510,6 +553,7 @@ TEST_F(MemoryTest, ArmSTRH_IBW) {
   ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -523,6 +567,7 @@ TEST_F(MemoryTest, ArmSTRH_IAW) {
   ArmSTRH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(137u, registers.current.user.gprs.r0);
   EXPECT_EQ(12u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint16_t memory_contents;
   ASSERT_TRUE(Load16LE(nullptr, 8u, &memory_contents));
@@ -531,6 +576,7 @@ TEST_F(MemoryTest, ArmSTRH_IAW) {
   ASSERT_TRUE(Store16LE(nullptr, 8u, 0u));
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -542,6 +588,7 @@ TEST_F(MemoryTest, ArmSTRSB_IB) {
   registers.current.user.gprs.r0_s = -65;
   ArmSTRSB_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -549,6 +596,7 @@ TEST_F(MemoryTest, ArmSTRSB_IB) {
 
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -562,6 +610,7 @@ TEST_F(MemoryTest, ArmSTRSB_DB) {
   ArmSTRSB_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -570,6 +619,7 @@ TEST_F(MemoryTest, ArmSTRSB_DB) {
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -583,6 +633,7 @@ TEST_F(MemoryTest, ArmSTRSB_DBW) {
   ArmSTRSB_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -591,6 +642,7 @@ TEST_F(MemoryTest, ArmSTRSB_DBW) {
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -604,6 +656,7 @@ TEST_F(MemoryTest, ArmSTRSB_DAW) {
   ArmSTRSB_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(4u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -612,6 +665,7 @@ TEST_F(MemoryTest, ArmSTRSB_DAW) {
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -625,6 +679,7 @@ TEST_F(MemoryTest, ArmSTRSB_IBW) {
   ArmSTRSB_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -633,6 +688,7 @@ TEST_F(MemoryTest, ArmSTRSB_IBW) {
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -646,6 +702,7 @@ TEST_F(MemoryTest, ArmSTRSB_IAW) {
   ArmSTRSB_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(12u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int8_t memory_contents;
   ASSERT_TRUE(Load8S(memory_, 8u, &memory_contents));
@@ -654,6 +711,7 @@ TEST_F(MemoryTest, ArmSTRSB_IAW) {
   ASSERT_TRUE(Store8S(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -665,6 +723,7 @@ TEST_F(MemoryTest, ArmSTRSH_IB) {
   registers.current.user.gprs.r0_s = -65;
   ArmSTRSH_IB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -682,6 +741,7 @@ TEST_F(MemoryTest, ArmSTRSH_DB) {
   ArmSTRSH_DB(&registers, memory_, REGISTER_R0, REGISTER_R1, 8u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(16u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -699,6 +759,7 @@ TEST_F(MemoryTest, ArmSTRSH_DBW) {
   ArmSTRSH_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -707,6 +768,7 @@ TEST_F(MemoryTest, ArmSTRSH_DBW) {
   ASSERT_TRUE(Store16SLE(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -720,6 +782,7 @@ TEST_F(MemoryTest, ArmSTRSH_DAW) {
   ArmSTRSH_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(4u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -728,6 +791,7 @@ TEST_F(MemoryTest, ArmSTRSH_DAW) {
   ASSERT_TRUE(Store16SLE(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -741,6 +805,7 @@ TEST_F(MemoryTest, ArmSTRSH_IBW) {
   ArmSTRSH_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(8u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -749,6 +814,7 @@ TEST_F(MemoryTest, ArmSTRSH_IBW) {
   ASSERT_TRUE(Store16SLE(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());
@@ -762,6 +828,7 @@ TEST_F(MemoryTest, ArmSTRSH_IAW) {
   ArmSTRSH_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(-65, registers.current.user.gprs.r0_s);
   EXPECT_EQ(12u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   int16_t memory_contents;
   ASSERT_TRUE(Load16SLE(memory_, 8u, &memory_contents));
@@ -770,6 +837,7 @@ TEST_F(MemoryTest, ArmSTRSH_IAW) {
   ASSERT_TRUE(Store16SLE(memory_, 8u, 0u));
   registers.current.user.gprs.r0_s = 0u;
   registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
 
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
   EXPECT_TRUE(MemoryIsZero());

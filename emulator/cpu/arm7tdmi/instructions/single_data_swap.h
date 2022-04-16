@@ -23,6 +23,7 @@ static inline void ArmSWP(ArmAllRegisters *registers, Memory *memory,
     return;
   }
 
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, Rd, temp);
 }
 
@@ -43,6 +44,7 @@ static inline void ArmSWPB(ArmAllRegisters *registers, Memory *memory,
     return;
   }
 
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, Rd, temp);
 }
 

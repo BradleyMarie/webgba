@@ -22,7 +22,7 @@ TEST(ArmB, Branch) {
 
   registers.current.user.gprs.pc = 208u;
   ArmB(&registers, 100u);
-  EXPECT_EQ(308u, ArmNextInstruction(&registers));
+  EXPECT_EQ(308u, ArmCurrentInstruction(&registers));
 
   registers.current.user.gprs.pc = 0u;
   EXPECT_TRUE(ArmArmAllRegistersAreZero(registers));

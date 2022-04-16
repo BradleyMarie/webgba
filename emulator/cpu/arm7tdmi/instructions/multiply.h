@@ -8,6 +8,7 @@ static inline uint32_t ArmMUL(ArmAllRegisters *registers, ArmRegisterIndex Rd,
                               ArmRegisterIndex Rm, ArmRegisterIndex Rs) {
   uint32_t product = registers->current.user.gprs.gprs[Rm] *
                      registers->current.user.gprs.gprs[Rs];
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, Rd, product);
   return product;
 }
@@ -25,6 +26,7 @@ static inline uint32_t ArmMLA(ArmAllRegisters *registers, ArmRegisterIndex Rd,
   uint32_t product = registers->current.user.gprs.gprs[Rn] +
                      (registers->current.user.gprs.gprs[Rm] *
                       registers->current.user.gprs.gprs[Rs]);
+  ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, Rd, product);
   return product;
 }
