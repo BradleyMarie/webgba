@@ -15,6 +15,7 @@ typedef struct {
   GLuint program;
   GLuint vertices;
   GLuint texture;
+  bool initialized;
 } GbaPpuScreen;
 
 static inline void GbaPpuScreenSet(GbaPpuScreen* screen, uint_fast8_t x,
