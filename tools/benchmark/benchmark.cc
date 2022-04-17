@@ -1,4 +1,6 @@
+#ifndef __EMSCRIPTEN__
 #include <gperftools/profiler.h>
+#endif  // __EMSCRIPTEN__
 
 #include <chrono>
 #include <cstring>
@@ -13,21 +15,26 @@ extern "C" {
 void NoOpAudioCallback(int16_t left, int16_t right) {}
 
 int main(int argc, char **argv) {
+#ifndef __EMSCRIPTEN__
   if (argc < 3) {
     std::cout << "Usage: benchmark <num-frames> <rom>" << std::endl;
     return EXIT_SUCCESS;
   }
+#endif  // __EMSCRIPTEN__
 
+#if __EMSCRIPTEN__
   int frame_count = 60u * 60u;  // 60 seconds * 60 frames per second.
-  if (argc >= 3) {
-    frame_count = std::atoi(argv[1u]);
-    if (frame_count < 0) {
-      std::cout << "ERROR: Negative frame count" << std::endl;
-      return EXIT_FAILURE;
-    }
+  std::ifstream file("/game.gba", std::ios::binary);
+#else
+  int frame_count = std::atoi(argv[1u]);
+  if (frame_count < 0) {
+    std::cout << "ERROR: Negative frame count" << std::endl;
+    return EXIT_FAILURE;
   }
 
   std::ifstream file(argv[2u], std::ios::binary);
+#endif  // __EMSCRIPTEN__
+
   if (file.fail()) {
     std::cout << "ERROR: Failed to open ROM file" << std::endl;
     return EXIT_FAILURE;
@@ -56,12 +63,18 @@ int main(int argc, char **argv) {
 
   auto begin = std::chrono::steady_clock::now();
 
+#ifndef __EMSCRIPTEN__
   ProfilerStart("benchmark.profile");
+#endif  // __EMSCRIPTEN__
+
   for (int i = 0; i < frame_count; i++) {
     GbaEmulatorStep(emulator, /*framebuffer=*/0, /*scale_factor=*/1,
                     NoOpAudioCallback);
   }
+
+#ifndef __EMSCRIPTEN__
   ProfilerStop();
+#endif  // __EMSCRIPTEN__
 
   auto end = std::chrono::steady_clock::now();
 
