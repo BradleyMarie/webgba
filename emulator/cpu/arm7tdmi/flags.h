@@ -23,7 +23,7 @@ static inline bool ArmZeroFlagUInt32(uint32_t result) { return result == 0; }
 static inline bool ArmZeroFlagUInt64(uint64_t result) { return result == 0; }
 
 static inline bool ArmAdditionCarryFlag(uint64_t result) {
-  assert(result < (uint64_t)UINT32_MAX + (uint64_t)UINT32_MAX + 1);
+  assert(result <= (uint64_t)UINT32_MAX + (uint64_t)UINT32_MAX + 1);
   return !!(result >> 32);
 }
 
