@@ -3,12 +3,19 @@
 #endif  // __EMSCRIPTEN__
 
 #include <SDL/SDL.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "emulator/gba.h"
 #include "third_party/libsamplerate/samplerate.h"
+
+#if __EMSCRIPTEN__
+
+#else
+
+#endif  // __EMSCRIPTEN__
 
 #if __EMSCRIPTEN__
 #define WEB_INPUT_A 0
@@ -47,7 +54,7 @@ static size_t g_audio_buffer_start = 0;
 static size_t g_audio_buffer_end = 0;
 static bool g_buffer_full = false;
 
-static void AddSample(int16_t sample) {
+static void AddSample(float sample) {
   g_audio_buffer[g_audio_buffer_end] = sample;
 
   size_t new_end = (g_audio_buffer_end + 1) % AUDIO_BUFFER_SIZE;
@@ -63,12 +70,12 @@ static void AddSample(int16_t sample) {
   }
 }
 
-static int16_t RemoveSample() {
+static float RemoveSample() {
   if (g_audio_buffer_start == g_audio_buffer_end && !g_buffer_full) {
     return 0;
   }
 
-  int16_t result = g_audio_buffer[g_audio_buffer_start];
+  float result = g_audio_buffer[g_audio_buffer_start];
   g_audio_buffer_start = (g_audio_buffer_start + 1) % AUDIO_BUFFER_SIZE;
 
   if (g_audio_buffer_start == g_audio_buffer_end) {
@@ -99,9 +106,7 @@ static void RenderAudioSample(int16_t left, int16_t right) {
   SDL_LockAudio();
 
   for (long i = 0; i < data.output_frames_gen * 2; i++) {
-    int16_t sample;
-    src_float_to_short_array(&output_samples[i], &sample, 1);
-    AddSample(sample);
+    AddSample(output_samples[i]);
   }
 
   SDL_UnlockAudio();
@@ -109,14 +114,19 @@ static void RenderAudioSample(int16_t left, int16_t right) {
 
 static void AudioCallback(void *userdata, Uint8 *stream, int len) {
   while (len != 0) {
-    int16_t sample = RemoveSample();
+    float sample = RemoveSample();
 
-    int bytes_to_copy = sizeof(int16_t);
-    if (len < bytes_to_copy) {
-      bytes_to_copy = len;
-    }
+#if __EMSCRIPTEN__
+    int bytes_to_copy = sizeof(float);
+    assert(bytes_to_copy <= len);
 
     memcpy(stream, &sample, bytes_to_copy);
+#else
+    int bytes_to_copy = sizeof(int16_t);
+    assert(bytes_to_copy <= len);
+
+    src_float_to_short_array(&sample, (void *)stream, 1);
+#endif  // __EMSCRIPTEN__
 
     stream += bytes_to_copy;
     len -= bytes_to_copy;
@@ -508,14 +518,22 @@ int main(int argc, char *argv[]) {
   SDL_AudioSpec want;
 
   memset(&want, 0, sizeof(want));
-  want.format = AUDIO_S16;
-#if __EMSCRIPTEN__
-  want.freq = 96000;
-#else
-  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
-#endif  // __EMSCRIPTEN__
   want.channels = 2;
-  want.samples = 4096;
+#if __EMSCRIPTEN__
+  want.format = AUDIO_F32;
+  want.freq = EM_ASM_INT({
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    var ctx = new AudioContext();
+    var sr = ctx.sampleRate;
+    ctx.close();
+    return sr;
+  });
+  want.samples = 256;
+#else
+  want.format = AUDIO_S16;
+  want.freq = 131072.0 * 60.0 / (16777216.0 / 280896.0);
+  want.samples = 512;
+#endif  // __EMSCRIPTEN__
   want.callback = AudioCallback;
 
   SDL_AudioSpec have;
