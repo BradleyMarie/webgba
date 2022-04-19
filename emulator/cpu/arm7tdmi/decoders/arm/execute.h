@@ -35,7 +35,7 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
   }
 
   ArmRegisterIndex rd_msw, rd_lsw, rd, rn, rm, rs;
-  uint32_t operand2, offset_32;
+  uint32_t operand1, operand2, offset_32;
   uint_fast32_t branch_offset;
   uint_fast16_t register_list, offset_16;
   uint_fast8_t offset_8;
@@ -45,75 +45,75 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
   switch (opcode) {
     case ARM_OPCODE_ADC:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmADC(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmADC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADC_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmADC(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmADC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADCS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmADCS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmADCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADCS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmADCS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmADCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADD:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmADD(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmADD(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADD_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmADD(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmADD(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADDS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmADDS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmADDS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ADDS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmADDS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmADDS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_AND:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmAND(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmAND(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_AND_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmAND(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmAND(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ANDS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmANDS(registers, rd, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmANDS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_ANDS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmANDS(registers, rd, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmANDS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_B_FWD:
       ArmOperandBranchForward(next_instruction, &branch_offset);
@@ -125,27 +125,27 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_BIC:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmBIC(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmBIC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_BIC_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmBIC(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmBIC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_BICS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmBICS(registers, rd, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmBICS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_BICS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmBICS(registers, rd, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmBICS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_BL_FWD:
       ArmOperandBranchForward(next_instruction, &branch_offset);
@@ -164,51 +164,51 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_CMN:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmCMN(registers, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmCMN(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_CMN_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmCMN(registers, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmCMN(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_CMP:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmCMP(registers, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmCMP(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_CMP_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmCMP(registers, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmCMP(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_EOR:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmEOR(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmEOR(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_EOR_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmEOR(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmEOR(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_EORS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmEORS(registers, rd, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmEORS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_EORS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmEORS(registers, rd, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmEORS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_LDC:
       ArmLDC(registers);
@@ -614,26 +614,26 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_MOV:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
       ArmMOV(registers, rd, operand2);
       break;
     case ARM_OPCODE_MOV_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
       ArmMOV(registers, rd, operand2);
       break;
     case ARM_OPCODE_MOVS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
       ArmMOVS(registers, rd, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_MOVS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
       ArmMOVS(registers, rd, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_MRC:
@@ -679,123 +679,123 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_MVN:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
       ArmMVN(registers, rd, operand2);
       break;
     case ARM_OPCODE_MVN_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
       ArmMVN(registers, rd, operand2);
       break;
     case ARM_OPCODE_MVNS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
       ArmMVNS(registers, rd, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_MVNS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
       ArmMVNS(registers, rd, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_ORR:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmORR(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmORR(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ORR_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmORR(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmORR(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_ORRS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmORRS(registers, rd, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmORRS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_ORRS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmORRS(registers, rd, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmORRS(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_RSB:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmRSB(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmRSB(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSB_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmRSB(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmRSB(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSBS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmRSBS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmRSBS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSBS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmRSBS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmRSBS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSC:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmRSC(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmRSC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSC_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmRSC(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmRSC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSCS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmRSCS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmRSCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_RSCS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmRSCS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmRSCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SBC:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmSBC(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmSBC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SBC_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmSBC(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmSBC(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SBCS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmSBCS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmSBCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SBCS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmSBCS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmSBCS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SMLAL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);
@@ -1086,27 +1086,27 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_SUB:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmSUB(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmSUB(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SUB_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmSUB(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmSUB(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SUBS:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmSUBS(registers, rd, rn, operand2);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmSUBS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SUBS_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmSUBS(registers, rd, rn, operand2);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmSUBS(registers, rd, operand1, operand2);
       break;
     case ARM_OPCODE_SWI:
       ArmSWI(registers);
@@ -1121,27 +1121,27 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_TEQ:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmTEQ(registers, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmTEQ(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TEQ_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmTEQ(registers, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmTEQ(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TST:
       ArmOperandDataProcessingOperand2(next_instruction,
-                                       &registers->current.user, &rd, &rn,
-                                       &shifter_carry_out, &operand2);
-      ArmTST(registers, rn, operand2, shifter_carry_out);
+                                       &registers->current.user, &rd, &operand1,
+                                       &operand2, &shifter_carry_out);
+      ArmTST(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_TST_I32:
-      ArmOperandDataProcessingImmediate(next_instruction,
-                                        &registers->current.user, &rd, &rn,
-                                        &shifter_carry_out, &operand2);
-      ArmTST(registers, rn, operand2, shifter_carry_out);
+      ArmOperandDataProcessingImmediate(
+          next_instruction, &registers->current.user, &rd, &operand1, &operand2,
+          &shifter_carry_out);
+      ArmTST(registers, rd, operand1, operand2, shifter_carry_out);
       break;
     case ARM_OPCODE_UMLAL:
       ArmOperandMultiplyLong(next_instruction, &rd_lsw, &rd_msw, &rm, &rs);

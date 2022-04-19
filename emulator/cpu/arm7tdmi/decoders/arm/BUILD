@@ -79,7 +79,10 @@ cc_test(
 cc_library(
     name = "operand",
     hdrs = ["operand.h"],
-    deps = ["//emulator/cpu/arm7tdmi:registers"],
+    deps = [
+        "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
+    ],
 )
 
 cc_test(

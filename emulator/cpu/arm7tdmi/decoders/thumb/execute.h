@@ -33,41 +33,50 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
   switch (opcode) {
     case THUMB_OPCODE_ADCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmADCS(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
+      ArmADCS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_ADD_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rd, &rm);
-      ArmADD(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
+      ArmADD(registers, rd, registers->current.user.gprs.gprs[rd],
+             registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_ADD_PC:
       ThumbOperandAddToSPOrPC(next_instruction, &rd, &immediate_16);
-      ArmADD(registers, rd, REGISTER_R15, immediate_16);
+      ArmADD(registers, rd, registers->current.user.gprs.gprs[REGISTER_R15],
+             immediate_16);
       break;
     case THUMB_OPCODE_ADD_SP:
       ThumbOperandAddToSPOrPC(next_instruction, &rd, &immediate_16);
-      ArmADD(registers, rd, REGISTER_R13, immediate_16);
+      ArmADD(registers, rd, registers->current.user.gprs.gprs[REGISTER_R13],
+             immediate_16);
       break;
     case THUMB_OPCODE_ADD_SP_I7:
       ThumbOperandAdjustStackPointer(next_instruction, &immediate_16);
-      ArmADD(registers, REGISTER_R13, REGISTER_R13, immediate_16);
+      ArmADD(registers, REGISTER_R13,
+             registers->current.user.gprs.gprs[REGISTER_R13], immediate_16);
       break;
     case THUMB_OPCODE_ADDS:
       ThumbOperandAddSubtractRegister(next_instruction, &rd, &rn, &rm);
-      ArmADDS(registers, rd, rn, registers->current.user.gprs.gprs[rm]);
+      ArmADDS(registers, rd, registers->current.user.gprs.gprs[rn],
+              registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_ADDS_I3:
       ThumbOperandAddSubtractImmediate(next_instruction, &rd, &rn,
                                        &immediate_8);
-      ArmADDS(registers, rd, rn, immediate_8);
+      ArmADDS(registers, rd, registers->current.user.gprs.gprs[rn],
+              immediate_8);
       break;
     case THUMB_OPCODE_ADDS_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rd,
                                                   &immediate_8);
-      ArmADDS(registers, rd, rd, immediate_8);
+      ArmADDS(registers, rd, registers->current.user.gprs.gprs[rd],
+              immediate_8);
       break;
     case THUMB_OPCODE_ANDS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmANDS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
+      ArmANDS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
       break;
     case THUMB_OPCODE_ASRS:
@@ -106,7 +115,8 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_BICS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmBICS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
+      ArmBICS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
       break;
     case THUMB_OPCODE_BL:
@@ -127,24 +137,29 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_CMN:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
-      ArmCMN(registers, rn, registers->current.user.gprs.gprs[rm]);
+      ArmCMN(registers, REGISTER_R0, registers->current.user.gprs.gprs[rn],
+             registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_CMP:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
-      ArmCMP(registers, rn, registers->current.user.gprs.gprs[rm]);
+      ArmCMP(registers, REGISTER_R0, registers->current.user.gprs.gprs[rn],
+             registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_CMP_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rn,
                                                   &immediate_8);
-      ArmCMP(registers, rn, immediate_8);
+      ArmCMP(registers, REGISTER_R0, registers->current.user.gprs.gprs[rn],
+             immediate_8);
       break;
     case THUMB_OPCODE_CMP_ANY:
       ThumbOperandSpecialDataProcessing(next_instruction, &rn, &rm);
-      ArmCMP(registers, rn, registers->current.user.gprs.gprs[rm]);
+      ArmCMP(registers, REGISTER_R0, registers->current.user.gprs.gprs[rn],
+             registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_EORS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmEORS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
+      ArmEORS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
       break;
     case THUMB_OPCODE_LDMIA:
@@ -239,11 +254,12 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_NEGS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmRSBS(registers, rd, rm, 0u);
+      ArmRSBS(registers, rd, registers->current.user.gprs.gprs[rm], 0u);
       break;
     case THUMB_OPCODE_ORRS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmORRS(registers, rd, rd, registers->current.user.gprs.gprs[rm],
+      ArmORRS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm],
               registers->current.user.cpsr.carry);
       break;
     case THUMB_OPCODE_POP:
@@ -260,7 +276,8 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_SBCS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);
-      ArmSBCS(registers, rd, rd, registers->current.user.gprs.gprs[rm]);
+      ArmSBCS(registers, rd, registers->current.user.gprs.gprs[rd],
+              registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_STMIA:
       ThumbOperandLoadStoreMultiple(next_instruction, &rd, &register_list);
@@ -302,28 +319,33 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_SUB_SP_I7:
       ThumbOperandAdjustStackPointer(next_instruction, &immediate_16);
-      ArmSUB(registers, REGISTER_R13, REGISTER_R13, immediate_16);
+      ArmSUB(registers, REGISTER_R13,
+             registers->current.user.gprs.gprs[REGISTER_R13], immediate_16);
       break;
     case THUMB_OPCODE_SUBS:
       ThumbOperandAddSubtractRegister(next_instruction, &rd, &rn, &rm);
-      ArmSUBS(registers, rd, rn, registers->current.user.gprs.gprs[rm]);
+      ArmSUBS(registers, rd, registers->current.user.gprs.gprs[rn],
+              registers->current.user.gprs.gprs[rm]);
       break;
     case THUMB_OPCODE_SUBS_I3:
       ThumbOperandAddSubtractImmediate(next_instruction, &rd, &rn,
                                        &immediate_8);
-      ArmSUBS(registers, rd, rn, immediate_8);
+      ArmSUBS(registers, rd, registers->current.user.gprs.gprs[rn],
+              immediate_8);
       break;
     case THUMB_OPCODE_SUBS_I8:
       ThumbOperandAddSubtractCompareMoveImmediate(next_instruction, &rd,
                                                   &immediate_8);
-      ArmSUBS(registers, rd, rd, immediate_8);
+      ArmSUBS(registers, rd, registers->current.user.gprs.gprs[rd],
+              immediate_8);
       break;
     case THUMB_OPCODE_SWI:
       ArmSWI(registers);
       break;
     case THUMB_OPCODE_TST:
       ThumbOperandDataProcessingRegister(next_instruction, &rn, &rm);
-      ArmTST(registers, rn, registers->current.user.gprs.gprs[rm],
+      ArmTST(registers, REGISTER_R0, registers->current.user.gprs.gprs[rn],
+             registers->current.user.gprs.gprs[rm],
              registers->current.user.cpsr.carry);
       break;
     default:
