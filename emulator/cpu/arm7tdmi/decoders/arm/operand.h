@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/registers.h"
+#include "util/macros.h"
 
 static inline void ArmOperandMultiply(uint32_t instruction,
                                       ArmRegisterIndex *Rd,
@@ -71,38 +72,52 @@ static inline void ArmOperandHalfwordAddressMode(
 
 static inline void ArmOperandDataProcessingImmediate(
     uint32_t instruction, const ArmUserRegisters *registers,
-    ArmRegisterIndex *Rd, ArmRegisterIndex *Rn, bool *shifter_carry_out,
-    uint32_t *value) {
-  *Rn = (ArmRegisterIndex)((instruction >> 16u) & 0xFu);
+    ArmRegisterIndex *Rd, uint32_t *operand1, uint32_t *operand2,
+    bool *shifter_carry_out) {
+  ArmRegisterIndex Rn = (ArmRegisterIndex)((instruction >> 16u) & 0xFu);
+  *operand1 = registers->gprs.gprs[Rn];
+
   *Rd = (ArmRegisterIndex)((instruction >> 12u) & 0xFu);
 
   uint_fast8_t shift_amount = (instruction >> 8u) & 0xFu;
   uint32_t immediate = (uint8_t)instruction;
   if (shift_amount == 0u) {
     *shifter_carry_out = registers->cpsr.carry;
-    *value = immediate;
+    *operand2 = immediate;
     return;
   }
 
   shift_amount *= 2u;
 
-  *value = (immediate >> shift_amount) | (immediate << (32u - shift_amount));
-  *shifter_carry_out = (*value >> 31u) & 0x1u;
+  *operand2 = (immediate >> shift_amount) | (immediate << (32u - shift_amount));
+  *shifter_carry_out = (*operand2 >> 31u) & 0x1u;
 }
 
 static inline void ArmOperandDataProcessingOperand2(
     uint32_t instruction, const ArmUserRegisters *registers,
-    ArmRegisterIndex *Rd, ArmRegisterIndex *Rn, bool *shifter_carry_out,
-    uint32_t *value) {
-  *Rn = (ArmRegisterIndex)((instruction >> 16u) & 0xFu);
+    ArmRegisterIndex *Rd, uint32_t *operand1, uint32_t *operand2,
+    bool *shifter_carry_out) {
   *Rd = (ArmRegisterIndex)((instruction >> 12u) & 0xFu);
-  ArmRegisterIndex Rm = (ArmRegisterIndex)(instruction & 0xFu);
 
+  ArmRegisterIndex Rn = (ArmRegisterIndex)((instruction >> 16u) & 0xFu);
+  *operand1 = registers->gprs.gprs[Rn];
+
+  ArmRegisterIndex Rm = (ArmRegisterIndex)(instruction & 0xFu);
   instruction = (instruction >> 4u) & 0xFFu;
+
+  uint32_t shifted_value = registers->gprs.gprs[Rm];
 
   bool immediate;
   uint_fast8_t shift_amount;
   if (instruction & 0x1u) {
+    // ARM defines specifying R15 for Rn to be unpredictable
+    if (Rn == REGISTER_R15) {
+      *operand1 += 4u;
+    }
+    // ARM defines specifying R15 for Rn to be unpredictable
+    if (Rm == REGISTER_R15) {
+      shifted_value += 4u;
+    }
     ArmRegisterIndex Rs = (ArmRegisterIndex)(instruction >> 0x4u);
     assert(REGISTER_R0 <= Rm && Rm <= REGISTER_R15);
     shift_amount = (uint8_t)registers->gprs.gprs[Rs];
@@ -117,31 +132,30 @@ static inline void ArmOperandDataProcessingOperand2(
     case 0u:  // LSL
       if (shift_amount == 0u) {
         *shifter_carry_out = registers->cpsr.carry;
-        *value = registers->gprs.gprs[Rm];
+        *operand2 = shifted_value;
         break;
       }
 
       if (shift_amount == 32u) {
-        *shifter_carry_out = registers->gprs.gprs[Rm] & 0x1u;
-        *value = 0u;
+        *shifter_carry_out = shifted_value & 0x1u;
+        *operand2 = 0u;
         break;
       }
 
       if (shift_amount > 32u) {
         *shifter_carry_out = false;
-        *value = 0u;
+        *operand2 = 0u;
         break;
       }
 
-      *shifter_carry_out =
-          (registers->gprs.gprs[Rm] >> (32u - shift_amount)) & 0x1u;
-      *value = registers->gprs.gprs[Rm] << shift_amount;
+      *shifter_carry_out = (shifted_value >> (32u - shift_amount)) & 0x1u;
+      *operand2 = shifted_value << shift_amount;
       break;
     case 1u:  // LSR
       if (shift_amount == 0u) {
         if (!immediate) {
           *shifter_carry_out = registers->cpsr.carry;
-          *value = registers->gprs.gprs[Rm];
+          *operand2 = shifted_value;
           break;
         }
 
@@ -149,26 +163,25 @@ static inline void ArmOperandDataProcessingOperand2(
       }
 
       if (shift_amount == 32u) {
-        *shifter_carry_out = (registers->gprs.gprs[Rm] >> 31u) & 0x1u;
-        *value = 0u;
+        *shifter_carry_out = (shifted_value >> 31u) & 0x1u;
+        *operand2 = 0u;
         break;
       }
 
       if (shift_amount > 32u) {
         *shifter_carry_out = false;
-        *value = 0u;
+        *operand2 = 0u;
         break;
       }
 
-      *shifter_carry_out =
-          (registers->gprs.gprs[Rm] >> (shift_amount - 1u)) & 0x1u;
-      *value = registers->gprs.gprs[Rm] >> shift_amount;
+      *shifter_carry_out = (shifted_value >> (shift_amount - 1u)) & 0x1u;
+      *operand2 = shifted_value >> shift_amount;
       break;
     case 2u:  // ASR
       if (shift_amount == 0u) {
         if (!immediate) {
           *shifter_carry_out = registers->cpsr.carry;
-          *value = registers->gprs.gprs[Rm];
+          *operand2 = shifted_value;
           break;
         }
 
@@ -176,31 +189,30 @@ static inline void ArmOperandDataProcessingOperand2(
       }
 
       if (shift_amount >= 32u) {
-        if (registers->gprs.gprs[Rm] >> 31u) {
+        if (shifted_value >> 31u) {
           *shifter_carry_out = true;
-          *value = 0xFFFFFFFFu;
+          *operand2 = 0xFFFFFFFFu;
         } else {
           *shifter_carry_out = false;
-          *value = 0u;
+          *operand2 = 0u;
         }
         break;
       }
 
-      *shifter_carry_out =
-          (registers->gprs.gprs[Rm] >> (shift_amount - 1u)) & 0x1u;
-      // Technically this triggers implementation defined behavior
-      *value = registers->gprs.gprs_s[Rm] >> shift_amount;
+      *shifter_carry_out = (shifted_value >> (shift_amount - 1u)) & 0x1u;
+
+      // Technically this triggers implementation defined behavior in C
+      *operand2 = ((int32_t)shifted_value) >> shift_amount;
       break;
     case 3u:
       if (shift_amount == 0u) {
         if (immediate) {
           // RRX
-          *shifter_carry_out = registers->gprs.gprs[Rm] & 0x1u;
-          *value =
-              (registers->cpsr.carry << 31u) | (registers->gprs.gprs[Rm] >> 1u);
+          *shifter_carry_out = shifted_value & 0x1u;
+          *operand2 = (registers->cpsr.carry << 31u) | (shifted_value >> 1u);
         } else {
           *shifter_carry_out = registers->cpsr.carry;
-          *value = registers->gprs.gprs[Rm];
+          *operand2 = shifted_value;
         }
         break;
       }
@@ -208,19 +220,18 @@ static inline void ArmOperandDataProcessingOperand2(
       shift_amount &= 0x1Fu;
 
       if (shift_amount == 0u) {
-        *shifter_carry_out = (registers->gprs.gprs[Rm] >> 31u) & 0x1u;
-        *value = registers->gprs.gprs[Rm];
+        *shifter_carry_out = (shifted_value >> 31u) & 0x1u;
+        *operand2 = shifted_value;
         break;
       }
 
       // ROR
-      *shifter_carry_out =
-          (registers->gprs.gprs[Rm] >> (shift_amount - 1u)) & 0x1u;
-      *value = (registers->gprs.gprs[Rm] >> shift_amount) |
-               (registers->gprs.gprs[Rm] << (32u - shift_amount));
+      *shifter_carry_out = (shifted_value >> (shift_amount - 1u)) & 0x1u;
+      *operand2 = (shifted_value >> shift_amount) |
+                  (shifted_value << (32u - shift_amount));
       break;
     default:
-      assert(false);
+      codegen_assert(false);
   }
 }
 
@@ -266,7 +277,7 @@ static inline void ArmOperandLoadStoreAddressMode(
         break;
       }
 
-      // Technically this triggers implementation defined behavior
+      // Technically this triggers implementation defined behavior in C
       *offset = registers->gprs.gprs_s[Rm] >> shift_amount;
       break;
     case 3u:
@@ -282,7 +293,7 @@ static inline void ArmOperandLoadStoreAddressMode(
                 (registers->gprs.gprs[Rm] << (32u - shift_amount));
       break;
     default:
-      assert(false);
+      codegen_assert(false);
   }
 }
 

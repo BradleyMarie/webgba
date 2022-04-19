@@ -82,164 +82,174 @@ TEST(ArmOperandHalfwordAddressMode, Compute) {
 
 TEST(ArmOperandDataProcessingImmediate, NoShiftNoCarry) {
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.cpsr.carry = false;
   uint32_t instruction = 0xE28100FFu;  // add r0, r1, #255
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &rn,
-                                    &carry_out, &value);
+  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &operand1,
+                                    &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(255u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(255u, value);
 }
 
 TEST(ArmOperandDataProcessingImmediate, NoShiftWithCarry) {
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.cpsr.carry = true;
   uint32_t instruction = 0xE28100FFu;  // add r0, r1, #255
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &rn,
-                                    &carry_out, &value);
+  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &operand1,
+                                    &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(255u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(255u, value);
 }
 
 TEST(ArmOperandDataProcessingImmediate, ShiftNoCarry) {
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   uint32_t instruction = 0xE2810A01u;  // add r0, r1, #4096
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &rn,
-                                    &carry_out, &value);
+  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &operand1,
+                                    &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(4096u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(4096u, value);
 }
 
 TEST(ArmOperandDataProcessingImmediate, ShiftWithCarry) {
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   uint32_t instruction = 0xE28104FFu;  // add r0, r1, #0xFF000000
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &rn,
-                                    &carry_out, &value);
+  ArmOperandDataProcessingImmediate(instruction, &registers, &rd, &operand1,
+                                    &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0xFF000000u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0xFF000000u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterValueNoCarry) {
   uint32_t instruction = 0xE0810002u;  // add r0, r1, r2
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.cpsr.carry = false;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterValueWithCarry) {
   uint32_t instruction = 0xE0810002u;  // add r0, r1, r2
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetLSLNoCarryOut) {
   uint32_t instruction = 0xE0810082u;  // add r0, r1, r2, lsl #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(128u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(128u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetLSLWithCarryOut) {
   uint32_t instruction = 0xE0810082u;  // add r0, r1, r2, lsl #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0xF0000000u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0xE0000000u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0xE0000000u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetLSRNoCarryOut) {
   uint32_t instruction = 0xE08100A2u;  // add r0, r1, r2, lsr #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(32u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(32u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetLSRWithCarryOut) {
   uint32_t instruction = 0xE08100A2u;  // add r0, r1, r2, lsr #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0xFu;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x7u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0x7u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -247,17 +257,18 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810022u;  // add r0, r1, r2, lsr #32
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -265,119 +276,126 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810022u;  // add r0, r1, r2, lsr #32
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0xF0000000u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetASRNoCarry) {
   uint32_t instruction = 0xE08100C2u;  // add r0, r1, r2, asr #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2_s = -64;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(-32, (int32_t)operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(-32, (int32_t)value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetASRWithCarry) {
   uint32_t instruction = 0xE08100C2u;  // add r0, r1, r2, asr #1
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2_s = -3;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(-2, (int32_t)operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(-2, (int32_t)value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetASRPositive32) {
   uint32_t instruction = 0xE0810042u;  // add r0, r1, r2, asr #32
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2_s = 3;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0, (int32_t)operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0, (int32_t)value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetASRNegative32) {
   uint32_t instruction = 0xE0810042u;  // add r0, r1, r2, asr #32
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2_s = -3;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(-1, (int32_t)operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(-1, (int32_t)value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetRORNoCarry) {
   uint32_t instruction = 0xE0810262u;  // add r0, r1, r2, ror #4
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0xC0000003u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x3C000000u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0x3C000000u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, ImmediateShiftedOffsetRORWithCarry) {
   uint32_t instruction = 0xE0810262u;  // add r0, r1, r2, ror #4
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x000000F8u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x8000000Fu, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0x8000000Fu, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -385,18 +403,19 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810062;  // add r0, r1, r2, rrx
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x00000002u;
   registers.cpsr.carry = false;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x00000001u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0x00000001u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -404,18 +423,19 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810062;  // add r0, r1, r2, rrx
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x00000003u;
   registers.cpsr.carry = false;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x00000001u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0x00000001u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -423,18 +443,19 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810062;  // add r0, r1, r2, rrx
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x00000002u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x80000001u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0x80000001u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2,
@@ -442,302 +463,353 @@ TEST(ArmOperandDataProcessingOperand2,
   uint32_t instruction = 0xE0810062;  // add r0, r1, r2, rrx
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x00000003u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x80000001u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0x80000001u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterShiftedOffsetLSL) {
   uint32_t instruction = 0xE0810312u;  // add r0, r1, r2, lsl r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 1u;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(128u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(128u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterZeroShiftedOffsetLSL) {
   uint32_t instruction = 0xE0810312u;  // add r0, r1, r2, lsl r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetLSLNoCarryOut) {
   uint32_t instruction = 0xE0810312u;  // add r0, r1, r2, lsl r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 4u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetLSLWithCarryOut) {
   uint32_t instruction = 0xE0810312u;  // add r0, r1, r2, lsl r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 1u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterLargeShiftedOffsetLSL) {
   uint32_t instruction = 0xE0810312u;  // add r0, r1, r2, lsl r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0xFFu;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterZeroShiftedOffsetLSR) {
   uint32_t instruction = 0xE0810332u;  // add r0, r1, r2, lsr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetLSRNoCarryOut) {
   uint32_t instruction = 0xE0810332u;  // add r0, r1, r2, lsr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 4u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetLSRWithCarryOut) {
   uint32_t instruction = 0xE0810332u;  // add r0, r1, r2, lsr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x80000000u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterLargeShiftedOffsetLSR) {
   uint32_t instruction = 0xE0810332u;  // add r0, r1, r2, lsr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0xFFu;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterZeroShiftedOffsetASR) {
   uint32_t instruction = 0xE0810352u;  // add r0, r1, r2, asr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetASRPositive) {
   uint32_t instruction = 0xE0810352u;  // add r0, r1, r2, asr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 4u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetASRNegative) {
   uint32_t instruction = 0xE0810352u;  // add r0, r1, r2, asr r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2_s = -4;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(-1, (int32_t)operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(-1, (int32_t)value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, RegisterZeroShiftedOffsetROR) {
   uint32_t instruction = 0xE0810372u;  // add r0, r1, r2, ror r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 64u;
   registers.gprs.r3 = 0u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(64u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(64u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetRORNoCarryOut) {
   uint32_t instruction = 0xE0810372u;  // add r0, r1, r2, ror r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x70000000u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x70000000u, operand2);
   EXPECT_FALSE(carry_out);
-  EXPECT_EQ(0x70000000u, value);
 }
 
 TEST(ArmOperandDataProcessingOperand2, Register32ShiftedOffsetRORWithCarryOut) {
   uint32_t instruction = 0xE0810372u;  // add r0, r1, r2, ror r3
 
   auto registers = CreateArmUserRegisters();
+  registers.gprs.r1 = 32u;
   registers.gprs.r2 = 0x80000000u;
   registers.gprs.r3 = 32u;
   registers.cpsr.carry = true;
 
-  ArmRegisterIndex rd, rn;
-  uint32_t value;
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
   bool carry_out;
-  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &rn,
-                                   &carry_out, &value);
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
   EXPECT_EQ(REGISTER_R0, rd);
-  EXPECT_EQ(REGISTER_R1, rn);
+  EXPECT_EQ(32u, operand1);
+  EXPECT_EQ(0x80000000u, operand2);
   EXPECT_TRUE(carry_out);
-  EXPECT_EQ(0x80000000u, value);
+}
+
+TEST(ArmOperandDataProcessingOperand2, RnIsR15) {
+  uint32_t instruction = 0xE08F0010u;  // add r0, pc, r0, lsl r0
+
+  auto registers = CreateArmUserRegisters();
+  registers.gprs.r0 = 0u;
+  registers.gprs.pc = 32u;
+
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
+  bool carry_out;
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
+  EXPECT_EQ(REGISTER_R0, rd);
+  EXPECT_EQ(36u, operand1);
+  EXPECT_EQ(0u, operand2);
+  EXPECT_FALSE(carry_out);
+}
+
+TEST(ArmOperandDataProcessingOperand2, RmIsR15) {
+  uint32_t instruction = 0xE1A0001Fu;  // mov r0, pc, lsl r0
+
+  auto registers = CreateArmUserRegisters();
+  registers.gprs.pc = 32u;
+  registers.gprs.r0 = 0u;
+
+  ArmRegisterIndex rd;
+  uint32_t operand1, operand2;
+  bool carry_out;
+  ArmOperandDataProcessingOperand2(instruction, &registers, &rd, &operand1,
+                                   &operand2, &carry_out);
+  EXPECT_EQ(REGISTER_R0, rd);
+  EXPECT_EQ(36u, operand2);
+  EXPECT_FALSE(carry_out);
 }
 
 TEST(ArmOperandLoadStoreImmediate, Compute) {
