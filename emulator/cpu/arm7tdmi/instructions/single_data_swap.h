@@ -9,8 +9,8 @@ static inline void ArmSWP(ArmAllRegisters *registers, Memory *memory,
                           ArmRegisterIndex Rd, ArmRegisterIndex Rm,
                           ArmRegisterIndex Rn) {
   uint32_t temp;
-  bool success =
-      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn], &temp);
+  bool success = ArmLoad32LEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &temp);
   if (!success) {
     ArmExceptionDataABT(registers);
     return;

@@ -170,6 +170,32 @@ TEST_F(MemoryTest, ArmSWP) {
   EXPECT_TRUE(MemoryIsZero());
 }
 
+TEST_F(MemoryTest, ArmSWPUnaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r0 = 9u;
+  registers.current.user.gprs.r1 = 0xCAFEBABE;
+  ArmSWP(&registers, memory_, REGISTER_R2, REGISTER_R1, REGISTER_R0);
+  EXPECT_EQ(9u, registers.current.user.gprs.r0);
+  EXPECT_EQ(0xCAFEBABE, registers.current.user.gprs.r1);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r2);
+  EXPECT_EQ(0x4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xCAFEBABE, memory_contents);
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0u));
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.r2 = 0u;
+  registers.current.user.gprs.pc = 0u;
+
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+  EXPECT_TRUE(MemoryIsZero());
+}
+
 TEST_F(MemoryTest, ArmSWPLoadFails) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.cpsr.mode = MODE_USR;

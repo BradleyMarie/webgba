@@ -8,9 +8,9 @@
 static inline void ArmLDRH_DAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
-  uint16_t value;
-  bool success =
-      ArmLoad16LE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
 
   if (!success) {
@@ -27,8 +27,8 @@ static inline void ArmLDRH_DAW(ArmAllRegisters *registers, const Memory *memory,
 static inline void ArmLDRH_DB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
-  uint16_t value;
-  bool success = ArmLoad16LE(
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] - offset, &value);
 
   if (!success) {
@@ -44,8 +44,8 @@ static inline void ArmLDRH_DBW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
-  uint16_t value;
-  bool success = ArmLoad16LE(memory, writeback, &value);
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);
@@ -61,9 +61,9 @@ static inline void ArmLDRH_DBW(ArmAllRegisters *registers, const Memory *memory,
 static inline void ArmLDRH_IAW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
-  uint16_t value;
-  bool success =
-      ArmLoad16LE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
 
   if (!success) {
@@ -80,8 +80,8 @@ static inline void ArmLDRH_IAW(ArmAllRegisters *registers, const Memory *memory,
 static inline void ArmLDRH_IB(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
-  uint16_t value;
-  bool success = ArmLoad16LE(
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] + offset, &value);
 
   if (!success) {
@@ -97,8 +97,8 @@ static inline void ArmLDRH_IBW(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
-  uint16_t value;
-  bool success = ArmLoad16LE(memory, writeback, &value);
+  uint32_t value;
+  bool success = ArmLoad16LEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);
@@ -218,9 +218,9 @@ static inline void ArmLDRSB_IBW(ArmAllRegisters *registers,
 static inline void ArmLDRSH_DAW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast8_t offset) {
-  int16_t value;
-  bool success =
-      ArmLoad16SLE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
 
   if (!success) {
@@ -237,8 +237,8 @@ static inline void ArmLDRSH_DAW(ArmAllRegisters *registers,
 static inline void ArmLDRSH_DB(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
-  int16_t value;
-  bool success = ArmLoad16SLE(
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] - offset, &value);
 
   if (!success) {
@@ -254,8 +254,8 @@ static inline void ArmLDRSH_DBW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
-  int16_t value;
-  bool success = ArmLoad16SLE(memory, writeback, &value);
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);
@@ -271,9 +271,9 @@ static inline void ArmLDRSH_DBW(ArmAllRegisters *registers,
 static inline void ArmLDRSH_IAW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast8_t offset) {
-  int16_t value;
-  bool success =
-      ArmLoad16SLE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
 
   if (!success) {
@@ -290,8 +290,8 @@ static inline void ArmLDRSH_IAW(ArmAllRegisters *registers,
 static inline void ArmLDRSH_IB(ArmAllRegisters *registers, const Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
-  int16_t value;
-  bool success = ArmLoad16SLE(
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] + offset, &value);
 
   if (!success) {
@@ -307,8 +307,8 @@ static inline void ArmLDRSH_IBW(ArmAllRegisters *registers,
                                 const Memory *memory, ArmRegisterIndex Rd,
                                 ArmRegisterIndex Rn, uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
-  int16_t value;
-  bool success = ArmLoad16SLE(memory, writeback, &value);
+  int32_t value;
+  bool success = ArmLoad16SLEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);

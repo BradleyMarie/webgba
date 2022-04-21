@@ -8,20 +8,9 @@ static inline uint32_t RotateRight(uint32_t value, uint_fast8_t amount) {
 
 static inline void RotateDataByAddress(uint32_t address, uint32_t *value) {
   uint_fast8_t rotate = address & 0x3u;
-  switch (rotate) {
-    case 0u:
-      break;
-    case 1u:
-      *value = RotateRight(*value, 8u);
-      break;
-    case 2u:
-      *value = RotateRight(*value, 16u);
-      break;
-    case 3u:
-      *value = RotateRight(*value, 24u);
-      break;
-    default:
-      assert(false);
+  if (rotate) {
+    assert(0u < rotate && rotate < 4u);
+    *value = RotateRight(*value, rotate * 8u);
   }
 }
 
@@ -40,9 +29,15 @@ bool ArmLoad32LE(const Memory *memory, uint32_t address, uint32_t *value) {
 }
 
 // Unaligned 16 bit reads have unpredictable behavior in the ARM
-bool ArmLoad16LE(const Memory *memory, uint32_t address, uint16_t *value) {
+bool ArmLoad16LEWithRotation(const Memory *memory, uint32_t address,
+                             uint32_t *value) {
   uint32_t masked_address = address & 0xFFFFFFFEu;
-  bool result = Load16LE(memory, masked_address, value);
+  uint16_t temp;
+  bool result = Load16LE(memory, masked_address, &temp);
+  *value = temp;
+  if (address & 0x1u) {
+    *value = RotateRight(*value, 8u);
+  }
   return result;
 }
 
@@ -61,9 +56,15 @@ bool ArmLoad32SLE(const Memory *memory, uint32_t address, int32_t *value) {
 }
 
 // Unaligned 16 bit reads have unpredictable behavior in the ARM
-bool ArmLoad16SLE(const Memory *memory, uint32_t address, int16_t *value) {
+bool ArmLoad16SLEWithRotation(const Memory *memory, uint32_t address,
+                              int32_t *value) {
   uint32_t masked_address = address & 0xFFFFFFFEu;
-  bool result = Load16SLE(memory, masked_address, value);
+  int16_t temp;
+  bool result = Load16SLE(memory, masked_address, &temp);
+  *value = temp;
+  if (address & 0x1u) {
+    *value >>= 8u;
+  }
   return result;
 }
 
