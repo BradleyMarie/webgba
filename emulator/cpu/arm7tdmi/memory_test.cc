@@ -145,18 +145,18 @@ TEST_F(MemoryTest, ArmLoad32LE_3) {
   EXPECT_EQ(0xAABBCCDDu, value);
 }
 
-TEST_F(MemoryTest, ArmLoad16LE_0) {
+TEST_F(MemoryTest, ArmLoad16LEWithRotation_0) {
   ASSERT_TRUE(Store16LE(nullptr, 0u, 0xAABBu));
-  uint16_t value;
-  ASSERT_TRUE(ArmLoad16LE(memory_, 0u, &value));
+  uint32_t value;
+  ASSERT_TRUE(ArmLoad16LEWithRotation(memory_, 0u, &value));
   EXPECT_EQ(0xAABBu, value);
 }
 
-TEST_F(MemoryTest, ArmLoad16LE_1) {
+TEST_F(MemoryTest, ArmLoad16LEWithRotation_1) {
   ASSERT_TRUE(Store16LE(nullptr, 0u, 0xAABBu));
-  uint16_t value;
-  ASSERT_TRUE(ArmLoad16LE(memory_, 1u, &value));
-  EXPECT_EQ(0xAABBu, value);
+  uint32_t value;
+  ASSERT_TRUE(ArmLoad16LEWithRotation(memory_, 1u, &value));
+  EXPECT_EQ(0xBB0000AAu, value);
 }
 
 TEST_F(MemoryTest, ArmLoad32SLEWithRotation_0) {
@@ -217,16 +217,16 @@ TEST_F(MemoryTest, ArmLoad32SLE_3) {
 
 TEST_F(MemoryTest, ArmLoad16SLE_0) {
   ASSERT_TRUE(Store16SLE(memory_, 0u, (int16_t)0xAABB));
-  int16_t value;
-  ASSERT_TRUE(ArmLoad16SLE(memory_, 0u, &value));
+  int32_t value;
+  ASSERT_TRUE(ArmLoad16SLEWithRotation(memory_, 0u, &value));
   EXPECT_EQ((int16_t)0xAABB, value);
 }
 
 TEST_F(MemoryTest, ArmLoad16SLE_1) {
   ASSERT_TRUE(Store16SLE(memory_, 0u, (int16_t)0xAABB));
-  int16_t value;
-  ASSERT_TRUE(ArmLoad16SLE(memory_, 1u, &value));
-  EXPECT_EQ((int16_t)0xAABB, value);
+  int32_t value;
+  ASSERT_TRUE(ArmLoad16SLEWithRotation(memory_, 1u, &value));
+  EXPECT_EQ((int8_t)0xAA, value);
 }
 
 TEST_F(MemoryTest, ArmStore32LE_0) {

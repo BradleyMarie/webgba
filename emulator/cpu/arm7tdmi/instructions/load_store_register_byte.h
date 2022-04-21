@@ -9,8 +9,8 @@ static inline void ArmLDR_DAW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   uint32_t value;
-  bool success =
-      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  bool success = ArmLoad32LEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
 
   if (!success) {
@@ -28,7 +28,7 @@ static inline void ArmLDR_DB(ArmAllRegisters *registers, const Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   uint32_t value;
-  bool success = ArmLoad32LE(
+  bool success = ArmLoad32LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] - offset, &value);
 
   if (!success) {
@@ -45,7 +45,7 @@ static inline void ArmLDR_DBW(ArmAllRegisters *registers, const Memory *memory,
                               uint_fast16_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
   uint32_t value;
-  bool success = ArmLoad32LE(memory, writeback, &value);
+  bool success = ArmLoad32LEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);
@@ -62,8 +62,8 @@ static inline void ArmLDR_IAW(ArmAllRegisters *registers, const Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint_fast16_t offset) {
   uint32_t value;
-  bool success =
-      ArmLoad32LE(memory, registers->current.user.gprs.gprs[Rn], &value);
+  bool success = ArmLoad32LEWithRotation(
+      memory, registers->current.user.gprs.gprs[Rn], &value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
 
   if (!success) {
@@ -81,7 +81,7 @@ static inline void ArmLDR_IB(ArmAllRegisters *registers, const Memory *memory,
                              ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                              uint32_t offset) {
   uint32_t value;
-  bool success = ArmLoad32LE(
+  bool success = ArmLoad32LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] + offset, &value);
 
   if (!success) {
@@ -98,7 +98,7 @@ static inline void ArmLDR_IBW(ArmAllRegisters *registers, const Memory *memory,
                               uint_fast16_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
   uint32_t value;
-  bool success = ArmLoad32LE(memory, writeback, &value);
+  bool success = ArmLoad32LEWithRotation(memory, writeback, &value);
 
   if (!success) {
     ArmLoadGPSR(registers, Rn, writeback);
@@ -121,7 +121,7 @@ static inline void ArmLDRT_DAW(ArmAllRegisters *registers, const Memory *memory,
 
   ArmLoadCPSR(registers, temporary_status);
   uint32_t value;
-  bool success = ArmLoad32LE(memory, address, &value);
+  bool success = ArmLoad32LEWithRotation(memory, address, &value);
   ArmLoadCPSR(registers, current_status);
 
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
@@ -146,7 +146,7 @@ static inline void ArmLDRT_DB(ArmAllRegisters *registers, const Memory *memory,
 
   ArmLoadCPSR(registers, temporary_status);
   uint32_t value;
-  bool success = ArmLoad32LE(
+  bool success = ArmLoad32LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] - offset, &value);
   ArmLoadCPSR(registers, current_status);
 
@@ -169,7 +169,7 @@ static inline void ArmLDRT_IAW(ArmAllRegisters *registers, const Memory *memory,
 
   ArmLoadCPSR(registers, temporary_status);
   uint32_t value;
-  bool success = ArmLoad32LE(memory, address, &value);
+  bool success = ArmLoad32LEWithRotation(memory, address, &value);
   ArmLoadCPSR(registers, current_status);
 
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
@@ -194,7 +194,7 @@ static inline void ArmLDRT_IB(ArmAllRegisters *registers, const Memory *memory,
 
   ArmLoadCPSR(registers, temporary_status);
   uint32_t value;
-  bool success = ArmLoad32LE(
+  bool success = ArmLoad32LEWithRotation(
       memory, registers->current.user.gprs.gprs[Rn] + offset, &value);
   ArmLoadCPSR(registers, current_status);
 

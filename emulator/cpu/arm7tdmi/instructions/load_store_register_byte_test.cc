@@ -116,6 +116,23 @@ TEST_F(MemoryTest, ArmLDR_IB) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDR_IB_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  ArmLDR_IB(&registers, memory_, REGISTER_R0, REGISTER_R0, 9u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDR_DB) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 16u;
@@ -154,6 +171,26 @@ TEST_F(MemoryTest, ArmLDR_DBW) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDR_DBW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 12u;
+  ArmLDR_DBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 3u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(9u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDR_DAW) {
   auto registers = CreateArmAllRegisters();
 
@@ -162,6 +199,26 @@ TEST_F(MemoryTest, ArmLDR_DAW) {
   ArmLDR_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
   EXPECT_EQ(4u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDR_DAW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 9u;
+  ArmLDR_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r1);
   EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint32_t memory_contents;
@@ -194,6 +251,26 @@ TEST_F(MemoryTest, ArmLDR_IBW) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDR_IBW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 4u;
+  ArmLDR_IBW(&registers, memory_, REGISTER_R0, REGISTER_R1, 5u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(9u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDR_IAW) {
   auto registers = CreateArmAllRegisters();
 
@@ -202,6 +279,26 @@ TEST_F(MemoryTest, ArmLDR_IAW) {
   ArmLDR_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
   EXPECT_EQ(12u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDR_IAW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 9u;
+  ArmLDR_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(13u, registers.current.user.gprs.r1);
   EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint32_t memory_contents;
@@ -233,6 +330,25 @@ TEST_F(MemoryTest, ArmLDRT_IB) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDRT_IB_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  ArmLDRT_IB(&registers, memory_, REGISTER_R0, REGISTER_R0, 9u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDRT_DB) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 16u;
@@ -241,6 +357,26 @@ TEST_F(MemoryTest, ArmLDRT_DB) {
   ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
   ArmLDRT_DB(&registers, memory_, REGISTER_R0, REGISTER_R0, 8u);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRT_DB_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.gprs.r0 = 16u;
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  ArmLDRT_DB(&registers, memory_, REGISTER_R0, REGISTER_R0, 7u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
   EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint32_t memory_contents;
@@ -275,6 +411,28 @@ TEST_F(MemoryTest, ArmLDRT_DAW) {
   EXPECT_TRUE(ArmAllRegistersAreZero(registers));
 }
 
+TEST_F(MemoryTest, ArmLDRT_DAW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 9u;
+  ArmLDRT_DAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(5u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
 TEST_F(MemoryTest, ArmLDRT_IAW) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.cpsr.mode = MODE_SVC;
@@ -284,6 +442,28 @@ TEST_F(MemoryTest, ArmLDRT_IAW) {
   ArmLDRT_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
   EXPECT_EQ(0xDEADC0DE, registers.current.user.gprs.r0);
   EXPECT_EQ(12u, registers.current.user.gprs.r1);
+  EXPECT_EQ(4u, registers.current.user.gprs.pc);
+
+  uint32_t memory_contents;
+  ASSERT_TRUE(Load32LE(nullptr, 8u, &memory_contents));
+  EXPECT_EQ(0xDEADC0DE, memory_contents);
+
+  registers.current.user.cpsr.mode = 0u;
+  registers.current.user.gprs.r0 = 0u;
+  registers.current.user.gprs.r1 = 0u;
+  registers.current.user.gprs.pc = 0u;
+  EXPECT_TRUE(ArmAllRegistersAreZero(registers));
+}
+
+TEST_F(MemoryTest, ArmLDRT_IAW_Unaligned) {
+  auto registers = CreateArmAllRegisters();
+  registers.current.user.cpsr.mode = MODE_SVC;
+
+  ASSERT_TRUE(Store32LE(nullptr, 8u, 0xDEADC0DE));
+  registers.current.user.gprs.r1 = 9u;
+  ArmLDRT_IAW(&registers, memory_, REGISTER_R0, REGISTER_R1, 4u);
+  EXPECT_EQ(0xDEDEADC0, registers.current.user.gprs.r0);
+  EXPECT_EQ(13u, registers.current.user.gprs.r1);
   EXPECT_EQ(4u, registers.current.user.gprs.pc);
 
   uint32_t memory_contents;
