@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/exceptions.h"
+#include "util/macros.h"
 
 static inline bool ArmModeIsUsrOrSys(ArmProgramStatusRegister cpsr) {
   return cpsr.mode == MODE_USR || cpsr.mode == MODE_SYS;
@@ -741,8 +742,14 @@ void ArmSTMDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   int i;
   while (NextRegister(&register_list, &i)) {
-    bool success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    bool success = ArmStore32LE(memory, address, value);
     if (!success) {
       ArmExceptionDataABT(registers);
       return;
@@ -762,8 +769,14 @@ void ArmSTMDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   int i;
   while (NextRegister(&register_list, &i)) {
-    bool success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    bool success = ArmStore32LE(memory, address, value);
     if (!success) {
       ArmExceptionDataABT(registers);
       return;
@@ -786,8 +799,14 @@ void ArmSTMDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -820,8 +839,14 @@ void ArmSTMDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -850,8 +875,14 @@ void ArmSTMIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   int i;
   while (NextRegister(&register_list, &i)) {
-    bool success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    bool success = ArmStore32LE(memory, address, value);
     if (!success) {
       ArmExceptionDataABT(registers);
       return;
@@ -870,9 +901,15 @@ void ArmSTMIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 
   int i;
   while (NextRegister(&register_list, &i)) {
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
     address += 4u;
-    bool success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    bool success = ArmStore32LE(memory, address, value);
     if (!success) {
       ArmExceptionDataABT(registers);
       return;
@@ -894,8 +931,14 @@ void ArmSTMIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -927,9 +970,15 @@ void ArmSTMIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
     address += 4u;
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -969,8 +1018,14 @@ void ArmSTMSDA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1009,8 +1064,14 @@ void ArmSTMSDB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1052,8 +1113,14 @@ void ArmSTMSDAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1100,8 +1167,14 @@ void ArmSTMSDBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1144,8 +1217,14 @@ void ArmSTMSIA(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1183,9 +1262,15 @@ void ArmSTMSIB(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
     address += 4u;
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1226,8 +1311,14 @@ void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }
@@ -1274,9 +1365,15 @@ void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   bool success = true;
   int i;
   while (NextRegister(&register_list, &i)) {
+    uint32_t value = registers->current.user.gprs.gprs[i];
+    // Including R15 in the register list triggers unpredictable behavior
+    if (i == REGISTER_R15) {
+      codegen_assert(!registers->current.user.cpsr.thumb);
+      value += 4u;
+    }
+
     address += 4u;
-    success =
-        ArmStore32LE(memory, address, registers->current.user.gprs.gprs[i]);
+    success = ArmStore32LE(memory, address, value);
     if (!success) {
       break;
     }

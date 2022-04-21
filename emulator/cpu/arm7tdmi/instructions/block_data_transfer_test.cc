@@ -1144,6 +1144,8 @@ class StmTest : public testing::TestWithParam<uint16_t> {
         address -= 4;
         if (index == address_register) {
           EXPECT_EQ(address_register_initial_value, value);
+        } else if (index == REGISTER_R15) {
+          EXPECT_EQ(index + 5, value);
         } else {
           EXPECT_EQ(index + 1, value);
         }
@@ -1172,6 +1174,8 @@ class StmTest : public testing::TestWithParam<uint16_t> {
         address += 4;
         if (i == address_register) {
           EXPECT_EQ(address_register_initial_value, value);
+        } else if (i == REGISTER_R15) {
+          EXPECT_EQ(i + 5, value);
         } else {
           EXPECT_EQ(i + 1, value);
         }

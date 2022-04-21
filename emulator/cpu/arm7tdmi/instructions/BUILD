@@ -10,6 +10,7 @@ cc_library(
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
     ],
 )
 
