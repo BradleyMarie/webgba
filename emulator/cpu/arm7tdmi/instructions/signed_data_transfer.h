@@ -325,6 +325,10 @@ static inline void ArmSTRH_DAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success =
       ArmStore16LE(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
@@ -337,13 +341,16 @@ static inline void ArmSTRH_DAW(ArmAllRegisters *registers, Memory *memory,
 
   ArmAdvanceProgramCounter(registers);
   ArmLoadGPSR(registers, Rn, writeback);
-  ArmLoadGPSR(registers, Rd, value);
 }
 
 static inline void ArmSTRH_DB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success = ArmStore16LE(
       memory, registers->current.user.gprs.gprs[Rn] - offset, value);
 
@@ -359,6 +366,10 @@ static inline void ArmSTRH_DBW(ArmAllRegisters *registers, Memory *memory,
                                uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success = ArmStore16LE(memory, writeback, value);
 
   if (!success) {
@@ -375,6 +386,10 @@ static inline void ArmSTRH_IAW(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint_fast8_t offset) {
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success =
       ArmStore16LE(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
@@ -393,6 +408,10 @@ static inline void ArmSTRH_IB(ArmAllRegisters *registers, Memory *memory,
                               ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                               uint32_t offset) {
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success = ArmStore16LE(
       memory, registers->current.user.gprs.gprs[Rn] + offset, value);
 
@@ -408,6 +427,10 @@ static inline void ArmSTRH_IBW(ArmAllRegisters *registers, Memory *memory,
                                uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
   uint16_t value = registers->current.user.gprs.gprs[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4u;
+  }
+
   bool success = ArmStore16LE(memory, writeback, value);
 
   if (!success) {
@@ -424,6 +447,10 @@ static inline void ArmSTRSB_DAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast8_t offset) {
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = Store8S(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
 
@@ -441,6 +468,10 @@ static inline void ArmSTRSB_DB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success =
       Store8S(memory, registers->current.user.gprs.gprs[Rn] - offset, value);
 
@@ -456,6 +487,10 @@ static inline void ArmSTRSB_DBW(ArmAllRegisters *registers, Memory *memory,
                                 uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = Store8S(memory, writeback, value);
 
   if (!success) {
@@ -472,6 +507,10 @@ static inline void ArmSTRSB_IAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast8_t offset) {
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = Store8S(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
 
@@ -489,6 +528,10 @@ static inline void ArmSTRSB_IB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success =
       Store8S(memory, registers->current.user.gprs.gprs[Rn] + offset, value);
 
@@ -505,6 +548,10 @@ static inline void ArmSTRSB_IBW(ArmAllRegisters *registers, Memory *memory,
                                 uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
   int8_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = Store8S(memory, writeback, value);
 
   if (!success) {
@@ -521,6 +568,10 @@ static inline void ArmSTRSH_DAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast8_t offset) {
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success =
       ArmStore16SLE(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
@@ -539,6 +590,10 @@ static inline void ArmSTRSH_DB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = ArmStore16SLE(
       memory, registers->current.user.gprs.gprs[Rn] - offset, value);
 
@@ -555,6 +610,10 @@ static inline void ArmSTRSH_DBW(ArmAllRegisters *registers, Memory *memory,
                                 uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] - offset;
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = ArmStore16SLE(memory, writeback, value);
 
   if (!success) {
@@ -571,6 +630,10 @@ static inline void ArmSTRSH_IAW(ArmAllRegisters *registers, Memory *memory,
                                 ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                 uint_fast8_t offset) {
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success =
       ArmStore16SLE(memory, registers->current.user.gprs.gprs[Rn], value);
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
@@ -589,6 +652,10 @@ static inline void ArmSTRSH_IB(ArmAllRegisters *registers, Memory *memory,
                                ArmRegisterIndex Rd, ArmRegisterIndex Rn,
                                uint32_t offset) {
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = ArmStore16SLE(
       memory, registers->current.user.gprs.gprs[Rn] + offset, value);
 
@@ -605,6 +672,10 @@ static inline void ArmSTRSH_IBW(ArmAllRegisters *registers, Memory *memory,
                                 uint_fast8_t offset) {
   uint32_t writeback = registers->current.user.gprs.gprs[Rn] + offset;
   int16_t value = registers->current.user.gprs.gprs_s[Rd];
+  if (Rd == REGISTER_R15) {
+    value += 4;
+  }
+
   bool success = ArmStore16SLE(memory, writeback, value);
 
   if (!success) {
