@@ -114,6 +114,18 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
   void ValidateGeneralPurposeRegisterContentsDescending(
       const ArmAllRegisters &registers, ArmRegisterIndex address_register,
       uint32_t address_register_expected_value, uint_fast16_t register_list) {
+    if (register_list == 0u) {
+      for (uint32_t i = 0u; i <= 14u; i++) {
+        if (i == address_register) {
+          EXPECT_EQ(address_register_expected_value,
+                    registers.current.user.gprs.gprs[i]);
+        } else {
+          EXPECT_EQ(0u, registers.current.user.gprs.gprs[i]);
+        }
+      }
+      return;
+    }
+
     uint32_t expected_value = 16u;
     for (uint32_t i = 0u; i < 16u; i++) {
       uint32_t index = 15u - i;
@@ -147,6 +159,18 @@ class LdmTest : public testing::TestWithParam<uint16_t> {
   void ValidateGeneralPurposeRegisterContentsAscending(
       const ArmAllRegisters &registers, ArmRegisterIndex address_register,
       uint32_t address_register_expected_value, uint_fast16_t register_list) {
+    if (register_list == 0u) {
+      for (uint32_t i = 0u; i <= 14u; i++) {
+        if (i == address_register) {
+          EXPECT_EQ(address_register_expected_value,
+                    registers.current.user.gprs.gprs[i]);
+        } else {
+          EXPECT_EQ(0u, registers.current.user.gprs.gprs[i]);
+        }
+      }
+      return;
+    }
+
     uint32_t expected_value = 1u;
     for (uint32_t i = 0u; i < 16u; i++) {
       if (register_list & (1u << i)) {
@@ -212,6 +236,8 @@ TEST_P(LdmTest, ArmLDMDAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x13Cu - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -230,6 +256,8 @@ TEST_P(LdmTest, ArmLDMDBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x140u - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -268,6 +296,8 @@ TEST_P(LdmTest, ArmLDMIAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x100u + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -286,6 +316,8 @@ TEST_P(LdmTest, ArmLDMIBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0xFCu + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -361,6 +393,8 @@ TEST_P(LdmTest, ArmLDMSDAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x13Cu - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -397,6 +431,8 @@ TEST_P(LdmTest, ArmLDMSDBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x140u - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -489,6 +525,8 @@ TEST_P(LdmTest, ArmLDMSIAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x100u + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -525,6 +563,8 @@ TEST_P(LdmTest, ArmLDMSIBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0xFCu + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -617,6 +657,8 @@ TEST_P(LdmTest, SysArmLDMSDAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x13Cu - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -653,6 +695,8 @@ TEST_P(LdmTest, SysArmLDMSDBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x140u - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -745,6 +789,8 @@ TEST_P(LdmTest, SysArmLDMSIAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x100u + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -781,6 +827,8 @@ TEST_P(LdmTest, SysArmLDMSIBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0xFCu + 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -882,6 +930,8 @@ TEST_P(LdmTest, SvcArmLDMSDAW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x13Cu - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -916,6 +966,8 @@ TEST_P(LdmTest, SvcArmLDMSDBW) {
   uint32_t address_register_expected_value;
   if (GetParam() & (1u << REGISTER_R0)) {
     address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x140u - 0x40u;
   } else {
     address_register_expected_value = end_address;
   }
@@ -999,7 +1051,13 @@ TEST_P(LdmTest, SvcArmLDMSIAW) {
     ArmLoadCPSR(&registers, new_status);
   }
 
-  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x100u + 0x40u;
+  } else {
+    end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0,
                                                   end_address, GetParam());
 }
@@ -1029,7 +1087,13 @@ TEST_P(LdmTest, SvcArmLDMSIBW) {
     ArmLoadCPSR(&registers, new_status);
   }
 
-  uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0xFCu + 0x40u;
+  } else {
+    end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateGeneralPurposeRegisterContentsAscending(registers, REGISTER_R0,
                                                   end_address, GetParam());
 }
@@ -1065,6 +1129,8 @@ class StmTest : public testing::TestWithParam<uint16_t> {
     registers_.current.user.gprs.r13 = 14u;
     registers_.current.user.gprs.r14 = 15u;
     registers_.current.user.gprs.r15 = 16u;
+    registers_.current.user.cpsr.value = 0u;
+    registers_.current.user.cpsr.mode = MODE_USR;
   }
 
   void TearDown() override { MemoryFree(memory_); }
@@ -1656,6 +1722,8 @@ class MemoryFailsTest : public testing::TestWithParam<uint16_t> {
     registers_.current.user.gprs.r13 = 14u;
     registers_.current.user.gprs.r14 = 15u;
     registers_.current.user.gprs.r15 = 16u;
+    registers_.current.user.cpsr.value = 0u;
+    registers_.current.user.cpsr.mode = MODE_USR;
   }
 
   void TearDown() override { MemoryFree(memory_); }
