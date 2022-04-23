@@ -202,7 +202,13 @@ TEST_F(ExecuteTest, THUMB_OPCODE_ADD_ANY) {
   EXPECT_EQ(0x10Cu, ArmCurrentInstruction(&registers_));
 }
 
-TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC) {
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC_0) {
+  RunInstruction("0x0046");  // nop
+  RunInstruction("0xFFA7");  // add r7, pc, #1020
+  EXPECT_EQ(1284u, registers_.current.user.gprs.r7);
+}
+
+TEST_F(ExecuteTest, THUMB_OPCODE_ADD_PC_1) {
   RunInstruction("0xFFA7");  // add r7, pc, #1020
   EXPECT_EQ(1284u, registers_.current.user.gprs.r7);
 }

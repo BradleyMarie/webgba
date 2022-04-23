@@ -43,7 +43,8 @@ static inline void ThumbInstructionExecute(uint16_t next_instruction,
       break;
     case THUMB_OPCODE_ADD_PC:
       ThumbOperandAddToSPOrPC(next_instruction, &rd, &immediate_16);
-      ArmADD(registers, rd, registers->current.user.gprs.gprs[REGISTER_R15],
+      ArmADD(registers, rd,
+             registers->current.user.gprs.gprs[REGISTER_R15] & 0xFFFFFFFCu,
              immediate_16);
       break;
     case THUMB_OPCODE_ADD_SP:
