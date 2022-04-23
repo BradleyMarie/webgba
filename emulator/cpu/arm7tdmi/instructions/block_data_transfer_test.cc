@@ -1201,6 +1201,13 @@ class StmTest : public testing::TestWithParam<uint16_t> {
                                         ArmRegisterIndex address_register,
                                         uint32_t address_register_initial_value,
                                         uint_fast16_t register_list) {
+    if (register_list == 0u) {
+      uint32_t value;
+      EXPECT_TRUE(Load32LE(memory_, address - 60u, &value));
+      EXPECT_EQ(20u, value);
+      return;
+    }
+
     uint32_t initial_address = address;
     for (uint32_t i = 0u; i < 16u; i++) {
       uint32_t index = 15u - i;
@@ -1232,6 +1239,13 @@ class StmTest : public testing::TestWithParam<uint16_t> {
                                        ArmRegisterIndex address_register,
                                        uint32_t address_register_initial_value,
                                        uint_fast16_t register_list) {
+    if (register_list == 0u) {
+      uint32_t value;
+      EXPECT_TRUE(Load32LE(memory_, address, &value));
+      EXPECT_EQ(20u, value);
+      return;
+    }
+
     uint32_t initial_address = address;
     for (uint32_t i = 0u; i < 16u; i++) {
       uint32_t value;
@@ -1300,7 +1314,13 @@ TEST_P(StmTest, ArmSTMDAW) {
 
   registers_.current.user.gprs.r0 = 0x13Cu;
   ArmSTMDAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x13Cu - 0x40u;
+  } else {
+    end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1314,7 +1334,13 @@ TEST_P(StmTest, ArmSTMDBW) {
 
   registers_.current.user.gprs.r0 = 0x140u;
   ArmSTMDBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x140u - 0x40u;
+  } else {
+    end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1344,7 +1370,13 @@ TEST_P(StmTest, ArmSTMIAW) {
 
   registers_.current.user.gprs.r0 = 0x100u;
   ArmSTMIAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x100u + 0x40u;
+  } else {
+    end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1357,7 +1389,13 @@ TEST_P(StmTest, ArmSTMIBW) {
 
   registers_.current.user.gprs.r0 = 0xFCu;
   ArmSTMIBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0xFCu + 0x40u;
+  } else {
+    end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1389,7 +1427,13 @@ TEST_P(StmTest, ArmSTMSDAW) {
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_USR;
   ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x13Cu - 0x40u;
+  } else {
+    end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1404,7 +1448,13 @@ TEST_P(StmTest, ArmSTMSDBW) {
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_USR;
   ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x140u - 0x40u;
+  } else {
+    end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1437,7 +1487,13 @@ TEST_P(StmTest, ArmSTMSIAW) {
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_USR;
   ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x100u + 0x40u;
+  } else {
+    end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1451,7 +1507,13 @@ TEST_P(StmTest, ArmSTMSIBW) {
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_USR;
   ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0xFCu + 0x40u;
+  } else {
+    end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1483,7 +1545,13 @@ TEST_P(StmTest, SysArmSTMSDAW) {
   registers_.current.user.gprs.r0 = 0x13Cu;
   registers_.current.user.cpsr.mode = MODE_SYS;
   ArmSTMSDAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x13Cu - 0x40u;
+  } else {
+    end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1498,7 +1566,13 @@ TEST_P(StmTest, SysArmSTMSDBW) {
   registers_.current.user.gprs.r0 = 0x140u;
   registers_.current.user.cpsr.mode = MODE_SYS;
   ArmSTMSDBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x140u - 0x40u;
+  } else {
+    end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
@@ -1531,7 +1605,13 @@ TEST_P(StmTest, SysArmSTMSIAW) {
   registers_.current.user.gprs.r0 = 0x100u;
   registers_.current.user.cpsr.mode = MODE_SYS;
   ArmSTMSIAW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x100u + 0x40u;
+  } else {
+    end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1545,7 +1625,13 @@ TEST_P(StmTest, SysArmSTMSIBW) {
   registers_.current.user.gprs.r0 = 0xFCu;
   registers_.current.user.cpsr.mode = MODE_SYS;
   ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
-  uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0xFCu + 0x40u;
+  } else {
+    end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  }
 
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1596,7 +1682,13 @@ TEST_P(StmTest, SvcArmSTMSDAW) {
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
-  uint32_t end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x13Cu - 0x40u;
+  } else {
+    end_address = 0x13Cu - __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1617,7 +1709,13 @@ TEST_P(StmTest, SvcArmSTMSDBW) {
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
-  uint32_t end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x140u - 0x40u;
+  } else {
+    end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateMemoryContentsDescending(0x13Cu, REGISTER_R0, end_address,
                                    GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
@@ -1668,7 +1766,13 @@ TEST_P(StmTest, SvcArmSTMSIAW) {
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
-  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x100u + 0x40u;
+  } else {
+    end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
 }
@@ -1688,7 +1792,13 @@ TEST_P(StmTest, SvcArmSTMSIBW) {
   new_status.mode = MODE_USR;
   ArmLoadCPSR(&registers_, new_status);
 
-  uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0xFCu + 0x40u;
+  } else {
+    end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
+  }
+
   ValidateMemoryContentsAscending(0x100u, REGISTER_R0, end_address, GetParam());
   ValidateRegisters(REGISTER_R0, end_address);
 }

@@ -340,60 +340,120 @@ static inline void ArmSTM(ArmAllRegisters *registers, Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t input_address = registers->current.user.gprs.gprs[Rn];
 
-  uint32_t output_address, load_address;
-  switch (address_mode) {
-    case ADDRESS_MODE_DECREMENT_AFTER:
-      output_address = input_address - size;
-      load_address = output_address + 4u;
-      break;
-    case ADDRESS_MODE_DECREMENT_BEFORE:
-      output_address = input_address - size;
-      load_address = output_address;
-      break;
-    case ADDRESS_MODE_INCREMENT_AFTER:
-      output_address = input_address + size;
-      load_address = input_address;
-      break;
-    default:
-      codegen_assert(false);
-    case ADDRESS_MODE_INCREMENT_BEFORE:
-      output_address = input_address + size;
-      load_address = input_address + 4u;
-      break;
-  }
-
-  uint_fast16_t register_list_mutable = register_list;
-
-  bool success = true;
-  int i;
-  while (NextRegister(&register_list_mutable, &i)) {
-    uint32_t value = registers->current.user.gprs.gprs[i];
-    // Including R15 in the register list triggers unpredictable behavior
-    if (i == REGISTER_R15) {
-      codegen_assert(!registers->current.user.cpsr.thumb);
-      value += 4u;
+  if (register_list != 0u) {
+    uint32_t output_address, load_address;
+    switch (address_mode) {
+      case ADDRESS_MODE_DECREMENT_AFTER:
+        output_address = input_address - size;
+        load_address = output_address + 4u;
+        break;
+      case ADDRESS_MODE_DECREMENT_BEFORE:
+        output_address = input_address - size;
+        load_address = output_address;
+        break;
+      case ADDRESS_MODE_INCREMENT_AFTER:
+        output_address = input_address + size;
+        load_address = input_address;
+        break;
+      default:
+        codegen_assert(false);
+      case ADDRESS_MODE_INCREMENT_BEFORE:
+        output_address = input_address + size;
+        load_address = input_address + 4u;
+        break;
     }
 
-    success = ArmStore32LE(memory, load_address, value);
+    uint_fast16_t register_list_mutable = register_list;
+
+    bool success = true;
+    int i;
+    while (NextRegister(&register_list_mutable, &i)) {
+      uint32_t value = registers->current.user.gprs.gprs[i];
+      if (i != Rn) {
+        // Including R15 in the register list triggers unpredictable behavior
+        if (i == REGISTER_R15) {
+          codegen_assert(!registers->current.user.cpsr.thumb);
+          value += 4u;
+        }
+      } else {
+        // Including base in the register list triggers unpredictable behavior
+        if (i == __builtin_ctz(register_list)) {
+          value = input_address;
+        } else {
+          switch (address_mode) {
+            case ADDRESS_MODE_DECREMENT_AFTER:
+            case ADDRESS_MODE_DECREMENT_BEFORE:
+              value = input_address - size;
+              break;
+            default:
+              codegen_assert(false);
+            case ADDRESS_MODE_INCREMENT_AFTER:
+            case ADDRESS_MODE_INCREMENT_BEFORE:
+              value = input_address + size;
+              break;
+          }
+        }
+      }
+
+      success = ArmStore32LE(memory, load_address, value);
+      if (!success) {
+        break;
+      }
+      load_address += 4u;
+    }
+
+    if (writeback) {
+      registers->current.user.gprs.gprs[Rn] = output_address;
+    }
+
     if (!success) {
-      break;
+      ArmExceptionDataABT(registers);
+      return;
     }
-    load_address += 4u;
-  }
 
-  if (writeback) {
-    registers->current.user.gprs.gprs[Rn] = output_address;
-  }
-
-  if (!success) {
-    ArmExceptionDataABT(registers);
-    return;
-  }
-
-  if (writeback && Rn == REGISTER_PC) {
-    ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+    if (writeback && Rn == REGISTER_PC) {
+      ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+    } else {
+      ArmAdvanceProgramCounter(registers);
+    }
   } else {
-    ArmAdvanceProgramCounter(registers);
+    uint32_t output_address, write_address;
+    switch (address_mode) {
+      case ADDRESS_MODE_DECREMENT_AFTER:
+        write_address = input_address - 60u;
+        output_address = input_address - 64u;
+        break;
+      case ADDRESS_MODE_DECREMENT_BEFORE:
+        write_address = input_address - 64u;
+        output_address = input_address - 64u;
+        break;
+      default:
+        codegen_assert(false);
+      case ADDRESS_MODE_INCREMENT_AFTER:
+        write_address = input_address;
+        output_address = input_address + 64u;
+        break;
+      case ADDRESS_MODE_INCREMENT_BEFORE:
+        write_address = input_address + 4u;
+        output_address = input_address + 64u;
+        break;
+    }
+
+    bool success = ArmStore32LE(memory, write_address,
+                                registers->current.user.gprs.pc +
+                                    (4u >> registers->current.user.cpsr.thumb));
+    if (!success) {
+      ArmExceptionDataABT(registers);
+      return;
+    }
+
+    if (writeback) {
+      ArmLoadGPSR(registers, Rn, output_address);
+    }
+
+    if (!writeback || Rn != REGISTER_PC) {
+      ArmAdvanceProgramCounter(registers);
+    }
   }
 }
 
@@ -415,64 +475,128 @@ static inline void ArmSTMS(ArmAllRegisters *registers, Memory *memory,
   uint_fast8_t size = PopCount(register_list) * 4u;
   uint32_t input_address = registers->current.user.gprs.gprs[Rn];
 
-  uint32_t output_address, load_address;
-  switch (address_mode) {
-    case ADDRESS_MODE_DECREMENT_AFTER:
-      output_address = input_address - size;
-      load_address = output_address + 4u;
-      break;
-    case ADDRESS_MODE_DECREMENT_BEFORE:
-      output_address = input_address - size;
-      load_address = output_address;
-      break;
-    case ADDRESS_MODE_INCREMENT_AFTER:
-      output_address = input_address + size;
-      load_address = input_address;
-      break;
-    default:
-      codegen_assert(false);
-    case ADDRESS_MODE_INCREMENT_BEFORE:
-      output_address = input_address + size;
-      load_address = input_address + 4u;
-      break;
-  }
-
-  uint_fast16_t register_list_mutable = register_list;
-
-  bool success = true;
-  int i;
-  while (NextRegister(&register_list_mutable, &i)) {
-    uint32_t value = registers->current.user.gprs.gprs[i];
-    // Including R15 in the register list triggers unpredictable behavior
-    if (i == REGISTER_R15) {
-      codegen_assert(!registers->current.user.cpsr.thumb);
-      value += 4u;
+  if (register_list != 0u) {
+    uint32_t output_address, load_address;
+    switch (address_mode) {
+      case ADDRESS_MODE_DECREMENT_AFTER:
+        output_address = input_address - size;
+        load_address = output_address + 4u;
+        break;
+      case ADDRESS_MODE_DECREMENT_BEFORE:
+        output_address = input_address - size;
+        load_address = output_address;
+        break;
+      case ADDRESS_MODE_INCREMENT_AFTER:
+        output_address = input_address + size;
+        load_address = input_address;
+        break;
+      default:
+        codegen_assert(false);
+      case ADDRESS_MODE_INCREMENT_BEFORE:
+        output_address = input_address + size;
+        load_address = input_address + 4u;
+        break;
     }
 
-    success = ArmStore32LE(memory, load_address, value);
+    uint_fast16_t register_list_mutable = register_list;
+
+    bool success = true;
+    int i;
+    while (NextRegister(&register_list_mutable, &i)) {
+      uint32_t value = registers->current.user.gprs.gprs[i];
+      if (i != Rn) {
+        // Including R15 in the register list triggers unpredictable behavior
+        if (i == REGISTER_R15) {
+          codegen_assert(!registers->current.user.cpsr.thumb);
+          value += 4u;
+        }
+      } else {
+        // Including base in the register list triggers unpredictable behavior
+        if (i == __builtin_ctz(register_list)) {
+          value = input_address;
+        } else {
+          switch (address_mode) {
+            case ADDRESS_MODE_DECREMENT_AFTER:
+            case ADDRESS_MODE_DECREMENT_BEFORE:
+              value = input_address - size;
+              break;
+            default:
+              codegen_assert(false);
+            case ADDRESS_MODE_INCREMENT_AFTER:
+            case ADDRESS_MODE_INCREMENT_BEFORE:
+              value = input_address + size;
+              break;
+          }
+        }
+      }
+
+      success = ArmStore32LE(memory, load_address, value);
+      if (!success) {
+        break;
+      }
+      load_address += 4u;
+    }
+
+    if (writeback) {
+      registers->current.user.gprs.gprs[Rn] = output_address;
+    }
+
     if (!success) {
-      break;
-    }
-    load_address += 4u;
-  }
+      if (change_to_usr) {
+        ArmLoadCPSR(registers, original_cpsr);
+      }
 
-  if (writeback) {
-    registers->current.user.gprs.gprs[Rn] = output_address;
-  }
-
-  if (!success) {
-    if (change_to_usr) {
-      ArmLoadCPSR(registers, original_cpsr);
+      ArmExceptionDataABT(registers);
+      return;
     }
 
-    ArmExceptionDataABT(registers);
-    return;
-  }
-
-  if (writeback && Rn == REGISTER_PC) {
-    ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+    if (writeback && Rn == REGISTER_PC) {
+      ArmLoadGPSR(registers, REGISTER_PC, registers->current.user.gprs.pc);
+    } else {
+      ArmAdvanceProgramCounter(registers);
+    }
   } else {
-    ArmAdvanceProgramCounter(registers);
+    uint32_t output_address, write_address;
+    switch (address_mode) {
+      case ADDRESS_MODE_DECREMENT_AFTER:
+        write_address = input_address - 60u;
+        output_address = input_address - 64u;
+        break;
+      case ADDRESS_MODE_DECREMENT_BEFORE:
+        write_address = input_address - 64u;
+        output_address = input_address - 64u;
+        break;
+      default:
+        codegen_assert(false);
+      case ADDRESS_MODE_INCREMENT_AFTER:
+        write_address = input_address;
+        output_address = input_address + 64u;
+        break;
+      case ADDRESS_MODE_INCREMENT_BEFORE:
+        write_address = input_address + 4u;
+        output_address = input_address + 64u;
+        break;
+    }
+
+    bool success = ArmStore32LE(memory, write_address,
+                                registers->current.user.gprs.pc +
+                                    (4u >> registers->current.user.cpsr.thumb));
+    if (!success) {
+      if (change_to_usr) {
+        ArmLoadCPSR(registers, original_cpsr);
+      }
+
+      ArmExceptionDataABT(registers);
+      return;
+    }
+
+    if (writeback) {
+      ArmLoadGPSR(registers, Rn, output_address);
+    }
+
+    if (!writeback || Rn != REGISTER_PC) {
+      ArmAdvanceProgramCounter(registers);
+    }
   }
 
   if (change_to_usr) {
