@@ -3,14 +3,8 @@
 #include <assert.h>
 
 #include "emulator/cpu/arm7tdmi/exceptions.h"
+#include "emulator/cpu/arm7tdmi/instructions/address_mode.h"
 #include "util/macros.h"
-
-typedef enum {
-  ADDRESS_MODE_DECREMENT_AFTER,
-  ADDRESS_MODE_DECREMENT_BEFORE,
-  ADDRESS_MODE_INCREMENT_AFTER,
-  ADDRESS_MODE_INCREMENT_BEFORE,
-} ArmAddressMode;
 
 static inline uint_fast8_t PopCount(uint_fast16_t value) {
   return __builtin_popcount(value);
