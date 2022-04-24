@@ -3,10 +3,16 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//emulator/cpu/arm7tdmi:__subpackages__"])
 
 cc_library(
+    name = "address_mode",
+    hdrs = ["address_mode.h"],
+)
+
+cc_library(
     name = "block_data_transfer",
     srcs = ["block_data_transfer.c"],
     hdrs = ["block_data_transfer.h"],
     deps = [
+        ":address_mode",
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
@@ -120,9 +126,11 @@ cc_library(
     name = "load_store_register_byte",
     hdrs = ["load_store_register_byte.h"],
     deps = [
+        ":address_mode",
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
     ],
 )
 
@@ -190,9 +198,11 @@ cc_library(
     name = "signed_data_transfer",
     hdrs = ["signed_data_transfer.h"],
     deps = [
+        ":address_mode",
         "//emulator/cpu/arm7tdmi:exceptions",
         "//emulator/cpu/arm7tdmi:memory",
         "//emulator/cpu/arm7tdmi:registers",
+        "//util:macros",
     ],
 )
 
