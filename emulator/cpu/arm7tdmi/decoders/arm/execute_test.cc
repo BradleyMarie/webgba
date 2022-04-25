@@ -917,7 +917,7 @@ TEST_F(ExecuteTest, LDR_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_DAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -935,7 +935,7 @@ TEST_F(ExecuteTest, LDRB_DAW) {
 }
 
 TEST_F(ExecuteTest, LDRB_DAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042050E4");  // ldrb r2, [r0], #-4
@@ -952,7 +952,7 @@ TEST_F(ExecuteTest, LDRB_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_DB) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -965,7 +965,7 @@ TEST_F(ExecuteTest, LDRB_DB) {
 }
 
 TEST_F(ExecuteTest, LDRB_DB_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042050E5");  // ldrb r2, [r0, #-4]
@@ -977,7 +977,7 @@ TEST_F(ExecuteTest, LDRB_DB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_DBW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -995,7 +995,7 @@ TEST_F(ExecuteTest, LDRB_DBW) {
 }
 
 TEST_F(ExecuteTest, LDRB_DBW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042070E5");  // ldrb r2, [r0, #-4]!
@@ -1012,7 +1012,7 @@ TEST_F(ExecuteTest, LDRB_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_IAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1030,7 +1030,7 @@ TEST_F(ExecuteTest, LDRB_IAW) {
 }
 
 TEST_F(ExecuteTest, LDRB_IAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x0420D0E4");  // ldrb r2, [r0], #4
@@ -1047,7 +1047,7 @@ TEST_F(ExecuteTest, LDRB_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_IB) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1060,7 +1060,7 @@ TEST_F(ExecuteTest, LDRB_IB) {
 }
 
 TEST_F(ExecuteTest, LDRB_IB_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0x0420D0E5");  // ldrb r2, [r0, #4]
@@ -1072,7 +1072,7 @@ TEST_F(ExecuteTest, LDRB_IB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRB_IBW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1090,7 +1090,7 @@ TEST_F(ExecuteTest, LDRB_IBW) {
 }
 
 TEST_F(ExecuteTest, LDRB_IBW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0x0420F0E5");  // ldrb r2, [r0, #4]!
@@ -1107,7 +1107,7 @@ TEST_F(ExecuteTest, LDRB_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRBT_DAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1125,7 +1125,7 @@ TEST_F(ExecuteTest, LDRBT_DAW) {
 }
 
 TEST_F(ExecuteTest, LDRBT_DAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042070E4");  // ldrbt r2, [r0], #-4
@@ -1142,7 +1142,7 @@ TEST_F(ExecuteTest, LDRBT_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRBT_IAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1160,7 +1160,7 @@ TEST_F(ExecuteTest, LDRBT_IAW) {
 }
 
 TEST_F(ExecuteTest, LDRBT_IAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x0420F0E4");  // ldrbt r2, [r0], #4
@@ -1177,13 +1177,13 @@ TEST_F(ExecuteTest, LDRBT_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_DAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12010E0");  // ldrh r2, [r0], -r1
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1195,12 +1195,12 @@ TEST_F(ExecuteTest, LDRH_DAW) {
 }
 
 TEST_F(ExecuteTest, LDRH_DAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xB42050E0");  // ldrh r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1212,12 +1212,12 @@ TEST_F(ExecuteTest, LDRH_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_DB) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12010E1");  // ldrh r2, [r0, -r1]
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -1225,11 +1225,11 @@ TEST_F(ExecuteTest, LDRH_DB) {
 }
 
 TEST_F(ExecuteTest, LDRH_DB_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xB42050E1");  // ldrh r2, [r0, #-4]
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -1237,13 +1237,13 @@ TEST_F(ExecuteTest, LDRH_DB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_DBW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12030E1");  // ldrh r2, [r0, -r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1255,12 +1255,12 @@ TEST_F(ExecuteTest, LDRH_DBW) {
 }
 
 TEST_F(ExecuteTest, LDRH_DBW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xB42070E1");  // ldrh r2, [r0, #-4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1272,13 +1272,13 @@ TEST_F(ExecuteTest, LDRH_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_IAW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12090E0");  // ldrh r2, [r0], r1
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1290,12 +1290,12 @@ TEST_F(ExecuteTest, LDRH_IAW) {
 }
 
 TEST_F(ExecuteTest, LDRH_IAW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xB420D0E0");  // ldrh r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1307,12 +1307,12 @@ TEST_F(ExecuteTest, LDRH_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_IB) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12090E1");  // ldrh r2, [r0, r1]
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x2FC;
@@ -1320,11 +1320,11 @@ TEST_F(ExecuteTest, LDRH_IB) {
 }
 
 TEST_F(ExecuteTest, LDRH_IB_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0xB420D0E1");  // ldrh r2, [r0, #4]
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x2FC;
@@ -1332,13 +1332,13 @@ TEST_F(ExecuteTest, LDRH_IB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRH_IBW) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB120B0E1");  // ldrh r2, [r0, r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1350,12 +1350,12 @@ TEST_F(ExecuteTest, LDRH_IBW) {
 }
 
 TEST_F(ExecuteTest, LDRH_IBW_I12) {
-  ASSERT_TRUE(Store8(nullptr, 0x300, 1u));
+  ASSERT_TRUE(Store32LE(nullptr, 0x300, 0x01010101u));
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0xB420F0E1");  // ldrh r2, [r0, #4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  EXPECT_EQ(1u, registers_.current.user.gprs.r2);
+  EXPECT_EQ(0x0101u, registers_.current.user.gprs.r2);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -1367,7 +1367,7 @@ TEST_F(ExecuteTest, LDRH_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DAW) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1385,7 +1385,7 @@ TEST_F(ExecuteTest, LDRSB_DAW) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DAW_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xD42050E0");  // ldrsb r2, [r0], #-4
@@ -1402,7 +1402,7 @@ TEST_F(ExecuteTest, LDRSB_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DB) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1415,7 +1415,7 @@ TEST_F(ExecuteTest, LDRSB_DB) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DB_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xD42050E1");  // ldrsb r2, [r0, #-4]
@@ -1427,7 +1427,7 @@ TEST_F(ExecuteTest, LDRSB_DB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DBW) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1445,7 +1445,7 @@ TEST_F(ExecuteTest, LDRSB_DBW) {
 }
 
 TEST_F(ExecuteTest, LDRSB_DBW_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xD42070E1");  // ldrsb r2, [r0, #-4]!
@@ -1462,7 +1462,7 @@ TEST_F(ExecuteTest, LDRSB_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IAW) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1480,7 +1480,7 @@ TEST_F(ExecuteTest, LDRSB_IAW) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IAW_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xD420D0E0");  // ldrsb r2, [r0], #4
@@ -1497,7 +1497,7 @@ TEST_F(ExecuteTest, LDRSB_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IB) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1510,7 +1510,7 @@ TEST_F(ExecuteTest, LDRSB_IB) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IB_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0xD420D0E1");  // ldrsb r2, [r0, #4]
@@ -1522,7 +1522,7 @@ TEST_F(ExecuteTest, LDRSB_IB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IBW) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1540,7 +1540,7 @@ TEST_F(ExecuteTest, LDRSB_IBW) {
 }
 
 TEST_F(ExecuteTest, LDRSB_IBW_I12) {
-  ASSERT_TRUE(Store8S(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x000000FFu));
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0xD420F0E1");  // ldrsb r2, [r0, #4]!
@@ -1557,7 +1557,7 @@ TEST_F(ExecuteTest, LDRSB_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DAW) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1575,7 +1575,7 @@ TEST_F(ExecuteTest, LDRSH_DAW) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DAW_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xF42050E0");  // ldrsh r2, [r0], #-4
@@ -1592,7 +1592,7 @@ TEST_F(ExecuteTest, LDRSH_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DB) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1605,7 +1605,7 @@ TEST_F(ExecuteTest, LDRSH_DB) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DB_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xF42050E1");  // ldrsh r2, [r0, #-4]
@@ -1617,7 +1617,7 @@ TEST_F(ExecuteTest, LDRSH_DB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DBW) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1635,7 +1635,7 @@ TEST_F(ExecuteTest, LDRSH_DBW) {
 }
 
 TEST_F(ExecuteTest, LDRSH_DBW_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xF42070E1");  // ldrsh r2, [r0, #-4]!
@@ -1652,7 +1652,7 @@ TEST_F(ExecuteTest, LDRSH_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IAW) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1670,7 +1670,7 @@ TEST_F(ExecuteTest, LDRSH_IAW) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IAW_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xF420D0E0");  // ldrsh r2, [r0], #4
@@ -1687,7 +1687,7 @@ TEST_F(ExecuteTest, LDRSH_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IB) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1700,7 +1700,7 @@ TEST_F(ExecuteTest, LDRSH_IB) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IB_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0xF420D0E1");  // ldrsh r2, [r0, #4]
@@ -1712,7 +1712,7 @@ TEST_F(ExecuteTest, LDRSH_IB_I12) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IBW) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -1730,7 +1730,7 @@ TEST_F(ExecuteTest, LDRSH_IBW) {
 }
 
 TEST_F(ExecuteTest, LDRSH_IBW_I12) {
-  ASSERT_TRUE(Store16SLE(memory_, 0x300, -1));
+  ASSERT_TRUE(Store32LE(memory_, 0x300, 0x0000FFFFu));
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0xF420F0E1");  // ldrsh r2, [r0, #4]!

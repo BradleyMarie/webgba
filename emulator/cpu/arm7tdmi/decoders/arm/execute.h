@@ -356,7 +356,7 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_LDRB_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      ArmLDR_DBW(registers, memory, rd, rn, offset_16);
+      ArmLDRB_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_LDRB_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,
