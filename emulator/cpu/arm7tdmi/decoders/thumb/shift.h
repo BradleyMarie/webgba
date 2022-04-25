@@ -46,7 +46,7 @@ static inline void ThumbASRS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
 
   ArmAdvanceProgramCounter(registers);
 
-  uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rs];
+  uint8_t shift_amount = registers->current.user.gprs.gprs[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
     registers->current.user.cpsr.carry =
         (registers->current.user.gprs.gprs[Rd] >> (shift_amount - 1u)) & 0x1u;
@@ -148,14 +148,14 @@ static inline void ThumbLSRS_I(ArmAllRegisters *registers, ArmRegisterIndex Rd,
 }
 
 static inline void ThumbLSRS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
-                               ArmRegisterIndex Rm) {
+                               ArmRegisterIndex Rs) {
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
-  assert(Rm <= REGISTER_R7);
+  assert(Rs <= REGISTER_R7);
 
   ArmAdvanceProgramCounter(registers);
 
-  uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rm];
+  uint8_t shift_amount = registers->current.user.gprs.gprs[Rs];
   if (shift_amount != 0u && shift_amount < 32u) {
     registers->current.user.cpsr.carry =
         (registers->current.user.gprs.gprs[Rd] >> (shift_amount - 1u)) & 0x1u;
@@ -176,28 +176,26 @@ static inline void ThumbLSRS_R(ArmAllRegisters *registers, ArmRegisterIndex Rd,
 }
 
 static inline void ThumbRORS(ArmAllRegisters *registers, ArmRegisterIndex Rd,
-                             ArmRegisterIndex Rm) {
+                             ArmRegisterIndex Rs) {
   codegen_assert(registers->current.user.cpsr.thumb);
   assert(Rd <= REGISTER_R7);
-  assert(Rm <= REGISTER_R7);
+  assert(Rs <= REGISTER_R7);
 
   ArmAdvanceProgramCounter(registers);
 
-  uint8_t shift_amount = registers->current.user.gprs.gprs_s[Rm];
-  if (shift_amount == 0) {
-    return;
-  }
-
-  shift_amount &= 0x1Fu;
-  if (shift_amount == 0) {
-    registers->current.user.cpsr.carry =
-        (registers->current.user.gprs.gprs[Rd] >> 31) & 0x1u;
-  } else {
-    registers->current.user.cpsr.carry =
-        (registers->current.user.gprs.gprs[Rd] >> (shift_amount - 1u)) & 0x1u;
-    registers->current.user.gprs.gprs[Rd] =
-        (registers->current.user.gprs.gprs[Rd] >> shift_amount) |
-        (registers->current.user.gprs.gprs[Rd] << (32u - shift_amount));
+  uint8_t shift_amount = registers->current.user.gprs.gprs[Rs];
+  if (shift_amount != 0) {
+    shift_amount &= 0x1Fu;
+    if (shift_amount == 0) {
+      registers->current.user.cpsr.carry =
+          (registers->current.user.gprs.gprs[Rd] >> 31) & 0x1u;
+    } else {
+      registers->current.user.cpsr.carry =
+          (registers->current.user.gprs.gprs[Rd] >> (shift_amount - 1u)) & 0x1u;
+      registers->current.user.gprs.gprs[Rd] =
+          (registers->current.user.gprs.gprs[Rd] >> shift_amount) |
+          (registers->current.user.gprs.gprs[Rd] << (32u - shift_amount));
+    }
   }
 
   registers->current.user.cpsr.negative =

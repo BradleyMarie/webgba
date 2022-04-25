@@ -74,6 +74,7 @@ TEST(ThumbASRS_R, Zero) {
   auto registers = CreateArmAllRegisters();
   registers.current.user.gprs.r0 = 0u;
   registers.current.user.gprs.r1_s = -16;
+  registers.current.user.cpsr.negative = true;
   ThumbASRS_R(&registers, REGISTER_R1, REGISTER_R0);
   EXPECT_EQ(-16, registers.current.user.gprs.r1_s);
   EXPECT_EQ(0u, registers.current.user.gprs.r0);
@@ -241,6 +242,7 @@ TEST(ThumbLSLS_R, Zero) {
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = true;
   ThumbLSLS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
@@ -390,6 +392,7 @@ TEST(ThumbLSRS_R, Zero) {
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = true;
   ThumbLSRS_R(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
@@ -468,6 +471,7 @@ TEST(ThumbRORS, Zero) {
   registers.current.user.gprs.r0 = 16u;
   registers.current.user.gprs.r1 = 0u;
   registers.current.user.gprs.pc = 0u;
+  registers.current.user.cpsr.negative = true;
   ThumbRORS(&registers, REGISTER_R0, REGISTER_R1);
   EXPECT_EQ(0u, registers.current.user.gprs.r1);
   EXPECT_EQ(16u, registers.current.user.gprs.r0);
