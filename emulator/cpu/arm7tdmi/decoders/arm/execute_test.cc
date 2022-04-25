@@ -2561,7 +2561,7 @@ TEST_F(ExecuteTest, STMSIB_W) {
 }
 
 TEST_F(ExecuteTest, STR_DAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -2569,7 +2569,7 @@ TEST_F(ExecuteTest, STR_DAW) {
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -2577,14 +2577,14 @@ TEST_F(ExecuteTest, STR_DAW) {
 }
 
 TEST_F(ExecuteTest, STR_DAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042000E4");  // str r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -2592,28 +2592,28 @@ TEST_F(ExecuteTest, STR_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, STR_DB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012000E7");  // str r2, [r0, -r1]
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 }
 
 TEST_F(ExecuteTest, STR_DB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042000E5");  // str r2, [r0, #-4]
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 }
 
 TEST_F(ExecuteTest, STR_DBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -2621,7 +2621,7 @@ TEST_F(ExecuteTest, STR_DBW) {
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -2629,14 +2629,14 @@ TEST_F(ExecuteTest, STR_DBW) {
 }
 
 TEST_F(ExecuteTest, STR_DBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042020E5");  // str r2, [r0, #-4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -2644,7 +2644,7 @@ TEST_F(ExecuteTest, STR_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, STR_IAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -2652,7 +2652,7 @@ TEST_F(ExecuteTest, STR_IAW) {
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -2660,14 +2660,14 @@ TEST_F(ExecuteTest, STR_IAW) {
 }
 
 TEST_F(ExecuteTest, STR_IAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042080E4");  // str r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -2675,28 +2675,28 @@ TEST_F(ExecuteTest, STR_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, STR_IB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012080E7");  // str r2, [r0, r1]
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 }
 
 TEST_F(ExecuteTest, STR_IB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0x042080E5");  // str r2, [r0, #4]
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 }
 
 TEST_F(ExecuteTest, STR_IBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -2704,7 +2704,7 @@ TEST_F(ExecuteTest, STR_IBW) {
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -2716,14 +2716,14 @@ TEST_F(ExecuteTest, STR_IBW) {
 }
 
 TEST_F(ExecuteTest, STR_IBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0x0420A0E5");  // str r2, [r0, #4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x2FCu;
@@ -2731,14 +2731,14 @@ TEST_F(ExecuteTest, STR_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, STRB_DAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012040E6");  // strb r2, [r0], -r1
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2747,13 +2747,13 @@ TEST_F(ExecuteTest, STRB_DAW) {
 }
 
 TEST_F(ExecuteTest, STRB_DAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042040E4");  // strb r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2762,35 +2762,35 @@ TEST_F(ExecuteTest, STRB_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRB_DB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012040E7");  // strb r2, [r0, -r1]
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 }
 
 TEST_F(ExecuteTest, STRB_DB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042040E5");  // strb r2, [r0, #-4]
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 }
 
 TEST_F(ExecuteTest, STRB_DBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012060E7");  // strb r2, [r0, -r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2799,13 +2799,13 @@ TEST_F(ExecuteTest, STRB_DBW) {
 }
 
 TEST_F(ExecuteTest, STRB_DBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0x042060E5");  // strb r2, [r0, #-4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2814,14 +2814,14 @@ TEST_F(ExecuteTest, STRB_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, STRB_IAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x0120C0E6");  // strb r2, [r0], r1
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2830,13 +2830,13 @@ TEST_F(ExecuteTest, STRB_IAW) {
 }
 
 TEST_F(ExecuteTest, STRB_IAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x0420C0E4");  // strb r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2845,35 +2845,35 @@ TEST_F(ExecuteTest, STRB_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRB_IB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x0120C0E7");  // strb r2, [r0, r1]
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 }
 
 TEST_F(ExecuteTest, STRB_IB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0x0420C0E5");  // strb r2, [r0, #4]
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 }
 
 TEST_F(ExecuteTest, STRB_IBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x0120E0E7");  // strb r2, [r0, r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2886,13 +2886,13 @@ TEST_F(ExecuteTest, STRB_IBW) {
 }
 
 TEST_F(ExecuteTest, STRB_IBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0x0420E0E5");  // strb r2, [r0, #4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2901,14 +2901,14 @@ TEST_F(ExecuteTest, STRB_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, STRBT_DAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x012060E6");  // strbt r2, [r0], -r1
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2917,13 +2917,13 @@ TEST_F(ExecuteTest, STRBT_DAW) {
 }
 
 TEST_F(ExecuteTest, STRBT_DAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042060E4");  // strbt r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2932,14 +2932,14 @@ TEST_F(ExecuteTest, STRBT_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRBT_IAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0x0120E0E6");  // strbt r2, [r0], r1
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2947,14 +2947,14 @@ TEST_F(ExecuteTest, STRBT_IAW) {
   RunInstruction("0x0100EFE6");  // strbt r0, [pc], r1
 }
 
-TEST_F(ExecuteTest, STRBT_IAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRBT_IAW_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x0420E0E4");  // strbt r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint8_t value;
-  ASSERT_TRUE(Load8(nullptr, 0x300, &value));
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
   EXPECT_EQ(1u, value);
 
   // Modifies PC
@@ -2963,30 +2963,30 @@ TEST_F(ExecuteTest, STRBT_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRH_DAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12000E0");  // strh r2, [r0], -r1
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
   RunInstruction("0xB1000FE0");  // strh r0, [pc], -r1
 }
 
-TEST_F(ExecuteTest, STRH_DAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_DAW_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xB42040E0");  // strh r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -2994,51 +2994,51 @@ TEST_F(ExecuteTest, STRH_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRH_DB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12000E1");  // strh r2, [r0, -r1]
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 }
 
-TEST_F(ExecuteTest, STRH_DB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_DB_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xB42040E1");  // strh r2, [r0, #-4]
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 }
 
 TEST_F(ExecuteTest, STRH_DBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12020E1");  // strh r2, [r0, -r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
   RunInstruction("0xB1002FE1");  // strh r0, [pc, -r1]!
 }
 
-TEST_F(ExecuteTest, STRH_DBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_DBW_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x304u;
 
   RunInstruction("0xB42060E1");  // strh r2, [r0, #-4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -3046,30 +3046,30 @@ TEST_F(ExecuteTest, STRH_DBW_I12) {
 }
 
 TEST_F(ExecuteTest, STRH_IAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12080E0");  // strh r2, [r0], r1
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
   RunInstruction("0xB1008FE0");  // strh r0, [pc], r1
 }
 
-TEST_F(ExecuteTest, STRH_IAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_IAW_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0xB420C0E0");  // strh r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -3077,36 +3077,36 @@ TEST_F(ExecuteTest, STRH_IAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRH_IB) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB12080E1");  // strh r2, [r0, r1]
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 }
 
-TEST_F(ExecuteTest, STRH_IB_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_IB_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FC;
 
   RunInstruction("0xB420C0E1");  // strh r2, [r0, #4]
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 }
 
 TEST_F(ExecuteTest, STRH_IBW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
   registers_.current.user.gprs.r1 = 4u;
 
   RunInstruction("0xB120A0E1");  // strh r2, [r0, r1]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   uint32_t pc = registers_.current.user.gprs.pc;
@@ -3117,15 +3117,15 @@ TEST_F(ExecuteTest, STRH_IBW) {
   RunInstruction("0xB100AFE1");  // strh r0, [pc, r1]!
 }
 
-TEST_F(ExecuteTest, STRH_IBW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+TEST_F(ExecuteTest, STRH_IBW_I8) {
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x2FCu;
 
   RunInstruction("0xB420E0E1");  // strh r2, [r0, #4]!
   EXPECT_EQ(0x300u, registers_.current.user.gprs.r0);
-  uint16_t value;
-  ASSERT_TRUE(Load16LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  uint32_t value;
+  ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
+  EXPECT_EQ(0x0101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x2FCu;
@@ -3133,7 +3133,7 @@ TEST_F(ExecuteTest, STRH_IBW_I12) {
 }
 
 TEST_F(ExecuteTest, STRT_DAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -3141,7 +3141,7 @@ TEST_F(ExecuteTest, STRT_DAW) {
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -3149,14 +3149,14 @@ TEST_F(ExecuteTest, STRT_DAW) {
 }
 
 TEST_F(ExecuteTest, STRT_DAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x042020E4");  // strt r2, [r0], #-4
   EXPECT_EQ(0x2FCu, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
@@ -3164,7 +3164,7 @@ TEST_F(ExecuteTest, STRT_DAW_I12) {
 }
 
 TEST_F(ExecuteTest, STRT_IAW) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
   registers_.current.user.gprs.r1 = 4u;
 
@@ -3172,7 +3172,7 @@ TEST_F(ExecuteTest, STRT_IAW) {
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x304u;
@@ -3180,14 +3180,14 @@ TEST_F(ExecuteTest, STRT_IAW) {
 }
 
 TEST_F(ExecuteTest, STRT_IAW_I12) {
-  registers_.current.user.gprs.r2 = 1u;
+  registers_.current.user.gprs.r2 = 0x01010101u;
   registers_.current.user.gprs.r0 = 0x300u;
 
   RunInstruction("0x0420A0E4");  // strt r2, [r0], #4
   EXPECT_EQ(0x304u, registers_.current.user.gprs.r0);
   uint32_t value;
   ASSERT_TRUE(Load32LE(nullptr, 0x300, &value));
-  EXPECT_EQ(1u, value);
+  EXPECT_EQ(0x01010101u, value);
 
   // Modifies PC
   registers_.current.user.gprs.r0 = 0x300u;
