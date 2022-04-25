@@ -959,7 +959,7 @@ static inline void ArmInstructionExecute(uint32_t next_instruction,
       break;
     case ARM_OPCODE_STRB_DBW_I12:
       ArmOperandLoadStoreImmediate(next_instruction, &rd, &rn, &offset_16);
-      ArmSTR_DBW(registers, memory, rd, rn, offset_16);
+      ArmSTRB_DBW(registers, memory, rd, rn, offset_16);
       break;
     case ARM_OPCODE_STRB_IAW:
       ArmOperandLoadStoreAddressMode(next_instruction, &registers->current.user,

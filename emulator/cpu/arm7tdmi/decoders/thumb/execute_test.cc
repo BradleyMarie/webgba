@@ -666,50 +666,50 @@ TEST_F(ExecuteTest, THUMB_OPCODE_STMIA) {
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STR) {
   registers_.current.user.gprs.r7 = 0x100u;
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   RunInstruction("0xFE51");  // str r6, [r7, r7]
-  EXPECT_EQ(1u, Load32(0x200u));
+  EXPECT_EQ(0x01010101u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STR_I5) {
   registers_.current.user.gprs.r7 = 0x184u;
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   RunInstruction("0xFE67");  // str r6, [r7, #124]
-  EXPECT_EQ(1u, Load32(0x200u));
+  EXPECT_EQ(0x01010101u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STR_SP_OFFSET_I8) {
-  registers_.current.user.gprs.r7 = 1u;
+  registers_.current.user.gprs.r7 = 0x01010101u;
   RunInstruction("0xFF97");  // str r7, [sp, #1020]
-  EXPECT_EQ(1u, Load32(0x5FCu));
+  EXPECT_EQ(0x01010101u, Load32(0x5FCu));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STRB) {
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   registers_.current.user.gprs.r7 = 0x100u;
   RunInstruction("0xFE55");  // strb r6, [r7, r7]
-  EXPECT_EQ(1u, Load8(0x200u));
+  EXPECT_EQ(1u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STRB_I5) {
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   registers_.current.user.gprs.r7 = 0x1E1u;
   RunInstruction("0xFE77");  // strb r6, [r7, #31]
-  EXPECT_EQ(1u, Load8(0x200u));
+  EXPECT_EQ(1u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STRH) {
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   registers_.current.user.gprs.r7 = 0x100u;
   RunInstruction("0xFE53");  // strh r6, [r7, r7]
-  EXPECT_EQ(1u, Load16(0x200u));
+  EXPECT_EQ(0x0101u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_STRH_I5) {
-  registers_.current.user.gprs.r6 = 1u;
+  registers_.current.user.gprs.r6 = 0x01010101u;
   registers_.current.user.gprs.r7 = 0x1C2u;
   RunInstruction("0xFE87");  // strh r6, [r7, #62]
-  EXPECT_EQ(1u, Load16(0x200u));
+  EXPECT_EQ(0x0101u, Load32(0x200u));
 }
 
 TEST_F(ExecuteTest, THUMB_OPCODE_SUB_SP_I7) {
