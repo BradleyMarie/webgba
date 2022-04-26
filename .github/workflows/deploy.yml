@@ -12,13 +12,13 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install Dependencies
-      run: sudo apt update && sudo apt install -y libgles2-mesa-dev libgoogle-perftools-dev libsdl1.2-dev libsdl2-dev
-
-    - name: Build
-      run: bazel build -c opt ...
+      run: sudo apt update && sudo apt install -y libgles2-mesa-dev libgoogle-perftools-dev libsdl1.2-dev
 
     - name: Test
       run: bazel test -c opt ...
+
+    - name: Build
+      run: bazel build -c opt front_end/sdl:webgba_wasm
 
     - name: Prepare Output
       run: mv bazel-bin/front_end/sdl/webgba_wasm/webgba.html bazel-bin/front_end/sdl/webgba_wasm/index.html
