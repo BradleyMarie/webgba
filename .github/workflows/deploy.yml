@@ -1,0 +1,30 @@
+name: Publish to gh-pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: sudo apt update && sudo apt install -y libsdl1.2-dev mesa-common-dev
+
+    - name: Build
+      run: bazel build -c opt ...
+
+    - name: Test
+      run: bazel test -c opt ...
+
+    - name: Prepare Output
+      run: mv bazel-bin/front_end/sdl/webgba_wasm/webgba.html bazel-bin/front_end/sdl/webgba_wasm/index.html
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./bazel-bin/front_end/sdl/webgba_wasm
