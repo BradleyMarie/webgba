@@ -1,21 +1,21 @@
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-git_repository(
+http_archive(
     name = "com_google_googletest",
-    remote = "https://github.com/google/googletest",
-    tag = "release-1.11.0",
+    sha256 = "b4870bf121ff7795ba20d20bcdd8627b8e088f2d1dab299a031c1034eddc93d5",
+    strip_prefix = "googletest-release-1.11.0",
+    url = "https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz",
 )
 
 http_archive(
     name = "emsdk",
-    sha256 = "d55e3c73fc4f8d1fecb7aabe548de86bdb55080fe6b12ce593d63b8bade54567",
-    strip_prefix = "emsdk-3891e7b04bf8cbb3bc62758e9c575ae096a9a518/bazel",
-    url = "https://github.com/emscripten-core/emsdk/archive/3891e7b04bf8cbb3bc62758e9c575ae096a9a518.tar.gz",
+    sha256 = "99de90a1827044c5430b926db947bcb266c8bdab1a0f20fe34a62431d9174376",
+    strip_prefix = "emsdk-3.1.9/bazel",
+    url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.9.tar.gz",
 )
 
 load("@emsdk//:deps.bzl", emsdk_deps = "deps")
 emsdk_deps()
 
 load("@emsdk//:emscripten_deps.bzl", emsdk_emscripten_deps = "emscripten_deps")
-emsdk_emscripten_deps(emscripten_version = "2.0.31")
+emsdk_emscripten_deps(emscripten_version = "3.1.9")
