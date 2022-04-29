@@ -220,6 +220,9 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
       frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
       GbaSpuStep(emulator->spu, audio_sample_callback);
     } else if (emulator->power_state == POWER_STATE_HALT) {
+      if (GbaDmaUnitIsActive(emulator->dma)) {
+        GbaDmaUnitStep(emulator->dma, emulator->memory);
+      }
       GbaTimersStep(emulator->timers);
       frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
       GbaSpuStep(emulator->spu, audio_sample_callback);
