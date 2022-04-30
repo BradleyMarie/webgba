@@ -8,5 +8,11 @@
     "display": "standalone",
     "theme_color": "#000000",
     "background_color": "#000000",
-    "orientation": "any"
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/magenta.png",
+            "sizes": "1024x1024"
+        }
+    ]
 }
