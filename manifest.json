@@ -1,0 +1,12 @@
+{
+    "name": "WebGBA",
+    "lang": "en-us",
+    "short_name": "WebGBA",
+    "description": "A GameBoy Advance Emulator",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "theme_color": "#000000",
+    "background_color": "#000000",
+    "orientation": "any"
+}
