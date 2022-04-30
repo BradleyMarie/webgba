@@ -22,12 +22,13 @@ jobs:
 
     - name: Prepare Output
       run: |
-        rm bazel-bin/front_end/sdl/webgba_wasm/webgba.html
-        cp front_end/pwa/* bazel-bin/front_end/sdl/webgba_wasm/
+        cp bazel-bin/front_end/sdl/webgba_wasm/webgba.js front_end/pwa/
+        cp bazel-bin/front_end/sdl/webgba_wasm/webgba.wasm front_end/pwa/
+        cp bazel-bin/third_party/totushi/magenta.png front_end/pwa/
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./bazel-bin/front_end/sdl/webgba_wasm
+        publish_dir: ./bazel-bin/front_end/pwa
         cname: webgba.app
