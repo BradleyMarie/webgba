@@ -21,7 +21,9 @@ jobs:
       run: bazel build -c opt front_end/sdl:webgba_wasm
 
     - name: Prepare Output
-      run: mv bazel-bin/front_end/sdl/webgba_wasm/webgba.html bazel-bin/front_end/sdl/webgba_wasm/index.html
+      run: |
+        rm bazel-bin/front_end/sdl/webgba_wasm/webgba.html
+        cp front_end/pwa/* bazel-bin/front_end/sdl/webgba_wasm/
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
