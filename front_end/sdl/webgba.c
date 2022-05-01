@@ -502,8 +502,28 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 #endif  // __EMSCRIPTEN__
 
+  int width, height;
+#ifndef __EMSCRIPTEN__
+  width = 240;
+  height = 160;
+#else
+  emscripten_get_screen_size(&width, &height);
+  if (height > width) {
+    int temp = width;
+    width = height;
+    height = temp;
+  }
+
+  width /= 240;
+  height /= 160;
+
+  int scale = (width < height) ? width : height;
+  width = 240 * scale;
+  height = 160 * scale;
+#endif  // __EMSCRIPTEN__
+
   SDL_WM_SetCaption("WebGBA", "game");
-  if (!SetVideoMode(/*width=*/240, /*height=*/160)) {
+  if (!SetVideoMode(width, height)) {
     fprintf(stderr, "ERROR: Failed to create window\n");
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
