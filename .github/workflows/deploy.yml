@@ -25,6 +25,7 @@ jobs:
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.data front_end/pwa/
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.js front_end/pwa/
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.wasm front_end/pwa/
+        cp third_party/totushi/generated/favicon.ico front_end/pwa/
         cp third_party/totushi/magenta.png front_end/pwa/
 
     - name: Deploy
