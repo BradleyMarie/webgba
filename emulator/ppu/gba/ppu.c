@@ -28,8 +28,6 @@
 #define GBA_PPU_HBLANK_LENGTH_CYCLES \
   (GBA_PPU_HBLANK_LENGTH_PIXELS * GBA_PPU_CYCLES_PER_PIXEL)
 
-#define GBA_PPU_FIRST_PIXEL_WAKE_CYCLE (GBA_PPU_CYCLES_PER_PIXEL - 1u)
-
 typedef void (*GbaPpuDrawPixelRoutine)(GbaPpu *ppu, bool draw_bg0,
                                        bool draw_bg1, bool draw_bg2,
                                        bool draw_bg3);
@@ -317,8 +315,6 @@ static bool GbaPpuDrawPixel(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
     ppu->x += 1u;
   }
 
-  ppu->cycle_count += 1;
-
   return false;
 }
 
@@ -328,8 +324,6 @@ static bool GbaPpuPostDrawnHBlank(GbaPpu *ppu, GLuint fbo,
 
   ppu->next_wake_routine = GbaPpuDrawPixel;
   ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
-
-  ppu->cycle_count += 1;
 
   return false;
 }
@@ -352,8 +346,6 @@ static bool GbaPpuPreVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   ppu->next_wake_routine = GbaPpuPreOffScreenHBlank;
   ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
 
-  ppu->cycle_count += 1;
-
   return true;
 }
 
@@ -368,8 +360,6 @@ static bool GbaPpuPreOffScreenHBlank(GbaPpu *ppu, GLuint fbo,
   }
 
   ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
-
-  ppu->cycle_count += 1;
 
   return false;
 }
@@ -392,7 +382,7 @@ static bool GbaPpuPostVBlank(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
   ppu->registers.dispstat.vblank_status = false;
 
   ppu->next_wake_routine = GbaPpuDrawPixel;
-  ppu->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
+  ppu->next_wake = GBA_PPU_CYCLES_PER_PIXEL;
 
   ppu->cycle_count = 0u;
 
@@ -462,7 +452,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
   (*ppu)->next_wake_routine = GbaPpuDrawPixel;
-  (*ppu)->next_wake = GBA_PPU_FIRST_PIXEL_WAKE_CYCLE;
+  (*ppu)->next_wake = GBA_PPU_CYCLES_PER_PIXEL;
 
   for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
     GbaPpuObjectVisibilityDrawn(&(*ppu)->memory.oam, object,
@@ -476,9 +466,16 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   return true;
 }
 
-bool GbaPpuStep(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor) {
+uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu) {
+  return ppu->next_wake - ppu->cycle_count;
+}
+
+bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
+                uint8_t scale_factor) {
+  ppu->cycle_count += num_cycles;
+  assert(ppu->cycle_count <= ppu->next_wake);
+
   if (ppu->cycle_count != ppu->next_wake) {
-    ppu->cycle_count += 1u;
     return false;
   }
 

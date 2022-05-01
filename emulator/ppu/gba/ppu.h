@@ -14,7 +14,10 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
                     Memory **pram, Memory **vram, Memory **oam,
                     Memory **registers);
 
-bool GbaPpuStep(GbaPpu *ppu, GLuint fbo, uint8_t scale_factor);
+uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu);
+
+bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
+                uint8_t scale_factor);
 
 // Context Loss Recovery
 void GbaPpuReloadContext(GbaPpu *ppu);

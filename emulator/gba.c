@@ -207,8 +207,7 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
   assert(scale_factor != 0);
   assert(audio_sample_callback != NULL);
 
-  bool frame_rendered = false;
-  while (!frame_rendered) {
+  for (;;) {
     if (emulator->power_state == POWER_STATE_RUN) {
       if (GbaDmaUnitIsActive(emulator->dma)) {
         GbaDmaUnitStep(emulator->dma, emulator->memory);
@@ -216,16 +215,35 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
         Arm7TdmiStep(emulator->cpu, emulator->memory);
       }
 
-      GbaTimersStep(emulator->timers);
-      frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
-      GbaSpuStep(emulator->spu, audio_sample_callback);
+      GbaTimersStep(emulator->timers, 1u);
+      GbaSpuStep(emulator->spu, 1u, audio_sample_callback);
+      if (GbaPpuStep(emulator->ppu, 1u, fbo, scale_factor)) {
+        break;
+      }
     } else if (emulator->power_state == POWER_STATE_HALT) {
+      uint32_t cycles_elapsed;
       if (GbaDmaUnitIsActive(emulator->dma)) {
         GbaDmaUnitStep(emulator->dma, emulator->memory);
+        cycles_elapsed = 1u;
+      } else {
+        cycles_elapsed = GbaTimersCyclesUntilNextWake(emulator->timers);
+
+        uint32_t next_ppu_wake = GbaPpuCyclesUntilNextWake(emulator->ppu);
+        if (next_ppu_wake < cycles_elapsed) {
+          cycles_elapsed = next_ppu_wake;
+        }
+
+        uint32_t next_spu_wake = GbaSpuCyclesUntilNextWake(emulator->spu);
+        if (next_spu_wake < cycles_elapsed) {
+          cycles_elapsed = next_spu_wake;
+        }
       }
-      GbaTimersStep(emulator->timers);
-      frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
-      GbaSpuStep(emulator->spu, audio_sample_callback);
+
+      GbaTimersStep(emulator->timers, cycles_elapsed);
+      GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
+      if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, scale_factor)) {
+        break;
+      }
     } else {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo);
       glClearColor(0.0, 0.0, 0.0, 1.0);
