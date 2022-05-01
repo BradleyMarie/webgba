@@ -208,23 +208,16 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
   assert(audio_sample_callback != NULL);
 
   for (;;) {
+    uint32_t cycles_elapsed = 1u;
     if (emulator->power_state == POWER_STATE_RUN) {
       if (GbaDmaUnitIsActive(emulator->dma)) {
         GbaDmaUnitStep(emulator->dma, emulator->memory);
       } else {
         Arm7TdmiStep(emulator->cpu, emulator->memory);
       }
-
-      GbaTimersStep(emulator->timers, 1u);
-      GbaSpuStep(emulator->spu, 1u, audio_sample_callback);
-      if (GbaPpuStep(emulator->ppu, 1u, fbo, scale_factor)) {
-        break;
-      }
     } else if (emulator->power_state == POWER_STATE_HALT) {
-      uint32_t cycles_elapsed;
       if (GbaDmaUnitIsActive(emulator->dma)) {
         GbaDmaUnitStep(emulator->dma, emulator->memory);
-        cycles_elapsed = 1u;
       } else {
         cycles_elapsed = GbaTimersCyclesUntilNextWake(emulator->timers);
 
@@ -238,16 +231,16 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
           cycles_elapsed = next_spu_wake;
         }
       }
-
-      GbaTimersStep(emulator->timers, cycles_elapsed);
-      GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
-      if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, scale_factor)) {
-        break;
-      }
     } else {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo);
       glClearColor(0.0, 0.0, 0.0, 1.0);
       glClear(GL_COLOR_BUFFER_BIT);
+      break;
+    }
+
+    GbaTimersStep(emulator->timers, cycles_elapsed);
+    GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
+    if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, scale_factor)) {
       break;
     }
   }
