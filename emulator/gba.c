@@ -227,7 +227,9 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
       frame_rendered = GbaPpuStep(emulator->ppu, fbo, scale_factor);
       GbaSpuStep(emulator->spu, audio_sample_callback);
     } else {
-      // TODO: Blank screen
+      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glClear(GL_COLOR_BUFFER_BIT);
       break;
     }
   }
