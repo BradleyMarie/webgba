@@ -90,12 +90,11 @@ static void UpdateTimersBeforeWrite(GbaTimers *timers) {
         timers->read.registers[i].tmcnt_h.cascade) {
       continue;
     }
-    
+
     uint32_t cycles_per_tick = CyclesPerTick(timers, i);
-  
-    uint32_t overflow_cycle =
-        TimerTicksRemaining(timers, i) * cycles_per_tick -
-        timers->timer_cycles[i] - timers->current_cycle;
+
+    uint32_t overflow_cycle = TimerTicksRemaining(timers, i) * cycles_per_tick -
+                              timers->timer_cycles[i] - timers->current_cycle;
     timers->overflow_cycle[i] = overflow_cycle;
 
     uint32_t absolute_cycle_count =
@@ -297,8 +296,13 @@ bool GbaTimersAllocate(GbaPlatform *platform, GbaSpu *spu, GbaTimers **timers,
   return true;
 }
 
-void GbaTimersStep(GbaTimers *timers) {
-  timers->current_cycle += 1u;
+uint32_t GbaTimersCyclesUntilNextWake(const GbaTimers *timers) {
+  return timers->next_overflow_cycle - timers->current_cycle;
+}
+
+void GbaTimersStep(GbaTimers *timers, uint32_t num_cycles) {
+  timers->current_cycle += num_cycles;
+  assert(timers->current_cycle <= timers->next_overflow_cycle);
 
   if (timers->current_cycle != timers->next_overflow_cycle ||
       timers->next_overflow_cycle == UINT32_MAX) {
@@ -312,8 +316,7 @@ void GbaTimersStep(GbaTimers *timers) {
     if (timers->current_cycle == timers->overflow_cycle[i]) {
       overflowed = true;
     } else if (timers->read.registers[i].tmcnt_h.started &&
-               timers->read.registers[i].tmcnt_h.cascade &&
-               overflowed) {
+               timers->read.registers[i].tmcnt_h.cascade && overflowed) {
       timers->read.registers[i].tmcnt_l += 1u;
       overflowed = (timers->read.registers[i].tmcnt_l == 0u);
     } else {

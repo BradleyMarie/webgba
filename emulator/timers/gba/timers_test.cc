@@ -247,7 +247,7 @@ TEST_F(TimersTest, OneCycleCounter) {
 
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
@@ -267,13 +267,13 @@ TEST_F(TimersTest, SixtyFourCycleCounter) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM1CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -291,7 +291,7 @@ TEST_F(TimersTest, TwoFiftySixCycleCounter) {
 
   for (uint16_t i = 0; i < 255u; i++) {
     EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM2CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
@@ -300,7 +300,7 @@ TEST_F(TimersTest, TwoFiftySixCycleCounter) {
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -321,13 +321,13 @@ TEST_F(TimersTest, FiveTwelveCycleCounter) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM2CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFEu + i / 256u, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -348,13 +348,13 @@ TEST_F(TimersTest, TenTwentyFourCycleCounter) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -375,13 +375,13 @@ TEST_F(TimersTest, ZeroCounter) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(i, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -402,13 +402,13 @@ TEST_F(TimersTest, WriteWhileZeroTimerIsRunning) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(i, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -432,11 +432,11 @@ TEST_F(TimersTest, Cascaded) {
     EXPECT_EQ(0xFFFFu, contents);
     EXPECT_TRUE(Load16LE(regs_, TM1CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFEu + i / 64u, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -463,13 +463,13 @@ TEST_F(TimersTest, WriteWhileCascadedTimersAreRunning) {
     EXPECT_EQ(0xFFFFu, contents);
     EXPECT_TRUE(Load16LE(regs_, TM1CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFEu + i / 64u, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM3CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -491,11 +491,11 @@ TEST_F(TimersTest, Repeats) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -511,11 +511,11 @@ TEST_F(TimersTest, Repeats) {
   for (uint16_t i = 0; i < 1023u; i++) {
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
   EXPECT_EQ(1u << 6u, contents);
@@ -534,13 +534,13 @@ TEST_F(TimersTest, WriteWhileRepeatedTimerIsRunning) {
     uint16_t contents;
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;
@@ -557,13 +557,13 @@ TEST_F(TimersTest, WriteWhileRepeatedTimerIsRunning) {
     EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM0CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
   EXPECT_TRUE(Load16LE(plat_regs_, IF_OFFSET, &contents));
   EXPECT_EQ(1u << 6u, contents);
@@ -586,13 +586,13 @@ TEST_F(TimersTest, TwoSixtyFourCycleCounters) {
     EXPECT_EQ(0xFFFFu, contents);
     EXPECT_TRUE(Load16LE(regs_, TM3CNT_L_OFFSET, &contents));
     EXPECT_EQ(0xFFFFu, contents);
-    GbaTimersStep(timers_);
+    GbaTimersStep(timers_, 1u);
     EXPECT_FALSE(raised_);
   }
 
   EXPECT_TRUE(Store16LE(regs_, TM2CNT_L_OFFSET, 0u));  // No Op
 
-  GbaTimersStep(timers_);
+  GbaTimersStep(timers_, 1u);
   EXPECT_TRUE(raised_);
 
   uint16_t contents;

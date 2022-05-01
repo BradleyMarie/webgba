@@ -10,7 +10,9 @@ typedef struct _GbaTimers GbaTimers;
 bool GbaTimersAllocate(GbaPlatform *platform, GbaSpu *spu, GbaTimers **timers,
                        Memory **registers);
 
-void GbaTimersStep(GbaTimers *timers);
+uint32_t GbaTimersCyclesUntilNextWake(const GbaTimers *timers);
+
+void GbaTimersStep(GbaTimers *timers, uint32_t num_cycles);
 
 void GbaTimersFree(GbaTimers *timers);
 

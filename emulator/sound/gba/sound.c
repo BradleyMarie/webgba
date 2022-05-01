@@ -5,7 +5,8 @@
 
 #include "emulator/sound/gba/direct_sound.h"
 
-#define GBA_SPU_CYCLES_PER_SAMPLE 512u
+#define GBA_SPU_CYCLES_PER_AUDIO_SAMPLE 128u
+#define GBA_SPU_AUDIO_SAMPLES_PER_FIFO_SAMPLE 4u
 
 #define SOUND1CNT_L_OFFSET 0x00u
 #define SOUND1CNT_H_OFFSET 0x02u
@@ -238,7 +239,8 @@ typedef union {
 } GbaSpuRegisters;
 
 struct _GbaSpu {
-  int_fast16_t cycle_counter;
+  uint32_t cycle_counter;
+  uint32_t fifo_counter;
   int8_t current_fifo_a;
   int8_t current_fifo_b;
   int8_t last_fifo_a;
@@ -491,18 +493,27 @@ bool GbaSpuAllocate(GbaDmaUnit *dma_unit, GbaSpu **spu, Memory **registers) {
   return true;
 }
 
-void GbaSpuStep(GbaSpu *spu, GbaSpuRenderAudioSample audio_sample_callback) {
-  if (spu->cycle_counter & 0x7Fu) {
-    spu->cycle_counter += 1;
+uint32_t GbaSpuCyclesUntilNextWake(const GbaSpu *spu) {
+  return GBA_SPU_CYCLES_PER_AUDIO_SAMPLE - spu->cycle_counter;
+}
+
+void GbaSpuStep(GbaSpu *spu, uint32_t num_cycles,
+                GbaSpuRenderAudioSample audio_sample_callback) {
+  spu->cycle_counter += num_cycles;
+  assert(spu->cycle_counter <= GBA_SPU_CYCLES_PER_AUDIO_SAMPLE);
+
+  if (spu->cycle_counter != GBA_SPU_CYCLES_PER_AUDIO_SAMPLE) {
     return;
   }
 
-  if ((spu->cycle_counter & 0x1FFu) == 0u) {
+  spu->cycle_counter = 0u;
+
+  spu->fifo_counter += 1u;
+  if (spu->fifo_counter == GBA_SPU_AUDIO_SAMPLES_PER_FIFO_SAMPLE) {
     spu->current_fifo_a = spu->last_fifo_a;
     spu->current_fifo_b = spu->last_fifo_b;
+    spu->fifo_counter = 0u;
   }
-
-  spu->cycle_counter += 1;
 
   int16_t left = spu->registers.soundbias.level;
   int16_t right = spu->registers.soundbias.level;
