@@ -51,6 +51,7 @@ struct _GbaPpu {
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
   uint32_t cycles_from_hblank_to_draw;
+  uint_fast8_t pixels_per_draw;
   uint_fast8_t x;
   uint32_t cycle_count;
   uint32_t next_wake;
@@ -358,9 +359,13 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
 
   switch (ppu->next_wake_state) {
     case GBA_PPU_DRAW_PIXEL_SOFTWARE:
-      GbaPpuRenderPixel(ppu, ppu->x);
+    case GBA_PPU_DRAW_ROW_SOFTWARE:
+    case GBA_PPU_DRAW_ROW_HARDWARE:
+      for (uint_fast8_t i = 0; i < ppu->pixels_per_draw; i++) {
+        GbaPpuRenderPixel(ppu, ppu->x++);
+      }
 
-      if (ppu->x == GBA_SCREEN_WIDTH - 1u) {
+      if (ppu->x == GBA_SCREEN_WIDTH) {
         GbaPpuStartHBlank(ppu);
 
         GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
@@ -381,35 +386,10 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
         ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
         ppu->x = 0u;
       } else {
+        codegen_assert(ppu->next_wake_state == GBA_PPU_DRAW_PIXEL_SOFTWARE);
         ppu->next_wake_state = GBA_PPU_DRAW_PIXEL_SOFTWARE;
         ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
-        ppu->x += 1u;
       }
-      break;
-    case GBA_PPU_DRAW_ROW_SOFTWARE:
-    case GBA_PPU_DRAW_ROW_HARDWARE:
-      for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-        GbaPpuRenderPixel(ppu, x);
-      }
-
-      GbaPpuStartHBlank(ppu);
-
-      GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
-
-      if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
-        ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
-        ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
-        ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
-        ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
-      } else {
-        ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
-        ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
-        ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
-        ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
-      }
-
-      ppu->next_wake_state = GBA_PPU_POST_DRAWN_HBLANK;
-      ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
       break;
     case GBA_PPU_POST_DRAWN_HBLANK:
       GbaPpuEndHBlank(ppu, ppu->registers.vcount + 1u);
@@ -471,18 +451,21 @@ void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode) {
       ppu->next_wake = GBA_PPU_DRAW_LENGTH_CYCLES;
       ppu->draw_state = GBA_PPU_DRAW_ROW_HARDWARE;
       ppu->cycles_from_hblank_to_draw = GBA_PPU_DRAW_LENGTH_CYCLES;
+      ppu->pixels_per_draw = GBA_SCREEN_WIDTH;
       break;
     case RENDER_MODE_SOFTWARE_ROWS:
       ppu->next_wake_state = GBA_PPU_DRAW_ROW_SOFTWARE;
       ppu->next_wake = GBA_PPU_DRAW_LENGTH_CYCLES;
       ppu->draw_state = GBA_PPU_DRAW_ROW_SOFTWARE;
       ppu->cycles_from_hblank_to_draw = GBA_PPU_DRAW_LENGTH_CYCLES;
+      ppu->pixels_per_draw = GBA_SCREEN_WIDTH;
       break;
     case RENDER_MODE_SOFTWARE_PIXELS:
       ppu->next_wake_state = GBA_PPU_DRAW_PIXEL_SOFTWARE;
       ppu->next_wake = GBA_PPU_CYCLES_PER_PIXEL;
       ppu->draw_state = GBA_PPU_DRAW_PIXEL_SOFTWARE;
       ppu->cycles_from_hblank_to_draw = GBA_PPU_CYCLES_PER_PIXEL;
+      ppu->pixels_per_draw = 1u;
       break;
   }
 }
