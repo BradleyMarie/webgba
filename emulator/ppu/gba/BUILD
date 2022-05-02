@@ -49,6 +49,7 @@ cc_library(
         "//emulator/ppu/gba/obj:draw",
         "//emulator/ppu/gba/palette",
         "//emulator/ppu/gba/vram",
+        "//util:macros",
     ],
 )
 
