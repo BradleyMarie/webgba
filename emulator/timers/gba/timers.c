@@ -46,6 +46,8 @@ struct _GbaTimers {
   uint32_t overflow_cycle[GBA_NUM_TIMERS];
   uint32_t cascade_cycle[GBA_NUM_TIMERS];
   uint16_t timer_cycles[GBA_NUM_TIMERS];
+  uint_fast8_t first_active_timer;
+  uint_fast8_t last_active_timer;
   GbaTimerRegisters read;
   GbaTimerRegisters write;
   GbaPlatform *platform;
@@ -66,7 +68,8 @@ static inline uint32_t CyclesPerTick(const GbaTimers *timers, uint_fast8_t i) {
 
 static void FindAndUpdateNextEvent(GbaTimers *timers) {
   timers->next_overflow_cycle = UINT32_MAX;
-  for (uint_fast8_t i = 0; i < GBA_NUM_TIMERS; i++) {
+  for (uint_fast8_t i = timers->first_active_timer;
+       i <= timers->last_active_timer; i++) {
     if (!timers->read.registers[i].tmcnt_h.started) {
       timers->cascade_cycle[i] = UINT32_MAX;
       timers->overflow_cycle[i] = UINT32_MAX;
@@ -97,7 +100,8 @@ static void FindAndUpdateNextEvent(GbaTimers *timers) {
 }
 
 static void UpdateTimersBeforeWrite(GbaTimers *timers) {
-  for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
+  for (uint_fast8_t i = timers->first_active_timer;
+       i <= timers->last_active_timer; i++) {
     if (!timers->read.registers[i].tmcnt_h.started) {
       continue;
     }
@@ -129,12 +133,22 @@ static void UpdateTimersBeforeWrite(GbaTimers *timers) {
 }
 
 static void UpdateTimersAfterWrite(GbaTimers *timers) {
+  timers->first_active_timer = GBA_NUM_TIMERS;
+  timers->last_active_timer = GBA_NUM_TIMERS;
+
   for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
-    bool timer_started = timers->write.registers[i].tmcnt_h.started &&
-                         !timers->read.registers[i].tmcnt_h.started;
+    if (timers->write.registers[i].tmcnt_h.started) {
+      if (timers->first_active_timer == GBA_NUM_TIMERS) {
+        timers->first_active_timer = i;
+      }
+      timers->last_active_timer = i;
+    }
+
+    bool timer_just_started = timers->write.registers[i].tmcnt_h.started &&
+                              !timers->read.registers[i].tmcnt_h.started;
     timers->read.registers[i].tmcnt_h = timers->write.registers[i].tmcnt_h;
 
-    if (timer_started) {
+    if (timer_just_started) {
       timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
       timers->timer_cycles[i] = 0;
     }
@@ -332,7 +346,8 @@ void GbaTimersStep(GbaTimers *timers, uint32_t num_cycles) {
 
   UpdateTimersBeforeWrite(timers);
 
-  for (uint_fast8_t i = 0; i < GBA_NUM_TIMERS; i++) {
+  for (uint_fast8_t i = timers->first_active_timer;
+       i <= timers->last_active_timer; i++) {
     if (timers->current_cycle == timers->cascade_cycle[i]) {
       timers->read.registers[i].tmcnt_l += 1u;
     }
