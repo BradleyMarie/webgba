@@ -44,6 +44,7 @@ struct _GbaTimers {
   uint32_t next_overflow_cycle;
   uint32_t current_cycle;
   uint32_t overflow_cycle[GBA_NUM_TIMERS];
+  uint32_t cascade_cycle[GBA_NUM_TIMERS];
   uint16_t timer_cycles[GBA_NUM_TIMERS];
   GbaTimerRegisters read;
   GbaTimerRegisters write;
@@ -66,9 +67,19 @@ static inline uint32_t CyclesPerTick(const GbaTimers *timers, uint_fast8_t i) {
 static void FindAndUpdateNextEvent(GbaTimers *timers) {
   timers->next_overflow_cycle = UINT32_MAX;
   for (uint_fast8_t i = 0; i < GBA_NUM_TIMERS; i++) {
-    if (!timers->read.registers[i].tmcnt_h.started ||
-        timers->read.registers[i].tmcnt_h.cascade) {
+    if (!timers->read.registers[i].tmcnt_h.started) {
+      timers->cascade_cycle[i] = UINT32_MAX;
       timers->overflow_cycle[i] = UINT32_MAX;
+      continue;
+    }
+
+    if (timers->read.registers[i].tmcnt_h.cascade) {
+      timers->cascade_cycle[i] =
+          (i == 0u) ? UINT32_MAX : timers->overflow_cycle[i - 1u];
+      timers->overflow_cycle[i] =
+          ((uint16_t)(timers->read.registers[i].tmcnt_l + 1u) == 0u)
+              ? timers->cascade_cycle[i]
+              : UINT32_MAX;
       continue;
     }
 
@@ -80,14 +91,24 @@ static void FindAndUpdateNextEvent(GbaTimers *timers) {
       timers->next_overflow_cycle = overflow_cycle;
     }
 
+    timers->cascade_cycle[i] = UINT32_MAX;
     timers->overflow_cycle[i] = overflow_cycle;
   }
 }
 
 static void UpdateTimersBeforeWrite(GbaTimers *timers) {
   for (uint_fast8_t i = 0u; i < GBA_NUM_TIMERS; i++) {
-    if (!timers->read.registers[i].tmcnt_h.started ||
-        timers->read.registers[i].tmcnt_h.cascade) {
+    if (!timers->read.registers[i].tmcnt_h.started) {
+      continue;
+    }
+
+    if (timers->read.registers[i].tmcnt_h.cascade) {
+      timers->cascade_cycle[i] =
+          (i == 0u) ? UINT32_MAX : timers->overflow_cycle[i - 1u];
+      timers->overflow_cycle[i] =
+          ((uint16_t)(timers->read.registers[i].tmcnt_l + 1u) == 0u)
+              ? timers->cascade_cycle[i]
+              : UINT32_MAX;
       continue;
     }
 
@@ -311,20 +332,12 @@ void GbaTimersStep(GbaTimers *timers, uint32_t num_cycles) {
 
   UpdateTimersBeforeWrite(timers);
 
-  bool overflowed = false;
   for (uint_fast8_t i = 0; i < GBA_NUM_TIMERS; i++) {
-    if (timers->current_cycle == timers->overflow_cycle[i]) {
-      overflowed = true;
-    } else if (timers->read.registers[i].tmcnt_h.started &&
-               timers->read.registers[i].tmcnt_h.cascade && overflowed) {
+    if (timers->current_cycle == timers->cascade_cycle[i]) {
       timers->read.registers[i].tmcnt_l += 1u;
-      overflowed = (timers->read.registers[i].tmcnt_l == 0u);
-    } else {
-      overflowed = false;
-      continue;
     }
 
-    if (overflowed) {
+    if (timers->current_cycle == timers->overflow_cycle[i]) {
       timers->read.registers[i].tmcnt_l = timers->write.registers[i].tmcnt_l;
 
       if (timers->read.registers[i].tmcnt_h.irq_enable) {
