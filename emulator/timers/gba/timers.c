@@ -313,8 +313,7 @@ void GbaTimersStep(GbaTimers *timers, uint32_t num_cycles) {
   timers->current_cycle += num_cycles;
   assert(timers->current_cycle <= timers->next_overflow_cycle);
 
-  if (timers->current_cycle != timers->next_overflow_cycle ||
-      timers->next_overflow_cycle == UINT32_MAX) {
+  if (timers->current_cycle != timers->next_overflow_cycle) {
     return;
   }
 
