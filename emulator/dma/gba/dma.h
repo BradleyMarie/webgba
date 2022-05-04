@@ -11,7 +11,8 @@ bool GbaDmaUnitAllocate(DmaStatus *dma_status, GbaPlatform *platform,
                         GbaDmaUnit **dma_unit, Memory **registers);
 
 // Step
-void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory);
+uint32_t GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory,
+                        uint32_t num_cycles);
 
 // Triggers
 void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount);

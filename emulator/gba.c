@@ -277,8 +277,8 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
       cycles_elapsed =
           Arm7TdmiStep(emulator->cpu, emulator->memory, cycles_elapsed);
     } else if (emulator->dma_active) {
-      GbaDmaUnitStep(emulator->dma, emulator->memory);
-      cycles_elapsed = 1u;
+      cycles_elapsed =
+          GbaDmaUnitStep(emulator->dma, emulator->memory, cycles_elapsed);
     } else if (emulator->power_state == POWER_STATE_STOP) {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo);
       glClearColor(0.0, 0.0, 0.0, 1.0);

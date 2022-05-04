@@ -292,71 +292,83 @@ bool GbaDmaUnitAllocate(DmaStatus *dma_status, GbaPlatform *platform,
   return true;
 }
 
-void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
+uint32_t GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory,
+                        uint32_t num_cycles) {
+  assert(num_cycles != 0u);
   assert(dma_unit->active);
-  for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
+
+  uint32_t transfers_completed = 0u;
+  for (uint_fast8_t i = 0;
+       i < GBA_NUM_DMA_UNITS && transfers_completed < num_cycles; i++) {
     if (!GbaDmaUnitIsActiveByIndex(dma_unit, i)) {
       continue;
     }
 
     bool is_fifo_dma = GbaDmaUnitIsFifoDma(dma_unit, i);
 
-    uint32_t transfer_size;
-    if (dma_unit->registers.units[i].control.transfer_word || is_fifo_dma) {
-      static const uint32_t address_mask = 0xFFFFFFFCu;
-      uint32_t value;
-      Load32LE(memory, dma_unit->current_source[i] & address_mask, &value);
-      Store32LE(memory, dma_unit->current_destination[i] & address_mask, value);
-      transfer_size = 4u;
-    } else {
-      static const uint32_t address_mask = 0xFFFFFFFEu;
-      uint16_t value;
-      Load16LE(memory, dma_unit->current_source[i] & address_mask, &value);
-      Store16LE(memory, dma_unit->current_destination[i] & address_mask, value);
-      transfer_size = 2u;
-    }
+    for (; transfers_completed < num_cycles; transfers_completed++) {
+      uint32_t transfer_size;
+      if (dma_unit->registers.units[i].control.transfer_word || is_fifo_dma) {
+        static const uint32_t address_mask = 0xFFFFFFFCu;
+        uint32_t value;
+        Load32LE(memory, dma_unit->current_source[i] & address_mask, &value);
+        Store32LE(memory, dma_unit->current_destination[i] & address_mask,
+                  value);
+        transfer_size = 4u;
+      } else {
+        static const uint32_t address_mask = 0xFFFFFFFEu;
+        uint16_t value;
+        Load16LE(memory, dma_unit->current_source[i] & address_mask, &value);
+        Store16LE(memory, dma_unit->current_destination[i] & address_mask,
+                  value);
+        transfer_size = 2u;
+      }
 
-    switch (dma_unit->registers.units[i].control.src_addr) {
-      case GBA_DMA_ADDR_INCREMENT:
-        dma_unit->current_source[i] += transfer_size;
-        break;
-      case GBA_DMA_ADDR_DECREMENT:
-        dma_unit->current_source[i] -= transfer_size;
-        break;
-    }
-
-    if (!is_fifo_dma) {
-      switch (dma_unit->registers.units[i].control.dest_addr) {
+      switch (dma_unit->registers.units[i].control.src_addr) {
         case GBA_DMA_ADDR_INCREMENT:
-          dma_unit->current_destination[i] += transfer_size;
+          dma_unit->current_source[i] += transfer_size;
           break;
         case GBA_DMA_ADDR_DECREMENT:
-          dma_unit->current_destination[i] -= transfer_size;
-          break;
-        case GBA_DMA_ADDR_INCREMENT_RELOAD:
-          dma_unit->current_destination[i] += transfer_size;
+          dma_unit->current_source[i] -= transfer_size;
           break;
       }
-    }
 
-    dma_unit->transfers_remaining[i] -= 1u;
-    if (dma_unit->transfers_remaining[i] == 0u) {
-      GbaDmaUnitClearActive(dma_unit, i);
-      if (!dma_unit->registers.units[i].control.repeat) {
-        dma_unit->registers.units[i].control.enabled = false;
-      } else {
-        if (dma_unit->registers.units[i].control.dest_addr ==
-            GBA_DMA_ADDR_INCREMENT_RELOAD) {
-          GbaDmaUnitReloadDestination(dma_unit, i);
+      if (!is_fifo_dma) {
+        switch (dma_unit->registers.units[i].control.dest_addr) {
+          case GBA_DMA_ADDR_INCREMENT:
+            dma_unit->current_destination[i] += transfer_size;
+            break;
+          case GBA_DMA_ADDR_DECREMENT:
+            dma_unit->current_destination[i] -= transfer_size;
+            break;
+          case GBA_DMA_ADDR_INCREMENT_RELOAD:
+            dma_unit->current_destination[i] += transfer_size;
+            break;
         }
-        GbaDmaUnitReloadTransferSize(dma_unit, i);
       }
-      if (dma_unit->registers.units[i].control.irq_enable) {
-        GbaPlatformRaiseDmaInterrupt(dma_unit->platform, i);
+
+      dma_unit->transfers_remaining[i] -= 1u;
+      if (dma_unit->transfers_remaining[i] == 0u) {
+        GbaDmaUnitClearActive(dma_unit, i);
+        if (!dma_unit->registers.units[i].control.repeat) {
+          dma_unit->registers.units[i].control.enabled = false;
+        } else {
+          if (dma_unit->registers.units[i].control.dest_addr ==
+              GBA_DMA_ADDR_INCREMENT_RELOAD) {
+            GbaDmaUnitReloadDestination(dma_unit, i);
+          }
+          GbaDmaUnitReloadTransferSize(dma_unit, i);
+        }
+        if (dma_unit->registers.units[i].control.irq_enable) {
+          GbaPlatformRaiseDmaInterrupt(dma_unit->platform, i);
+        }
+        transfers_completed += 1u;
+        break;
       }
     }
-    break;
   }
+
+  return transfers_completed;
 }
 
 void GbaDmaUnitSignalHBlank(GbaDmaUnit *dma_unit, uint_fast8_t vcount) {

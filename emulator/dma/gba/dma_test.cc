@@ -150,10 +150,7 @@ class DmaUnitTest : public testing::Test {
   }
 
   void DmaDoSteps(uint32_t steps_to_do) {
-    while (steps_to_do != 0) {
-      GbaDmaUnitStep(dma_unit_, memory_);
-      steps_to_do -= 1;
-    }
+    ASSERT_EQ(GbaDmaUnitStep(dma_unit_, memory_, steps_to_do), steps_to_do);
   }
 
   void CheckDmaIsDisabled(uint_fast8_t index) {
