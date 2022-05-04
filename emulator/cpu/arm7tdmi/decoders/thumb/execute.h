@@ -19,9 +19,9 @@
 #include "tools/thumb_opcode_decoder/decoder.h"
 #include "util/macros.h"
 
-static inline void ThumbInstructionExecute(uint16_t next_instruction,
-                                           ArmAllRegisters* registers,
-                                           Memory* memory) {
+static inline void __attribute__((always_inline))
+ThumbInstructionExecute(uint16_t next_instruction, ArmAllRegisters* registers,
+                        Memory* memory) {
   codegen_assert(registers->current.user.cpsr.thumb);
 
   ArmRegisterIndex rd, rn, rm;

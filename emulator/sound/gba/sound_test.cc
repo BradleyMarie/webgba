@@ -39,8 +39,10 @@ class SoundTest : public testing::Test {
     ASSERT_NE(irq, nullptr);
     ASSERT_TRUE(
         GbaPlatformAllocate(power, irq, &platform_, &platform_registers_));
-    ASSERT_TRUE(
-        GbaDmaUnitAllocate(platform_, &dma_unit_, &dma_unit_registers_));
+    DmaStatus *dma_status =
+        DmaStatusAllocate(nullptr, DmaStatusSetFunc, nullptr);
+    ASSERT_TRUE(GbaDmaUnitAllocate(dma_status, platform_, &dma_unit_,
+                                   &dma_unit_registers_));
     ASSERT_TRUE(GbaSpuAllocate(dma_unit_, &spu_, &regs_));
   }
 
@@ -58,6 +60,10 @@ class SoundTest : public testing::Test {
   }
 
   static void PowerSet(void *context, PowerState power_state) {
+    // Do Nothing
+  }
+
+  static void DmaStatusSetFunc(void *context, bool active) {
     // Do Nothing
   }
 

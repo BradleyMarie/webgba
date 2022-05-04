@@ -69,6 +69,7 @@ struct _GbaDmaUnit {
   uint32_t current_destination[GBA_NUM_DMA_UNITS];
   uint16_t transfers_remaining[GBA_NUM_DMA_UNITS];
   GbaDmaUnitRegisters registers;
+  DmaStatus *dma_status;
   GbaPlatform *platform;
   uint16_t reference_count;
 };
@@ -77,6 +78,7 @@ static void GbaDmaUnitClearActive(GbaDmaUnit *dma_unit, uint_fast8_t index) {
   assert(index < GBA_NUM_DMA_UNITS);
   unsigned unset_bit_mask = ~(1u << index);
   dma_unit->active &= unset_bit_mask;
+  DmaStatusSet(dma_unit->dma_status, dma_unit->active);
 }
 
 static void GbaDmaUnitSetActiveBitTo(GbaDmaUnit *dma_unit, uint_fast8_t index,
@@ -84,6 +86,7 @@ static void GbaDmaUnitSetActiveBitTo(GbaDmaUnit *dma_unit, uint_fast8_t index,
   assert(index < GBA_NUM_DMA_UNITS);
   GbaDmaUnitClearActive(dma_unit, index);
   dma_unit->active |= (unsigned)active << index;
+  DmaStatusSet(dma_unit->dma_status, dma_unit->active);
 }
 
 static bool GbaDmaUnitIsActiveByIndex(const GbaDmaUnit *dma_unit,
@@ -261,8 +264,8 @@ void GbaDmaUnitMemoryFree(void *context) {
   GbaDmaUnitRelease(dma_unit);
 }
 
-bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
-                        Memory **registers) {
+bool GbaDmaUnitAllocate(DmaStatus *dma_status, GbaPlatform *platform,
+                        GbaDmaUnit **dma_unit, Memory **registers) {
   *dma_unit = (GbaDmaUnit *)calloc(1, sizeof(GbaDmaUnit));
   if (*dma_unit == NULL) {
     return false;
@@ -278,6 +281,9 @@ bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
     return false;
   }
 
+  DmaStatusSet(dma_status, false);
+
+  (*dma_unit)->dma_status = dma_status;
   (*dma_unit)->platform = platform;
   (*dma_unit)->reference_count = 2u;
 
@@ -286,10 +292,8 @@ bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
   return true;
 }
 
-bool GbaDmaUnitIsActive(const GbaDmaUnit *dma_unit) { return dma_unit->active; }
-
 void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory) {
-  assert(GbaDmaUnitIsActive(dma_unit));
+  assert(dma_unit->active);
   for (uint_fast8_t i = 0; i < GBA_NUM_DMA_UNITS; i++) {
     if (!GbaDmaUnitIsActiveByIndex(dma_unit, i)) {
       continue;
@@ -395,6 +399,8 @@ void GbaDmaUnitRelease(GbaDmaUnit *dma_unit) {
   assert(dma_unit->reference_count != 0u);
   dma_unit->reference_count -= 1u;
   if (dma_unit->reference_count == 0u) {
+    DmaStatusFree(dma_unit->dma_status);
+    GbaPlatformRelease(dma_unit->platform);
     free(dma_unit);
   }
 }

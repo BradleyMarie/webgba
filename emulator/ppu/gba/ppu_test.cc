@@ -17,7 +17,11 @@ class PpuTest : public testing::Test {
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
     ASSERT_TRUE(GbaPlatformAllocate(power, irq, &plat_, &plat_regs_));
-    ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_regs_));
+    DmaStatus *dma_status =
+        DmaStatusAllocate(nullptr, DmaStatusSetFunc, nullptr);
+    ASSERT_NE(dma_status, nullptr);
+    ASSERT_TRUE(
+        GbaDmaUnitAllocate(dma_status, plat_, &dma_unit_, &dma_unit_regs_));
     ASSERT_TRUE(
         GbaPpuAllocate(dma_unit_, plat_, &ppu_, &pram_, &vram_, &oam_, &regs_));
   }
@@ -40,6 +44,10 @@ class PpuTest : public testing::Test {
   }
 
   static void PowerSet(void *context, PowerState power_state) {
+    // Do Nothing
+  }
+
+  static void DmaStatusSetFunc(void *context, bool active) {
     // Do Nothing
   }
 
