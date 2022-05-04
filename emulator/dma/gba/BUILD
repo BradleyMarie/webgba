@@ -7,6 +7,7 @@ cc_library(
     srcs = ["dma.c"],
     hdrs = ["dma.h"],
     deps = [
+        "//emulator/dma:status",
         "//emulator/memory",
         "//emulator/platform/gba:platform",
     ],

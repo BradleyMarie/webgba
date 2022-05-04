@@ -1,16 +1,16 @@
 #ifndef _WEBGBA_EMULATOR_DMA_GBA_DMA_
 #define _WEBGBA_EMULATOR_DMA_GBA_DMA_
 
+#include "emulator/dma/status.h"
 #include "emulator/memory/memory.h"
 #include "emulator/platform/gba/platform.h"
 
 typedef struct _GbaDmaUnit GbaDmaUnit;
 
-bool GbaDmaUnitAllocate(GbaPlatform *platform, GbaDmaUnit **dma_unit,
-                        Memory **registers);
+bool GbaDmaUnitAllocate(DmaStatus *dma_status, GbaPlatform *platform,
+                        GbaDmaUnit **dma_unit, Memory **registers);
 
 // Step
-bool GbaDmaUnitIsActive(const GbaDmaUnit *dma_unit);
 void GbaDmaUnitStep(GbaDmaUnit *dma_unit, Memory *memory);
 
 // Triggers

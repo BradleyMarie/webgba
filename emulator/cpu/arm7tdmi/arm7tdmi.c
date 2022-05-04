@@ -11,6 +11,7 @@
 
 struct _Arm7Tdmi {
   ArmAllRegisters registers;
+  uint32_t cycles_to_run;
   uint16_t reference_count;
 };
 
@@ -105,76 +106,84 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
   return cpu;
 }
 
-void Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory) {
-  uint32_t next_instruction_32;
-  uint16_t next_instruction_16;
-  bool success;
+uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
+  cpu->cycles_to_run = num_cycles;
 
-  switch (cpu->registers.execution_control.mode) {
-    case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM:
-      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-        break;
-      }
-      goto arm_execute;
-    case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM:
-      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-        break;
-      }
-    case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM:
-      if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
-        break;
-      }
-    arm_execute:
-    case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
-      codegen_assert(!cpu->registers.current.user.cpsr.thumb);
-      success = Load32LE(memory, ArmCurrentInstruction(&cpu->registers),
-                         &next_instruction_32);
-      if (!success) {
-        ArmExceptionPrefetchABT(&cpu->registers);
-        break;
-      }
+  uint32_t cycles_executed = 0u;
+  for (; cycles_executed < cpu->cycles_to_run; cycles_executed++) {
+    uint32_t next_instruction_32;
+    uint16_t next_instruction_16;
+    bool success;
+    switch (cpu->registers.execution_control.mode) {
+      case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM:
+        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+          break;
+        }
+        goto arm_execute;
+      case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM:
+        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+          break;
+        }
+      case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM:
+        if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
+          break;
+        }
+      arm_execute:
+      case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
+        codegen_assert(!cpu->registers.current.user.cpsr.thumb);
+        success = Load32LE(memory, ArmCurrentInstruction(&cpu->registers),
+                           &next_instruction_32);
+        if (!success) {
+          ArmExceptionPrefetchABT(&cpu->registers);
+          break;
+        }
 
-      ArmInstructionExecute(next_instruction_32, &cpu->registers, memory);
-      break;
-    case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB:
-      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+        ArmInstructionExecute(next_instruction_32, &cpu->registers, memory);
         break;
-      }
-      goto thumb_execute;
-    case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB:
-      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-        break;
-      }
-    case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB:
-      if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
-        break;
-      }
-    thumb_execute:
-    case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
-      codegen_assert(cpu->registers.current.user.cpsr.thumb);
-      success = Load16LE(memory, ArmCurrentInstruction(&cpu->registers),
-                         &next_instruction_16);
-      if (!success) {
-        ArmExceptionPrefetchABT(&cpu->registers);
-        break;
-      }
+      case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB:
+        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+          break;
+        }
+        goto thumb_execute;
+      case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB:
+        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+          break;
+        }
+      case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB:
+        if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
+          break;
+        }
+      thumb_execute:
+      case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
+        codegen_assert(cpu->registers.current.user.cpsr.thumb);
+        success = Load16LE(memory, ArmCurrentInstruction(&cpu->registers),
+                           &next_instruction_16);
+        if (!success) {
+          ArmExceptionPrefetchABT(&cpu->registers);
+          break;
+        }
 
-      ThumbInstructionExecute(next_instruction_16, &cpu->registers, memory);
-      break;
-    case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM:
-    case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB:
-    case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM:
-    case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB:
-    case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM:
-    case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB:
-    case ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM:
-    case ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB:
-      ArmExceptionRST(&cpu->registers);
-      break;
-    default:
-      codegen_assert(false);
+        ThumbInstructionExecute(next_instruction_16, &cpu->registers, memory);
+        break;
+      case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM:
+      case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB:
+      case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM:
+      case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB:
+      case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM:
+      case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB:
+      case ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM:
+      case ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB:
+        ArmExceptionRST(&cpu->registers);
+        break;
+      default:
+        codegen_assert(false);
+    }
   }
+
+  return cycles_executed;
 }
+
+void Arm7TdmiHalt(Arm7Tdmi* cpu) { cpu->cycles_to_run = 0u; }
 
 void Arm7TdmiFree(Arm7Tdmi* cpu) {
   assert(cpu->reference_count != 0);

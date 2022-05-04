@@ -27,7 +27,10 @@ class TimersTest : public testing::Test {
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
     ASSERT_TRUE(GbaPlatformAllocate(power, irq, &plat_, &plat_regs_));
-    ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &dma_unit_registers_));
+    DmaStatus *dma_status =
+        DmaStatusAllocate(nullptr, DmaStatusSetFunc, nullptr);
+    ASSERT_TRUE(GbaDmaUnitAllocate(dma_status, plat_, &dma_unit_,
+                                   &dma_unit_registers_));
     ASSERT_TRUE(GbaSpuAllocate(dma_unit_, &spu_, &spu_registers_));
     ASSERT_TRUE(GbaTimersAllocate(plat_, spu_, &timers_, &regs_));
     ASSERT_TRUE(Store16LE(plat_regs_, IE_OFFSET, 0xFFFFu));
@@ -52,6 +55,10 @@ class TimersTest : public testing::Test {
   }
 
   static void PowerSet(void *context, PowerState power_state) {
+    // Do Nothing
+  }
+
+  static void DmaStatusSetFunc(void *context, bool active) {
     // Do Nothing
   }
 

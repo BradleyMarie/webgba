@@ -7,6 +7,8 @@ extern "C" {
 class ExecuteTest : public testing::Test {
  public:
   void SetUp() override {
+    trigger_halt_ = false;
+
     for (char &c : memory_space_) {
       c = 0;
     }
@@ -42,6 +44,11 @@ class ExecuteTest : public testing::Test {
     if (address + sizeof(uint32_t) - 1 >= memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     char *data = memory_space_.data() + address;
     *value = *reinterpret_cast<uint32_t *>(data);
     return true;
@@ -51,6 +58,11 @@ class ExecuteTest : public testing::Test {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     char *data = memory_space_.data() + address;
     *value = *reinterpret_cast<uint16_t *>(data);
     return true;
@@ -60,6 +72,11 @@ class ExecuteTest : public testing::Test {
     if (address > memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     *value = memory_space_[address];
     return true;
   }
@@ -68,6 +85,11 @@ class ExecuteTest : public testing::Test {
     if (address + sizeof(uint32_t) - 1 >= memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     char *data = memory_space_.data() + address;
     *reinterpret_cast<uint32_t *>(data) = value;
     return true;
@@ -77,6 +99,11 @@ class ExecuteTest : public testing::Test {
     if (address + sizeof(uint16_t) - 1 >= memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     char *data = memory_space_.data() + address;
     *reinterpret_cast<uint16_t *>(data) = value;
     return true;
@@ -86,6 +113,11 @@ class ExecuteTest : public testing::Test {
     if (address >= memory_space_.size()) {
       return false;
     }
+
+    if (trigger_halt_) {
+      Arm7TdmiHalt(cpu_);
+    }
+
     memory_space_[address] = value;
     return true;
   }
@@ -121,21 +153,34 @@ class ExecuteTest : public testing::Test {
   }
 
   void Run(uint32_t num_steps) {
-    for (uint32_t i = 0; i < num_steps; i++) {
-      Arm7TdmiStep(cpu_, memory_);
-    }
+    ASSERT_EQ(Arm7TdmiStep(cpu_, memory_, num_steps), num_steps);
   }
 
+  static bool trigger_halt_;
   static std::vector<char> memory_space_;
-  size_t instruction_end_;
-  Arm7Tdmi *cpu_;
-  InterruptLine *rst_;
-  InterruptLine *fiq_;
-  InterruptLine *irq_;
-  Memory *memory_;
+  static size_t instruction_end_;
+  static Arm7Tdmi *cpu_;
+  static InterruptLine *rst_;
+  static InterruptLine *fiq_;
+  static InterruptLine *irq_;
+  static Memory *memory_;
 };
 
+bool ExecuteTest::trigger_halt_ = false;
 std::vector<char> ExecuteTest::memory_space_(1024u, 0);
+size_t ExecuteTest::instruction_end_ = 0u;
+Arm7Tdmi *ExecuteTest::cpu_ = nullptr;
+InterruptLine *ExecuteTest::rst_ = nullptr;
+InterruptLine *ExecuteTest::fiq_ = nullptr;
+InterruptLine *ExecuteTest::irq_ = nullptr;
+Memory *ExecuteTest::memory_ = nullptr;
+
+TEST_F(ExecuteTest, ArmHalt) {
+  ExecuteTest::trigger_halt_ = true;
+  AddInstruction("0x0F00A0E3");  // mov r0, #15
+  AddInstruction("0x0F00A0E3");  // mov r0, #15
+  ASSERT_EQ(Arm7TdmiStep(cpu_, memory_, 2u), 1u);
+}
 
 TEST_F(ExecuteTest, ArmGCD) {
   AddInstruction("0x0F00A0E3");  // mov r0, #15
@@ -236,6 +281,7 @@ TEST_F(ExecuteTest, DoFIQ) {
 TEST_F(ExecuteTest, DoIRQ) {
   InterruptLineSetLevel(irq_, true);
 
+  trigger_halt_ = false;
   AddInstruction(0x18u, "0x03DCA0E3");  // mov sp, #0x300
   AddInstruction(0x1Cu, "0x00D08DE5");  // str sp, [sp]
   AddInstruction(0x20u, "0x04E08DE5");  // str lr, [sp,#4]

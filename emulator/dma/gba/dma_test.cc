@@ -45,7 +45,11 @@ class DmaUnitTest : public testing::Test {
         InterruptLineAllocate(nullptr, InterruptSetLevel, nullptr);
     ASSERT_NE(irq, nullptr);
     ASSERT_TRUE(GbaPlatformAllocate(power, irq, &plat_, &plat_regs_));
-    ASSERT_TRUE(GbaDmaUnitAllocate(plat_, &dma_unit_, &regs_));
+    active_ = false;
+    DmaStatus *dma_status =
+        DmaStatusAllocate(nullptr, DmaStatusSetFunc, nullptr);
+    ASSERT_NE(dma_status, nullptr);
+    ASSERT_TRUE(GbaDmaUnitAllocate(dma_status, plat_, &dma_unit_, &regs_));
 
     for (char &c : memory_space_) {
       c = 0;
@@ -174,7 +178,10 @@ class DmaUnitTest : public testing::Test {
     // Do Nothing
   }
 
+  static void DmaStatusSetFunc(void *context, bool active) { active_ = active; }
+
   static bool raised_;
+  static bool active_;
 
   static std::vector<char> memory_space_;
   GbaPlatform *plat_;
@@ -186,6 +193,7 @@ class DmaUnitTest : public testing::Test {
 
 std::vector<char> DmaUnitTest::memory_space_(1024u, 0);
 bool DmaUnitTest::raised_ = false;
+bool DmaUnitTest::active_ = false;
 
 TEST_F(DmaUnitTest, GbaDmaUnitRegistersLoad16LE) {
   uint16_t contents;
@@ -395,9 +403,7 @@ TEST_F(DmaUnitTest, GbaDmaUnitRegistersLoad32LE) {
   EXPECT_FALSE(Load32LE(regs_, DMA3CNT_L_OFFSET + 4u, &contents));
 }
 
-TEST_F(DmaUnitTest, DefaultUnitIsInactive) {
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
-}
+TEST_F(DmaUnitTest, DefaultUnitIsInactive) { EXPECT_FALSE(active_); }
 
 TEST_F(DmaUnitTest, TestDmaIrq0) {
   EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x12345678u));
@@ -405,12 +411,12 @@ TEST_F(DmaUnitTest, TestDmaIrq0) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
@@ -430,12 +436,12 @@ TEST_F(DmaUnitTest, TestDmaIrq1) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
@@ -455,12 +461,12 @@ TEST_F(DmaUnitTest, TestDmaIrq2) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
@@ -480,12 +486,12 @@ TEST_F(DmaUnitTest, TestDmaIrq3) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/true);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   EXPECT_FALSE(raised_);
 
   DmaDoSteps(1u);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   EXPECT_TRUE(raised_);
 
   uint16_t interrupt_flags;
@@ -510,11 +516,11 @@ TEST_F(DmaUnitTest, TestDmaPriority) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsDisabled(0u);
   CheckDmaIsEnabled(1u);
 
@@ -526,7 +532,7 @@ TEST_F(DmaUnitTest, TestDmaPriority) {
 
   DmaDoSteps(1u);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x12345678u, value);
@@ -544,13 +550,13 @@ TEST_F(DmaUnitTest, TestDmaIncrementSrcIncrementDest) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint32_t value;
@@ -567,13 +573,13 @@ TEST_F(DmaUnitTest, TestDmaDecrementSrcIncrementDest) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_DECREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint32_t value;
@@ -589,13 +595,13 @@ TEST_F(DmaUnitTest, TestDmaFixedSrcIncrementDest) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_FIXED,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint32_t value;
@@ -612,13 +618,13 @@ TEST_F(DmaUnitTest, TestDmaIncrementSrcDecrementDest) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_DECREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint32_t value;
@@ -635,13 +641,13 @@ TEST_F(DmaUnitTest, TestDmaIncrementSrcFixedDest) {
             /*transfer_words=*/true, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_FIXED,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint32_t value;
@@ -659,16 +665,16 @@ TEST_F(DmaUnitTest, TestDmaIncrementSrcIncrementDestHalfWord) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_IMMEDIATE, /*repeat=*/false, /*irq=*/false);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsDisabled(0u);
 
   uint16_t value;
@@ -685,12 +691,12 @@ TEST_F(DmaUnitTest, TestVBlankDma0) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_VBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalVBlank(dma_unit_);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
 }
 
@@ -699,12 +705,12 @@ TEST_F(DmaUnitTest, TestVBlankDma1) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_VBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(1u);
 
   GbaDmaUnitSignalVBlank(dma_unit_);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(1u);
 }
 
@@ -713,12 +719,12 @@ TEST_F(DmaUnitTest, TestVBlankDma2) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_VBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(2u);
 
   GbaDmaUnitSignalVBlank(dma_unit_);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(2u);
 }
 
@@ -727,12 +733,12 @@ TEST_F(DmaUnitTest, TestVBlankDma3) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_VBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 
   GbaDmaUnitSignalVBlank(dma_unit_);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(3u);
 }
 
@@ -741,12 +747,12 @@ TEST_F(DmaUnitTest, TestHBlankDma0) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(0u);
 }
 
@@ -755,12 +761,12 @@ TEST_F(DmaUnitTest, TestHBlankDma1) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(1u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(1u);
 }
 
@@ -769,12 +775,12 @@ TEST_F(DmaUnitTest, TestHBlankDma2) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(2u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(2u);
 }
 
@@ -783,12 +789,12 @@ TEST_F(DmaUnitTest, TestHBlankDma3) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(3u);
 }
 
@@ -797,15 +803,15 @@ TEST_F(DmaUnitTest, TestSpecialDma1) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_SPECIAL, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(1u);
 
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 0u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(1u);
 
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(1u);
 
   EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x11111111u));
@@ -819,28 +825,28 @@ TEST_F(DmaUnitTest, TestSpecialDma1) {
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x11111111u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x22222222u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x33333333u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x44444444u, value);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
 }
 
 TEST_F(DmaUnitTest, TestSpecialDma2) {
@@ -848,15 +854,15 @@ TEST_F(DmaUnitTest, TestSpecialDma2) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_SPECIAL, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(2u);
 
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 0u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(2u);
 
   GbaDmaUnitSignalFifoRefresh(dma_unit_, 16u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
   CheckDmaIsEnabled(2u);
 
   EXPECT_TRUE(Store32LEStatic(nullptr, 0u, 0x11111111u));
@@ -870,28 +876,28 @@ TEST_F(DmaUnitTest, TestSpecialDma2) {
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x11111111u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x22222222u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x33333333u, value);
 
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
 
   EXPECT_TRUE(Load32LEStatic(nullptr, 16u, &value));
   EXPECT_EQ(0x44444444u, value);
 
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
 }
 
 TEST_F(DmaUnitTest, TestSpecialDma3) {
@@ -899,25 +905,25 @@ TEST_F(DmaUnitTest, TestSpecialDma3) {
             /*transfer_words=*/false, /*src_addr_mode=*/GBA_DMA_ADDR_FIXED,
             /*dest_addr_mode=*/GBA_DMA_ADDR_FIXED,
             /*trigger=*/GBA_DMA_SPECIAL, /*repeat=*/false, /*irq=*/false);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 
   for (uint_fast8_t i = 2; i < 162; i++) {
     GbaDmaUnitSignalHBlank(dma_unit_, i);
-    EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+    EXPECT_TRUE(active_);
     CheckDmaIsEnabled(3u);
 
     DmaDoSteps(1u);
 
-    EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+    EXPECT_FALSE(active_);
     CheckDmaIsDisabled(3u);
 
     EnableDma(/*index=*/3u, /*source=*/0u, /*dest=*/16u, /*transfer_count=*/1u,
@@ -927,7 +933,7 @@ TEST_F(DmaUnitTest, TestSpecialDma3) {
   }
 
   GbaDmaUnitSignalHBlank(dma_unit_, 162u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(3u);
 }
 
@@ -940,24 +946,24 @@ TEST_F(DmaUnitTest, TestRepeat) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/true, /*irq=*/false);
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   uint16_t value;
@@ -978,24 +984,24 @@ TEST_F(DmaUnitTest, TestRepeatReload) {
             /*dest_addr_mode=*/GBA_DMA_ADDR_INCREMENT_RELOAD,
             /*trigger=*/GBA_DMA_HBLANK, /*repeat=*/true, /*irq=*/false);
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   GbaDmaUnitSignalHBlank(dma_unit_, 0u);
-  EXPECT_TRUE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_TRUE(active_);
 
   DmaDoSteps(1u);
-  EXPECT_FALSE(GbaDmaUnitIsActive(dma_unit_));
+  EXPECT_FALSE(active_);
   CheckDmaIsEnabled(0u);
 
   uint16_t value;
