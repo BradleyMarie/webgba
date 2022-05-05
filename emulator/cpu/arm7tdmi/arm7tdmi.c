@@ -166,12 +166,10 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
 }
 
 uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
-  assert(num_cycles != 0u);
-
   cpu->cycles_to_run = num_cycles;
 
   uint32_t cycles_executed = 0u;
-  do {
+  while (cycles_executed < cpu->cycles_to_run) {
     if (cpu->registers.execution_control.value == 1u) {
       cycles_executed = Arm7TdmiStepThumb(cpu, memory, cycles_executed);
     } else if (cpu->registers.execution_control.value == 0u) {
@@ -179,7 +177,7 @@ uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
     } else {
       cycles_executed = Arm7TdmiStepAny(cpu, memory, cycles_executed);
     }
-  } while (cycles_executed < cpu->cycles_to_run);
+  }
 
   return cycles_executed;
 }
