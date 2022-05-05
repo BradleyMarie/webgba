@@ -45,7 +45,8 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 
 static uint32_t Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory,
                                 uint32_t cycles_executed) {
-  assert(cycles_executed < cpu->cycles_to_run);
+  assert(cycles_executed < cpu->cycles_to_run ||
+         cycles_executed == UINT32_MAX - 1u);
 
   do {
     codegen_assert(!cpu->registers.current.user.cpsr.thumb);
@@ -67,7 +68,8 @@ static uint32_t Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory,
 
 static uint32_t Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory,
                                   uint32_t cycles_executed) {
-  assert(cycles_executed < cpu->cycles_to_run);
+  assert(cycles_executed < cpu->cycles_to_run ||
+         cycles_executed == UINT32_MAX - 1u);
 
   do {
     codegen_assert(cpu->registers.current.user.cpsr.thumb);
@@ -112,7 +114,8 @@ static bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   return true;
 }
 
-static void Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory) {
+static uint32_t Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory,
+                                uint32_t cycles_executed) {
   switch (cpu->registers.execution_control.mode) {
     case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM:
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
@@ -129,7 +132,7 @@ static void Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory) {
       }
     arm_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
-      Arm7TdmiStepArm(cpu, memory, 1u);
+      Arm7TdmiStepArm(cpu, memory, UINT32_MAX - 1u);
       break;
     case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB:
       if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
@@ -146,7 +149,7 @@ static void Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory) {
       }
     thumb_execute:
     case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
-      Arm7TdmiStepThumb(cpu, memory, 1u);
+      Arm7TdmiStepThumb(cpu, memory, UINT32_MAX - 1u);
       break;
     case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM:
     case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB:
@@ -161,6 +164,8 @@ static void Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory) {
     default:
       codegen_assert(false);
   }
+
+  return cycles_executed + 1u;
 }
 
 //
@@ -206,13 +211,15 @@ uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
   cpu->cycles_to_run = num_cycles;
 
   uint32_t cycles_executed = 0u;
-  for (; (cpu->registers.execution_control.mode & 0xEu) &&
-         cycles_executed < cpu->cycles_to_run;
-       cycles_executed++) {
-    Arm7TdmiStepAny(cpu, memory);
+  while (cpu->registers.execution_control.mode & 0xEu) {
+    cycles_executed = Arm7TdmiStepAny(cpu, memory, cycles_executed);
+    if (cpu->cycles_to_run <= cycles_executed) {
+      return cycles_executed;
+    }
   }
 
   if (cpu->registers.execution_control.mode != 0u) {
+    assert(cpu->registers.execution_control.mode == 1u);
     for (; cycles_executed < cpu->cycles_to_run;) {
       cycles_executed = Arm7TdmiStepThumb(cpu, memory, cycles_executed);
       if (cpu->cycles_to_run <= cycles_executed) {
