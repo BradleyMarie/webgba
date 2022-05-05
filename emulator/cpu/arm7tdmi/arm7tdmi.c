@@ -40,10 +40,55 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 }
 
 //
-// Common Functions
+// Step Routines
 //
 
-static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
+static uint32_t Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory,
+                                uint32_t cycles_executed) {
+  assert(cycles_executed < cpu->cycles_to_run);
+
+  do {
+    codegen_assert(!cpu->registers.current.user.cpsr.thumb);
+    cycles_executed += 1u;
+
+    uint32_t next_instruction_32;
+    bool success = Load32LE(memory, ArmCurrentInstruction(&cpu->registers),
+                            &next_instruction_32);
+    if (!success) {
+      ArmExceptionPrefetchABT(&cpu->registers);
+    } else {
+      ArmInstructionExecute(next_instruction_32, &cpu->registers, memory);
+    }
+  } while (cpu->registers.execution_control.mode == 0u &&
+           cycles_executed < cpu->cycles_to_run);
+
+  return cycles_executed;
+}
+
+static uint32_t Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory,
+                                  uint32_t cycles_executed) {
+  assert(cycles_executed < cpu->cycles_to_run);
+
+  do {
+    codegen_assert(cpu->registers.current.user.cpsr.thumb);
+    cycles_executed += 1u;
+
+    uint16_t next_instruction_16;
+    bool success = Load16LE(memory, ArmCurrentInstruction(&cpu->registers),
+                            &next_instruction_16);
+    if (!success) {
+      ArmExceptionPrefetchABT(&cpu->registers);
+      break;
+    }
+
+    ThumbInstructionExecute(next_instruction_16, &cpu->registers, memory);
+  } while (cpu->registers.execution_control.mode != 0u &&
+           cycles_executed < cpu->cycles_to_run);
+
+  return cycles_executed;
+}
+
+static bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
   assert(cpu->registers.execution_control.fiq);
 
   if (cpu->registers.current.user.cpsr.fiq_disable) {
@@ -55,7 +100,7 @@ static inline bool Arm7TdmiStepMaybeFiq(Arm7Tdmi* cpu, Memory* memory) {
   return true;
 }
 
-static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
+static bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   assert(cpu->registers.execution_control.irq);
 
   if (cpu->registers.current.user.cpsr.irq_disable) {
@@ -65,6 +110,57 @@ static inline bool Arm7TdmiStepMaybeIrq(Arm7Tdmi* cpu, Memory* memory) {
   ArmExceptionIRQ(&cpu->registers);
 
   return true;
+}
+
+static void Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory) {
+  switch (cpu->registers.execution_control.mode) {
+    case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM:
+      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+        break;
+      }
+      goto arm_execute;
+    case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM:
+      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+        break;
+      }
+    case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM:
+      if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
+        break;
+      }
+    arm_execute:
+    case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
+      Arm7TdmiStepArm(cpu, memory, 1u);
+      break;
+    case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB:
+      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+        break;
+      }
+      goto thumb_execute;
+    case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB:
+      if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
+        break;
+      }
+    case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB:
+      if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
+        break;
+      }
+    thumb_execute:
+    case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
+      Arm7TdmiStepThumb(cpu, memory, 1u);
+      break;
+    case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM:
+    case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB:
+    case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM:
+    case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB:
+    case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM:
+    case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB:
+    case ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM:
+    case ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB:
+      ArmExceptionRST(&cpu->registers);
+      break;
+    default:
+      codegen_assert(false);
+  }
 }
 
 //
@@ -110,73 +206,27 @@ uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
   cpu->cycles_to_run = num_cycles;
 
   uint32_t cycles_executed = 0u;
-  for (; cycles_executed < cpu->cycles_to_run; cycles_executed++) {
-    uint32_t next_instruction_32;
-    uint16_t next_instruction_16;
-    bool success;
-    switch (cpu->registers.execution_control.mode) {
-      case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM:
-        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-          break;
-        }
-        goto arm_execute;
-      case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM:
-        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-          break;
-        }
-      case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM:
-        if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
-          break;
-        }
-      arm_execute:
-      case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM:
-        codegen_assert(!cpu->registers.current.user.cpsr.thumb);
-        success = Load32LE(memory, ArmCurrentInstruction(&cpu->registers),
-                           &next_instruction_32);
-        if (!success) {
-          ArmExceptionPrefetchABT(&cpu->registers);
-          break;
-        }
+  for (; (cpu->registers.execution_control.mode & 0xEu) &&
+         cycles_executed < cpu->cycles_to_run;
+       cycles_executed++) {
+    Arm7TdmiStepAny(cpu, memory);
+  }
 
-        ArmInstructionExecute(next_instruction_32, &cpu->registers, memory);
-        break;
-      case ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB:
-        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-          break;
-        }
-        goto thumb_execute;
-      case ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB:
-        if (Arm7TdmiStepMaybeFiq(cpu, memory)) {
-          break;
-        }
-      case ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB:
-        if (Arm7TdmiStepMaybeIrq(cpu, memory)) {
-          break;
-        }
-      thumb_execute:
-      case ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB:
-        codegen_assert(cpu->registers.current.user.cpsr.thumb);
-        success = Load16LE(memory, ArmCurrentInstruction(&cpu->registers),
-                           &next_instruction_16);
-        if (!success) {
-          ArmExceptionPrefetchABT(&cpu->registers);
-          break;
-        }
-
-        ThumbInstructionExecute(next_instruction_16, &cpu->registers, memory);
-        break;
-      case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM:
-      case ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB:
-      case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM:
-      case ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB:
-      case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM:
-      case ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB:
-      case ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM:
-      case ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB:
-        ArmExceptionRST(&cpu->registers);
-        break;
-      default:
-        codegen_assert(false);
+  if (cpu->registers.execution_control.mode != 0u) {
+    for (; cycles_executed < cpu->cycles_to_run;) {
+      cycles_executed = Arm7TdmiStepThumb(cpu, memory, cycles_executed);
+      if (cpu->cycles_to_run <= cycles_executed) {
+        return cycles_executed;
+      }
+      cycles_executed = Arm7TdmiStepArm(cpu, memory, cycles_executed);
+    }
+  } else {
+    for (; cycles_executed < cpu->cycles_to_run;) {
+      cycles_executed = Arm7TdmiStepArm(cpu, memory, cycles_executed);
+      if (cpu->cycles_to_run <= cycles_executed) {
+        return cycles_executed;
+      }
+      cycles_executed = Arm7TdmiStepThumb(cpu, memory, cycles_executed);
     }
   }
 

@@ -23,9 +23,9 @@
 #include "tools/arm_opcode_decoder/decoder.h"
 #include "util/macros.h"
 
-static inline void ArmInstructionExecute(uint32_t next_instruction,
-                                         ArmAllRegisters* registers,
-                                         Memory* memory) {
+static inline void __attribute__((always_inline))
+ArmInstructionExecute(uint32_t next_instruction, ArmAllRegisters* registers,
+                      Memory* memory) {
   codegen_assert(!registers->current.user.cpsr.thumb);
 
   if (!ArmInstructionShouldExecute(registers->current.user.cpsr,
