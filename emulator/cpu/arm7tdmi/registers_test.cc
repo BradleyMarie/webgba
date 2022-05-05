@@ -24,6 +24,23 @@ extern "C" {
 #define BANKED_R13_INDEX 1u
 #define BANKED_R14_INDEX 0u
 
+#define ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_ARM 0u
+#define ARM_EXECUTION_MODE_NORST_NOFIQ_NOIRQ_THUMB 1u
+#define ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_ARM 2u
+#define ARM_EXECUTION_MODE_NORST_NOFIQ_IRQ_THUMB 3u
+#define ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_ARM 4u
+#define ARM_EXECUTION_MODE_NORST_FIQ_NOIRQ_THUMB 5u
+#define ARM_EXECUTION_MODE_NORST_FIQ_IRQ_ARM 6u
+#define ARM_EXECUTION_MODE_NORST_FIQ_IRQ_THUMB 7u
+#define ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_ARM 8u
+#define ARM_EXECUTION_MODE_RST_NOFIQ_NOIRQ_THUMB 9u
+#define ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_ARM 10u
+#define ARM_EXECUTION_MODE_RST_NOFIQ_IRQ_THUMB 11u
+#define ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_ARM 12u
+#define ARM_EXECUTION_MODE_RST_FIQ_NOIRQ_THUMB 13u
+#define ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM 14u
+#define ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB 15u
+
 ArmAllRegisters CreateArmAllRegisters() {
   ArmAllRegisters registers;
   memset(&registers, 0, sizeof(ArmAllRegisters));
@@ -253,7 +270,7 @@ TEST_P(ArmLoadCPSRTest, ToUSR) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_THUMB,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_USR);
 }
@@ -309,7 +326,7 @@ TEST_P(ArmLoadCPSRTest, ToSYS) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_SYS);
 }
@@ -360,7 +377,7 @@ TEST_P(ArmLoadCPSRTest, ToABT) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_ABT);
 }
@@ -408,7 +425,7 @@ TEST_P(ArmLoadCPSRTest, ToFIQ) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_FIQ);
 }
@@ -459,7 +476,7 @@ TEST_P(ArmLoadCPSRTest, ToIRQ) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_IRQ);
 }
@@ -510,7 +527,7 @@ TEST_P(ArmLoadCPSRTest, ToSVC) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_SVC);
 }
@@ -561,7 +578,7 @@ TEST_P(ArmLoadCPSRTest, ToUND) {
 
   // Execution Mode
   EXPECT_EQ(ARM_EXECUTION_MODE_RST_FIQ_IRQ_ARM,
-            registers_.execution_control.mode);
+            registers_.execution_control.value);
 
   ValidateBanksUnmodifiedExcept(MODE_UND);
 }
