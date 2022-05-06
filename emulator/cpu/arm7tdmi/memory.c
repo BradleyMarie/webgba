@@ -8,10 +8,8 @@ static inline uint32_t RotateRight(uint32_t value, uint_fast8_t amount) {
 
 static inline void RotateDataByAddress(uint32_t address, uint32_t *value) {
   uint_fast8_t rotate = address & 0x3u;
-  if (rotate) {
-    assert(0u < rotate && rotate < 4u);
-    *value = RotateRight(*value, rotate * 8u);
-  }
+  assert(0u <= rotate && rotate < 4u);
+  *value = RotateRight(*value, rotate * 8u);
 }
 
 bool ArmLoad32LEWithRotation(const Memory *memory, uint32_t address,
@@ -34,10 +32,7 @@ bool ArmLoad16LEWithRotation(const Memory *memory, uint32_t address,
   uint32_t masked_address = address & 0xFFFFFFFEu;
   uint16_t temp;
   bool result = Load16LE(memory, masked_address, &temp);
-  *value = temp;
-  if (address & 0x1u) {
-    *value = RotateRight(*value, 8u);
-  }
+  *value = RotateRight(temp, (address & 0x1u) * 8u);
   return result;
 }
 
@@ -61,10 +56,7 @@ bool ArmLoad16SLEWithRotation(const Memory *memory, uint32_t address,
   uint32_t masked_address = address & 0xFFFFFFFEu;
   int16_t temp;
   bool result = Load16SLE(memory, masked_address, &temp);
-  *value = temp;
-  if (address & 0x1u) {
-    *value >>= 8u;
-  }
+  *value = ((int32_t)temp) >> ((address & 0x1u) * 8u);
   return result;
 }
 
