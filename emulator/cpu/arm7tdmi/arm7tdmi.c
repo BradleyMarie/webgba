@@ -26,12 +26,16 @@ static void Arm7TdmiSetLevelRst(void* context, bool raised) {
 
 static void Arm7TdmiSetLevelFiq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->registers.execution_control.fiq = raised;
+  cpu->registers.execution_control.fiq =
+      raised && !cpu->registers.current.user.cpsr.fiq_disable;
+  cpu->registers.execution_control.fiq_raised = raised;
 }
 
 static void Arm7TdmiSetLevelIrq(void* context, bool raised) {
   Arm7Tdmi* cpu = (Arm7Tdmi*)context;
-  cpu->registers.execution_control.irq = raised;
+  cpu->registers.execution_control.irq =
+      raised && !cpu->registers.current.user.cpsr.irq_disable;
+  cpu->registers.execution_control.irq_raised = raised;
 }
 
 static void Arm7TdmiInterruptLineFree(void* context) {
@@ -43,10 +47,9 @@ static void Arm7TdmiInterruptLineFree(void* context) {
 // Step Routines
 //
 
-static uint32_t __attribute__((noinline))
-Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
-  assert(cycles_executed < cpu->cycles_to_run ||
-         cycles_executed == UINT32_MAX - 1u);
+static uint32_t Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory,
+                                uint32_t cycles_executed) {
+  assert(cycles_executed < cpu->cycles_to_run);
 
   do {
     codegen_assert(!cpu->registers.current.user.cpsr.thumb);
@@ -60,16 +63,15 @@ Arm7TdmiStepArm(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
     } else {
       ArmInstructionExecute(next_instruction_32, &cpu->registers, memory);
     }
-  } while (cpu->registers.execution_control.value == 0u &&
+  } while (cpu->registers.execution_control.mode == 0u &&
            cycles_executed < cpu->cycles_to_run);
 
   return cycles_executed;
 }
 
-static uint32_t __attribute__((noinline))
-Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
-  assert(cycles_executed < cpu->cycles_to_run ||
-         cycles_executed == UINT32_MAX - 1u);
+static uint32_t Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory,
+                                  uint32_t cycles_executed) {
+  assert(cycles_executed < cpu->cycles_to_run);
 
   do {
     codegen_assert(cpu->registers.current.user.cpsr.thumb);
@@ -84,46 +86,35 @@ Arm7TdmiStepThumb(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
     }
 
     ThumbInstructionExecute(next_instruction_16, &cpu->registers, memory);
-  } while (cpu->registers.execution_control.value != 0u &&
+  } while (cpu->registers.execution_control.mode == 1u &&
            cycles_executed < cpu->cycles_to_run);
 
   return cycles_executed;
 }
 
-static uint32_t __attribute__((noinline))
-Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
-  assert(cpu->registers.execution_control.value & 0xEu);
+static uint32_t Arm7TdmiInterrupt(Arm7Tdmi* cpu, Memory* memory,
+                                  uint32_t cycles_executed) {
+  assert(cpu->registers.execution_control.rst ||
+         cpu->registers.execution_control.fiq ||
+         cpu->registers.execution_control.irq);
   assert(cycles_executed < cpu->cycles_to_run);
 
-  do {
-    cycles_executed += 1u;
+  if (cpu->registers.execution_control.rst) {
+    ArmExceptionRST(&cpu->registers);
+    assert(cpu->registers.execution_control.rst);
+  } else if (cpu->registers.execution_control.fiq) {
+    ArmExceptionFIQ(&cpu->registers);
+    assert(!cpu->registers.execution_control.rst);
+  } else if (cpu->registers.execution_control.irq) {
+    ArmExceptionIRQ(&cpu->registers);
+    assert(!cpu->registers.execution_control.rst);
+  }
 
-    if (cpu->registers.execution_control.rst) {
-      ArmExceptionRST(&cpu->registers);
-      continue;
-    }
+  assert(!cpu->registers.execution_control.irq);
+  assert(!cpu->registers.execution_control.fiq);
+  assert(!cpu->registers.execution_control.thumb);
 
-    if (cpu->registers.execution_control.fiq &&
-        !cpu->registers.current.user.cpsr.fiq_disable) {
-      ArmExceptionFIQ(&cpu->registers);
-      continue;
-    }
-
-    if (cpu->registers.execution_control.irq &&
-        !cpu->registers.current.user.cpsr.irq_disable) {
-      ArmExceptionIRQ(&cpu->registers);
-      continue;
-    }
-
-    if (cpu->registers.execution_control.thumb) {
-      Arm7TdmiStepThumb(cpu, memory, UINT32_MAX - 1u);
-    } else {
-      Arm7TdmiStepArm(cpu, memory, UINT32_MAX - 1u);
-    }
-  } while ((cpu->registers.execution_control.value & 0xEu) &&
-           cycles_executed < cpu->cycles_to_run);
-
-  return cycles_executed;
+  return cycles_executed + 1u;
 }
 
 //
@@ -170,12 +161,12 @@ uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
 
   uint32_t cycles_executed = 0u;
   while (cycles_executed < cpu->cycles_to_run) {
-    if (cpu->registers.execution_control.value == 1u) {
+    if (cpu->registers.execution_control.mode == 1u) {
       cycles_executed = Arm7TdmiStepThumb(cpu, memory, cycles_executed);
-    } else if (cpu->registers.execution_control.value == 0u) {
+    } else if (cpu->registers.execution_control.mode == 0u) {
       cycles_executed = Arm7TdmiStepArm(cpu, memory, cycles_executed);
     } else {
-      cycles_executed = Arm7TdmiStepAny(cpu, memory, cycles_executed);
+      cycles_executed = Arm7TdmiInterrupt(cpu, memory, cycles_executed);
     }
   }
 
