@@ -120,7 +120,7 @@ Arm7TdmiStepAny(Arm7Tdmi* cpu, Memory* memory, uint32_t cycles_executed) {
     } else {
       Arm7TdmiStepArm(cpu, memory, UINT32_MAX - 1u);
     }
-  } while (cpu->registers.execution_control.value == 0u &&
+  } while ((cpu->registers.execution_control.value & 0xEu) &&
            cycles_executed < cpu->cycles_to_run);
 
   return cycles_executed;
