@@ -184,8 +184,7 @@ static inline void ArmLoadGPSR(ArmAllRegisters* registers,
   if (register_index != REGISTER_PC) {
     registers->current.user.gprs.gprs[register_index] = value;
   } else {
-    uint_fast8_t shift_size =
-        2u - (uint_fast8_t)registers->current.user.cpsr.thumb;
+    uint_fast8_t shift_size = 2u >> registers->current.user.cpsr.thumb;
     ArmLoadProgramCounter(registers, (value >> shift_size) << shift_size);
   }
 }
