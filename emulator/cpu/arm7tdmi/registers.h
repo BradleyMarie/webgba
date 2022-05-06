@@ -135,15 +135,18 @@ typedef struct {
 } ArmPrivilegedRegisters;
 
 // Non-architectural state used to control execution
-typedef union {
-  struct {
-    bool thumb : 1;
-    bool irq : 1;
-    bool fiq : 1;
-    bool rst : 1;
-    bool any : 1;
+typedef struct {
+  union {
+    struct {
+      bool thumb : 1;
+      bool irq : 1;
+      bool fiq : 1;
+      bool rst : 1;
+    };
+    uint32_t mode;
   };
-  uint32_t value;
+  bool irq_raised;
+  bool fiq_raised;
 } ArmExecutionControl;
 
 typedef struct {

@@ -64,4 +64,8 @@ void ArmLoadCPSR(ArmAllRegisters* registers, ArmProgramStatusRegister cpsr) {
 
   registers->current.user.cpsr = cpsr;
   registers->execution_control.thumb = cpsr.thumb;
+  registers->execution_control.irq =
+      registers->execution_control.irq_raised && !cpsr.irq_disable;
+  registers->execution_control.fiq =
+      registers->execution_control.fiq_raised && !cpsr.fiq_disable;
 }
