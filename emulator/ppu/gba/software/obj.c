@@ -1,8 +1,7 @@
-#include "emulator/ppu/gba/obj/draw.h"
+#include "emulator/ppu/gba/software/obj.h"
 
 bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
-                       const GbaPpuInternalRegisters* internal_registers,
                        const GbaPpuObjectVisibility* visibility,
                        const uint_fast8_t x, uint_fast8_t y, uint16_t* color,
                        uint8_t* priority, bool* semi_transparent,
@@ -11,9 +10,9 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
   *on_obj_mask = false;
   bool found = false;
 
-  GbaPpuObjectSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
-  while (!GbaPpuObjectSetEmpty(&objects)) {
-    uint_fast8_t object = GbaPpuObjectSetPop(&objects);
+  GbaPpuSet objects = GbaPpuObjectVisibilityGet(visibility, x, y);
+  while (!GbaPpuSetEmpty(&objects)) {
+    uint_fast8_t object = GbaPpuSetPop(&objects);
     assert(memory->oam.object_attributes[object].affine ||
            !memory->oam.object_attributes[object].flex_param_0);
 
@@ -24,9 +23,9 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
       unsigned char group = memory->oam.object_attributes[object].flex_param_1;
 
       int_fast16_t center_x =
-          internal_registers->object_coordinates[object].x_center;
+          visibility->object_coordinates[object].true_x_center;
       int_fast16_t center_y =
-          internal_registers->object_coordinates[object].y_center;
+          visibility->object_coordinates[object].true_y_center;
 
       int_fast16_t from_center_x = lookup_x - center_x;
       int_fast16_t from_center_y = lookup_y - center_y;
@@ -39,19 +38,19 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
           memory->oam.rotate_scale[group].pc * from_center_x +
           memory->oam.rotate_scale[group].pd * from_center_y;
 
-      lookup_x = (internal_registers->object_coordinates[object].x_size >> 1) +
+      lookup_x = (visibility->object_coordinates[object].pixel_x_size >> 1) +
                  (x_rotation >> 8u);
 
       if (lookup_x < 0 ||
-          lookup_x >= internal_registers->object_coordinates[object].x_size) {
+          lookup_x >= visibility->object_coordinates[object].pixel_x_size) {
         continue;
       }
 
-      lookup_y = (internal_registers->object_coordinates[object].y_size >> 1) +
+      lookup_y = (visibility->object_coordinates[object].pixel_y_size >> 1) +
                  (y_rotation >> 8u);
 
       if (lookup_y < 0 ||
-          lookup_y >= internal_registers->object_coordinates[object].y_size) {
+          lookup_y >= visibility->object_coordinates[object].pixel_y_size) {
         continue;
       }
 
@@ -60,8 +59,8 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
         lookup_y -= lookup_y % (registers->mosaic.obj_vert + 1u);
       }
     } else {
-      lookup_x -= internal_registers->object_coordinates[object].x;
-      lookup_y -= internal_registers->object_coordinates[object].y;
+      lookup_x -= visibility->object_coordinates[object].true_x_start;
+      lookup_y -= visibility->object_coordinates[object].true_y_start;
 
       if (memory->oam.object_attributes[object].obj_mosaic) {
         lookup_x -= lookup_x % (registers->mosaic.obj_horiz + 1u);
@@ -70,14 +69,14 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
 
       // Horizontal Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x8u) {
-        lookup_x = internal_registers->object_coordinates[object].x_size -
-                   lookup_x - 1;
+        lookup_x =
+            visibility->object_coordinates[object].pixel_x_size - lookup_x - 1;
       }
 
       // Vertical Flip
       if (memory->oam.object_attributes[object].flex_param_1 & 0x10u) {
-        lookup_y = internal_registers->object_coordinates[object].y_size -
-                   lookup_y - 1;
+        lookup_y =
+            visibility->object_coordinates[object].pixel_y_size - lookup_y - 1;
       }
     }
 
@@ -91,7 +90,7 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
     if (registers->dispcnt.object_mode) {
       // One Dimensional Lookup
       unsigned short x_size_tiles =
-          (internal_registers->object_coordinates[object].x_size / 8u);
+          (visibility->object_coordinates[object].pixel_x_size / 8u);
       tile_index = character_name + y_tile * x_size_tiles + x_tile;
     } else {
       // Two Dimensional Lookup

@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_BG_SCROLLING_
-#define _WEBGBA_EMULATOR_PPU_GBA_BG_SCROLLING_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_SCROLLING_
+#define _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_SCROLLING_
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
@@ -17,4 +17,4 @@ bool GbaPpuScrollingBackgroundPixel(const GbaPpuMemory* memory,
                                     uint_fast8_t x, uint_fast8_t y,
                                     uint16_t* color);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_BG_SCROLLING_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_SCROLLING_

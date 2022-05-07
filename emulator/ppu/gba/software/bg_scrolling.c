@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/bg/scrolling.h"
+#include "emulator/ppu/gba/software/bg_scrolling.h"
 
 bool GbaPpuScrollingBackgroundPixel(const GbaPpuMemory* memory,
                                     const GbaPpuRegisters* registers,

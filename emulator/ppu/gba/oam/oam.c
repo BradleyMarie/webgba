@@ -8,7 +8,8 @@
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
   GbaPpuInternalRegisters *internal_registers;
-  GbaPpuObjectVisibility *object_visibility;
+  GbaPpuSet *dirty_objects;
+  GbaPpuSet *dirty_rotations;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuOam;
@@ -46,43 +47,28 @@ static bool OamLoad8(const void *context, uint32_t address, uint8_t *value) {
   return true;
 }
 
-static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
-  assert((address & 0x3u) == 0u);
-
-  GbaPpuOam *oam = (GbaPpuOam *)context;
-
-  address &= OAM_ADDRESS_MASK;
-
-  if ((address & 0x7u) < 4u) {
-    uint_fast8_t object = address >> 3u;
-    GbaPpuObjectVisibilityHidden(oam->memory, oam->internal_registers, object,
-                                 oam->object_visibility);
-    oam->memory->words[address >> 2u] = value;
-    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->internal_registers,
-                                oam->object_visibility);
-  } else {
-    oam->memory->words[address >> 2u] = value;
-  }
-
-  return true;
-}
-
 static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   assert((address & 0x1u) == 0u);
 
   GbaPpuOam *oam = (GbaPpuOam *)context;
 
   address &= OAM_ADDRESS_MASK;
+  oam->memory->half_words[address >> 1u] = value;
+
   if ((address & 0x7u) < 4u) {
-    uint_fast8_t object = address >> 3u;
-    GbaPpuObjectVisibilityHidden(oam->memory, oam->internal_registers, object,
-                                 oam->object_visibility);
-    oam->memory->half_words[address >> 1u] = value;
-    GbaPpuObjectVisibilityDrawn(oam->memory, object, oam->internal_registers,
-                                oam->object_visibility);
+    GbaPpuSetAdd(oam->dirty_objects, address >> 3u);
   } else {
-    oam->memory->half_words[address >> 1u] = value;
+    GbaPpuSetAdd(oam->dirty_rotations, address >> 5u);
   }
+
+  return true;
+}
+
+static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
+  assert((address & 0x3u) == 0u);
+
+  OamStore16LE(context, address, value);
+  OamStore16LE(context, address + 2u, value >> 16u);
 
   return true;
 }
@@ -100,7 +86,7 @@ static void OamFree(void *context) {
 
 Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
                     GbaPpuInternalRegisters *internal_registers,
-                    GbaPpuObjectVisibility *object_visibility,
+                    GbaPpuSet *dirty_objects, GbaPpuSet *dirty_rotations,
                     MemoryContextFree free_routine, void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
   if (oam == NULL) {
@@ -109,7 +95,8 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
 
   oam->memory = oam_memory;
   oam->internal_registers = internal_registers;
-  oam->object_visibility = object_visibility;
+  oam->dirty_objects = dirty_objects;
+  oam->dirty_rotations = dirty_rotations;
   oam->free_routine = free_routine;
   oam->free_address = free_address;
 

@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/window.h"
+#include "emulator/ppu/gba/software/window.h"
 
 static inline bool IsInsideWindow1D(uint_fast8_t lower_bound,
                                     uint_fast8_t upper_bound,

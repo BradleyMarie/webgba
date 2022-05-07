@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_BG_AFFINE_
-#define _WEBGBA_EMULATOR_PPU_GBA_BG_AFFINE_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_AFFINE_
+#define _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_AFFINE_
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
@@ -15,4 +15,4 @@ bool GbaPpuAffineBackgroundPixel(
     GbaPpuAffineBackground background, uint_fast8_t x, uint_fast8_t y,
     uint16_t* color);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_BG_AFFINE_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BG_AFFINE_

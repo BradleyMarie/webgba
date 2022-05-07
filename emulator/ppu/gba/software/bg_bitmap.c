@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/bg/bitmap.h"
+#include "emulator/ppu/gba/software/bg_bitmap.h"
 
 typedef enum {
   GBA_PPU_BG2_MODE_3,
@@ -27,16 +27,14 @@ static inline bool GbaPpuBackground2BitmapPixel(
   uint8_t color_index;
   switch (mode) {
     case GBA_PPU_BG2_MODE_3:
-      if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
-          lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+      if (lookup_x >= GBA_SCREEN_WIDTH || lookup_y >= GBA_SCREEN_HEIGHT) {
         return false;
       } else {
         *color = memory->vram.mode_3.bg.pixels[lookup_y][lookup_x];
       }
       break;
     case GBA_PPU_BG2_MODE_4:
-      if (lookup_x >= GBA_FULL_FRAME_WIDTH ||
-          lookup_y >= GBA_FULL_FRAME_HEIGHT) {
+      if (lookup_x >= GBA_SCREEN_WIDTH || lookup_y >= GBA_SCREEN_HEIGHT) {
         return false;
       } else {
         color_index =

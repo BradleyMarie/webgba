@@ -3,19 +3,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "emulator/ppu/gba/bg/affine.h"
-#include "emulator/ppu/gba/bg/bitmap.h"
-#include "emulator/ppu/gba/bg/scrolling.h"
-#include "emulator/ppu/gba/blend.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
-#include "emulator/ppu/gba/obj/draw.h"
 #include "emulator/ppu/gba/palette/palette.h"
 #include "emulator/ppu/gba/registers.h"
-#include "emulator/ppu/gba/screen.h"
+#include "emulator/ppu/gba/software/render.h"
 #include "emulator/ppu/gba/vram/vram.h"
-#include "emulator/ppu/gba/window.h"
 #include "util/macros.h"
 
 #define GBA_PPU_CYCLES_PER_PIXEL 4u
@@ -41,15 +35,15 @@ typedef enum {
 struct _GbaPpu {
   GbaDmaUnit *dma_unit;
   GbaPlatform *platform;
+  GbaPpuSoftwareRenderer *software_renderer;
   GbaPpuMemory memory;
-  GbaPpuBlendUnit blend_unit;
-  GbaPpuScreen screen;
   GbaPpuRegisters registers;
   GbaPpuInternalRegisters internal_registers;
-  GbaPpuObjectVisibility object_visibility;
   GbaPpuRenderMode next_render_mode;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
+  GbaPpuSet dirty_objects;
+  GbaPpuSet dirty_rotations;
   uint32_t cycles_from_hblank_to_draw;
   uint_fast8_t pixels_per_draw;
   uint_fast8_t x;
@@ -65,180 +59,6 @@ struct _GbaPpu {
 static void GbaPpuRelease(void *context) {
   GbaPpu *ppu = (GbaPpu *)context;
   GbaPpuFree(ppu);
-}
-
-//
-// Render
-//
-
-static inline void GbaPpuRenderPixel(GbaPpu *ppu, uint_fast8_t x) {
-  uint16_t color = 0u;
-  if (!ppu->registers.dispcnt.forced_blank) {
-    uint16_t obj_color;
-    uint8_t obj_priority;
-    bool object_on_pixel, obj_semi_transparent, on_obj_mask;
-    if (ppu->registers.dispcnt.object_enable) {
-      object_on_pixel = GbaPpuObjectPixel(
-          &ppu->memory, &ppu->registers, &ppu->internal_registers,
-          &ppu->object_visibility, x, ppu->registers.vcount, &obj_color,
-          &obj_priority, &obj_semi_transparent, &on_obj_mask);
-    } else {
-      object_on_pixel = false;
-      on_obj_mask = false;
-    }
-
-    bool draw_obj, draw_bg0, draw_bg1, draw_bg2, draw_bg3, enable_blending;
-    GbaPpuWindowCheck(&ppu->registers, x, ppu->registers.vcount, on_obj_mask,
-                      &draw_obj, &draw_bg0, &draw_bg1, &draw_bg2, &draw_bg3,
-                      &enable_blending);
-
-    GbaPpuBlendUnitReset(&ppu->blend_unit);
-    if (object_on_pixel && draw_obj) {
-      GbaPpuBlendUnitAddObject(&ppu->blend_unit, &ppu->registers, obj_color,
-                               obj_priority, obj_semi_transparent);
-    }
-
-    bool success;
-    switch (ppu->registers.dispcnt.mode) {
-      case 0:
-        if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground0(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg1 && ppu->registers.dispcnt.bg1_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground1(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_2, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg3 && ppu->registers.dispcnt.bg3_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_3, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground3(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-      case 1:
-        if (draw_bg0 && ppu->registers.dispcnt.bg0_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_0, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground0(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg1 && ppu->registers.dispcnt.bg1_enable) {
-          success = GbaPpuScrollingBackgroundPixel(
-              &ppu->memory, &ppu->registers, GBA_PPU_SCROLLING_BACKGROUND_1, x,
-              ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground1(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuAffineBackgroundPixel(
-              &ppu->memory, &ppu->registers, &ppu->internal_registers,
-              GBA_PPU_AFFINE_BACKGROUND_2, x, ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-      case 2:
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuAffineBackgroundPixel(
-              &ppu->memory, &ppu->registers, &ppu->internal_registers,
-              GBA_PPU_AFFINE_BACKGROUND_2, x, ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-
-        if (draw_bg3 && ppu->registers.dispcnt.bg3_enable) {
-          success = GbaPpuAffineBackgroundPixel(
-              &ppu->memory, &ppu->registers, &ppu->internal_registers,
-              GBA_PPU_AFFINE_BACKGROUND_3, x, ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground3(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-      case 3:
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuBitmapMode3Pixel(&ppu->memory, &ppu->registers,
-                                           &ppu->internal_registers, x,
-                                           ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-      case 4:
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuBitmapMode4Pixel(&ppu->memory, &ppu->registers,
-                                           &ppu->internal_registers, x,
-                                           ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-      case 5:
-        if (draw_bg2 && ppu->registers.dispcnt.bg2_enable) {
-          success = GbaPpuBitmapMode5Pixel(&ppu->memory, &ppu->registers,
-                                           &ppu->internal_registers, x,
-                                           ppu->registers.vcount, &color);
-          if (success) {
-            GbaPpuBlendUnitAddBackground2(&ppu->blend_unit, &ppu->registers,
-                                          color);
-          }
-        }
-        break;
-    }
-
-    GbaPpuBlendUnitAddBackdrop(&ppu->blend_unit, &ppu->registers,
-                               ppu->memory.palette.bg.large_palette[0u]);
-
-    if (enable_blending) {
-      color = GbaPpuBlendUnitBlend(&ppu->blend_unit, &ppu->registers);
-    } else {
-      color = GbaPpuBlendUnitNoBlend(&ppu->blend_unit);
-    }
-  }
-
-  GbaPpuScreenSet(&ppu->screen, x, ppu->registers.vcount, color);
 }
 
 //
@@ -299,7 +119,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->reference_count += 1u;
 
   *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->internal_registers,
-                     &(*ppu)->object_visibility, GbaPpuRelease, *ppu);
+                     &(*ppu)->dirty_objects, &(*ppu)->dirty_rotations,
+                     GbaPpuRelease, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -321,6 +142,17 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
+  (*ppu)->software_renderer =
+      GbaPpuSoftwareRendererAllocate(&(*ppu)->memory.oam);
+  if ((*ppu)->software_renderer == NULL) {
+    MemoryFree(*oam);
+    MemoryFree(*vram);
+    MemoryFree(*palette);
+    MemoryFree(*registers);
+    free(*ppu);
+    return false;
+  }
+
   (*ppu)->dma_unit = dma_unit;
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;
@@ -331,12 +163,6 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.dispstat.vcount_status = true;
 
   GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
-
-  for (uint_fast8_t object = 0; object < OAM_NUM_OBJECTS; object++) {
-    GbaPpuObjectVisibilityDrawn(&(*ppu)->memory.oam, object,
-                                &(*ppu)->internal_registers,
-                                &(*ppu)->object_visibility);
-  }
 
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
@@ -362,7 +188,12 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
     case GBA_PPU_DRAW_ROW_SOFTWARE:
     case GBA_PPU_DRAW_ROW_HARDWARE:
       for (uint_fast8_t i = 0; i < ppu->pixels_per_draw; i++) {
-        GbaPpuRenderPixel(ppu, ppu->x++);
+        GbaPpuSoftwareRendererDrawPixel(
+            ppu->software_renderer, &ppu->memory, &ppu->registers,
+            &ppu->internal_registers, ppu->dirty_objects, ppu->dirty_rotations,
+            ppu->x++, ppu->registers.vcount);
+        GbaPpuSetClear(&ppu->dirty_objects);
+        GbaPpuSetClear(&ppu->dirty_rotations);
       }
 
       if (ppu->x == GBA_SCREEN_WIDTH) {
@@ -403,7 +234,7 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
         GbaDmaUnitSignalVBlank(ppu->dma_unit);
 
         if (ppu->draw_state != GBA_PPU_DRAW_ROW_HARDWARE) {
-          GbaPpuScreenRenderToFbo(&ppu->screen, fbo);
+          GbaPpuSoftwareRendererPresent(ppu->software_renderer, fbo);
         }
 
         ppu->next_wake_state = GBA_PPU_PRE_OFFSCREEN_HBLANK;
@@ -475,11 +306,11 @@ void GbaPpuFree(GbaPpu *ppu) {
   ppu->reference_count -= 1u;
   if (ppu->reference_count == 0u) {
     GbaPlatformRelease(ppu->platform);
-    GbaPpuScreenDestroy(&ppu->screen);
+    GbaPpuSoftwareRendererFree(ppu->software_renderer);
     free(ppu);
   }
 }
 
 void GbaPpuReloadContext(GbaPpu *ppu) {
-  GbaPpuScreenReloadContext(&ppu->screen);
+  GbaPpuSoftwareRendererReloadContext(ppu->software_renderer);
 }

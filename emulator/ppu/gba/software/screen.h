@@ -1,14 +1,11 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_SCREEN_
-#define _WEBGBA_EMULATOR_PPU_GBA_PPU_SCREEN_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_SCREEN_
+#define _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_SCREEN_
 
 #include <GLES2/gl2.h>
 #include <assert.h>
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
-
-#define GBA_SCREEN_HEIGHT GBA_FULL_FRAME_HEIGHT
-#define GBA_SCREEN_WIDTH GBA_FULL_FRAME_WIDTH
 
 typedef struct {
   uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
@@ -31,4 +28,4 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen);
 
 void GbaPpuScreenDestroy(GbaPpuScreen* screen);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_PPU_SCREEN_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_SCREEN_
