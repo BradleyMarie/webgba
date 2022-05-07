@@ -88,10 +88,10 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
                /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                /*border=*/0, /*format=*/GL_RGBA,
-               /*type=*/GL_UNSIGNED_BYTE,
+               /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
 
