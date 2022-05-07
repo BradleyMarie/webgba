@@ -190,9 +190,9 @@ void GbaPpuSoftwareRendererDrawPixel(
   GbaPpuScreenSet(&renderer->screen, x, y, color);
 }
 
-void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer,
-                                   GLuint fbo) {
-  GbaPpuScreenRenderToFbo(&renderer->screen, fbo);
+void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
+                                   GLsizei width, GLsizei height) {
+  GbaPpuScreenRenderToFbo(&renderer->screen, fbo, width, height);
 }
 
 void GbaPpuSoftwareRendererReloadContext(GbaPpuSoftwareRenderer* renderer) {

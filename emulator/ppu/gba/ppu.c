@@ -174,8 +174,8 @@ uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu) {
   return ppu->next_wake - ppu->cycle_count;
 }
 
-bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
-                uint8_t scale_factor) {
+bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
+                GLsizei height) {
   ppu->cycle_count += num_cycles;
   assert(ppu->cycle_count <= ppu->next_wake);
 
@@ -234,7 +234,8 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
         GbaDmaUnitSignalVBlank(ppu->dma_unit);
 
         if (ppu->draw_state != GBA_PPU_DRAW_ROW_HARDWARE) {
-          GbaPpuSoftwareRendererPresent(ppu->software_renderer, fbo);
+          GbaPpuSoftwareRendererPresent(ppu->software_renderer, fbo, width,
+                                        height);
         }
 
         ppu->next_wake_state = GBA_PPU_PRE_OFFSCREEN_HBLANK;

@@ -16,7 +16,8 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
 typedef void (*GbaEmulatorRenderAudioSample)(int16_t left, int16_t right);
 
 // Advance emulation by one frame
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
+void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
+                     GLsizei height,
                      GbaEmulatorRenderAudioSample audio_sample_callback);
 
 // Context Loss Recovery

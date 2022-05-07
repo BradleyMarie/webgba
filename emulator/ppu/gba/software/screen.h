@@ -22,7 +22,8 @@ static inline void GbaPpuScreenSet(GbaPpuScreen* screen, uint_fast8_t x,
   screen->pixels[y][x] = value;
 }
 
-void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo);
+void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
+                             GLsizei height);
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen);
 

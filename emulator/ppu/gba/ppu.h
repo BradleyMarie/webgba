@@ -22,8 +22,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
 uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu);
 
-bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo,
-                uint8_t scale_factor);
+bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
+                GLsizei height);
 
 // Rendering mode changes take effect at the beginning of each frame
 void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode);

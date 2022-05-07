@@ -18,8 +18,8 @@ void GbaPpuSoftwareRendererDrawPixel(
     const GbaPpuInternalRegisters* internal_registers, GbaPpuSet dirty_objects,
     GbaPpuSet dirty_rotations, uint8_t x, uint8_t y);
 
-void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer,
-                                   GLuint fbo);
+void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
+                                   GLsizei width, GLsizei height);
 
 void GbaPpuSoftwareRendererReloadContext(GbaPpuSoftwareRenderer* renderer);
 
