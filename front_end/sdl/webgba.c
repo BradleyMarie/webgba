@@ -12,12 +12,6 @@
 #include "third_party/libsamplerate/samplerate.h"
 
 #if __EMSCRIPTEN__
-
-#else
-
-#endif  // __EMSCRIPTEN__
-
-#if __EMSCRIPTEN__
 #define WEB_INPUT_A 0
 #define WEB_INPUT_B 1
 #define WEB_INPUT_L 4
@@ -600,7 +594,7 @@ int main(int argc, char *argv[]) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
                /*width=*/240, /*height=*/160, /*border=*/0,
-               /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
+               /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_BYTE,
                /*pixels=*/NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
 
