@@ -5,10 +5,6 @@
 #include "emulator/gba.h"
 
 static SDL_GameController *g_gamecontroller = NULL;
-static GLuint g_fbo_texture = 0;
-static GLuint g_fbo = 0;
-static GLuint g_program = 0;
-static GLuint g_vertices = 0;
 static SDL_Window *g_window = NULL;
 static SDL_GLContext *g_glcontext = NULL;
 static SDL_AudioDeviceID g_audiodevice = 0;
@@ -153,37 +149,20 @@ static bool RenderNextFrame() {
   GamePadToggleDown(g_gamepad, down_pressed);
   GamePadToggleLeft(g_gamepad, left_pressed);
   GamePadToggleRight(g_gamepad, right_pressed);
-  //
-  // Run emulation
-  //
-
-  GbaEmulatorStep(g_emulator, /*fbo=*/g_fbo, /*scale_factor=*/1,
-                  RenderAudioSample);
 
   //
-  // Render result
+  // Get screen dimensions
   //
-
-  glUseProgram(g_program);
-
-  GLuint coord_attrib = glGetAttribLocation(g_program, "coord");
-  glBindBuffer(GL_ARRAY_BUFFER, g_vertices);
-  glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
-                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
-  glEnableVertexAttribArray(coord_attrib);
-
-  GLint texture_location = glGetUniformLocation(g_program, "image");
-  glUniform1i(texture_location, 0);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, g_fbo_texture);
 
   int width, height;
   SDL_GetWindowSize(g_window, &width, &height);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, width, height);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+  //
+  // Run emulation
+  //
+
+  GbaEmulatorStep(g_emulator, /*fbo=*/0, /*width=*/width, /*height=*/height,
+                  RenderAudioSample);
 
   //
   // Flip framebuffer
@@ -347,81 +326,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  //
-  // Create Emulator Framebuffer
-  //
-
-  glGenTextures(/*n=*/1, &g_fbo_texture);
-  glBindTexture(GL_TEXTURE_2D, g_fbo_texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
-               /*width=*/240, /*height=*/160, /*border=*/0,
-               /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  glGenFramebuffers(/*n=*/1, &g_fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                         g_fbo_texture, /*level=*/0);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  //
-  // Create Shader Program
-  //
-
-  g_program = glCreateProgram();
-
-  static const char *vertex_shader_source[8u] = {
-      "#version 100\n",
-      "attribute highp vec2 coord;\n",
-      "varying mediump vec2 texcoord;\n",
-      "void main() {\n",
-      "  texcoord.x = (coord.x + 1.0) * 0.5;\n",
-      "  texcoord.y = (coord.y + 1.0) * 0.5;\n",
-      "  gl_Position = vec4(coord, 0.0, 1.0);\n",
-      "}\n",
-  };
-
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 8u, vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
-  glAttachShader(g_program, vertex_shader);
-  glDeleteShader(vertex_shader);
-
-  static const char *fragment_shader_source[7u] = {
-      "#version 100\n",
-      "uniform lowp sampler2D image;\n",
-      "varying mediump vec2 texcoord;\n",
-      "void main() {\n",
-      "  lowp vec4 color = texture2D(image, texcoord);\n",
-      "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n",
-      "}\n",
-  };
-
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 7u, fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
-  glAttachShader(g_program, fragment_shader);
-  glDeleteShader(fragment_shader);
-
-  glLinkProgram(g_program);
-
-  //
-  // Create Vertices
-  //
-
-  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
-                                       1.0,  1.0,  1.0,  -1.0};
-
-  glGenBuffers(1, &g_vertices);
-  glBindBuffer(GL_ARRAY_BUFFER, g_vertices);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   //
   // Load emulator OpenGL context

@@ -2,7 +2,8 @@
 
 #include <string.h>
 
-void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
+void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
+                             GLsizei height) {
   if (!screen->initialized) {
     return;
   }
@@ -32,7 +33,7 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo) {
                   /*pixels=*/screen->pixels);
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  glViewport(0, 0, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
+  glViewport(0, 0, width, height);
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
 }
 

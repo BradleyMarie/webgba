@@ -254,9 +254,10 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
   return true;
 }
 
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
+void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
+                     GLsizei height,
                      GbaEmulatorRenderAudioSample audio_sample_callback) {
-  assert(scale_factor != 0);
+  assert(width != 0u && height != 0u);
   assert(audio_sample_callback != NULL);
 
   for (;;) {
@@ -288,7 +289,7 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, uint8_t scale_factor,
 
     GbaTimersStep(emulator->timers, cycles_elapsed);
     GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
-    if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, scale_factor)) {
+    if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, width, height)) {
       break;
     }
   }

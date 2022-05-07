@@ -24,5 +24,5 @@ class GbaEmulatorTest : public testing::Test {
 };
 
 TEST_F(GbaEmulatorTest, EmptyTest) {
-  GbaEmulatorStep(gba_, /*fbo=*/0, /*scale_facotor=*/1, AudioCallback);
+  GbaEmulatorStep(gba_, /*fbo=*/0, /*width=*/1, /*height=*/1, AudioCallback);
 }
