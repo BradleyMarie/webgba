@@ -1,5 +1,5 @@
 extern "C" {
-#include "emulator/ppu/gba/blend.h"
+#include "emulator/ppu/gba/software/blend.h"
 }
 
 #include <cstring>

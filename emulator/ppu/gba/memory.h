@@ -102,11 +102,11 @@ typedef struct {
   TileModeObjectMemory obj;
 } TileModeMemory;
 
-#define GBA_FULL_FRAME_WIDTH 240
-#define GBA_FULL_FRAME_HEIGHT 160
+#define GBA_SCREEN_WIDTH 240
+#define GBA_SCREEN_HEIGHT 160
 
 typedef struct {
-  uint16_t pixels[GBA_FULL_FRAME_HEIGHT][GBA_FULL_FRAME_WIDTH];
+  uint16_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
   uint8_t unused[5120u];
 } BitmapMode3BackgroundMemory;
 
@@ -124,7 +124,7 @@ typedef struct {
 } BitmapMode3Memory;
 
 typedef struct {
-  uint8_t pixels[GBA_FULL_FRAME_HEIGHT][GBA_FULL_FRAME_WIDTH];
+  uint8_t pixels[GBA_SCREEN_HEIGHT][GBA_SCREEN_WIDTH];
   uint8_t unused[2560u];
 } BitmapMode4BackgroundPage;
 

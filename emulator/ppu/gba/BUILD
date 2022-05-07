@@ -3,24 +3,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:private"])
 
 cc_library(
-    name = "blend",
-    srcs = ["blend.c"],
-    hdrs = ["blend.h"],
-    deps = [
-        ":registers",
-    ],
-)
-
-cc_test(
-    name = "blend_test",
-    srcs = ["blend_test.cc"],
-    deps = [
-        ":blend",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
@@ -33,21 +15,15 @@ cc_library(
     linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
-        ":blend",
         ":memory",
         ":registers",
-        ":screen",
-        ":window",
         "//emulator/dma/gba:dma",
         "//emulator/memory",
         "//emulator/platform/gba:platform",
-        "//emulator/ppu/gba/bg:affine",
-        "//emulator/ppu/gba/bg:bitmap",
-        "//emulator/ppu/gba/bg:scrolling",
         "//emulator/ppu/gba/io",
         "//emulator/ppu/gba/oam",
-        "//emulator/ppu/gba/obj:draw",
         "//emulator/ppu/gba/palette",
+        "//emulator/ppu/gba/software:render",
         "//emulator/ppu/gba/vram",
         "//util:macros",
     ],
@@ -69,32 +45,16 @@ cc_library(
 )
 
 cc_library(
-    name = "screen",
-    srcs = ["screen.c"],
-    hdrs = ["screen.h"],
-    linkopts = ["-lGL"],
+    name = "set",
+    hdrs = ["set.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
-    deps = [
-        ":memory",
-        ":registers",
-    ],
 )
 
 cc_test(
-    name = "screen_test",
-    srcs = ["screen_test.cc"],
-    linkopts = ["-lGL"],
+    name = "set_test",
+    srcs = ["set_test.cc"],
     deps = [
-        ":screen",
+        ":set",
         "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "window",
-    srcs = ["window.c"],
-    hdrs = ["window.h"],
-    deps = [
-        ":registers",
     ],
 )

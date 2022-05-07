@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_WINDOW_
-#define _WEBGBA_EMULATOR_PPU_GBA_PPU_WINDOW_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_WINDOW_
+#define _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_WINDOW_
 
 #include "emulator/ppu/gba/registers.h"
 
@@ -8,4 +8,4 @@ void GbaPpuWindowCheck(const GbaPpuRegisters *registers, uint_fast8_t x,
                        bool *draw_bg0, bool *draw_bg1, bool *draw_bg2,
                        bool *draw_bg3, bool *enable_blending);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_PPU_WINDOW_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_WINDOW_

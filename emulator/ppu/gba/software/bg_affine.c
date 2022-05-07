@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/bg/affine.h"
+#include "emulator/ppu/gba/software/bg_affine.h"
 
 #include <assert.h>
 

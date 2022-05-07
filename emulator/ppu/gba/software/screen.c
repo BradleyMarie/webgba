@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/screen.h"
+#include "emulator/ppu/gba/software/screen.h"
 
 #include <string.h>
 

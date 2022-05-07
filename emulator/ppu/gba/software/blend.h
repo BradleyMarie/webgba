@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_BLEND_
-#define _WEBGBA_EMULATOR_PPU_GBA_BLEND_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BLEND_
+#define _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BLEND_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -74,4 +74,4 @@ static inline uint16_t GbaPpuBlendUnitNoBlend(
   return blend_unit->layers[0u];
 }
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_BLEND_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BLEND_

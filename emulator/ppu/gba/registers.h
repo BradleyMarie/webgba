@@ -187,18 +187,8 @@ typedef struct {
 } GbaPpuInternalAffineRegisters;
 
 typedef struct {
-  int16_t x;
-  int16_t y;
-  int16_t x_center;
-  int16_t y_center;
-  uint8_t x_size;
-  uint8_t y_size;
-} GbaPpuInternalObjectCoordinates;
-
-typedef struct {
   // TODO: Fix these magic number
   GbaPpuInternalAffineRegisters affine[2];
-  GbaPpuInternalObjectCoordinates object_coordinates[128];
 } GbaPpuInternalRegisters;
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_REGISTERS_
