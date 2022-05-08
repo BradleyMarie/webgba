@@ -40,35 +40,33 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   screen->program = glCreateProgram();
 
-  static const char* vertex_shader_source[8u] = {
-      "#version 100\n",
-      "attribute highp vec2 coord;\n",
-      "varying mediump vec2 texcoord;\n",
-      "void main() {\n",
-      "  texcoord.x = (coord.x + 1.0) * 0.5;\n",
-      "  texcoord.y = (coord.y - 1.0) * -0.5;\n",
-      "  gl_Position = vec4(coord, 0.0, 1.0);\n",
-      "}\n",
-  };
+  static const char* vertex_shader_source =
+      "#version 100\n"
+      "attribute highp vec2 coord;\n"
+      "varying mediump vec2 texcoord;\n"
+      "void main() {\n"
+      "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
+      "  texcoord.y = (coord.y - 1.0) * -0.5;\n"
+      "  gl_Position = vec4(coord, 0.0, 1.0);\n"
+      "}\n";
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 8u, vertex_shader_source, NULL);
+  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
   glCompileShader(vertex_shader);
   glAttachShader(screen->program, vertex_shader);
   glDeleteShader(vertex_shader);
 
-  static const char* fragment_shader_source[7u] = {
-      "#version 100\n",
-      "uniform lowp sampler2D image;\n",
-      "varying mediump vec2 texcoord;\n",
-      "void main() {\n",
-      "  lowp vec4 color = texture2D(image, texcoord);\n",
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n",
-      "}\n",
-  };
+  static const char* fragment_shader_source =
+      "#version 100\n"
+      "uniform lowp sampler2D image;\n"
+      "varying mediump vec2 texcoord;\n"
+      "void main() {\n"
+      "  lowp vec4 color = texture2D(image, texcoord);\n"
+      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 7u, fragment_shader_source, NULL);
+  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
   glCompileShader(fragment_shader);
   glAttachShader(screen->program, fragment_shader);
   glDeleteShader(fragment_shader);
