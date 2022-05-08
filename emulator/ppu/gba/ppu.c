@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -42,8 +43,8 @@ struct _GbaPpu {
   GbaPpuRenderMode next_render_mode;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
-  GbaPpuSet dirty_objects;
-  GbaPpuSet dirty_rotations;
+  GbaPpuDirtyBits dirty;
+  bool render_mode_changed;
   uint32_t cycles_from_hblank_to_draw;
   uint_fast8_t pixels_per_draw;
   uint_fast8_t x;
@@ -119,8 +120,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->reference_count += 1u;
 
   *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->internal_registers,
-                     &(*ppu)->dirty_objects, &(*ppu)->dirty_rotations,
-                     GbaPpuRelease, *ppu);
+                     &(*ppu)->dirty.oam, GbaPpuRelease, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -161,6 +161,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pa = 0x100;
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
+  GbaPpuDirtyBitsAllDirty(&(*ppu)->dirty);
 
   GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
 
@@ -188,12 +189,10 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
     case GBA_PPU_DRAW_ROW_SOFTWARE:
     case GBA_PPU_DRAW_ROW_HARDWARE:
       for (uint_fast8_t i = 0; i < ppu->pixels_per_draw; i++) {
-        GbaPpuSoftwareRendererDrawPixel(
-            ppu->software_renderer, &ppu->memory, &ppu->registers,
-            &ppu->internal_registers, ppu->dirty_objects, ppu->dirty_rotations,
-            ppu->x++, ppu->registers.vcount);
-        GbaPpuSetClear(&ppu->dirty_objects);
-        GbaPpuSetClear(&ppu->dirty_rotations);
+        GbaPpuSoftwareRendererDrawPixel(ppu->software_renderer, &ppu->memory,
+                                        &ppu->registers,
+                                        &ppu->internal_registers, &ppu->dirty,
+                                        ppu->x++, ppu->registers.vcount);
       }
 
       if (ppu->x == GBA_SCREEN_WIDTH) {
@@ -271,10 +270,19 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
 }
 
 void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode) {
+  if (ppu->next_render_mode != render_mode) {
+    ppu->render_mode_changed = true;
+  }
+
   ppu->next_render_mode = render_mode;
 
   if (ppu->cycle_count != 0) {
     return;
+  }
+
+  if (ppu->render_mode_changed) {
+    GbaPpuDirtyBitsAllDirty(&ppu->dirty);
+    ppu->render_mode_changed = false;
   }
 
   switch (render_mode) {

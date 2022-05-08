@@ -3,6 +3,17 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:private"])
 
 cc_library(
+    name = "dirty",
+    hdrs = ["dirty.h"],
+    srcs = ["dirty.c"],
+    visibility = ["//emulator/ppu:__subpackages__"],
+    deps = [
+        ":memory",
+        ":set",
+    ],
+)
+
+cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
@@ -15,6 +26,7 @@ cc_library(
     linkopts = ["-lGL"],
     visibility = ["//emulator:__subpackages__"],
     deps = [
+        ":dirty",
         ":memory",
         ":registers",
         "//emulator/dma/gba:dma",

@@ -33,10 +33,10 @@ GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate(
 void GbaPpuSoftwareRendererDrawPixel(
     GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GbaPpuSet dirty_objects,
-    GbaPpuSet dirty_rotations, uint8_t x, uint8_t y) {
-  while (!GbaPpuSetEmpty(&dirty_objects)) {
-    uint_fast8_t index = GbaPpuSetPop(&dirty_objects);
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, uint8_t x, uint8_t y) {
+  while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
+    uint_fast8_t index = GbaPpuSetPop(&dirty_bits->oam.objects);
     GbaPpuObjectVisibilityHidden(&renderer->object_visibility, &memory->oam,
                                  index);
     GbaPpuObjectVisibilityDrawn(&renderer->object_visibility, &memory->oam,
