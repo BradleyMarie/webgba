@@ -78,6 +78,7 @@ cc_library(
         ":obj",
         ":screen",
         ":window",
+        "//emulator/ppu/gba:dirty",
     ],
 )
 

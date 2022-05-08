@@ -8,8 +8,7 @@
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
   GbaPpuInternalRegisters *internal_registers;
-  GbaPpuSet *dirty_objects;
-  GbaPpuSet *dirty_rotations;
+  GbaPpuOamDirtyBits *dirty;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuOam;
@@ -56,9 +55,9 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   oam->memory->half_words[address >> 1u] = value;
 
   if ((address & 0x7u) < 4u) {
-    GbaPpuSetAdd(oam->dirty_objects, address >> 3u);
+    GbaPpuSetAdd(&oam->dirty->objects, address >> 3u);
   } else {
-    GbaPpuSetAdd(oam->dirty_rotations, address >> 5u);
+    GbaPpuSetAdd(&oam->dirty->rotations, address >> 5u);
   }
 
   return true;
@@ -86,8 +85,8 @@ static void OamFree(void *context) {
 
 Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
                     GbaPpuInternalRegisters *internal_registers,
-                    GbaPpuSet *dirty_objects, GbaPpuSet *dirty_rotations,
-                    MemoryContextFree free_routine, void *free_address) {
+                    GbaPpuOamDirtyBits *dirty, MemoryContextFree free_routine,
+                    void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
   if (oam == NULL) {
     return NULL;
@@ -95,8 +94,7 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
 
   oam->memory = oam_memory;
   oam->internal_registers = internal_registers;
-  oam->dirty_objects = dirty_objects;
-  oam->dirty_rotations = dirty_rotations;
+  oam->dirty = dirty;
   oam->free_routine = free_routine;
   oam->free_address = free_address;
 

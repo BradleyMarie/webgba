@@ -8,9 +8,9 @@ cc_library(
     hdrs = ["oam.h"],
     deps = [
         "//emulator/memory",
+        "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
-        "//emulator/ppu/gba:set",
     ],
 )
 

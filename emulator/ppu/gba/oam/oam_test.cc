@@ -11,10 +11,10 @@ class OamTest : public testing::Test {
   void SetUp() override {
     memset(&oam_memory_, 0, sizeof(GbaPpuObjectAttributeMemory));
     memset(&internal_registers_, 0, sizeof(GbaPpuInternalRegisters));
-    memset(&dirty_objects_, 0, sizeof(GbaPpuSet));
-    memset(&dirty_rotations_, 0, sizeof(GbaPpuSet));
-    memory_ = OamAllocate(&oam_memory_, &internal_registers_, &dirty_objects_,
-                          &dirty_rotations_, FreeRoutine, nullptr);
+    memset(&dirty_.objects, 0, sizeof(GbaPpuSet));
+    memset(&dirty_.rotations, 0, sizeof(GbaPpuSet));
+    memory_ = OamAllocate(&oam_memory_, &internal_registers_, &dirty_,
+                          FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -25,8 +25,7 @@ class OamTest : public testing::Test {
  protected:
   GbaPpuObjectAttributeMemory oam_memory_;
   GbaPpuInternalRegisters internal_registers_;
-  GbaPpuSet dirty_objects_;
-  GbaPpuSet dirty_rotations_;
+  GbaPpuOamDirtyBits dirty_;
   Memory* memory_;
 };
 
@@ -59,70 +58,70 @@ TEST_F(OamTest, LoadStore8Succeeds) {
 
 TEST_F(OamTest, Store16UpdatesAddsState0) {
   EXPECT_TRUE(Store16LE(memory_, 0x0u, 0u));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState2) {
   EXPECT_TRUE(Store16LE(memory_, 0x2u, 0u));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState4) {
   EXPECT_TRUE(Store16LE(memory_, 0x4u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState6) {
   EXPECT_TRUE(Store16LE(memory_, 0x6u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState8) {
   EXPECT_TRUE(Store16LE(memory_, 0x8u, 0u));
-  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState14) {
   EXPECT_TRUE(Store16LE(memory_, 14u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store16UpdatesAddsState36) {
   EXPECT_TRUE(Store16LE(memory_, 36u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store32UpdatesAddsState0) {
   EXPECT_TRUE(Store16LE(memory_, 0x6u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store32UpdatesAddsState4) {
   EXPECT_TRUE(Store16LE(memory_, 0x4u, 0u));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_rotations_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_EQ(0u, GbaPpuSetPop(&dirty_.rotations));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
 
 TEST_F(OamTest, Store32UpdatesAddsState8) {
   EXPECT_TRUE(Store16LE(memory_, 0x8u, 0u));
-  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_objects_));
-  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_rotations_));
+  EXPECT_EQ(1u, GbaPpuSetPop(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.objects));
+  EXPECT_TRUE(GbaPpuSetEmpty(&dirty_.rotations));
 }
