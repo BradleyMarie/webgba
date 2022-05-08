@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 #endif  // __EMSCRIPTEN__
 
   for (int i = 0; i < frame_count; i++) {
-    GbaEmulatorStep(emulator, /*framebuffer=*/0, /*scale_factor=*/1,
+    GbaEmulatorStep(emulator, /*framebuffer=*/0, /*width=*/240, /*height=*/160,
                     NoOpAudioCallback);
   }
 
