@@ -34,9 +34,11 @@ static void CreateMode5SourceTexture(GLuint* result) {
 }
 
 static void CreateVertices(GLuint* result) {
+  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
+                                       1.0,  1.0,  1.0,  -1.0};
   glGenBuffers(1, result);
   glBindBuffer(GL_ARRAY_BUFFER, *result);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, NULL, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -80,9 +82,9 @@ static void CreateProgram(GLuint* result) {
 static void Render(const GbaPpuOpenGlBgBitmap* context,
                    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
                    const GbaPpuInternalRegisters* internal_registers,
-                   GLuint fbo, GLsizei width, GLsizei height, uint8_t y,
-                   GLuint src_texture, bool bg_dirty, GLsizei bg_width,
-                   GLsizei bg_height) {
+                   const GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width,
+                   GLsizei height, uint8_t y, GLuint src_texture,
+                   GLsizei bg_width, GLsizei bg_height) {
   assert(height % GBA_SCREEN_HEIGHT == 0u);
 
   // TODO: Update vertices
@@ -97,7 +99,8 @@ static void Render(const GbaPpuOpenGlBgBitmap* context,
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, src_texture);
-  if (bg_dirty) {
+
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/bg_width, /*height=*/bg_height,
                     /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
@@ -115,54 +118,75 @@ static void Render(const GbaPpuOpenGlBgBitmap* context,
 void GbaPpuOpenGlBgBitmapMode3(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y) {
-  for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-      context->colors[y * GBA_SCREEN_HEIGHT + x] =
-          memory->vram.mode_3.bg.pixels[y][x] << 1u;
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y) {
+  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+    return;
+  }
+
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+    for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
+      for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
+        context->colors[y * GBA_SCREEN_HEIGHT + x] =
+            memory->vram.mode_3.bg.pixels[y][x] << 1u;
+      }
     }
   }
 
-  Render(context, memory, registers, internal_registers, fbo, width, height, y,
-         context->src_texture_mode34, true, GBA_SCREEN_WIDTH,
+  Render(context, memory, registers, internal_registers, dirty_bits, fbo, width,
+         height, y, context->src_texture_mode34, GBA_SCREEN_WIDTH,
          GBA_SCREEN_HEIGHT);
 }
 
 void GbaPpuOpenGlBgBitmapMode4(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y) {
-  for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-      uint8_t color_index =
-          memory->vram.mode_4.bg.pages[registers->dispcnt.page_select]
-              .pixels[y][x];
-      context->colors[y * GBA_SCREEN_HEIGHT + x] =
-          memory->palette.bg.large_palette[color_index] << 1u;
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y) {
+  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+    return;
+  }
+
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+    for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
+      for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
+        uint8_t color_index =
+            memory->vram.mode_4.bg.pages[registers->dispcnt.page_select]
+                .pixels[y][x];
+        context->colors[y * GBA_SCREEN_HEIGHT + x] =
+            memory->palette.bg.large_palette[color_index] << 1u;
+      }
     }
   }
 
-  Render(context, memory, registers, internal_registers, fbo, width, height, y,
-         context->src_texture_mode34, true, GBA_SCREEN_WIDTH,
+  Render(context, memory, registers, internal_registers, dirty_bits, fbo, width,
+         height, y, context->src_texture_mode34, GBA_SCREEN_WIDTH,
          GBA_SCREEN_HEIGHT);
 }
 
 void GbaPpuOpenGlBgBitmapMode5(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y) {
-  for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
-    for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
-      context->colors[y * GBA_REDUCED_FRAME_HEIGHT + x] =
-          memory->vram.mode_3.bg.pixels[y][x] << 1u;
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y) {
+  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+    return;
+  }
+
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+    for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
+      for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
+        context->colors[y * GBA_REDUCED_FRAME_HEIGHT + x] =
+            memory->vram.mode_3.bg.pixels[y][x] << 1u;
+      }
     }
   }
 
-  Render(context, memory, registers, internal_registers, fbo, width, height, y,
-         context->src_texture_mode5, true, GBA_REDUCED_FRAME_WIDTH,
+  Render(context, memory, registers, internal_registers, dirty_bits, fbo, width,
+         height, y, context->src_texture_mode5, GBA_REDUCED_FRAME_WIDTH,
          GBA_REDUCED_FRAME_HEIGHT);
 }
 

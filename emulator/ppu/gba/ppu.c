@@ -322,4 +322,5 @@ void GbaPpuFree(GbaPpu *ppu) {
 
 void GbaPpuReloadContext(GbaPpu *ppu) {
   GbaPpuSoftwareRendererReloadContext(ppu->software_renderer);
+  GbaPpuDirtyBitsAllDirty(&ppu->dirty);
 }
