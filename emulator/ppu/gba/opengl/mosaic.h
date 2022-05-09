@@ -8,22 +8,19 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint identity;
-  GLuint bg;
-  GLuint obj;
+  GLfloat bg[2];
+  GLfloat obj[2];
 } GbaPpuOpenGlMosaicContext;
 
-GLuint GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
-                            const GbaPpuRegisters* registers,
-                            GbaPpuDirtyBits* dirty_bits, uint8_t index);
+void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
+                          const GbaPpuRegisters* registers,
+                          GbaPpuDirtyBits* dirty_bits, uint8_t index,
+                          GLfloat mosaic[2]);
 
-GLuint GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaicContext* context,
-                             const GbaPpuMemory* memory,
-                             const GbaPpuRegisters* registers,
-                             GbaPpuDirtyBits* dirty_bits, uint8_t index);
-
-void GbaPpuOpenGlMosaicReloadContext(GbaPpuOpenGlMosaicContext* context);
-
-void GbaPpuOpenGlMosaicDestroy(GbaPpuOpenGlMosaicContext* context);
+void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaicContext* context,
+                           const GbaPpuMemory* memory,
+                           const GbaPpuRegisters* registers,
+                           GbaPpuDirtyBits* dirty_bits, uint8_t index,
+                           GLfloat mosaic[2]);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_MOSAIC_
