@@ -100,7 +100,7 @@ static void Render(const GbaPpuOpenGlBgBitmap* context,
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, src_texture);
 
-  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.bg_large_palette) {
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/bg_width, /*height=*/bg_height,
                     /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
@@ -121,11 +121,12 @@ void GbaPpuOpenGlBgBitmapMode3(
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
     uint8_t y) {
-  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+  if (!dirty_bits->vram.mode_3.overall &&
+      !dirty_bits->palette.bg_large_palette) {
     return;
   }
 
-  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.bg_large_palette) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
         context->colors[y * GBA_SCREEN_HEIGHT + x] =
@@ -145,11 +146,12 @@ void GbaPpuOpenGlBgBitmapMode4(
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
     uint8_t y) {
-  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+  if (!dirty_bits->vram.mode_3.overall &&
+      !dirty_bits->palette.bg_large_palette) {
     return;
   }
 
-  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.bg_large_palette) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
         uint8_t color_index =
@@ -172,11 +174,12 @@ void GbaPpuOpenGlBgBitmapMode5(
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
     uint8_t y) {
-  if (!dirty_bits->vram.mode_3.overall && !dirty_bits->palette.large_palette) {
+  if (!dirty_bits->vram.mode_3.overall &&
+      !dirty_bits->palette.bg_large_palette) {
     return;
   }
 
-  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.large_palette) {
+  if (dirty_bits->vram.mode_3.overall || dirty_bits->palette.bg_large_palette) {
     for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
         context->colors[y * GBA_REDUCED_FRAME_HEIGHT + x] =
