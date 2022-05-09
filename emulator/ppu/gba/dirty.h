@@ -5,8 +5,10 @@
 #include "emulator/ppu/gba/set.h"
 
 typedef struct {
-  GbaPpuSet small_palettes;
-  bool large_palette;
+  bool bg_small_palettes[GBA_NUM_SMALL_PALETTES];
+  bool bg_large_palette;
+  bool obj_small_palettes[GBA_NUM_SMALL_PALETTES];
+  bool obj_large_palette;
 } GbaPpuPaletteDirtyBits;
 
 typedef struct {

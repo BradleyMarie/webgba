@@ -13,3 +13,25 @@ cc_library(
         "//emulator/ppu/gba:registers",
     ],
 )
+
+cc_library(
+    name = "palette_large",
+    srcs = ["palette_large.c"],
+    hdrs = ["palette_large.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+    ],
+)
+
+cc_library(
+    name = "palette_small",
+    srcs = ["palette_small.c"],
+    hdrs = ["palette_small.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+    ],
+)
