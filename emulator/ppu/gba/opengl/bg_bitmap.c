@@ -182,12 +182,60 @@ static void CreatePrograms(GLuint* mode3_program, GLuint* mode4_program,
   glDeleteShader(mode5_fragment_shader);
 }
 
-void GbaPpuOpenGlBgBitmapMode3(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y) {
+static void RenderImpl(const GbaPpuOpenGlBgBitmap* context, GLuint fbo,
+                       GLuint program, GLuint texture, GLuint texcoord,
+                       GLfloat mosaic[2]) {
+  GLuint vertex_attrib = glGetAttribLocation(program, "vertex");
+  glBindBuffer(GL_ARRAY_BUFFER, context->vertices);
+  glVertexAttribPointer(vertex_attrib, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(vertex_attrib);
+
+  GLuint vertextexcoord_attrib = glGetAttribLocation(program, "vertextexcoord");
+  glBindBuffer(GL_ARRAY_BUFFER, texcoord);
+  glVertexAttribPointer(vertextexcoord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(vertextexcoord_attrib);
+
+  GLint mosaic_location = glGetUniformLocation(program, "mosaic");
+  glUniform2f(mosaic_location, mosaic[0u], mosaic[1u]);
+
+  GLint image_location = glGetUniformLocation(program, "image");
+  glUniform1i(image_location, 0);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+}
+
+static void Render(const GbaPpuOpenGlBgBitmap* context, GLuint fbo,
+                   GLuint program, GLuint texture, GLuint texcoord,
+                   GLfloat mosaic[2]) {
+  glUseProgram(program);
+
+  RenderImpl(context, fbo, program, texture, texcoord, mosaic);
+}
+
+static void RenderWithPalette(const GbaPpuOpenGlBgBitmap* context, GLuint fbo,
+                              GLuint program, GLuint texture, GLuint texcoord,
+                              GLfloat mosaic[2], GLuint palette) {
+  glUseProgram(program);
+
+  GLint palette_location = glGetUniformLocation(program, "palette");
+  glUniform1i(palette_location, 1);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, palette);
+
+  RenderImpl(context, fbo, program, texture, texcoord, mosaic);
+}
+
+void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_3.overall) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
@@ -205,15 +253,13 @@ void GbaPpuOpenGlBgBitmapMode3(
     dirty_bits->vram.mode_3.overall = false;
   }
 
-  // TODO: Call Render
+  Render(context, fbo, context->mode3_program, context->mode3_texture, 0, NULL);
 }
 
-void GbaPpuOpenGlBgBitmapMode4(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y) {
+void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select]) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
@@ -234,15 +280,15 @@ void GbaPpuOpenGlBgBitmapMode4(
     dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select] = false;
   }
 
-  // TODO: Call Render
+  RenderWithPalette(context, fbo, context->mode4_program,
+                    context->mode4_textures[registers->dispcnt.page_select], 0,
+                    NULL, 0);
 }
 
-void GbaPpuOpenGlBgBitmapMode5(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y) {
+void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select]) {
     for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
       for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
@@ -264,7 +310,8 @@ void GbaPpuOpenGlBgBitmapMode5(
     dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select] = false;
   }
 
-  // TODO: Call Render
+  Render(context, fbo, context->mode5_program,
+         context->mode5_textures[registers->dispcnt.page_select], 0, NULL);
 }
 
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context) {

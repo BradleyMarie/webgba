@@ -21,26 +21,20 @@ typedef struct {
   } staging;
 } GbaPpuOpenGlBgBitmap;
 
-void GbaPpuOpenGlBgBitmapMode3(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y);
+void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
-void GbaPpuOpenGlBgBitmapMode4(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y);
+void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
-void GbaPpuOpenGlBgBitmapMode5(
-    GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
-    uint8_t y);
+void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
+                               const GbaPpuMemory* memory,
+                               const GbaPpuRegisters* registers,
+                               GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context);
 
