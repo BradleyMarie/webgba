@@ -19,6 +19,9 @@ cc_library(
     hdrs = ["bg_bitmap.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":affine",
+        ":mosaic",
+        ":palette_large",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",

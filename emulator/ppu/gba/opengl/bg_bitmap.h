@@ -5,6 +5,9 @@
 
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/affine.h"
+#include "emulator/ppu/gba/opengl/mosaic.h"
+#include "emulator/ppu/gba/opengl/palette_large.h"
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
@@ -24,16 +27,23 @@ typedef struct {
 void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
+                               GbaPpuOpenGlAffineContext* affine,
+                               GbaPpuOpenGlMosaicContext* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
+                               GbaPpuOpenGlAffineContext* affine,
+                               GbaPpuOpenGlMosaicContext* mosaic,
+                               GbaPpuOpenGlLargePaletteContext* palette,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
+                               GbaPpuOpenGlAffineContext* affine,
+                               GbaPpuOpenGlMosaicContext* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context);
