@@ -15,7 +15,7 @@ void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
                           GLfloat mosaic[2]) {
   assert(index < GBA_PPU_NUM_BACKGROUNDS);
 
-  if (!registers->bgcnt->mosaic) {
+  if (!registers->bgcnt[index].mosaic) {
     mosaic[0u] = 1.0;
     mosaic[1u] = 1.0;
     return;
@@ -38,7 +38,7 @@ void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaicContext* context,
                            GLfloat mosaic[2]) {
   assert(index < OAM_NUM_OBJECTS);
 
-  if (!memory->oam.object_attributes->obj_mosaic) {
+  if (!memory->oam.object_attributes[index].obj_mosaic) {
     mosaic[0u] = 1.0;
     mosaic[1u] = 1.0;
     return;
