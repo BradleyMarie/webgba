@@ -8,11 +8,17 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint src_texture_mode34;
-  GLuint src_texture_mode5;
-  GLuint program;
   GLuint vertices;
-  uint16_t colors[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
+  GLuint mode3_program;
+  GLuint mode3_texture;
+  GLuint mode4_program;
+  GLuint mode4_textures[2u];
+  GLuint mode5_program;
+  GLuint mode5_textures[2u];
+  union {
+    uint16_t colors[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
+    uint8_t indices[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
+  } staging;
 } GbaPpuOpenGlBgBitmap;
 
 void GbaPpuOpenGlBgBitmapMode3(
