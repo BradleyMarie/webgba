@@ -3,6 +3,17 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:private"])
 
 cc_library(
+    name = "affine",
+    srcs = ["affine.c"],
+    hdrs = ["affine.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
     name = "bg_bitmap",
     srcs = ["bg_bitmap.c"],
     hdrs = ["bg_bitmap.h"],

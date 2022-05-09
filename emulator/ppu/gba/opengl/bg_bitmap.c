@@ -162,19 +162,19 @@ static void CreatePrograms(GLuint* mode3_program, GLuint* mode4_program,
   GLuint mode5_fragment_shader = CreateMode5FragmentShader();
 
   *mode3_program = glCreateProgram();
-  glAttachShader(mode3_program, vertex_shader);
-  glAttachShader(mode3_program, mode3_fragment_shader);
-  glLinkProgram(mode3_program);
+  glAttachShader(*mode3_program, vertex_shader);
+  glAttachShader(*mode3_program, mode3_fragment_shader);
+  glLinkProgram(*mode3_program);
 
   *mode4_program = glCreateProgram();
-  glAttachShader(mode4_program, vertex_shader);
-  glAttachShader(mode4_program, mode4_fragment_shader);
-  glLinkProgram(mode4_program);
+  glAttachShader(*mode4_program, vertex_shader);
+  glAttachShader(*mode4_program, mode4_fragment_shader);
+  glLinkProgram(*mode4_program);
 
   *mode5_program = glCreateProgram();
-  glAttachShader(mode5_program, vertex_shader);
-  glAttachShader(mode5_program, mode5_fragment_shader);
-  glLinkProgram(mode5_program);
+  glAttachShader(*mode5_program, vertex_shader);
+  glAttachShader(*mode5_program, mode5_fragment_shader);
+  glLinkProgram(*mode5_program);
 
   glDeleteShader(vertex_shader);
   glDeleteShader(mode3_fragment_shader);
@@ -270,8 +270,8 @@ void GbaPpuOpenGlBgBitmapMode5(
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context) {
   CreateVertices(&context->vertices);
   CreateMode3Texture(&context->mode3_texture);
-  CreateMode4Texture(context->mode4_textures);
-  CreateMode5Texture(context->mode5_textures);
+  CreateMode4Textures(context->mode4_textures);
+  CreateMode5Textures(context->mode5_textures);
   CreatePrograms(&context->mode3_program, &context->mode4_program,
                  &context->mode5_program);
 }
