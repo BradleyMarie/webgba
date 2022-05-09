@@ -27,9 +27,9 @@ GLuint GbaPpuOpenGlLargePaletteBG(GbaPpuOpenGlLargePaletteContext* context,
   return context->palette;
 }
 
-GLuint GbaPpuOpenGlBgLargePaletteOBJ(GbaPpuOpenGlLargePaletteContext* context,
-                                     const GbaPpuMemory* memory,
-                                     GbaPpuDirtyBits* dirty_bits) {
+GLuint GbaPpuOpenGlLargePaletteOBJ(GbaPpuOpenGlLargePaletteContext* context,
+                                   const GbaPpuMemory* memory,
+                                   GbaPpuDirtyBits* dirty_bits) {
   if (dirty_bits->palette.obj_large_palette) {
     GbaPpuReloadLargePalette(context, &memory->palette.obj);
     dirty_bits->palette.obj_large_palette = false;

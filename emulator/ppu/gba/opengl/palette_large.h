@@ -11,13 +11,13 @@ typedef struct {
   uint16_t colors[GBA_LARGE_PALETTE_SIZE];
 } GbaPpuOpenGlLargePaletteContext;
 
-GLuint GbaPpuOpenGlBgLargePaletteBG(GbaPpuOpenGlLargePaletteContext* context,
-                                const GbaPpuMemory* memory,
-                                GbaPpuDirtyBits* dirty_bits);
+GLuint GbaPpuOpenGlLargePaletteBG(GbaPpuOpenGlLargePaletteContext* context,
+                                  const GbaPpuMemory* memory,
+                                  GbaPpuDirtyBits* dirty_bits);
 
-GLuint GbaPpuOpenGlBgLargePaletteOBJ(GbaPpuOpenGlLargePaletteContext* context,
-                                const GbaPpuMemory* memory,
-                                GbaPpuDirtyBits* dirty_bits);
+GLuint GbaPpuOpenGlLargePaletteOBJ(GbaPpuOpenGlLargePaletteContext* context,
+                                   const GbaPpuMemory* memory,
+                                   GbaPpuDirtyBits* dirty_bits);
 
 void GbaPpuOpenGlLargePaletteReloadContext(
     GbaPpuOpenGlLargePaletteContext* context);

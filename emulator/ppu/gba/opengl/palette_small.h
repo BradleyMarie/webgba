@@ -10,14 +10,13 @@ typedef struct {
   GLuint palettes[GBA_NUM_SMALL_PALETTES];
 } GbaPpuOpenGlSmallPaletteContext;
 
-GLuint GbaPpuOpenGlBgSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
-                                    const GbaPpuMemory* memory,
-                                    GbaPpuDirtyBits* dirty_bits, uint8_t index);
+GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
+                                  const GbaPpuMemory* memory,
+                                  GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-GLuint GbaPpuOpenGlBgSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
-                                     const GbaPpuMemory* memory,
-                                     GbaPpuDirtyBits* dirty_bits,
-                                     uint8_t index);
+GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
+                                   const GbaPpuMemory* memory,
+                                   GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
 void GbaPpuOpenGlSmallPaletteReloadContext(
     GbaPpuOpenGlSmallPaletteContext* context);

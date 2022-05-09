@@ -15,6 +15,18 @@ cc_library(
 )
 
 cc_library(
+    name = "mosaic",
+    srcs = ["mosaic.c"],
+    hdrs = ["mosaic.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
     name = "palette_large",
     srcs = ["palette_large.c"],
     hdrs = ["palette_large.h"],

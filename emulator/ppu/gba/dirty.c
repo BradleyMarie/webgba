@@ -22,4 +22,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   for (uint8_t i = 0; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
     GbaPpuSetAdd(&bits->oam.rotations, i);
   }
+
+  bits->io.bg_mosaic = true;
+  bits->io.obj_mosaic = true;
 }
