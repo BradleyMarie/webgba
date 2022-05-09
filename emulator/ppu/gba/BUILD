@@ -9,6 +9,7 @@ cc_library(
     visibility = ["//emulator/ppu:__subpackages__"],
     deps = [
         ":memory",
+        ":registers",
         ":set",
     ],
 )
