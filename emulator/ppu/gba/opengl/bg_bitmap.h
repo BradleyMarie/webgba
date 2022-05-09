@@ -3,6 +3,7 @@
 
 #include <GLES2/gl2.h>
 
+#include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
 
@@ -17,20 +18,23 @@ typedef struct {
 void GbaPpuOpenGlBgBitmapMode3(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y);
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y);
 
 void GbaPpuOpenGlBgBitmapMode4(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y);
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y);
 
 void GbaPpuOpenGlBgBitmapMode5(
     GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers, GLuint fbo,
-    GLsizei width, GLsizei height, uint8_t y);
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLsizei width, GLsizei height,
+    uint8_t y);
 
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context);
 
