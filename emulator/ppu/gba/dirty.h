@@ -40,9 +40,15 @@ typedef struct {
 } GbaPpuOamDirtyBits;
 
 typedef struct {
+  bool bg_mosaic;
+  bool obj_mosaic;
+} GbaPpuIoDirtyBits;
+
+typedef struct {
   GbaPpuPaletteDirtyBits palette;
   GbaPpuVramDirtyBits vram;
   GbaPpuOamDirtyBits oam;
+  GbaPpuIoDirtyBits io;
 } GbaPpuDirtyBits;
 
 void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits);

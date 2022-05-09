@@ -151,6 +151,8 @@ typedef union {
   uint16_t value;
 } WindowOutRegister;
 
+#define GBA_PPU_NUM_AFFINE_BACKGROUNDS 2u
+#define GBA_PPU_NUM_BACKGROUNDS 4u
 #define GBA_PPU_REGISTERS_SIZE 88u
 
 typedef union {
@@ -159,9 +161,9 @@ typedef union {
     uint16_t greenswp;  // Unimplemented
     DispStatRegister dispstat;
     uint16_t vcount;
-    BgCntRegister bgcnt[4];
-    BackgroundOffsetRegister bg_offsets[4];
-    BackgroundAffineRegister affine[2];
+    BgCntRegister bgcnt[GBA_PPU_NUM_BACKGROUNDS];
+    BackgroundOffsetRegister bg_offsets[GBA_PPU_NUM_BACKGROUNDS];
+    BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
     WindowBoundsRegister win0h;
     WindowBoundsRegister win1h;
     WindowBoundsRegister win0v;

@@ -30,10 +30,9 @@ GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
   return context->palettes[index];
 }
 
-GLuint GbaPpuOpenGlBgSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
-                                     const GbaPpuMemory* memory,
-                                     GbaPpuDirtyBits* dirty_bits,
-                                     uint8_t index) {
+GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
+                                   const GbaPpuMemory* memory,
+                                   GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   if (dirty_bits->palette.obj_small_palettes[index]) {
     GbaPpuReloadSmallPalette(context, &memory->palette.obj, index);
     dirty_bits->palette.obj_small_palettes[index] = false;
