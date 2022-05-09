@@ -6,7 +6,7 @@
 static void GbaPpuOpenGlMosaicReload(GLfloat buffer[2], unsigned char x,
                                      unsigned char y) {
   buffer[0] = x + 1;
-  buffer[2] = y + 2;
+  buffer[1] = y + 1;
 }
 
 void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
