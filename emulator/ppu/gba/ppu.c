@@ -252,6 +252,8 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
         if (ppu->draw_state != GBA_PPU_DRAW_ROW_OPENGL) {
           GbaPpuSoftwareRendererPresent(ppu->software_renderer, fbo, width,
                                         height);
+        } else {
+          GbaPpuOpenGlRendererPresent(ppu->opengl_renderer, fbo, width, height);
         }
 
         ppu->next_wake_state = GBA_PPU_PRE_OFFSCREEN_HBLANK;
