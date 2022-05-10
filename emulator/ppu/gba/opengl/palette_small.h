@@ -8,19 +8,18 @@
 
 typedef struct {
   GLuint palettes[GBA_NUM_SMALL_PALETTES];
-} GbaPpuOpenGlSmallPaletteContext;
+} GbaPpuOpenGlSmallPalette;
 
-GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
+GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPalette* context,
                                   const GbaPpuMemory* memory,
                                   GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
+GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPalette* context,
                                    const GbaPpuMemory* memory,
                                    GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-void GbaPpuOpenGlSmallPaletteReloadContext(
-    GbaPpuOpenGlSmallPaletteContext* context);
+void GbaPpuOpenGlSmallPaletteReloadContext(GbaPpuOpenGlSmallPalette* context);
 
-void GbaPpuOpenGlSmallPaletteDestroy(GbaPpuOpenGlSmallPaletteContext* context);
+void GbaPpuOpenGlSmallPaletteDestroy(GbaPpuOpenGlSmallPalette* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_SMALL_

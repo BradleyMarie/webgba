@@ -36,9 +36,9 @@ static void GbaPpuOpenGlAffineReload(GLuint buffer, uint8_t row, int32_t pa,
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-GLuint GbaPpuOpenGlAffine(GbaPpuOpenGlAffineContext* context,
-                          const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits, uint8_t index) {
+GLuint GbaPpuOpenGlAffineBG(GbaPpuOpenGlAffine* context,
+                            const GbaPpuRegisters* registers,
+                            GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   index -= 2u;
   assert(index < GBA_PPU_NUM_AFFINE_BACKGROUNDS);
 
@@ -54,7 +54,7 @@ GLuint GbaPpuOpenGlAffine(GbaPpuOpenGlAffineContext* context,
   return context->bg_affine[index];
 }
 
-void GbaPpuOpenGlAffineReloadContext(GbaPpuOpenGlAffineContext* context) {
+void GbaPpuOpenGlAffineReloadContext(GbaPpuOpenGlAffine* context) {
   glGenBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->bg_affine);
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     glBindBuffer(GL_ARRAY_BUFFER, context->bg_affine[i]);
@@ -63,6 +63,6 @@ void GbaPpuOpenGlAffineReloadContext(GbaPpuOpenGlAffineContext* context) {
   }
 }
 
-void GbaPpuOpenGlAffineDestroy(GbaPpuOpenGlAffineContext* context) {
+void GbaPpuOpenGlAffineDestroy(GbaPpuOpenGlAffine* context) {
   glDeleteBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->bg_affine);
 }

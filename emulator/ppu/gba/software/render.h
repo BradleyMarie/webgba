@@ -9,14 +9,19 @@
 
 typedef struct _GbaPpuSoftwareRenderer GbaPpuSoftwareRenderer;
 
-GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate(
-    const GbaPpuObjectAttributeMemory* memory);
+GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate();
+
+void GbaPpuSoftwareRendererDrawRow(
+    GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
+    const GbaPpuRegisters* registers,
+    const GbaPpuInternalRegisters* internal_registers,
+    GbaPpuDirtyBits* dirty_bits);
 
 void GbaPpuSoftwareRendererDrawPixel(
     GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, uint8_t x, uint8_t y);
+    GbaPpuDirtyBits* dirty_bits, uint8_t x);
 
 void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
                                    GLsizei width, GLsizei height);

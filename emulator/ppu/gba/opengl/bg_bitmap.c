@@ -185,8 +185,7 @@ static void CreatePrograms(GLuint* mode3_program, GLuint* mode4_program,
 static void RenderImpl(const GbaPpuOpenGlBgBitmap* context,
                        const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
-                       GbaPpuOpenGlAffineContext* affine,
-                       GbaPpuOpenGlMosaicContext* mosaic,
+                       GbaPpuOpenGlAffine* affine, GbaPpuOpenGlMosaic* mosaic,
                        GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLuint program,
                        GLuint texture) {
   GLuint vertex_attrib = glGetAttribLocation(program, "vertex");
@@ -221,8 +220,7 @@ static void RenderImpl(const GbaPpuOpenGlBgBitmap* context,
 
 static void Render(const GbaPpuOpenGlBgBitmap* context,
                    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
-                   GbaPpuOpenGlAffineContext* affine,
-                   GbaPpuOpenGlMosaicContext* mosaic,
+                   GbaPpuOpenGlAffine* affine, GbaPpuOpenGlMosaic* mosaic,
                    GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLuint program,
                    GLuint texture) {
   glUseProgram(program);
@@ -233,8 +231,8 @@ static void Render(const GbaPpuOpenGlBgBitmap* context,
 
 static void RenderWithPalette(
     const GbaPpuOpenGlBgBitmap* context, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers, GbaPpuOpenGlAffineContext* affine,
-    GbaPpuOpenGlMosaicContext* mosaic, GbaPpuOpenGlLargePaletteContext* palette,
+    const GbaPpuRegisters* registers, GbaPpuOpenGlAffine* affine,
+    GbaPpuOpenGlMosaic* mosaic, GbaPpuOpenGlLargePalette* palette,
     GbaPpuDirtyBits* dirty_bits, GLuint fbo, GLuint program, GLuint texture) {
   glUseProgram(program);
 
@@ -252,8 +250,8 @@ static void RenderWithPalette(
 void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_3.overall) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
@@ -279,9 +277,9 @@ void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
 void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
-                               GbaPpuOpenGlLargePaletteContext* palette,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
+                               GbaPpuOpenGlLargePalette* palette,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select]) {
     for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
@@ -311,8 +309,8 @@ void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
 void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo) {
   if (dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select]) {
     for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {

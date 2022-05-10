@@ -35,10 +35,10 @@ cc_library(
         "//emulator/platform/gba:platform",
         "//emulator/ppu/gba/io",
         "//emulator/ppu/gba/oam",
+        "//emulator/ppu/gba/opengl:render",
         "//emulator/ppu/gba/palette",
         "//emulator/ppu/gba/software:render",
         "//emulator/ppu/gba/vram",
-        "//util:macros",
     ],
 )
 

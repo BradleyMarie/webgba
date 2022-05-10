@@ -9,7 +9,7 @@ static void GbaPpuOpenGlMosaicReload(GLfloat buffer[2], unsigned char x,
   buffer[1] = y + 1;
 }
 
-void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
+void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaic* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits, uint8_t index,
                           GLfloat mosaic[2]) {
@@ -31,7 +31,7 @@ void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
   mosaic[1u] = context->bg[1u];
 }
 
-void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaicContext* context,
+void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaic* context,
                            const GbaPpuMemory* memory,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits, uint8_t index,
