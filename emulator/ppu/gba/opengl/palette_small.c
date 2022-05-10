@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-static void GbaPpuReloadSmallPalette(GbaPpuOpenGlSmallPaletteContext* context,
+static void GbaPpuReloadSmallPalette(GbaPpuOpenGlSmallPalette* context,
                                      const GbaPpuPaletteSegment* palette,
                                      uint8_t index) {
   uint16_t colors[GBA_SMALL_PALETTE_SIZE];
@@ -20,7 +20,7 @@ static void GbaPpuReloadSmallPalette(GbaPpuOpenGlSmallPaletteContext* context,
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
+GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPalette* context,
                                   const GbaPpuMemory* memory,
                                   GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   if (dirty_bits->palette.bg_small_palettes[index]) {
@@ -30,7 +30,7 @@ GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPaletteContext* context,
   return context->palettes[index];
 }
 
-GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
+GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPalette* context,
                                    const GbaPpuMemory* memory,
                                    GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   if (dirty_bits->palette.obj_small_palettes[index]) {
@@ -40,8 +40,7 @@ GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPaletteContext* context,
   return context->palettes[index];
 }
 
-void GbaPpuOpenGlSmallPaletteReloadContext(
-    GbaPpuOpenGlSmallPaletteContext* context) {
+void GbaPpuOpenGlSmallPaletteReloadContext(GbaPpuOpenGlSmallPalette* context) {
   glGenTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
   for (uint8_t i = 0; i < GBA_NUM_SMALL_PALETTES; i++) {
     glBindTexture(GL_TEXTURE_2D, context->palettes[i]);
@@ -59,6 +58,6 @@ void GbaPpuOpenGlSmallPaletteReloadContext(
   }
 }
 
-void GbaPpuOpenGlSmallPaletteDestroy(GbaPpuOpenGlSmallPaletteContext* context) {
+void GbaPpuOpenGlSmallPaletteDestroy(GbaPpuOpenGlSmallPalette* context) {
   glDeleteTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
 }

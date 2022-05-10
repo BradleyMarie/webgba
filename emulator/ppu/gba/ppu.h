@@ -8,7 +8,7 @@
 #include "emulator/platform/gba/platform.h"
 
 typedef enum {
-  RENDER_MODE_HARDWARE_ROWS = 0u,
+  RENDER_MODE_OPENGL_ROWS = 0u,
   RENDER_MODE_SOFTWARE_ROWS = 1u,
   RENDER_MODE_SOFTWARE_PIXELS = 2u,
 } GbaPpuRenderMode;

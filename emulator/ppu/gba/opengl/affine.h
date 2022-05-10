@@ -8,14 +8,14 @@
 
 typedef struct {
   GLuint bg_affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-} GbaPpuOpenGlAffineContext;
+} GbaPpuOpenGlAffine;
 
-GLuint GbaPpuOpenGlAffineBG(GbaPpuOpenGlAffineContext* context,
+GLuint GbaPpuOpenGlAffineBG(GbaPpuOpenGlAffine* context,
                             const GbaPpuRegisters* registers,
                             GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-void GbaPpuOpenGlAffineReloadContext(GbaPpuOpenGlAffineContext* context);
+void GbaPpuOpenGlAffineReloadContext(GbaPpuOpenGlAffine* context);
 
-void GbaPpuOpenGlAffineDestroy(GbaPpuOpenGlAffineContext* context);
+void GbaPpuOpenGlAffineDestroy(GbaPpuOpenGlAffine* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_AFFINE_

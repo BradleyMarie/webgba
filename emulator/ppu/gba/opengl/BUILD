@@ -61,3 +61,20 @@ cc_library(
         "//emulator/ppu/gba:memory",
     ],
 )
+
+cc_library(
+    name = "render",
+    srcs = ["render.c"],
+    hdrs = ["render.h"],
+    visibility = ["//emulator/ppu:__subpackages__"],
+    deps = [
+        ":affine",
+        ":bg_bitmap",
+        ":mosaic",
+        ":palette_large",
+        ":palette_small",
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+    ],
+)

@@ -4,10 +4,6 @@
 
 void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
                              GLsizei height) {
-  if (!screen->initialized) {
-    return;
-  }
-
   for (uint_fast8_t y = 0u; y < GBA_SCREEN_HEIGHT; y++) {
     for (uint_fast8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
       screen->pixels[y][x] <<= 1u;
@@ -93,13 +89,10 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
-
-  screen->initialized = true;
 }
 
 void GbaPpuScreenDestroy(GbaPpuScreen* screen) {
   glDeleteProgram(screen->program);
   glDeleteBuffers(1u, &screen->vertices);
   glDeleteTextures(1u, &screen->texture);
-  screen->initialized = false;
 }

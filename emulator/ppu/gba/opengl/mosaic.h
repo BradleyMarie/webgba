@@ -10,14 +10,14 @@
 typedef struct {
   GLfloat bg[2];
   GLfloat obj[2];
-} GbaPpuOpenGlMosaicContext;
+} GbaPpuOpenGlMosaic;
 
-void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaicContext* context,
+void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaic* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits, uint8_t index,
                           GLfloat mosaic[2]);
 
-void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaicContext* context,
+void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaic* context,
                            const GbaPpuMemory* memory,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits, uint8_t index,

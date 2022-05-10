@@ -27,23 +27,23 @@ typedef struct {
 void GbaPpuOpenGlBgBitmapMode3(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapMode4(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
-                               GbaPpuOpenGlLargePaletteContext* palette,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
+                               GbaPpuOpenGlLargePalette* palette,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
-                               GbaPpuOpenGlAffineContext* affine,
-                               GbaPpuOpenGlMosaicContext* mosaic,
+                               GbaPpuOpenGlAffine* affine,
+                               GbaPpuOpenGlMosaic* mosaic,
                                GbaPpuDirtyBits* dirty_bits, GLuint fbo);
 
 void GbaPpuOpenGlBgBitmapReloadContext(GbaPpuOpenGlBgBitmap* context);
