@@ -25,4 +25,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
 
   bits->io.bg_mosaic = true;
   bits->io.obj_mosaic = true;
+
+  bits->composite.bg_affine[0] = true;
+  bits->composite.bg_affine[1] = true;
 }

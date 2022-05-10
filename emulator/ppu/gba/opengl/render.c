@@ -36,11 +36,11 @@ static void UpdateTextures(GbaPpuOpenGlRenderer* renderer) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
                  /*width=*/GBA_SCREEN_WIDTH * renderer->render_scale,
                  /*height=*/GBA_SCREEN_HEIGHT * renderer->render_scale,
                  /*border=*/0,
-                 /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_BYTE,
+                 /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
                  /*pixels=*/NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
@@ -76,9 +76,12 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     UpdateTextures(renderer);
   }
 
-  glViewport(0u, registers->vcount * renderer->render_scale,
-             GBA_SCREEN_WIDTH * renderer->render_scale,
-             (registers->vcount + 1) * renderer->render_scale);
+  glEnable(GL_SCISSOR_TEST);
+
+  glScissor(0u, registers->vcount * renderer->render_scale, GBA_SCREEN_WIDTH,
+            renderer->render_scale);
+  glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
+             GBA_SCREEN_HEIGHT * renderer->render_scale);
 
   switch (registers->dispcnt.mode) {
     case 0:
@@ -104,6 +107,8 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                 dirty_bits, renderer->layer_fbos[2u]);
       break;
   }
+
+  glDisable(GL_SCISSOR_TEST);
 }
 
 void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
@@ -156,7 +161,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
       "varying mediump vec2 texcoord;\n"
       "void main() {\n"
       "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
-      "  texcoord.y = (coord.y - 1.0) * -0.5;\n"
+      "  texcoord.y = (coord.y + 1.0) * 0.5;\n"
       "  gl_Position = vec4(coord, 0.0, 1.0);\n"
       "}\n";
 
@@ -172,7 +177,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
       "varying mediump vec2 texcoord;\n"
       "void main() {\n"
       "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);

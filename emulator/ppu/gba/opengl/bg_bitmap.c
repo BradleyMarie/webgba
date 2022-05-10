@@ -87,13 +87,13 @@ static GLuint CreateMode3FragmentShader() {
       "const highp vec2 screen = vec2(240.0, 160.0);\n"
       "varying highp vec2 texcoord;\n"
       "void main() {\n"
-      "  texcoord -= mod(texcoord, mosaic);\n"
-      "  lowp vec4 color = texture2D(image, texcoord / screen);\n"
+      "  highp vec2 lookup = texcoord - mod(texcoord, mosaic) + vec2(0.5, 0.5);"
+      "  lowp vec4 color = texture2D(image, lookup / screen);\n"
       "  color *= step(texcoord.x, screen.x);\n"
       "  color *= step(texcoord.y, screen.y);\n"
       "  color *= step(-texcoord.x, 0.0);\n"
       "  color *= step(-texcoord.y, 0.0);\n"
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "  gl_FragColor = vec4(color.b, color.g, color.r, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -113,14 +113,14 @@ static GLuint CreateMode4FragmentShader() {
       "const highp vec2 screen = vec2(240.0, 160.0);\n"
       "varying highp vec2 texcoord;\n"
       "void main() {\n"
-      "  texcoord -= mod(texcoord, mosaic);\n"
-      "  mediump vec4 index = texture2D(image, texcoord / screen);\n"
+      "  highp vec2 lookup = texcoord - mod(texcoord, mosaic) + vec2(0.5, 0.5);"
+      "  mediump vec4 index = texture2D(image, lookup / screen);\n"
       "  lowp vec4 color = texture2D(palette, vec2(index.r + offset, 0.5));\n"
       "  color *= step(texcoord.x, screen.x);\n"
       "  color *= step(texcoord.y, screen.y);\n"
       "  color *= step(-texcoord.x, 0.0);\n"
       "  color *= step(-texcoord.y, 0.0);\n"
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "  gl_FragColor = vec4(color.b, color.g, color.r, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -138,13 +138,13 @@ static GLuint CreateMode5FragmentShader() {
       "const highp vec2 screen = vec2(160.0, 128.0);\n"
       "varying highp vec2 texcoord;\n"
       "void main() {\n"
-      "  texcoord -= mod(texcoord, mosaic);\n"
-      "  lowp vec4 color = texture2D(image, texcoord / screen);\n"
+      "  highp vec2 lookup = texcoord - mod(texcoord, mosaic) + vec2(0.5, 0.5);"
+      "  lowp vec4 color = texture2D(image, lookup / screen);\n"
       "  color *= step(texcoord.x, screen.x);\n"
       "  color *= step(texcoord.y, screen.y);\n"
       "  color *= step(-texcoord.x, 0.0);\n"
       "  color *= step(-texcoord.y, 0.0);\n"
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "  gl_FragColor = vec4(color.b, color.g, color.r, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -317,7 +317,8 @@ void GbaPpuOpenGlBgBitmapMode5(GbaPpuOpenGlBgBitmap* context,
       for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
         context->staging.colors[y * GBA_REDUCED_FRAME_WIDTH + x] =
             memory->vram.mode_5.bg.pages[registers->dispcnt.page_select]
-                .pixels[y][x];
+                .pixels[y][x]
+            << 1u;
       }
     }
 

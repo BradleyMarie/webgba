@@ -32,7 +32,7 @@ static void GbaPpuOpenGlAffineReload(GLuint buffer, uint8_t row, int32_t pa,
       FixedToFloat(top_left_y + GBA_SCREEN_HEIGHT * pd + GBA_SCREEN_WIDTH * pc);
 
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 2, array, GL_STATIC_DRAW);
+  glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 8, array);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
