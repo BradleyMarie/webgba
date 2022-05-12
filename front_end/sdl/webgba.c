@@ -377,6 +377,10 @@ int main(int argc, char *argv[]) {
   }
 #endif  // __EMSCRIPTEN__
 
+#if _XOPEN_SOURCE || _DEFAULT_SOURCE || _SVID_SOURCE
+  putenv("SDL12COMPAT_OPENGL_SCALING=0");
+#endif  // _XOPEN_SOURCE || _DEFAULT_SOURCE || _SVID_SOURCE
+
   //
   // Initialize SDL
   //
@@ -465,6 +469,7 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 #ifndef __EMSCRIPTEN__
   SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
