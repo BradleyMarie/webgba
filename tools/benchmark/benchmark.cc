@@ -68,8 +68,9 @@ int main(int argc, char **argv) {
 #endif  // __EMSCRIPTEN__
 
   for (int i = 0; i < frame_count; i++) {
+    uint8_t fbo_contents = UINT8_MAX;
     GbaEmulatorStep(emulator, /*framebuffer=*/0, /*width=*/240, /*height=*/160,
-                    NoOpAudioCallback);
+                    NoOpAudioCallback, &fbo_contents);
   }
 
 #ifndef __EMSCRIPTEN__

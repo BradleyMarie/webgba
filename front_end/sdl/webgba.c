@@ -37,6 +37,8 @@ static double g_src_ratio = 1.0;
 static SDL_Surface *g_screen = NULL;
 static GbaEmulator *g_emulator = NULL;
 static GamePad *g_gamepad = NULL;
+static uint8_t g_fbo_contents[2u] = {UINT8_MAX, UINT8_MAX};
+static uint8_t g_fbo_contents_index = 0u;
 
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
@@ -356,7 +358,9 @@ static ReturnType RenderNextFrame() {
   //
 
   GbaEmulatorStep(g_emulator, /*fbo=*/0u, /*width=*/g_screen->w,
-                  /*height=*/g_screen->h, RenderAudioSample);
+                  /*height=*/g_screen->h, RenderAudioSample,
+                  &g_fbo_contents[g_fbo_contents_index]);
+  g_fbo_contents_index = (g_fbo_contents_index == 0u) ? 1u : 0u;
 
   //
   // Flip framebuffer

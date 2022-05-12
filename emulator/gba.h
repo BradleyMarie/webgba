@@ -18,7 +18,8 @@ typedef void (*GbaEmulatorRenderAudioSample)(int16_t left, int16_t right);
 // Advance emulation by one frame
 void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
                      GLsizei height,
-                     GbaEmulatorRenderAudioSample audio_sample_callback);
+                     GbaEmulatorRenderAudioSample audio_sample_callback,
+                     uint8_t *fbo_contents);
 
 // Context Loss Recovery
 void GbaEmulatorReloadContext(GbaEmulator *emulator);
