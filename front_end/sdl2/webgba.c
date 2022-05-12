@@ -10,6 +10,8 @@ static SDL_GLContext *g_glcontext = NULL;
 static SDL_AudioDeviceID g_audiodevice = 0;
 static GbaEmulator *g_emulator = NULL;
 static GamePad *g_gamepad = NULL;
+static uint8_t g_fbo_contents[2u] = {UINT8_MAX, UINT8_MAX};
+static uint8_t g_fbo_contents_index = 0u;
 
 static void RenderAudioSample(int16_t left, int16_t right) {
   int16_t buffer[2] = {left, right};
@@ -161,8 +163,10 @@ static bool RenderNextFrame() {
   // Run emulation
   //
 
-  GbaEmulatorStep(g_emulator, /*fbo=*/0, /*width=*/width, /*height=*/height,
-                  RenderAudioSample);
+  GbaEmulatorStep(g_emulator, /*fbo=*/0, /*width=*/width,
+                  /*height=*/height, RenderAudioSample,
+                  &g_fbo_contents[g_fbo_contents_index]);
+  g_fbo_contents_index = (g_fbo_contents_index == 0u) ? 1u : 0u;
 
   //
   // Flip framebuffer
@@ -254,6 +258,7 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);

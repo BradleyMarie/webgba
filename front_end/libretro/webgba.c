@@ -147,9 +147,12 @@ void retro_run() {
     UpdateVariables();
   }
 
-  GbaEmulatorStep(emulator, /*fbo=*/hw_render.get_current_framebuffer(),
+  uint8_t fbo_contents = UINT8_MAX;
+  GbaEmulatorStep(emulator,
+                  /*fbo=*/hw_render.get_current_framebuffer(),
                   /*width=*/BASE_WIDTH * render_scale,
-                  /*height=*/BASE_HEIGHT * render_scale, audio_cb);
+                  /*height=*/BASE_HEIGHT * render_scale, audio_cb,
+                  &fbo_contents);
   video_cb(RETRO_HW_FRAME_BUFFER_VALID, BASE_WIDTH * render_scale,
            BASE_HEIGHT * render_scale, 0);
 }

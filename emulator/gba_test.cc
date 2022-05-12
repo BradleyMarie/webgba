@@ -21,8 +21,10 @@ class GbaEmulatorTest : public testing::Test {
  protected:
   GbaEmulator *gba_;
   GamePad *gamepad_;
+  uint8_t fbo_contents_;
 };
 
 TEST_F(GbaEmulatorTest, EmptyTest) {
-  GbaEmulatorStep(gba_, /*fbo=*/0, /*width=*/1, /*height=*/1, AudioCallback);
+  GbaEmulatorStep(gba_, /*fbo=*/0, /*width=*/1, /*height=*/1, AudioCallback,
+                  &fbo_contents_);
 }

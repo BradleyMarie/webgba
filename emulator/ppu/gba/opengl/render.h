@@ -17,7 +17,8 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  GbaPpuDirtyBits* dirty_bits);
 
 void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
-                                 GLsizei width, GLsizei height);
+                                 GLsizei width, GLsizei height,
+                                 uint8_t* fbo_contents);
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer);
 void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,

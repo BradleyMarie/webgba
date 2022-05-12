@@ -204,7 +204,8 @@ void GbaPpuSoftwareRendererDrawPixel(
 }
 
 void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
-                                   GLsizei width, GLsizei height) {
+                                   GLsizei width, GLsizei height,
+                                   uint8_t* fbo_contents) {
   if (!renderer->initialized) {
     return;
   }
