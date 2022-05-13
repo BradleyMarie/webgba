@@ -2,18 +2,19 @@
 
 void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->palette.bg_large_palette = true;
+  bits->palette.bg_backdrop = true;
   bits->palette.obj_large_palette = true;
-  for (uint8_t i = 0; i < GBA_NUM_SMALL_PALETTES; i++) {
+  for (uint8_t i = 0u; i < GBA_NUM_SMALL_PALETTES; i++) {
     bits->palette.bg_small_palettes[i] = true;
     bits->palette.obj_small_palettes[i] = true;
   }
 
   bits->vram.tile_mode.overall = true;
   bits->vram.mode_3.overall = true;
-  bits->vram.mode_4.pages[0] = true;
-  bits->vram.mode_4.pages[1] = true;
-  bits->vram.mode_5.pages[0] = true;
-  bits->vram.mode_5.pages[1] = true;
+  bits->vram.mode_4.pages[0u] = true;
+  bits->vram.mode_4.pages[1u] = true;
+  bits->vram.mode_5.pages[0u] = true;
+  bits->vram.mode_5.pages[1u] = true;
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     GbaPpuSetAdd(&bits->oam.objects, i);
@@ -26,6 +27,6 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->io.bg_mosaic = true;
   bits->io.obj_mosaic = true;
 
-  bits->composite.bg_affine[0] = true;
-  bits->composite.bg_affine[1] = true;
+  bits->composite.bg_affine[0u] = true;
+  bits->composite.bg_affine[1u] = true;
 }
