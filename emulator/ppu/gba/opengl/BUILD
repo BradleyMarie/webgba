@@ -14,6 +14,30 @@ cc_library(
 )
 
 cc_library(
+    name = "bg_bitmap_mode3",
+    srcs = ["bg_bitmap_mode3.c"],
+    hdrs = ["bg_bitmap_mode3.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
+    name = "bg_bitmap_mode4",
+    srcs = ["bg_bitmap_mode4.c"],
+    hdrs = ["bg_bitmap_mode4.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
     name = "bg_bitmap",
     srcs = ["bg_bitmap.c"],
     hdrs = ["bg_bitmap.h"],
