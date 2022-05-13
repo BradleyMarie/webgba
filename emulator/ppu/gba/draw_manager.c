@@ -189,6 +189,12 @@ void GbaPpuDrawManagerInitialize(GbaPpuDrawManager* draw_manager) {
   draw_manager->flush_triggered = false;
 }
 
+void GbaPpuDrawManagerStartFrame(GbaPpuDrawManager* draw_manager,
+                                 const GbaPpuRegisters* registers,
+                                 const GbaPpuDirtyBits* dirty_bits) {
+  GbaPpuDrawManagerUpdate(draw_manager, registers, dirty_bits);
+}
+
 bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
                                   const GbaPpuRegisters* registers,
                                   const GbaPpuDirtyBits* dirty_bits) {
