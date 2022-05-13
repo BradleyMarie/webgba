@@ -8,6 +8,7 @@
 typedef struct {
   bool bg_small_palettes[GBA_NUM_SMALL_PALETTES];
   bool bg_large_palette;
+  bool bg_backdrop;
   bool obj_small_palettes[GBA_NUM_SMALL_PALETTES];
   bool obj_large_palette;
 } GbaPpuPaletteDirtyBits;

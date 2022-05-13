@@ -15,6 +15,18 @@ cc_library(
 )
 
 cc_library(
+    name = "draw_manager",
+    hdrs = ["draw_manager.h"],
+    srcs = ["draw_manager.c"],
+    visibility = ["//emulator/ppu:__subpackages__"],
+    deps = [
+        ":dirty",
+        ":registers",
+        ":set",
+    ],
+)
+
+cc_library(
     name = "memory",
     hdrs = ["memory.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
