@@ -21,9 +21,9 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
+  OpenGlBgLargePalette bg_palette_large;
+  OpenGlBgSmallPalette bg_palette_small;
   OpenGlMosaic mosaic;
-  OpenGlLargePalette palette_large;
-  OpenGlSmallPalette palette_small;
   uint8_t flush_start_row;
   uint8_t flush_size;
   uint8_t next_render_scale;
@@ -152,15 +152,17 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
       OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory, registers,
                                 dirty_bits);
+      OpenGlBgLargePaletteReload(&renderer->bg_palette_large, memory,
+                                 dirty_bits);
       OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
-      OpenGlLargePaletteBG(&renderer->palette_large, memory, dirty_bits);
       break;
     case 5u:
       OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5, memory, registers,
                                 dirty_bits);
+      OpenGlBgLargePaletteReload(&renderer->bg_palette_large, memory,
+                                 dirty_bits);
       OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
-      OpenGlLargePaletteBG(&renderer->palette_large, memory, dirty_bits);
       break;
   }
 }
@@ -270,8 +272,8 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
-  OpenGlLargePaletteReloadContext(&renderer->palette_large);
-  OpenGlSmallPaletteReloadContext(&renderer->palette_small);
+  OpenGlBgLargePaletteReloadContext(&renderer->bg_palette_large);
+  OpenGlBgSmallPaletteReloadContext(&renderer->bg_palette_small);
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
@@ -292,8 +294,8 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
-    OpenGlLargePaletteDestroy(&renderer->palette_large);
-    OpenGlSmallPaletteDestroy(&renderer->palette_small);
+    OpenGlBgLargePaletteDestroy(&renderer->bg_palette_large);
+    OpenGlBgSmallPaletteDestroy(&renderer->bg_palette_small);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);
     glDeleteProgram(renderer->upscale_program);
