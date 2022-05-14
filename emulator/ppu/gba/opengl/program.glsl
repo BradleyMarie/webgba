@@ -1,6 +1,7 @@
 #version 100
 
 // Controls
+uniform bool blank;
 uniform int mode;
 
 uniform bool bg0_enabled;
@@ -127,34 +128,39 @@ vec4 Background2Mode5() {
   return color;
 }
 
-vec4 Mode0(WindowContents window) { return vec4(0.0, 0.0, 0.0, 1.0); }
+vec4 Mode0(WindowContents window) { return backdrop; }
 
-vec4 Mode1(WindowContents window) { return vec4(0.0, 0.0, 0.0, 1.0); }
+vec4 Mode1(WindowContents window) { return backdrop; }
 
-vec4 Mode2(WindowContents window) { return vec4(0.0, 0.0, 0.0, 1.0); }
+vec4 Mode2(WindowContents window) { return backdrop; }
 
 vec4 Mode3(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode3();
   }
-  return vec4(0.0, 0.0, 0.0, 1.0);
+  return backdrop;
 }
 
 vec4 Mode4(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode4();
   }
-  return vec4(0.0, 0.0, 0.0, 1.0);
+  return backdrop;
 }
 
 vec4 Mode5(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode5();
   }
-  return vec4(0.0, 0.0, 0.0, 1.0);
+  return backdrop;
 }
 
 void main(WindowContents window) {
+  if (blank) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+  }
+
   WindowContents window = CheckWindow(false);
 
   if (mode == 0) {
