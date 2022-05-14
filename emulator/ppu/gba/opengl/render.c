@@ -12,6 +12,8 @@
 #include "emulator/ppu/gba/opengl/mosaic.h"
 #include "emulator/ppu/gba/opengl/palette_large.h"
 #include "emulator/ppu/gba/opengl/palette_small.h"
+#include "emulator/ppu/gba/opengl/shader_fragment.h"
+#include "emulator/ppu/gba/opengl/shader_vertex.h"
 
 #define NUM_LAYERS (GBA_PPU_NUM_BACKGROUNDS + 1u)
 
@@ -32,6 +34,7 @@ struct _GbaPpuOpenGlRenderer {
   GLuint staging_texture;
   GLuint staging_fbo;
   GLuint vertices;
+  GLuint render_program;
   GLuint upscale_program;
   bool initialized;
 };
@@ -75,7 +78,7 @@ static void CreateVertices(GLuint* vertices) {
 static void CreateUpscaleProgram(GLuint* program) {
   *program = glCreateProgram();
 
-  static const char* vertex_shader_source =
+  static const char* upscale_vertex_shader_source =
       "#version 100\n"
       "attribute highp vec2 coord;\n"
       "varying mediump vec2 texcoord;\n"
@@ -86,12 +89,12 @@ static void CreateUpscaleProgram(GLuint* program) {
       "}\n";
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
+  glShaderSource(vertex_shader, 1u, &upscale_vertex_shader_source, NULL);
   glCompileShader(vertex_shader);
   glAttachShader(*program, vertex_shader);
   glDeleteShader(vertex_shader);
 
-  static const char* fragment_shader_source =
+  static const char* upscale_fragment_shader_source =
       "#version 100\n"
       "uniform lowp sampler2D image;\n"
       "varying mediump vec2 texcoord;\n"
@@ -99,6 +102,24 @@ static void CreateUpscaleProgram(GLuint* program) {
       "  lowp vec4 color = texture2D(image, texcoord);\n"
       "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n"
       "}\n";
+
+  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1u, &upscale_fragment_shader_source, NULL);
+  glCompileShader(fragment_shader);
+  glAttachShader(*program, fragment_shader);
+  glDeleteShader(fragment_shader);
+
+  glLinkProgram(*program);
+}
+
+static void CreateRenderProgram(GLuint* program) {
+  *program = glCreateProgram();
+
+  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
+  glCompileShader(vertex_shader);
+  glAttachShader(*program, vertex_shader);
+  glDeleteShader(vertex_shader);
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
@@ -277,6 +298,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
+  CreateRenderProgram(&renderer->render_program);
   CreateUpscaleProgram(&renderer->upscale_program);
   CreateVertices(&renderer->vertices);
 
@@ -298,6 +320,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgSmallPaletteDestroy(&renderer->bg_palette_small);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);
+    glDeleteProgram(renderer->render_program);
     glDeleteProgram(renderer->upscale_program);
     glDeleteBuffers(1u, &renderer->vertices);
   }
