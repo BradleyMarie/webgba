@@ -41,8 +41,8 @@ bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
                                   const GbaPpuDirtyBits* dirty_bits);
 
 // This should be called before presenting a frame
-bool GbaPpuDrawManagerEndFrame(GbaPpuDrawManager* draw_manager,
-                               const GbaPpuRegisters* registers,
-                               const GbaPpuDirtyBits* dirty_bits);
+bool GbaPpuDrawManagerEndFrame(GbaPpuDrawManager* draw_manager);
+
+void GbaPpuDrawManagerInvalidatePreviousFrame(GbaPpuDrawManager* draw_manager);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_

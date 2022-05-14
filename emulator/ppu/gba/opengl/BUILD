@@ -3,17 +3,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:private"])
 
 cc_library(
-    name = "affine",
-    srcs = ["affine.c"],
-    hdrs = ["affine.h"],
-    linkopts = ["-lGL"],
-    deps = [
-        "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:registers",
-    ],
-)
-
-cc_library(
     name = "bg_affine",
     srcs = ["bg_affine.c"],
     hdrs = ["bg_affine.h"],
@@ -50,14 +39,11 @@ cc_library(
 )
 
 cc_library(
-    name = "bg_bitmap",
-    srcs = ["bg_bitmap.c"],
-    hdrs = ["bg_bitmap.h"],
+    name = "bg_bitmap_mode5",
+    srcs = ["bg_bitmap_mode5.c"],
+    hdrs = ["bg_bitmap_mode5.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":affine",
-        ":mosaic",
-        ":palette_large",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
@@ -104,12 +90,15 @@ cc_library(
     hdrs = ["render.h"],
     visibility = ["//emulator/ppu:__subpackages__"],
     deps = [
-        ":affine",
-        ":bg_bitmap",
+        ":bg_affine",
+        ":bg_bitmap_mode3",
+        ":bg_bitmap_mode4",
+        ":bg_bitmap_mode5",
         ":mosaic",
         ":palette_large",
         ":palette_small",
         "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:draw_manager",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
     ],

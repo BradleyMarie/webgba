@@ -4,14 +4,14 @@
 
 static GLfloat FixedToFloat(int32_t value) { return (double)value / 256.0; }
 
-void GbaPpuOpenGlBgAffineInitialize(GbaPpuOpenGlBgAffine* context) {
+void OpenGlBgAffineInitialize(OpenGlBgAffine* context) {
   context->reload_scanlines[0u] = UINT16_MAX;
   context->reload_scanlines[1u] = UINT16_MAX;
 }
 
-void GbaPpuOpenGlBgAffineReload(GbaPpuOpenGlBgAffine* context,
-                                const GbaPpuRegisters* registers,
-                                GbaPpuDirtyBits* dirty_bits, uint8_t index) {
+void OpenGlBgAffineReload(OpenGlBgAffine* context,
+                          const GbaPpuRegisters* registers,
+                          GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   assert(index == 2u || index == 3u);
   index -= 2u;
 
@@ -60,9 +60,9 @@ void GbaPpuOpenGlBgAffineReload(GbaPpuOpenGlBgAffine* context,
   dirty_bits->composite.bg_affine[index] = false;
 }
 
-bool GbaPpuOpenGlBgAffineGet(GbaPpuOpenGlBgAffine* context,
-                             const GbaPpuRegisters* registers, uint8_t index,
-                             GLuint* buffer) {
+bool OpenGlBgAffineGet(OpenGlBgAffine* context,
+                       const GbaPpuRegisters* registers, uint8_t index,
+                       GLuint* buffer) {
   assert(index == 2u || index == 3u);
   index -= 2u;
 
@@ -75,7 +75,7 @@ bool GbaPpuOpenGlBgAffineGet(GbaPpuOpenGlBgAffine* context,
   return false;
 }
 
-void GbaPpuOpenGlBgAffineReloadContext(GbaPpuOpenGlBgAffine* context) {
+void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
   glGenBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->buffers);
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
@@ -84,6 +84,6 @@ void GbaPpuOpenGlBgAffineReloadContext(GbaPpuOpenGlBgAffine* context) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void GbaPpuOpenGlBgAffineDestroy(GbaPpuOpenGlBgAffine* context) {
+void OpenGlBgAffineDestroy(OpenGlBgAffine* context) {
   glDeleteBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->buffers);
 }

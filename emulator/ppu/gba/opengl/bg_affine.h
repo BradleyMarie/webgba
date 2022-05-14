@@ -9,20 +9,20 @@
 typedef struct {
   GLuint buffers[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   uint16_t reload_scanlines[2u];
-} GbaPpuOpenGlBgAffine;
+} OpenGlBgAffine;
 
-void GbaPpuOpenGlBgAffineInitialize(GbaPpuOpenGlBgAffine* context);
+void OpenGlBgAffineInitialize(OpenGlBgAffine* context);
 
-void GbaPpuOpenGlBgAffineReload(GbaPpuOpenGlBgAffine* context,
-                                const GbaPpuRegisters* registers,
-                                GbaPpuDirtyBits* dirty_bits, uint8_t index);
+void OpenGlBgAffineReload(OpenGlBgAffine* context,
+                          const GbaPpuRegisters* registers,
+                          GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-bool GbaPpuOpenGlBgAffineGet(GbaPpuOpenGlBgAffine* context,
-                             const GbaPpuRegisters* registers, uint8_t index,
-                             GLuint* buffer);
+bool OpenGlBgAffineGet(OpenGlBgAffine* context,
+                       const GbaPpuRegisters* registers, uint8_t index,
+                       GLuint* buffer);
 
-void GbaPpuOpenGlBgAffineReloadContext(GbaPpuOpenGlBgAffine* context);
+void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 
-void GbaPpuOpenGlBgAffineDestroy(GbaPpuOpenGlBgAffine* context);
+void OpenGlBgAffineDestroy(OpenGlBgAffine* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_AFFINE_

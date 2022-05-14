@@ -206,12 +206,14 @@ bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
   return dirty;
 }
 
-bool GbaPpuDrawManagerEndFrame(GbaPpuDrawManager* draw_manager,
-                               const GbaPpuRegisters* registers,
-                               const GbaPpuDirtyBits* dirty_bits) {
+bool GbaPpuDrawManagerEndFrame(GbaPpuDrawManager* draw_manager) {
   bool can_skip =
       !draw_manager->flush_triggered && draw_manager->previous_frame_copyable;
   draw_manager->previous_frame_copyable = !draw_manager->flush_triggered;
   draw_manager->flush_triggered = false;
   return can_skip;
+}
+
+void GbaPpuDrawManagerInvalidatePreviousFrame(GbaPpuDrawManager* draw_manager) {
+  draw_manager->previous_frame_copyable = false;
 }
