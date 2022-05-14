@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-static void GbaPpuReloadSmallPalette(GbaPpuOpenGlSmallPalette* context,
+static void GbaPpuReloadSmallPalette(OpenGlSmallPalette* context,
                                      const GbaPpuPaletteSegment* palette,
                                      uint8_t index) {
   uint16_t colors[GBA_SMALL_PALETTE_SIZE];
@@ -20,9 +20,9 @@ static void GbaPpuReloadSmallPalette(GbaPpuOpenGlSmallPalette* context,
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPalette* context,
-                                  const GbaPpuMemory* memory,
-                                  GbaPpuDirtyBits* dirty_bits, uint8_t index) {
+GLuint OpenGlSmallPaletteBG(OpenGlSmallPalette* context,
+                            const GbaPpuMemory* memory,
+                            GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   if (dirty_bits->palette.bg_small_palettes[index]) {
     GbaPpuReloadSmallPalette(context, &memory->palette.bg, index);
     dirty_bits->palette.bg_small_palettes[index] = false;
@@ -30,9 +30,9 @@ GLuint GbaPpuOpenGlSmallPaletteBG(GbaPpuOpenGlSmallPalette* context,
   return context->palettes[index];
 }
 
-GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPalette* context,
-                                   const GbaPpuMemory* memory,
-                                   GbaPpuDirtyBits* dirty_bits, uint8_t index) {
+GLuint OpenGlSmallPaletteOBJ(OpenGlSmallPalette* context,
+                             const GbaPpuMemory* memory,
+                             GbaPpuDirtyBits* dirty_bits, uint8_t index) {
   if (dirty_bits->palette.obj_small_palettes[index]) {
     GbaPpuReloadSmallPalette(context, &memory->palette.obj, index);
     dirty_bits->palette.obj_small_palettes[index] = false;
@@ -40,7 +40,7 @@ GLuint GbaPpuOpenGlSmallPaletteOBJ(GbaPpuOpenGlSmallPalette* context,
   return context->palettes[index];
 }
 
-void GbaPpuOpenGlSmallPaletteReloadContext(GbaPpuOpenGlSmallPalette* context) {
+void OpenGlSmallPaletteReloadContext(OpenGlSmallPalette* context) {
   glGenTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
   for (uint8_t i = 0; i < GBA_NUM_SMALL_PALETTES; i++) {
     glBindTexture(GL_TEXTURE_2D, context->palettes[i]);
@@ -58,6 +58,6 @@ void GbaPpuOpenGlSmallPaletteReloadContext(GbaPpuOpenGlSmallPalette* context) {
   }
 }
 
-void GbaPpuOpenGlSmallPaletteDestroy(GbaPpuOpenGlSmallPalette* context) {
+void OpenGlSmallPaletteDestroy(OpenGlSmallPalette* context) {
   glDeleteTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
 }

@@ -10,21 +10,18 @@
 typedef struct {
   GLfloat bg[2];
   GLfloat obj[2];
-} GbaPpuOpenGlMosaic;
+} OpenGlMosaic;
 
-void GbaPpuOpenGlMosaicReload(GbaPpuOpenGlMosaic* context,
-                              const GbaPpuRegisters* registers,
-                              GbaPpuDirtyBits* dirty_bits);
+void OpenGlMosaicReload(OpenGlMosaic* context, const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits);
 
-void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaic* context,
-                          const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits, uint8_t index,
-                          GLfloat mosaic[2]);
+void OpenGlMosaicBG(OpenGlMosaic* context, const GbaPpuRegisters* registers,
+                    GbaPpuDirtyBits* dirty_bits, uint8_t index,
+                    GLfloat mosaic[2]);
 
-void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaic* context,
-                           const GbaPpuMemory* memory,
-                           const GbaPpuRegisters* registers,
-                           GbaPpuDirtyBits* dirty_bits, uint8_t index,
-                           GLfloat mosaic[2]);
+void OpenGlMosaicOBJ(OpenGlMosaic* context, const GbaPpuMemory* memory,
+                     const GbaPpuRegisters* registers,
+                     GbaPpuDirtyBits* dirty_bits, uint8_t index,
+                     GLfloat mosaic[2]);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_MOSAIC_

@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "emulator/ppu/gba/opengl/affine.h"
-#include "emulator/ppu/gba/opengl/bg_bitmap.h"
+#include "emulator/ppu/gba/draw_manager.h"
+#include "emulator/ppu/gba/opengl/bg_affine.h"
+#include "emulator/ppu/gba/opengl/bg_bitmap_mode3.h"
+#include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
+#include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
 #include "emulator/ppu/gba/opengl/palette_large.h"
 #include "emulator/ppu/gba/opengl/palette_small.h"
@@ -13,36 +16,152 @@
 #define NUM_LAYERS (GBA_PPU_NUM_BACKGROUNDS + 1u)
 
 struct _GbaPpuOpenGlRenderer {
-  GbaPpuOpenGlAffine affine;
-  GbaPpuOpenGlBgBitmap bg_bitmap;
-  GbaPpuOpenGlMosaic mosaic;
-  GbaPpuOpenGlLargePalette palette_large;
-  GbaPpuOpenGlSmallPalette palette_small;
+  GbaPpuDrawManager draw_manager;
+  OpenGlBgAffine affine;
+  OpenGlBgBitmapMode3 bg_bitmap_mode3;
+  OpenGlBgBitmapMode4 bg_bitmap_mode4;
+  OpenGlBgBitmapMode5 bg_bitmap_mode5;
+  OpenGlMosaic mosaic;
+  OpenGlLargePalette palette_large;
+  OpenGlSmallPalette palette_small;
+  uint8_t flush_start_row;
+  uint8_t flush_size;
   uint8_t next_render_scale;
   uint8_t render_scale;
-  GLuint layer_textures[NUM_LAYERS];
-  GLuint layer_fbos[NUM_LAYERS];
+  uint8_t last_frame_contents;
+  GLuint staging_texture;
+  GLuint staging_fbo;
   GLuint vertices;
-  GLuint program;
+  GLuint upscale_program;
   bool initialized;
 };
 
-static void UpdateTextures(GbaPpuOpenGlRenderer* renderer) {
-  assert(renderer->render_scale != 0u);
+static void CreateStagingTexture(GLuint* texture, uint8_t render_scale) {
+  glGenTextures(1u, texture);
+  glBindTexture(GL_TEXTURE_2D, *texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
+               /*width=*/GBA_SCREEN_WIDTH * render_scale,
+               /*height=*/GBA_SCREEN_HEIGHT * render_scale,
+               /*border=*/0,
+               /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
+               /*pixels=*/NULL);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
 
-  for (uint8_t i = 0; i < NUM_LAYERS; i++) {
-    glBindTexture(GL_TEXTURE_2D, renderer->layer_textures[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
-                 /*width=*/GBA_SCREEN_WIDTH * renderer->render_scale,
-                 /*height=*/GBA_SCREEN_HEIGHT * renderer->render_scale,
-                 /*border=*/0,
-                 /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
-                 /*pixels=*/NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
+static void UpdateStagingFbo(GLuint fbo, GLuint staging_texture) {
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         staging_texture, /*level=*/0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+static void CreateStagingFbo(GLuint* fbo, GLuint staging_texture) {
+  glGenFramebuffers(1u, fbo);
+  UpdateStagingFbo(*fbo, staging_texture);
+}
+
+static void CreateVertices(GLuint* vertices) {
+  static const GLfloat data[8u] = {-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0};
+  glGenBuffers(1, vertices);
+  glBindBuffer(GL_ARRAY_BUFFER, *vertices);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+static void CreateUpscaleProgram(GLuint* program) {
+  *program = glCreateProgram();
+
+  static const char* vertex_shader_source =
+      "#version 100\n"
+      "attribute highp vec2 coord;\n"
+      "varying mediump vec2 texcoord;\n"
+      "void main() {\n"
+      "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
+      "  texcoord.y = (coord.y + 1.0) * 0.5;\n"
+      "  gl_Position = vec4(coord, 0.0, 1.0);\n"
+      "}\n";
+
+  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
+  glCompileShader(vertex_shader);
+  glAttachShader(*program, vertex_shader);
+  glDeleteShader(vertex_shader);
+
+  static const char* fragment_shader_source =
+      "#version 100\n"
+      "uniform lowp sampler2D image;\n"
+      "varying mediump vec2 texcoord;\n"
+      "void main() {\n"
+      "  lowp vec4 color = texture2D(image, texcoord);\n"
+      "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n"
+      "}\n";
+
+  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
+  glCompileShader(fragment_shader);
+  glAttachShader(*program, fragment_shader);
+  glDeleteShader(fragment_shader);
+
+  glLinkProgram(*program);
+}
+
+static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
+                                     GLuint fbo) {
+  // TODO
+}
+
+static void GbaPpuOpenGlRendererFlush(const GbaPpuOpenGlRenderer* renderer) {
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(0u, renderer->flush_start_row * renderer->render_scale,
+            GBA_SCREEN_WIDTH, renderer->flush_size * renderer->render_scale);
+  glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
+             GBA_SCREEN_HEIGHT * renderer->render_scale);
+  GbaPpuOpenGlRendererDraw(renderer, renderer->staging_fbo);
+  glDisable(GL_SCISSOR_TEST);
+}
+
+static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
+                                       const GbaPpuMemory* memory,
+                                       const GbaPpuRegisters* registers,
+                                       GbaPpuDirtyBits* dirty_bits) {
+  if (registers->dispcnt.forced_blank) {
+    return;
+  }
+
+  switch (registers->dispcnt.mode) {
+    case 0u:
+      // TuODO
+      break;
+    case 1u:
+      // TODO
+      break;
+    case 2u:
+      // TODO
+      break;
+    case 3u:
+      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
+      OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3, memory, registers,
+                                dirty_bits);
+      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
+      break;
+    case 4u:
+      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
+      OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory, registers,
+                                dirty_bits);
+      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
+      OpenGlLargePaletteBG(&renderer->palette_large, memory, dirty_bits);
+      break;
+    case 5u:
+      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
+      OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5, memory, registers,
+                                dirty_bits);
+      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
+      OpenGlLargePaletteBG(&renderer->palette_large, memory, dirty_bits);
+      break;
   }
 }
 
@@ -50,8 +169,12 @@ GbaPpuOpenGlRenderer* GbaPpuOpenGlRendererAllocate() {
   GbaPpuOpenGlRenderer* renderer = calloc(1u, sizeof(GbaPpuOpenGlRenderer));
 
   if (renderer != NULL) {
+    GbaPpuDrawManagerInitialize(&renderer->draw_manager);
     renderer->next_render_scale = 1u;
     renderer->render_scale = 1u;
+    renderer->flush_start_row = 0u;
+    renderer->flush_size = 0u;
+    renderer->last_frame_contents = 0u;
   }
 
   return renderer;
@@ -73,42 +196,32 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   if (registers->vcount == 0u &&
       renderer->render_scale != renderer->next_render_scale) {
     renderer->render_scale = renderer->next_render_scale;
-    UpdateTextures(renderer);
+    glDeleteTextures(1u, &renderer->staging_texture);
+    CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
+    UpdateStagingFbo(renderer->staging_fbo, renderer->staging_texture);
+    GbaPpuDrawManagerInvalidatePreviousFrame(&renderer->draw_manager);
   }
 
-  glEnable(GL_SCISSOR_TEST);
-
-  glScissor(0u, registers->vcount * renderer->render_scale, GBA_SCREEN_WIDTH,
-            renderer->render_scale);
-  glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
-             GBA_SCREEN_HEIGHT * renderer->render_scale);
-
-  switch (registers->dispcnt.mode) {
-    case 0:
-      break;
-    case 1:
-      break;
-    case 2:
-      break;
-    case 3:
-      GbaPpuOpenGlBgBitmapMode3(&renderer->bg_bitmap, memory, registers,
-                                &renderer->affine, &renderer->mosaic,
-                                dirty_bits, renderer->layer_fbos[2u]);
-      break;
-    case 4:
-      GbaPpuOpenGlBgBitmapMode4(&renderer->bg_bitmap, memory, registers,
-                                &renderer->affine, &renderer->mosaic,
-                                &renderer->palette_large, dirty_bits,
-                                renderer->layer_fbos[2u]);
-      break;
-    case 5:
-      GbaPpuOpenGlBgBitmapMode5(&renderer->bg_bitmap, memory, registers,
-                                &renderer->affine, &renderer->mosaic,
-                                dirty_bits, renderer->layer_fbos[2u]);
-      break;
+  if (registers->vcount == 0u) {
+    GbaPpuDrawManagerStartFrame(&renderer->draw_manager, registers, dirty_bits);
+    GbaPpuOpenGlRendererReload(renderer, memory, registers, dirty_bits);
+    renderer->flush_start_row = 0u;
+    renderer->flush_size = 1u;
+    return;
   }
 
-  glDisable(GL_SCISSOR_TEST);
+  bool should_flush = GbaPpuDrawManagerShouldFlush(&renderer->draw_manager,
+                                                   registers, dirty_bits);
+
+  if (!should_flush) {
+    renderer->flush_size += 1u;
+    return;
+  }
+
+  GbaPpuOpenGlRendererFlush(renderer);
+  GbaPpuOpenGlRendererReload(renderer, memory, registers, dirty_bits);
+  renderer->flush_start_row = registers->vcount;
+  renderer->flush_size = 1u;
 }
 
 void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
@@ -118,84 +231,52 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
     return;
   }
 
-  glUseProgram(renderer->program);
+  bool can_skip = GbaPpuDrawManagerEndFrame(&renderer->draw_manager);
+  if (can_skip && *fbo_contents == renderer->last_frame_contents) {
+    return;
+  }
 
-  GLuint coord_attrib = glGetAttribLocation(renderer->program, "coord");
-  glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
-  glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
-                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
-  glEnableVertexAttribArray(coord_attrib);
+  if (renderer->flush_size == GBA_SCREEN_HEIGHT) {
+    GbaPpuOpenGlRendererDraw(renderer, fbo);
+  } else {
+    GbaPpuOpenGlRendererFlush(renderer);
 
-  GLint texture_location = glGetUniformLocation(renderer->program, "image");
-  glUniform1i(texture_location, 0);
+    glUseProgram(renderer->upscale_program);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, renderer->layer_textures[2u]);
+    GLuint coord_attrib =
+        glGetAttribLocation(renderer->upscale_program, "coord");
+    glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
+    glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
+                          /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+    glEnableVertexAttribArray(coord_attrib);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  glViewport(0, 0, width, height);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+    GLint texture_location =
+        glGetUniformLocation(renderer->upscale_program, "image");
+    glUniform1i(texture_location, 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, renderer->staging_texture);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glViewport(0, 0, width, height);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+  }
+
+  *fbo_contents = ++renderer->last_frame_contents;
 }
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
-  GbaPpuOpenGlAffineReloadContext(&renderer->affine);
-  GbaPpuOpenGlBgBitmapReloadContext(&renderer->bg_bitmap);
-  GbaPpuOpenGlLargePaletteReloadContext(&renderer->palette_large);
-  GbaPpuOpenGlSmallPaletteReloadContext(&renderer->palette_small);
+  OpenGlBgAffineReloadContext(&renderer->affine);
+  OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
+  OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
+  OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
+  OpenGlLargePaletteReloadContext(&renderer->palette_large);
+  OpenGlSmallPaletteReloadContext(&renderer->palette_small);
 
-  glGenTextures(/*n=*/NUM_LAYERS, renderer->layer_textures);
-  UpdateTextures(renderer);
-
-  glGenFramebuffers(/*n=*/NUM_LAYERS, renderer->layer_fbos);
-  for (uint8_t i = 0; i < NUM_LAYERS; i++) {
-    glBindFramebuffer(GL_FRAMEBUFFER, renderer->layer_fbos[i]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           renderer->layer_textures[i], /*level=*/0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
-
-  renderer->program = glCreateProgram();
-
-  static const char* vertex_shader_source =
-      "#version 100\n"
-      "attribute highp vec2 coord;\n"
-      "varying mediump vec2 texcoord;\n"
-      "void main() {\n"
-      "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
-      "  texcoord.y = (coord.y + 1.0) * 0.5;\n"
-      "  gl_Position = vec4(coord, 0.0, 1.0);\n"
-      "}\n";
-
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
-  glAttachShader(renderer->program, vertex_shader);
-  glDeleteShader(vertex_shader);
-
-  static const char* fragment_shader_source =
-      "#version 100\n"
-      "uniform lowp sampler2D image;\n"
-      "varying mediump vec2 texcoord;\n"
-      "void main() {\n"
-      "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n"
-      "}\n";
-
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
-  glAttachShader(renderer->program, fragment_shader);
-  glDeleteShader(fragment_shader);
-
-  glLinkProgram(renderer->program);
-
-  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
-                                       1.0,  1.0,  1.0,  -1.0};
-
-  glGenBuffers(1, &renderer->vertices);
-  glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
+  CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
+  CreateUpscaleProgram(&renderer->upscale_program);
+  CreateVertices(&renderer->vertices);
 
   renderer->initialized = true;
 }
@@ -207,12 +288,16 @@ void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
 
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
   if (renderer->initialized) {
-    GbaPpuOpenGlAffineDestroy(&renderer->affine);
-    GbaPpuOpenGlBgBitmapDestroy(&renderer->bg_bitmap);
-    GbaPpuOpenGlLargePaletteDestroy(&renderer->palette_large);
-    GbaPpuOpenGlSmallPaletteDestroy(&renderer->palette_small);
-    glDeleteFramebuffers(NUM_LAYERS, renderer->layer_fbos);
-    glDeleteTextures(NUM_LAYERS, renderer->layer_textures);
+    OpenGlBgAffineDestroy(&renderer->affine);
+    OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
+    OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
+    OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
+    OpenGlLargePaletteDestroy(&renderer->palette_large);
+    OpenGlSmallPaletteDestroy(&renderer->palette_small);
+    glDeleteFramebuffers(1u, &renderer->staging_fbo);
+    glDeleteTextures(1u, &renderer->staging_texture);
+    glDeleteProgram(renderer->upscale_program);
+    glDeleteBuffers(1u, &renderer->vertices);
   }
 
   free(renderer);
