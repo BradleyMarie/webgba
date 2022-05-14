@@ -24,8 +24,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
     GbaPpuSetAdd(&bits->oam.rotations, i);
   }
 
-  bits->io.bg_mosaic = true;
-  bits->io.obj_mosaic = true;
+  bits->io.mosaic = true;
 
   bits->composite.bg_affine[0u] = true;
   bits->composite.bg_affine[1u] = true;

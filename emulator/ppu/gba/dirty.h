@@ -42,8 +42,7 @@ typedef struct {
 } GbaPpuOamDirtyBits;
 
 typedef struct {
-  bool bg_mosaic;
-  bool obj_mosaic;
+  bool mosaic;
 } GbaPpuIoDirtyBits;
 
 typedef struct {
