@@ -1,15 +1,22 @@
 #include "emulator/ppu/gba/opengl/palette_small.h"
 
+#include <assert.h>
 #include <string.h>
 
-static void GbaPpuReloadSmallPalette(OpenGlSmallPalette* context,
-                                     const GbaPpuPaletteSegment* palette,
-                                     uint8_t index) {
+void OpenGlBgSmallPaletteReload(OpenGlBgSmallPalette* context,
+                                  const GbaPpuMemory* memory,
+                                  GbaPpuDirtyBits* dirty_bits, uint8_t index) {
+  assert(index < GBA_NUM_SMALL_PALETTES);
+
+  if (!dirty_bits->palette.bg_small_palettes[index]) {
+    return;
+  }
+
   uint16_t colors[GBA_SMALL_PALETTE_SIZE];
 
   colors[0] = 0u;
   for (uint16_t i = 1; i < GBA_SMALL_PALETTE_SIZE; i++) {
-    colors[i] = palette->small_palettes[index][i] << 1u;
+    colors[i] = memory->palette.bg.small_palettes[index][i] << 1u;
   }
 
   glBindTexture(GL_TEXTURE_2D, context->palettes[index]);
@@ -18,29 +25,17 @@ static void GbaPpuReloadSmallPalette(OpenGlSmallPalette* context,
                   /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                   /*pixels=*/colors);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  dirty_bits->palette.bg_small_palettes[index] = false;
 }
 
-GLuint OpenGlSmallPaletteBG(OpenGlSmallPalette* context,
-                            const GbaPpuMemory* memory,
-                            GbaPpuDirtyBits* dirty_bits, uint8_t index) {
-  if (dirty_bits->palette.bg_small_palettes[index]) {
-    GbaPpuReloadSmallPalette(context, &memory->palette.bg, index);
-    dirty_bits->palette.bg_small_palettes[index] = false;
-  }
+GLuint OpenGlBgSmallPaletteGet(const OpenGlBgSmallPalette* context,
+                               uint8_t index) {
+  assert(index < GBA_NUM_SMALL_PALETTES);
   return context->palettes[index];
 }
 
-GLuint OpenGlSmallPaletteOBJ(OpenGlSmallPalette* context,
-                             const GbaPpuMemory* memory,
-                             GbaPpuDirtyBits* dirty_bits, uint8_t index) {
-  if (dirty_bits->palette.obj_small_palettes[index]) {
-    GbaPpuReloadSmallPalette(context, &memory->palette.obj, index);
-    dirty_bits->palette.obj_small_palettes[index] = false;
-  }
-  return context->palettes[index];
-}
-
-void OpenGlSmallPaletteReloadContext(OpenGlSmallPalette* context) {
+void OpenGlBgSmallPaletteReloadContext(OpenGlBgSmallPalette* context) {
   glGenTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
   for (uint8_t i = 0; i < GBA_NUM_SMALL_PALETTES; i++) {
     glBindTexture(GL_TEXTURE_2D, context->palettes[i]);
@@ -54,10 +49,10 @@ void OpenGlSmallPaletteReloadContext(OpenGlSmallPalette* context) {
                  /*border=*/0, /*format=*/GL_RGBA,
                  /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                  /*pixels=*/NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
   }
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void OpenGlSmallPaletteDestroy(OpenGlSmallPalette* context) {
+void OpenGlBgSmallPaletteDestroy(OpenGlBgSmallPalette* context) {
   glDeleteTextures(GBA_NUM_SMALL_PALETTES, context->palettes);
 }

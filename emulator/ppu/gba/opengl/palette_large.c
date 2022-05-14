@@ -2,11 +2,16 @@
 
 #include <string.h>
 
-static void GbaPpuReloadLargePalette(OpenGlLargePalette* context,
-                                     const GbaPpuPaletteSegment* palette) {
+void OpenGlBgLargePaletteReload(OpenGlBgLargePalette* context,
+                                const GbaPpuMemory* memory,
+                                GbaPpuDirtyBits* dirty_bits) {
+  if (!dirty_bits->palette.bg_large_palette) {
+    return;
+  }        
+
   context->colors[0] = 0u;
   for (uint16_t i = 1; i < GBA_LARGE_PALETTE_SIZE; i++) {
-    context->colors[i] = palette->large_palette[i] << 1u;
+    context->colors[i] = memory->palette.bg.large_palette[i] << 1u;
   }
 
   glBindTexture(GL_TEXTURE_2D, context->palette);
@@ -15,29 +20,15 @@ static void GbaPpuReloadLargePalette(OpenGlLargePalette* context,
                   /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                   /*pixels=*/context->colors);
   glBindTexture(GL_TEXTURE_2D, 0);
+  
+  dirty_bits->palette.bg_large_palette = false;
 }
 
-GLuint OpenGlLargePaletteBG(OpenGlLargePalette* context,
-                            const GbaPpuMemory* memory,
-                            GbaPpuDirtyBits* dirty_bits) {
-  if (dirty_bits->palette.bg_large_palette) {
-    GbaPpuReloadLargePalette(context, &memory->palette.bg);
-    dirty_bits->palette.bg_large_palette = false;
-  }
+GLuint OpenGlBgLargePaletteGet(const OpenGlBgLargePalette* context) {
   return context->palette;
 }
 
-GLuint OpenGlLargePaletteOBJ(OpenGlLargePalette* context,
-                             const GbaPpuMemory* memory,
-                             GbaPpuDirtyBits* dirty_bits) {
-  if (dirty_bits->palette.obj_large_palette) {
-    GbaPpuReloadLargePalette(context, &memory->palette.obj);
-    dirty_bits->palette.obj_large_palette = false;
-  }
-  return context->palette;
-}
-
-void OpenGlLargePaletteReloadContext(OpenGlLargePalette* context) {
+void OpenGlBgLargePaletteReloadContext(OpenGlBgLargePalette* context) {
   glGenTextures(1u, &context->palette);
   glBindTexture(GL_TEXTURE_2D, context->palette);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -53,6 +44,6 @@ void OpenGlLargePaletteReloadContext(OpenGlLargePalette* context) {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void OpenGlLargePaletteDestroy(OpenGlLargePalette* context) {
+void OpenGlBgLargePaletteDestroy(OpenGlBgLargePalette* context) {
   glDeleteTextures(1u, &context->palette);
 }

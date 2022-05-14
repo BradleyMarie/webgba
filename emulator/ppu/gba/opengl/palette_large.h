@@ -9,18 +9,16 @@
 typedef struct {
   GLuint palette;
   uint16_t colors[GBA_LARGE_PALETTE_SIZE];
-} OpenGlLargePalette;
+} OpenGlBgLargePalette;
 
-GLuint OpenGlLargePaletteBG(OpenGlLargePalette* context,
-                            const GbaPpuMemory* memory,
-                            GbaPpuDirtyBits* dirty_bits);
+void OpenGlBgLargePaletteReload(OpenGlBgLargePalette* context,
+                                const GbaPpuMemory* memory,
+                                GbaPpuDirtyBits* dirty_bits);
 
-GLuint OpenGlLargePaletteOBJ(OpenGlLargePalette* context,
-                             const GbaPpuMemory* memory,
-                             GbaPpuDirtyBits* dirty_bits);
+GLuint OpenGlBgLargePaletteGet(const OpenGlBgLargePalette* context);
 
-void OpenGlLargePaletteReloadContext(OpenGlLargePalette* context);
+void OpenGlBgLargePaletteReloadContext(OpenGlBgLargePalette* context);
 
-void OpenGlLargePaletteDestroy(OpenGlLargePalette* context);
+void OpenGlBgLargePaletteDestroy(OpenGlBgLargePalette* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_LARGE_
