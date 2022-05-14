@@ -56,6 +56,8 @@ void GbaPpuOpenGlBgAffineReload(GbaPpuOpenGlBgAffine* context,
   glBindBuffer(GL_ARRAY_BUFFER, context->buffers[index]);
   glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 8, array);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  dirty_bits->composite.bg_affine[index] = false;
 }
 
 bool GbaPpuOpenGlBgAffineGet(GbaPpuOpenGlBgAffine* context,

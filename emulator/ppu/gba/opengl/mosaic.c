@@ -1,12 +1,20 @@
 #include "emulator/ppu/gba/opengl/mosaic.h"
 
 #include <assert.h>
-#include <string.h>
 
-static void GbaPpuOpenGlMosaicReload(GLfloat buffer[2], unsigned char x,
-                                     unsigned char y) {
-  buffer[0] = x + 1;
-  buffer[1] = y + 1;
+void GbaPpuOpenGlMosaicReload(GbaPpuOpenGlMosaic* context,
+                              const GbaPpuRegisters* registers,
+                              GbaPpuDirtyBits* dirty_bits) {
+  if (!dirty_bits->io.mosaic) {
+    return;
+  }
+
+  context->bg[0u] = registers->mosaic.bg_horiz + 1;
+  context->bg[1u] = registers->mosaic.bg_vert + 1;
+  context->obj[0u] = registers->mosaic.obj_horiz + 1;
+  context->obj[1u] = registers->mosaic.obj_vert + 1;
+
+  dirty_bits->io.mosaic = false;
 }
 
 void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaic* context,
@@ -19,12 +27,6 @@ void GbaPpuOpenGlMosaicBG(GbaPpuOpenGlMosaic* context,
     mosaic[0u] = 1.0;
     mosaic[1u] = 1.0;
     return;
-  }
-
-  if (dirty_bits->io.bg_mosaic) {
-    GbaPpuOpenGlMosaicReload(context->bg, registers->mosaic.bg_horiz,
-                             registers->mosaic.bg_vert);
-    dirty_bits->io.bg_mosaic = false;
   }
 
   mosaic[0u] = context->bg[0u];
@@ -42,12 +44,6 @@ void GbaPpuOpenGlMosaicOBJ(GbaPpuOpenGlMosaic* context,
     mosaic[0u] = 1.0;
     mosaic[1u] = 1.0;
     return;
-  }
-
-  if (dirty_bits->io.obj_mosaic) {
-    GbaPpuOpenGlMosaicReload(context->obj, registers->mosaic.obj_horiz,
-                             registers->mosaic.obj_vert);
-    dirty_bits->io.obj_mosaic = false;
   }
 
   mosaic[0u] = context->obj[0u];

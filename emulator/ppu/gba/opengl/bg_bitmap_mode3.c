@@ -31,6 +31,7 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
                   /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                   /*pixels=*/context->staging);
   glBindTexture(GL_TEXTURE_2D, 0);
+
   dirty_bits->vram.mode_3.overall = false;
 }
 
