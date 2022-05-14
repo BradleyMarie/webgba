@@ -97,9 +97,37 @@ cc_library(
         ":mosaic",
         ":palette_large",
         ":palette_small",
+        ":shader_fragment",
+        ":shader_vertex",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:draw_manager",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
     ],
+)
+
+genrule(
+  name = "shader_fragment_generate",
+  srcs = [":shader_fragment.glsl"],
+  outs = ["shader_fragment.h"],
+  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader_fragment.glsl) fragment_shader_source > $@",
+  tools = ["//tools/string_generator:string_generator"],
+)
+
+cc_library(
+  name = "shader_fragment",
+  hdrs = [":shader_fragment_generate"],
+)
+
+genrule(
+  name = "shader_vertex_generate",
+  srcs = [":shader_vertex.glsl"],
+  outs = ["shader_vertex.h"],
+  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader_vertex.glsl) vertex_shader_source > $@",
+  tools = ["//tools/string_generator:string_generator"],
+)
+
+cc_library(
+  name = "shader_vertex",
+  hdrs = [":shader_vertex_generate"],
 )

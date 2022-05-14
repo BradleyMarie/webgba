@@ -29,7 +29,8 @@ uniform lowp sampler2D bg_large_palette;
 const mediump float large_palette_offset = 1.0 / 512.0;
 
 // Inputs
-varying highp vec2 bg2_texcoord;  // In screen space
+varying highp vec2 bg2_affine_screencoord;
+varying highp vec2 bg3_affine_screencoord;
 varying highp vec2 screencoord;
 
 // Window
@@ -92,39 +93,39 @@ WindowContents CheckWindow(bool on_object) {
 
 vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
-  highp vec2 lookup =
-      bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
+  highp vec2 lookup = bg2_affine_screencoord -
+                      mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   lowp vec4 color = texture2D(bg_mode3, lookup / bitmap_size);
-  color *= step(bg2_texcoord.x, bitmap_size.x);
-  color *= step(bg2_texcoord.y, bitmap_size.y);
-  color *= step(-bg2_texcoord.x, 0.0);
-  color *= step(-bg2_texcoord.y, 0.0);
+  color *= step(bg2_affine_screencoord.x, bitmap_size.x);
+  color *= step(bg2_affine_screencoord.y, bitmap_size.y);
+  color *= step(-bg2_affine_screencoord.x, 0.0);
+  color *= step(-bg2_affine_screencoord.y, 0.0);
   return color;
 }
 
 vec4 Background2Mode4() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
-  highp vec2 lookup =
-      bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
+  highp vec2 lookup = bg2_affine_screencoord -
+                      mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   mediump vec4 index = texture2D(bg_mode4, lookup / bitmap_size);
   lowp vec4 color =
       texture2D(bg_large_palette, vec2(index.r + large_palette_offset, 0.5));
-  color *= step(bg2_texcoord.x, bitmap_size.x);
-  color *= step(bg2_texcoord.y, bitmap_size.y);
-  color *= step(-bg2_texcoord.x, 0.0);
-  color *= step(-bg2_texcoord.y, 0.0);
+  color *= step(bg2_affine_screencoord.x, bitmap_size.x);
+  color *= step(bg2_affine_screencoord.y, bitmap_size.y);
+  color *= step(-bg2_affine_screencoord.x, 0.0);
+  color *= step(-bg2_affine_screencoord.y, 0.0);
   return color;
 }
 
 vec4 Background2Mode5() {
   const highp vec2 bitmap_size = vec2(160.0, 128.0);
-  highp vec2 lookup =
-      bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
+  highp vec2 lookup = bg2_affine_screencoord -
+                      mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   lowp vec4 color = texture2D(bg_mode5, lookup / bitmap_size);
-  color *= step(bg2_texcoord.x, bitmap_size.x);
-  color *= step(bg2_texcoord.y, bitmap_size.y);
-  color *= step(-bg2_texcoord.x, 0.0);
-  color *= step(-bg2_texcoord.y, 0.0);
+  color *= step(bg2_affine_screencoord.x, bitmap_size.x);
+  color *= step(bg2_affine_screencoord.y, bitmap_size.y);
+  color *= step(-bg2_affine_screencoord.x, 0.0);
+  color *= step(-bg2_affine_screencoord.y, 0.0);
   return color;
 }
 
