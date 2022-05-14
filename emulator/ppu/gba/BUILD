@@ -40,6 +40,7 @@ cc_library(
     visibility = ["//emulator:__subpackages__"],
     deps = [
         ":dirty",
+        ":draw_manager",
         ":memory",
         ":registers",
         "//emulator/dma/gba:dma",

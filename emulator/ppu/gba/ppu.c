@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "emulator/ppu/gba/dirty.h"
+#include "emulator/ppu/gba/draw_manager.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -44,6 +45,7 @@ struct _GbaPpu {
   GbaPpuRenderMode next_render_mode;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
+  GbaPpuDrawManager draw_manager;
   GbaPpuDirtyBits dirty;
   bool render_mode_changed;
   uint32_t cycles_from_hblank_to_draw;
@@ -172,6 +174,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
   GbaPpuDirtyBitsAllDirty(&(*ppu)->dirty);
+  GbaPpuDrawManagerInitialize(&(*ppu)->draw_manager);
 
   GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
 
