@@ -23,13 +23,9 @@ uniform mediump sampler2D bg_mode5;
 // Background Mosaic
 uniform highp vec2 bg2_mosaic;
 
-// Background Palettes
+// Palettes
 uniform lowp sampler2D bg_large_palette;
-
-// Constants
 const mediump float large_palette_offset = 1.0 / 512.0;
-const highp vec2 mode34_bitmap_size = vec2(240.0, 160.0);
-const highp vec2 mode5_bitmap_size = vec2(160.0, 128.0);
 
 // Inputs
 varying highp vec2 bg2_texcoord;  // In screen space
@@ -94,35 +90,38 @@ WindowContents CheckWindow(bool on_object) {
 }
 
 vec4 Background2Mode3() {
+  const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup =
       bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
-  lowp vec4 color = texture2D(bg_mode3, lookup / mode34_bitmap_size);
-  color *= step(bg2_texcoord.x, mode34_bitmap_size.x);
-  color *= step(bg2_texcoord.y, mode34_bitmap_size.y);
+  lowp vec4 color = texture2D(bg_mode3, lookup / bitmap_size);
+  color *= step(bg2_texcoord.x, bitmap_size.x);
+  color *= step(bg2_texcoord.y, bitmap_size.y);
   color *= step(-bg2_texcoord.x, 0.0);
   color *= step(-bg2_texcoord.y, 0.0);
   return color;
 }
 
 vec4 Background2Mode4() {
+  const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup =
       bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
-  mediump vec4 index = texture2D(bg_mode4, lookup / mode34_bitmap_size);
+  mediump vec4 index = texture2D(bg_mode4, lookup / bitmap_size);
   lowp vec4 color =
       texture2D(bg_large_palette, vec2(index.r + large_palette_offset, 0.5));
-  color *= step(bg2_texcoord.x, mode34_bitmap_size.x);
-  color *= step(bg2_texcoord.y, mode34_bitmap_size.y);
+  color *= step(bg2_texcoord.x, bitmap_size.x);
+  color *= step(bg2_texcoord.y, bitmap_size.y);
   color *= step(-bg2_texcoord.x, 0.0);
   color *= step(-bg2_texcoord.y, 0.0);
   return color;
 }
 
 vec4 Background2Mode5() {
+  const highp vec2 bitmap_size = vec2(160.0, 128.0);
   highp vec2 lookup =
       bg2_texcoord - mod(bg2_texcoord, bg2_mosaic) + vec2(0.5, 0.5);
-  lowp vec4 color = texture2D(bg_mode5, lookup / mode5_bitmap_size);
-  color *= step(bg2_texcoord.x, mode5_bitmap_size.x);
-  color *= step(bg2_texcoord.y, mode5_bitmap_size.y);
+  lowp vec4 color = texture2D(bg_mode5, lookup / bitmap_size);
+  color *= step(bg2_texcoord.x, bitmap_size.x);
+  color *= step(bg2_texcoord.y, bitmap_size.y);
   color *= step(-bg2_texcoord.x, 0.0);
   color *= step(-bg2_texcoord.y, 0.0);
   return color;
