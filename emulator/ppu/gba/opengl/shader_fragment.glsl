@@ -43,10 +43,10 @@ struct WindowContents {
   bool blend;
 };
 
-uniform WindowContents win0_contents;
-uniform WindowContents win1_contents;
-uniform WindowContents winobj_contents;
-uniform WindowContents winout_contents;
+uniform bool win0_contents[6];
+uniform bool win1_contents[6];
+uniform bool winobj_contents[6];
+uniform bool winout_contents[6];
 
 uniform highp vec2 win0_start;
 uniform highp vec2 win0_end;
@@ -65,23 +65,47 @@ bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
 }
 
 WindowContents CheckWindow(bool on_object) {
+  WindowContents result;
   if (win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord)) {
-    return win0_contents;
+    result.bg0 = win0_contents[0];
+    result.bg1 = win0_contents[1];
+    result.bg2 = win0_contents[2];
+    result.bg3 = win0_contents[3];
+    result.obj = win0_contents[4];
+    result.blend = win0_contents[5];
+    return result;
   }
 
   if (win1_enabled && IsInsideWindow2D(win1_start, win1_end, screencoord)) {
-    return win1_contents;
+    result.bg0 = win1_contents[0];
+    result.bg1 = win1_contents[1];
+    result.bg2 = win1_contents[2];
+    result.bg3 = win1_contents[3];
+    result.obj = win1_contents[4];
+    result.blend = win1_contents[5];
+    return result;
   }
 
   if (winobj_enabled && on_object) {
-    return winobj_contents;
+    result.bg0 = winobj_contents[0];
+    result.bg1 = winobj_contents[1];
+    result.bg2 = winobj_contents[2];
+    result.bg3 = winobj_contents[3];
+    result.obj = winobj_contents[4];
+    result.blend = winobj_contents[5];
+    return result;
   }
 
   if (win0_enabled || win1_enabled || winobj_enabled) {
-    return winobj_contents;
+    result.bg0 = winout_contents[0];
+    result.bg1 = winout_contents[1];
+    result.bg2 = winout_contents[2];
+    result.bg3 = winout_contents[3];
+    result.obj = winout_contents[4];
+    result.blend = winout_contents[5];
+    return result;
   }
 
-  WindowContents result;
   result.bg0 = true;
   result.bg1 = true;
   result.bg2 = true;

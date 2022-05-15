@@ -91,6 +91,7 @@ cc_library(
         ":palette",
         ":shader_fragment",
         ":shader_vertex",
+        ":window",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:draw_manager",
         "//emulator/ppu/gba:memory",
@@ -127,4 +128,15 @@ cc_library(
 cc_library(
     name = "texture_bindings",
     hdrs = ["texture_bindings.h"],
+)
+
+cc_library(
+    name = "window",
+    srcs = ["window.c"],
+    hdrs = ["window.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:registers",
+    ],
 )

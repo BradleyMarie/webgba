@@ -13,6 +13,7 @@
 #include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
 #include "emulator/ppu/gba/opengl/shader_vertex.h"
+#include "emulator/ppu/gba/opengl/window.h"
 
 #define NUM_LAYERS (GBA_PPU_NUM_BACKGROUNDS + 1u)
 
@@ -24,6 +25,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
   OpenGlBgPalette bg_palette;
   OpenGlBgMosaic mosaic;
+  OpenGlWindow window;
   uint8_t flush_start_row;
   uint8_t flush_size;
   uint8_t next_render_scale;
@@ -153,6 +155,7 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
 
   OpenGlBgPaletteReload(&renderer->bg_palette, memory, dirty_bits);
   OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
+  OpenGlWindowReload(&renderer->window, registers, dirty_bits);
 
   switch (registers->dispcnt.mode) {
     case 0u:
