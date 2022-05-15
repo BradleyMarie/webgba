@@ -134,7 +134,25 @@ static void CreateRenderProgram(GLuint* program) {
 
 static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
                                      GLuint fbo) {
-  // TODO
+  glUseProgram(renderer->render_program);
+
+  OpenGlControlBind(&renderer->control, renderer->render_program);
+  OpenGlBgPaletteBind(&renderer->bg_palette, renderer->render_program);
+  OpenGlBgMosaicBind(&renderer->mosaic, renderer->render_program);
+  OpenGlWindowBind(&renderer->window, renderer->render_program);
+  OpenGlBgAffineBind(&renderer->affine, renderer->render_program);
+  OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
+  OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
+  OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
+
+  GLuint vertex = glGetAttribLocation(renderer->upscale_program, "vertex");
+  glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
+  glVertexAttribPointer(vertex, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(vertex);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
 }
 
 static void GbaPpuOpenGlRendererFlush(const GbaPpuOpenGlRenderer* renderer) {
@@ -151,6 +169,7 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
                                        const GbaPpuMemory* memory,
                                        const GbaPpuRegisters* registers,
                                        GbaPpuDirtyBits* dirty_bits) {
+  OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits);
   OpenGlControlReload(&renderer->control, registers, dirty_bits);
 
   if (registers->dispcnt.forced_blank) {
@@ -172,17 +191,14 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
       // TODO
       break;
     case 3u:
-      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3, memory, registers,
                                 dirty_bits);
       break;
     case 4u:
-      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory, registers,
                                 dirty_bits);
       break;
     case 5u:
-      OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5, memory, registers,
                                 dirty_bits);
       break;
@@ -238,6 +254,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                                    registers, dirty_bits);
 
   if (!should_flush) {
+    OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits);
     renderer->flush_size += 1u;
     return;
   }

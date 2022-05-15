@@ -40,10 +40,12 @@ typedef struct {
 
 typedef struct {
   bool dispcnt;
+  bool bg_affine_x[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  bool bg_affine_y[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  bool bg_affine_params[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
 } GbaPpuIoDirtyBits;
 
 typedef struct {
-  bool bg_affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   bool bg_mosaic;
   bool window;
 } GbaPpuCompositeDirtyBits;
