@@ -10,8 +10,7 @@ void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,
     return;
   }
 
-  context->colors[0] = 0u;
-  for (uint16_t i = 1; i < GBA_LARGE_PALETTE_SIZE; i++) {
+  for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
     context->colors[i] = memory->palette.bg.large_palette[i] << 1u;
   }
 
