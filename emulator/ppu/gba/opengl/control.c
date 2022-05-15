@@ -19,7 +19,7 @@ void OpenGlControlReload(OpenGlControl* context,
   context->win1_enabled = registers->dispcnt.win1_enable;
   context->winobj_enabled = registers->dispcnt.winobj_enable;
 
-  dirty_bits->composite.window = false;
+  dirty_bits->io.dispcnt = false;
 }
 
 void OpenGlControlBind(const OpenGlControl* context, GLuint program) {

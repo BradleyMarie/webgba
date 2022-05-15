@@ -112,12 +112,12 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
-vec4 Backdrop() {
+lowp vec4 Backdrop() {
   return texture2D(bg_palette,
                    vec2(bg_palette_sample_offset, bg_palette_sample_offset));
 }
 
-vec4 Background2Mode3() {
+lowp vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -129,7 +129,7 @@ vec4 Background2Mode3() {
   return color;
 }
 
-vec4 Background2Mode4() {
+lowp vec4 Background2Mode4() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -143,7 +143,7 @@ vec4 Background2Mode4() {
   return color;
 }
 
-vec4 Background2Mode5() {
+lowp vec4 Background2Mode5() {
   const highp vec2 bitmap_size = vec2(160.0, 128.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -155,34 +155,34 @@ vec4 Background2Mode5() {
   return color;
 }
 
-vec4 Mode0(WindowContents window) { return Backdrop(); }
+lowp vec4 Mode0(WindowContents window) { return Backdrop(); }
 
-vec4 Mode1(WindowContents window) { return Backdrop(); }
+lowp vec4 Mode1(WindowContents window) { return Backdrop(); }
 
-vec4 Mode2(WindowContents window) { return Backdrop(); }
+lowp vec4 Mode2(WindowContents window) { return Backdrop(); }
 
-vec4 Mode3(WindowContents window) {
+lowp vec4 Mode3(WindowContents window) {
   if (bg_enabled[2] && window.bg2) {
     return Background2Mode3();
   }
   return Backdrop();
 }
 
-vec4 Mode4(WindowContents window) {
+lowp vec4 Mode4(WindowContents window) {
   if (bg_enabled[2] && window.bg2) {
     return Background2Mode4();
   }
   return Backdrop();
 }
 
-vec4 Mode5(WindowContents window) {
+lowp vec4 Mode5(WindowContents window) {
   if (bg_enabled[2] && window.bg2) {
     return Background2Mode5();
   }
   return Backdrop();
 }
 
-void main(WindowContents window) {
+void main() {
   if (blank) {
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
@@ -190,19 +190,22 @@ void main(WindowContents window) {
 
   WindowContents window = CheckWindow(false);
 
+  lowp vec4 color;
   if (mode == 0) {
-    gl_FragColor = Mode0(window);
+    color = Mode0(window);
   } else if (mode == 1) {
-    gl_FragColor = Mode1(window);
+    color = Mode1(window);
   } else if (mode == 2) {
-    gl_FragColor = Mode2(window);
+    color = Mode2(window);
   } else if (mode == 3) {
-    gl_FragColor = Mode3(window);
+    color = Mode3(window);
   } else if (mode == 4) {
-    gl_FragColor = Mode4(window);
+    color = Mode4(window);
   } else if (mode == 5) {
-    gl_FragColor = Mode5(window);
+    color = Mode5(window);
   } else {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    color = vec4(0.0, 0.0, 0.0, 1.0);
   }
+
+  gl_FragColor = vec4(color.b, color.g, color.r, 1.0);
 }
