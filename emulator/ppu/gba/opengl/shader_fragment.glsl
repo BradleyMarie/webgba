@@ -4,10 +4,7 @@
 uniform bool blank;
 uniform int mode;
 
-uniform bool bg0_enabled;
-uniform bool bg1_enabled;
-uniform bool bg2_enabled;
-uniform bool bg3_enabled;
+uniform bool bg_enabled[4];
 
 uniform bool win0_enabled;
 uniform bool win1_enabled;
@@ -165,21 +162,21 @@ vec4 Mode1(WindowContents window) { return Backdrop(); }
 vec4 Mode2(WindowContents window) { return Backdrop(); }
 
 vec4 Mode3(WindowContents window) {
-  if (window.bg2 && bg2_enabled) {
+  if (bg_enabled[2] && window.bg2) {
     return Background2Mode3();
   }
   return Backdrop();
 }
 
 vec4 Mode4(WindowContents window) {
-  if (window.bg2 && bg2_enabled) {
+  if (bg_enabled[2] && window.bg2) {
     return Background2Mode4();
   }
   return Backdrop();
 }
 
 vec4 Mode5(WindowContents window) {
-  if (window.bg2 && bg2_enabled) {
+  if (bg_enabled[2] && window.bg2) {
     return Background2Mode5();
   }
   return Backdrop();
