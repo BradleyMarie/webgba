@@ -20,6 +20,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   }
 
   bits->io.dispcnt = true;
+  bits->io.blend = true;
   bits->io.bg_affine_x[0u] = true;
   bits->io.bg_affine_x[1u] = true;
   bits->io.bg_affine_y[0u] = true;

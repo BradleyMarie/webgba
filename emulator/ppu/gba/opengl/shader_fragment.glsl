@@ -41,6 +41,11 @@ varying highp vec2 screencoord;
 
 // Blend Unit
 uniform int blend_mode;
+uniform lowp float blend_eva;
+uniform lowp float blend_evb;
+uniform lowp float blend_evy;
+uniform bool obj_top;
+uniform bool obj_bottom;
 uniform bool bg0_top;
 uniform bool bg0_bottom;
 uniform bool bg1_top;
@@ -58,7 +63,7 @@ bool blend_bottom[2];
 bool blend_is_object[2];
 bool blend_contains_object;
 bool blend_obj_semi_transparent;
-lowp vec4 blend_layers[2];
+lowp vec3 blend_layers[2];
 
 void BlendUnitInitialize() {
   blend_priorities[0] = 6;
@@ -88,13 +93,13 @@ void BlendUnitAddBackground(int priority, bool top, bool bottom,
     blend_bottom[1] = blend_bottom[0];
     blend_is_object[1] = blend_is_object[0];
     blend_priorities[0] = priority;
-    blend_layers[0] = color;
+    blend_layers[0] = color.rgb;
     blend_top[0] = top;
     blend_bottom[0] = bottom;
     blend_is_object[0] = false;
   } else {
     blend_priorities[1] = priority;
-    blend_layers[1] = color;
+    blend_layers[1] = color.rgb;
     blend_top[1] = top;
     blend_bottom[1] = bottom;
     blend_is_object[1] = false;
@@ -119,6 +124,73 @@ void BlendUnitAddBackground3(lowp vec4 color) {
 
 void BlendUnitAddBackdrop(lowp vec4 color) {
   BlendUnitAddBackground(bd_priority, bd_top, bd_bottom, color);
+}
+
+lowp vec3 BlendUnitAdditiveBlendImpl() {
+  return max((blend_layers[0] * blend_eva) + (blend_layers[1] * blend_evb),
+             1.0);
+}
+
+lowp vec3 BlendUnitNoBlendImpl() { return blend_layers[0]; }
+
+lowp vec3 BlendUnitNoBlend() {
+  if (blend_contains_object && blend_obj_semi_transparent && blend_top[0] &&
+      blend_bottom[1]) {
+    return BlendUnitAdditiveBlendImpl();
+  }
+
+  return BlendUnitNoBlendImpl();
+}
+
+lowp vec3 BlendUnitAdditiveBlend() {
+  if (!blend_top[0] || !blend_bottom[1]) {
+    return BlendUnitNoBlendImpl();
+  }
+
+  return BlendUnitAdditiveBlendImpl();
+}
+
+lowp vec3 BlendUnitBrighten() {
+  if (!blend_top[0]) {
+    return BlendUnitNoBlendImpl();
+  }
+
+  if (blend_contains_object && blend_obj_semi_transparent && blend_bottom[1]) {
+    return BlendUnitAdditiveBlendImpl();
+  }
+
+  return min(blend_layers[0] * (1.0 - blend_evy), 0.0);
+}
+
+lowp vec3 BlendUnitDarken() {
+  if (!blend_top[0]) {
+    return BlendUnitNoBlendImpl();
+  }
+
+  if (blend_contains_object && blend_obj_semi_transparent && blend_bottom[1]) {
+    return BlendUnitAdditiveBlendImpl();
+  }
+
+  return max(blend_layers[0] * blend_evy, 1.0);
+}
+
+lowp vec4 BlendUnitBlend(bool enable_blend) {
+  lowp vec3 color;
+  if (!enable_blend) {
+    color = BlendUnitNoBlendImpl();
+  } else {
+    if (blend_mode == 0) {
+      color = BlendUnitNoBlend();
+    } else if (blend_mode == 1) {
+      color = BlendUnitAdditiveBlend();
+    } else if (blend_mode == 2) {
+      color = BlendUnitBrighten();
+    } else {
+      color = BlendUnitDarken();
+    }
+  }
+
+  return vec4(color.b, color.g, color.r, 1.0);
 }
 
 // Window
@@ -281,7 +353,5 @@ void main() {
   lowp vec4 backdrop = Backdrop();
   BlendUnitAddBackdrop(backdrop);
 
-  lowp vec4 color = blend_layers[0];
-
-  gl_FragColor = vec4(color.b, color.g, color.r, 1.0);
+  gl_FragColor = BlendUnitBlend(window.blend);
 }

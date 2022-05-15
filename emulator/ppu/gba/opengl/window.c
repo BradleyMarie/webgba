@@ -1,7 +1,5 @@
 #include "emulator/ppu/gba/opengl/window.h"
 
-#include <string.h>
-
 void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
                         GbaPpuDirtyBits* dirty_bits) {
   if (!dirty_bits->composite.window) {
