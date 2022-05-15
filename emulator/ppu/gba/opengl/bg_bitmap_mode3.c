@@ -23,7 +23,7 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
   for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
     for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
       context->staging[y * GBA_SCREEN_WIDTH + x] =
-          memory->vram.mode_3.bg.pixels[y][x] << 1u;
+          (memory->vram.mode_3.bg.pixels[y][x] << 1u) | 1u;
     }
   }
 

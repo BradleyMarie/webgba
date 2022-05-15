@@ -13,6 +13,8 @@ static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
     return;
   }
 
+  // The bottom element is always removed. If the bottom element is an object,
+  // the blend unit no longer contains any objects.
   blend_unit->contains_object ^= blend_unit->is_object[1u];
 
   if (blend_unit->priorities[0u] > priority) {

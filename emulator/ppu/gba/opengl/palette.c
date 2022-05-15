@@ -11,7 +11,7 @@ void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,
   }
 
   for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
-    context->colors[i] = memory->palette.bg.large_palette[i] << 1u;
+    context->colors[i] = (memory->palette.bg.large_palette[i] << 1u) | 1u;
   }
 
   glBindTexture(GL_TEXTURE_2D, context->palette);

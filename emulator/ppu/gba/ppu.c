@@ -176,7 +176,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   GbaPpuDirtyBitsAllDirty(&(*ppu)->dirty);
   GbaPpuDrawManagerInitialize(&(*ppu)->draw_manager);
 
-  GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
+  GbaPpuSetRenderMode(*ppu, RENDER_MODE_OPENGL_ROWS);
 
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);

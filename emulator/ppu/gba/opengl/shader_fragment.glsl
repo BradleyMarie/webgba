@@ -1,17 +1,23 @@
 #version 100
 
-// Controls
+// Display Controls
 uniform bool blank;
 uniform int mode;
-
 uniform bool bg0_enabled;
 uniform bool bg1_enabled;
 uniform bool bg2_enabled;
 uniform bool bg3_enabled;
-
 uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
+
+// Layer Controls
+uniform int obj_priority;
+uniform int bg0_priority;
+uniform int bg1_priority;
+uniform int bg2_priority;
+uniform int bg3_priority;
+const int bd_priority = 5;
 
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
@@ -32,6 +38,88 @@ const mediump float bg_palette_sample_offset = 1.0 / 512.0;
 varying highp vec2 bg2_affine_screencoord;
 varying highp vec2 bg3_affine_screencoord;
 varying highp vec2 screencoord;
+
+// Blend Unit
+uniform int blend_mode;
+uniform bool bg0_top;
+uniform bool bg0_bottom;
+uniform bool bg1_top;
+uniform bool bg1_bottom;
+uniform bool bg2_top;
+uniform bool bg2_bottom;
+uniform bool bg3_top;
+uniform bool bg3_bottom;
+uniform bool bd_top;
+uniform bool bd_bottom;
+
+int blend_priorities[2];
+bool blend_top[2];
+bool blend_bottom[2];
+bool blend_is_object[2];
+bool blend_contains_object;
+bool blend_obj_semi_transparent;
+lowp vec4 blend_layers[2];
+
+void BlendUnitInitialize() {
+  blend_priorities[0] = 6;
+  blend_priorities[1] = 6;
+  blend_top[0] = false;
+  blend_top[1] = false;
+  blend_bottom[0] = false;
+  blend_bottom[1] = false;
+  blend_is_object[0] = false;
+  blend_is_object[1] = false;
+  blend_contains_object = false;
+  blend_obj_semi_transparent = false;
+}
+
+void BlendUnitAddBackground(int priority, bool top, bool bottom,
+                            lowp vec4 color) {
+  if (color.a == 0.0 || blend_priorities[1] <= priority) {
+    return;
+  }
+
+  blend_contains_object = blend_contains_object ^^ blend_is_object[1];
+
+  if (blend_priorities[0] > priority) {
+    blend_priorities[1] = blend_priorities[0];
+    blend_layers[1] = blend_layers[0];
+    blend_top[1] = blend_top[0];
+    blend_bottom[1] = blend_bottom[0];
+    blend_is_object[1] = blend_is_object[0];
+    blend_priorities[0] = priority;
+    blend_layers[0] = color;
+    blend_top[0] = top;
+    blend_bottom[0] = bottom;
+    blend_is_object[0] = false;
+  } else {
+    blend_priorities[1] = priority;
+    blend_layers[1] = color;
+    blend_top[1] = top;
+    blend_bottom[1] = bottom;
+    blend_is_object[1] = false;
+  }
+}
+
+void BlendUnitAddBackground0(lowp vec4 color) {
+  BlendUnitAddBackground(bg0_priority, bg0_top, bg0_bottom, color);
+}
+
+void BlendUnitAddBackground1(lowp vec4 color) {
+  BlendUnitAddBackground(bg1_priority, bg1_top, bg1_bottom, color);
+}
+
+void BlendUnitAddBackground2(lowp vec4 color) {
+  BlendUnitAddBackground(bg2_priority, bg2_top, bg2_bottom, color);
+}
+
+void BlendUnitAddBackground3(lowp vec4 color) {
+  BlendUnitAddBackground(bg3_priority, bg3_top, bg3_bottom, color);
+}
+
+void BlendUnitAddBackdrop(lowp vec4 color) {
+  BlendUnitAddBackground(bd_priority, bd_top, bd_bottom, color);
+}
 
 // Window
 struct WindowContents {
@@ -115,10 +203,6 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
-lowp vec4 Backdrop() {
-  return texture2D(bg_palette, vec2(bg_palette_sample_offset, 0.5));
-}
-
 lowp vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
@@ -157,31 +241,8 @@ lowp vec4 Background2Mode5() {
   return color;
 }
 
-lowp vec4 Mode0(WindowContents window) { return Backdrop(); }
-
-lowp vec4 Mode1(WindowContents window) { return Backdrop(); }
-
-lowp vec4 Mode2(WindowContents window) { return Backdrop(); }
-
-lowp vec4 Mode3(WindowContents window) {
-  if (bg2_enabled && window.bg2) {
-    return Background2Mode3();
-  }
-  return Backdrop();
-}
-
-lowp vec4 Mode4(WindowContents window) {
-  if (bg2_enabled && window.bg2) {
-    return Background2Mode4();
-  }
-  return Backdrop();
-}
-
-lowp vec4 Mode5(WindowContents window) {
-  if (bg2_enabled && window.bg2) {
-    return Background2Mode5();
-  }
-  return Backdrop();
+lowp vec4 Backdrop() {
+  return texture2D(bg_palette, vec2(bg_palette_sample_offset, 0.5));
 }
 
 void main() {
@@ -190,24 +251,37 @@ void main() {
     return;
   }
 
+  BlendUnitInitialize();
+
   WindowContents window = CheckWindow(false);
 
-  lowp vec4 color;
   if (mode == 0) {
-    color = Mode0(window);
+    // TODO
   } else if (mode == 1) {
-    color = Mode1(window);
+    // TODO
   } else if (mode == 2) {
-    color = Mode2(window);
+    // TODO
   } else if (mode == 3) {
-    color = Mode3(window);
+    if (bg2_enabled && window.bg2) {
+      lowp vec4 bg2 = Background2Mode3();
+      BlendUnitAddBackground2(bg2);
+    }
   } else if (mode == 4) {
-    color = Mode4(window);
+    if (bg2_enabled && window.bg2) {
+      lowp vec4 bg2 = Background2Mode4();
+      BlendUnitAddBackground2(bg2);
+    }
   } else if (mode == 5) {
-    color = Mode5(window);
-  } else {
-    color = vec4(0.0, 0.0, 0.0, 1.0);
+    if (bg2_enabled && window.bg2) {
+      lowp vec4 bg2 = Background2Mode5();
+      BlendUnitAddBackground2(bg2);
+    }
   }
+
+  lowp vec4 backdrop = Backdrop();
+  BlendUnitAddBackdrop(backdrop);
+
+  lowp vec4 color = blend_layers[0];
 
   gl_FragColor = vec4(color.b, color.g, color.r, 1.0);
 }
