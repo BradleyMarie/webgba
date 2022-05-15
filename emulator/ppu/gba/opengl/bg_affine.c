@@ -28,7 +28,7 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
     if (dirty_bits->io.bg_affine_y[i] ||
         registers->vcount < context->reload_scanlines[i]) {
       context->affine[i].y = registers->affine[i].y;
-      dirty_bits->io.bg_affine_x[i] = false;
+      dirty_bits->io.bg_affine_y[i] = false;
     }
 
     context->reload_scanlines[i] = registers->vcount;

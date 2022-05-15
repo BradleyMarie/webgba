@@ -102,7 +102,7 @@ static void CreateUpscaleProgram(GLuint* program) {
       "varying mediump vec2 texcoord;\n"
       "void main() {\n"
       "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.r, color.g, color.b, 0.0);\n"
+      "  gl_FragColor = vec4(color.r, color.g, color.b, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -145,7 +145,7 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
   OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
 
-  GLuint vertex = glGetAttribLocation(renderer->upscale_program, "vertex");
+  GLuint vertex = glGetAttribLocation(renderer->render_program, "vertex");
   glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
   glVertexAttribPointer(vertex, /*size=*/2, /*type=*/GL_FLOAT,
                         /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
