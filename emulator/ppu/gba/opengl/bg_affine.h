@@ -8,17 +8,17 @@
 
 typedef struct {
   GLuint buffers[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-  uint16_t reload_scanlines[2u];
+  BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  uint16_t reload_scanlines[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
 } OpenGlBgAffine;
 
 void OpenGlBgAffineInitialize(OpenGlBgAffine* context);
 
 void OpenGlBgAffineReload(OpenGlBgAffine* context,
                           const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits, uint8_t index);
+                          GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgAffineBind(OpenGlBgAffine* context,
-                        const GbaPpuRegisters* registers, GLuint program);
+void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program);
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 

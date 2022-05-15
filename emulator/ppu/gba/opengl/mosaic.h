@@ -18,6 +18,6 @@ void OpenGlBgMosaicReload(OpenGlBgMosaic* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgMosaicBind(OpenGlBgMosaic* context, GLuint program);
+void OpenGlBgMosaicBind(const OpenGlBgMosaic* context, GLuint program);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_MOSAIC_

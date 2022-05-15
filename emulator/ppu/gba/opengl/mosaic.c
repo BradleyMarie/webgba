@@ -44,7 +44,7 @@ void OpenGlBgMosaicReload(OpenGlBgMosaic* context,
   dirty_bits->composite.bg_mosaic = false;
 }
 
-void OpenGlBgMosaicBind(OpenGlBgMosaic* context, GLuint program) {
+void OpenGlBgMosaicBind(const OpenGlBgMosaic* context, GLuint program) {
   GLint bg0_mosaic = glGetUniformLocation(program, "bg0_mosaic");
   glUniform2f(bg0_mosaic, context->bg0[0u], context->bg0[1u]);
 
