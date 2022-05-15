@@ -60,19 +60,19 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
   dirty_bits->composite.bg_affine[index] = false;
 }
 
-bool OpenGlBgAffineGet(OpenGlBgAffine* context,
-                       const GbaPpuRegisters* registers, uint8_t index,
-                       GLuint* buffer) {
-  assert(index == 2u || index == 3u);
-  index -= 2u;
+void OpenGlBgAffineBind(OpenGlBgAffine* context,
+                        const GbaPpuRegisters* registers, GLuint program) {
+  GLuint bg2_affine = glGetAttribLocation(program, "bg2_affine");
+  glBindBuffer(GL_ARRAY_BUFFER, context->buffers[0u]);
+  glVertexAttribPointer(bg2_affine, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(bg2_affine);
 
-  if ((index == 0u && registers->dispcnt.bg2_enable) ||
-      (index == 1u && registers->dispcnt.bg3_enable)) {
-    *buffer = context->buffers[index];
-    return true;
-  }
-
-  return false;
+  GLuint bg3_affine = glGetAttribLocation(program, "bg3_affine");
+  glBindBuffer(GL_ARRAY_BUFFER, context->buffers[1u]);
+  glVertexAttribPointer(bg3_affine, /*size=*/2, /*type=*/GL_FLOAT,
+                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
+  glEnableVertexAttribArray(bg3_affine);
 }
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {

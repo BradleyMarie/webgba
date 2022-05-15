@@ -18,8 +18,8 @@ void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits);
 
-bool OpenGlBgBitmapMode5Texture(const OpenGlBgBitmapMode5* context,
-                                GLuint* texture);
+void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
+                             GLuint program);
 
 void OpenGlBgBitmapMode5ReloadContext(OpenGlBgBitmapMode5* context);
 

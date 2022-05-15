@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
+
 void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
@@ -35,12 +37,13 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
   dirty_bits->vram.mode_3.overall = false;
 }
 
-bool OpenGlBgBitmapMode3Texture(const OpenGlBgBitmapMode3* context,
-                                GLuint* texture) {
-  if (context->enabled) {
-    *texture = context->texture;
-  }
-  return context->enabled;
+void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
+                             GLuint program) {
+  GLint bg_mode3 = glGetUniformLocation(program, "bg_mode3");
+  glUniform1i(bg_mode3, BG2_MODE3_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + BG2_MODE3_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->texture);
 }
 
 void OpenGlBgBitmapMode3ReloadContext(OpenGlBgBitmapMode3* context) {

@@ -181,7 +181,7 @@ static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  return dirty_bits->palette.bg_backdrop;
+  return dirty_bits->palette.bg_palette;
 }
 
 void GbaPpuDrawManagerInitialize(GbaPpuDrawManager* draw_manager) {

@@ -17,9 +17,8 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits, uint8_t index);
 
-bool OpenGlBgAffineGet(OpenGlBgAffine* context,
-                       const GbaPpuRegisters* registers, uint8_t index,
-                       GLuint* buffer);
+void OpenGlBgAffineBind(OpenGlBgAffine* context,
+                        const GbaPpuRegisters* registers, GLuint program);
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 
