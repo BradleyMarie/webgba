@@ -11,10 +11,10 @@ void OpenGlControlReload(OpenGlControl* context,
 
   context->blank = registers->dispcnt.forced_blank;
   context->mode = registers->dispcnt.mode;
-  context->bg_enabled[0u] = registers->dispcnt.bg0_enable;
-  context->bg_enabled[1u] = registers->dispcnt.bg1_enable;
-  context->bg_enabled[2u] = registers->dispcnt.bg2_enable;
-  context->bg_enabled[3u] = registers->dispcnt.bg3_enable;
+  context->bg0_enabled = registers->dispcnt.bg0_enable;
+  context->bg1_enabled = registers->dispcnt.bg1_enable;
+  context->bg2_enabled = registers->dispcnt.bg2_enable;
+  context->bg3_enabled = registers->dispcnt.bg3_enable;
   context->win0_enabled = registers->dispcnt.win0_enable;
   context->win1_enabled = registers->dispcnt.win1_enable;
   context->winobj_enabled = registers->dispcnt.winobj_enable;
@@ -29,9 +29,17 @@ void OpenGlControlBind(const OpenGlControl* context, GLuint program) {
   GLint mode = glGetUniformLocation(program, "mode");
   glUniform1i(mode, context->mode);
 
-  GLint bg_enabled = glGetUniformLocation(program, "bg_enabled");
-  glUniform4i(bg_enabled, context->bg_enabled[0u], context->bg_enabled[1u],
-              context->bg_enabled[2u], context->bg_enabled[3u]);
+  GLint bg0_enabled = glGetUniformLocation(program, "bg0_enabled");
+  glUniform1i(bg0_enabled, context->bg0_enabled);
+
+  GLint bg1_enabled = glGetUniformLocation(program, "bg1_enabled");
+  glUniform1i(bg1_enabled, context->bg1_enabled);
+
+  GLint bg2_enabled = glGetUniformLocation(program, "bg2_enabled");
+  glUniform1i(bg2_enabled, context->bg2_enabled);
+
+  GLint bg3_enabled = glGetUniformLocation(program, "bg3_enabled");
+  glUniform1i(bg3_enabled, context->bg3_enabled);
 
   GLint win0_enabled = glGetUniformLocation(program, "win0_enabled");
   glUniform1i(win0_enabled, context->win0_enabled);

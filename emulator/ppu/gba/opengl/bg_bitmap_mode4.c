@@ -33,7 +33,7 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                 context->textures[registers->dispcnt.page_select]);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                   /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
-                  /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+                  /*format=*/GL_LUMINANCE, /*type=*/GL_UNSIGNED_BYTE,
                   /*pixels=*/context->staging);
   glBindTexture(GL_TEXTURE_2D, 0);
 

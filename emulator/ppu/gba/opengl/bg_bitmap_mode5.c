@@ -25,7 +25,8 @@ void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
     for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
       context->staging[y * GBA_REDUCED_FRAME_WIDTH + x] =
           memory->vram.mode_5.bg.pages[registers->dispcnt.page_select]
-              .pixels[y][x];
+              .pixels[y][x]
+          << 1u;
     }
   }
 
