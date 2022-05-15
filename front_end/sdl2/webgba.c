@@ -53,7 +53,7 @@ static bool RenderNextFrame() {
   bool up_pressed = keyboard_state[SDL_SCANCODE_UP] != 0;
   bool down_pressed = keyboard_state[SDL_SCANCODE_DOWN] != 0;
   bool left_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
-  bool right_pressed = keyboard_state[SDL_SCANCODE_LEFT] != 0;
+  bool right_pressed = keyboard_state[SDL_SCANCODE_RIGHT] != 0;
 
   if (!g_gamecontroller && SDL_NumJoysticks() > 0) {
     for (int i = 0; i < SDL_NumJoysticks(); ++i) {

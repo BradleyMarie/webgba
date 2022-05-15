@@ -278,6 +278,7 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
   }
 
   if (renderer->flush_size == GBA_SCREEN_HEIGHT) {
+    glViewport(0u, 0u, width, height);
     GbaPpuOpenGlRendererDraw(renderer, fbo);
   } else {
     GbaPpuOpenGlRendererFlush(renderer);

@@ -4,7 +4,10 @@
 uniform bool blank;
 uniform int mode;
 
-uniform bool bg_enabled[4];
+uniform bool bg0_enabled;
+uniform bool bg1_enabled;
+uniform bool bg2_enabled;
+uniform bool bg3_enabled;
 
 uniform bool win0_enabled;
 uniform bool win1_enabled;
@@ -113,8 +116,7 @@ WindowContents CheckWindow(bool on_object) {
 }
 
 lowp vec4 Backdrop() {
-  return texture2D(bg_palette,
-                   vec2(bg_palette_sample_offset, bg_palette_sample_offset));
+  return texture2D(bg_palette, vec2(bg_palette_sample_offset, 0.5));
 }
 
 lowp vec4 Background2Mode3() {
@@ -162,21 +164,21 @@ lowp vec4 Mode1(WindowContents window) { return Backdrop(); }
 lowp vec4 Mode2(WindowContents window) { return Backdrop(); }
 
 lowp vec4 Mode3(WindowContents window) {
-  if (bg_enabled[2] && window.bg2) {
+  if (bg2_enabled && window.bg2) {
     return Background2Mode3();
   }
   return Backdrop();
 }
 
 lowp vec4 Mode4(WindowContents window) {
-  if (bg_enabled[2] && window.bg2) {
+  if (bg2_enabled && window.bg2) {
     return Background2Mode4();
   }
   return Backdrop();
 }
 
 lowp vec4 Mode5(WindowContents window) {
-  if (bg_enabled[2] && window.bg2) {
+  if (bg2_enabled && window.bg2) {
     return Background2Mode5();
   }
   return Backdrop();

@@ -9,7 +9,10 @@
 typedef struct {
   GLint blank;
   GLint mode;
-  GLint bg_enabled[4u];
+  GLint bg0_enabled;
+  GLint bg1_enabled;
+  GLint bg2_enabled;
+  GLint bg3_enabled;
   GLint win0_enabled;
   GLint win1_enabled;
   GLint winobj_enabled;
