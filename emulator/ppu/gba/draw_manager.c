@@ -148,6 +148,10 @@ static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
+  if (dirty_bits->io.blend) {
+    return true;
+  }
+
   if (dirty_bits->composite.window) {
     return true;
   }

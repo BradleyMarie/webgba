@@ -54,6 +54,17 @@ cc_library(
 )
 
 cc_library(
+    name = "blend",
+    srcs = ["blend.c"],
+    hdrs = ["blend.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
     name = "control",
     srcs = ["control.c"],
     hdrs = ["control.h"],
@@ -98,6 +109,7 @@ cc_library(
         ":bg_bitmap_mode3",
         ":bg_bitmap_mode4",
         ":bg_bitmap_mode5",
+        ":blend",
         ":control",
         ":mosaic",
         ":palette",

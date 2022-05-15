@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode3.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
+#include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
 #include "emulator/ppu/gba/opengl/palette.h"
@@ -24,6 +25,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
+  OpenGlBlend blend;
   OpenGlBgPalette bg_palette;
   OpenGlControl control;
   OpenGlBgMosaic mosaic;
@@ -144,6 +146,7 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
   OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
   OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
+  OpenGlBlendBind(&renderer->blend, renderer->render_program);
 
   GLuint vertex = glGetAttribLocation(renderer->render_program, "vertex");
   glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
@@ -179,6 +182,7 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
   OpenGlBgPaletteReload(&renderer->bg_palette, memory, dirty_bits);
   OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
   OpenGlWindowReload(&renderer->window, registers, dirty_bits);
+  OpenGlBlendReload(&renderer->blend, registers, dirty_bits);
 
   switch (registers->dispcnt.mode) {
     case 0u:
