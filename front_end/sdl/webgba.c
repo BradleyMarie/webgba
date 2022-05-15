@@ -138,6 +138,12 @@ static bool SetVideoMode(int width, int height) {
     return false;
   }
 
+#ifndef __EMSCRIPTEN__
+  // Workaround for OpenGL context destruction triggered by call to
+  // SDL_SetVideoMode in sdl12-compat
+  GbaEmulatorReloadContext(g_emulator);
+#endif  // __EMSCRIPTEN__
+
   g_screen = new_surface;
 
   return true;
