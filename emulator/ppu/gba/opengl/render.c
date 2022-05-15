@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode3.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
+#include "emulator/ppu/gba/opengl/control.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
 #include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
@@ -24,6 +25,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
   OpenGlBgPalette bg_palette;
+  OpenGlControl control;
   OpenGlBgMosaic mosaic;
   OpenGlWindow window;
   uint8_t flush_start_row;
@@ -149,6 +151,8 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
                                        const GbaPpuMemory* memory,
                                        const GbaPpuRegisters* registers,
                                        GbaPpuDirtyBits* dirty_bits) {
+  OpenGlControlReload(&renderer->control, registers, dirty_bits);
+
   if (registers->dispcnt.forced_blank) {
     return;
   }

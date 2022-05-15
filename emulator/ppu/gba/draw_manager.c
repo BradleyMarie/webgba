@@ -141,11 +141,7 @@ static bool GbaPpuDrawManagerCheckMode5(const GbaPpuDrawManager* draw_manager,
 static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
                                      const GbaPpuRegisters* registers,
                                      const GbaPpuDirtyBits* dirty_bits) {
-  if (registers->dispcnt.forced_blank != draw_manager->blank) {
-    return true;
-  }
-
-  if (registers->dispcnt.mode != draw_manager->mode) {
+  if (dirty_bits->io.dispcnt) {
     return true;
   }
 
