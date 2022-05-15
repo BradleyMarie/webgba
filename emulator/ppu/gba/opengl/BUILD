@@ -20,6 +20,7 @@ cc_library(
     hdrs = ["bg_bitmap_mode3.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
@@ -32,6 +33,7 @@ cc_library(
     hdrs = ["bg_bitmap_mode4.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
@@ -44,6 +46,7 @@ cc_library(
     hdrs = ["bg_bitmap_mode5.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
@@ -63,22 +66,12 @@ cc_library(
 )
 
 cc_library(
-    name = "palette_large",
-    srcs = ["palette_large.c"],
-    hdrs = ["palette_large.h"],
+    name = "palette",
+    srcs = ["palette.c"],
+    hdrs = ["palette.h"],
     linkopts = ["-lGL"],
     deps = [
-        "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:memory",
-    ],
-)
-
-cc_library(
-    name = "palette_small",
-    srcs = ["palette_small.c"],
-    hdrs = ["palette_small.h"],
-    linkopts = ["-lGL"],
-    deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
     ],
@@ -95,8 +88,7 @@ cc_library(
         ":bg_bitmap_mode4",
         ":bg_bitmap_mode5",
         ":mosaic",
-        ":palette_large",
-        ":palette_small",
+        ":palette",
         ":shader_fragment",
         ":shader_vertex",
         "//emulator/ppu/gba:dirty",
@@ -130,4 +122,9 @@ genrule(
 cc_library(
   name = "shader_vertex",
   hdrs = [":shader_vertex_generate"],
+)
+
+cc_library(
+    name = "texture_bindings",
+    hdrs = ["texture_bindings.h"],
 )

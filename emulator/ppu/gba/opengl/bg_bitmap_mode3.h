@@ -17,8 +17,8 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits);
 
-bool OpenGlBgBitmapMode3Texture(const OpenGlBgBitmapMode3* context,
-                                GLuint* texture);
+void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
+                             GLuint program);
 
 void OpenGlBgBitmapMode3ReloadContext(OpenGlBgBitmapMode3* context);
 

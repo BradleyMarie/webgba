@@ -6,11 +6,8 @@
 #include "emulator/ppu/gba/set.h"
 
 typedef struct {
-  bool bg_small_palettes[GBA_NUM_SMALL_PALETTES];
-  bool bg_large_palette;
-  bool bg_backdrop;
-  bool obj_small_palettes[GBA_NUM_SMALL_PALETTES];
-  bool obj_large_palette;
+  bool bg_palette;
+  bool obj_palette;
 } GbaPpuPaletteDirtyBits;
 
 typedef struct {
@@ -42,18 +39,14 @@ typedef struct {
 } GbaPpuOamDirtyBits;
 
 typedef struct {
-  bool mosaic;
-} GbaPpuIoDirtyBits;
-
-typedef struct {
   bool bg_affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  bool bg_mosaic;
 } GbaPpuCompositeDirtyBits;
 
 typedef struct {
   GbaPpuPaletteDirtyBits palette;
   GbaPpuVramDirtyBits vram;
   GbaPpuOamDirtyBits oam;
-  GbaPpuIoDirtyBits io;
   GbaPpuCompositeDirtyBits composite;
 } GbaPpuDirtyBits;
 

@@ -18,8 +18,8 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits);
 
-bool OpenGlBgBitmapMode4Texture(const OpenGlBgBitmapMode4* context,
-                                GLuint* texture);
+void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
+                             GLuint program);
 
 void OpenGlBgBitmapMode4ReloadContext(OpenGlBgBitmapMode4* context);
 

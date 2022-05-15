@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
+
 void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
@@ -38,12 +40,13 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
   dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select] = false;
 }
 
-bool OpenGlBgBitmapMode4Texture(const OpenGlBgBitmapMode4* context,
-                                GLuint* texture) {
-  if (context->enabled) {
-    *texture = context->textures[context->page];
-  }
-  return context->enabled;
+void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
+                             GLuint program) {
+  GLint bg_mode4 = glGetUniformLocation(program, "bg_mode4");
+  glUniform1i(bg_mode4, BG2_MODE4_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + BG2_MODE4_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
 }
 
 void OpenGlBgBitmapMode4ReloadContext(OpenGlBgBitmapMode4* context) {

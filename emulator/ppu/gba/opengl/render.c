@@ -10,8 +10,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
-#include "emulator/ppu/gba/opengl/palette_large.h"
-#include "emulator/ppu/gba/opengl/palette_small.h"
+#include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
 #include "emulator/ppu/gba/opengl/shader_vertex.h"
 
@@ -23,9 +22,8 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
-  OpenGlBgLargePalette bg_palette_large;
-  OpenGlBgSmallPalette bg_palette_small;
-  OpenGlMosaic mosaic;
+  OpenGlBgPalette bg_palette;
+  OpenGlBgMosaic mosaic;
   uint8_t flush_start_row;
   uint8_t flush_size;
   uint8_t next_render_scale;
@@ -153,6 +151,9 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
     return;
   }
 
+  OpenGlBgPaletteReload(&renderer->bg_palette, memory, dirty_bits);
+  OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
+
   switch (registers->dispcnt.mode) {
     case 0u:
       // TuODO
@@ -167,23 +168,16 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
       OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3, memory, registers,
                                 dirty_bits);
-      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
       break;
     case 4u:
       OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory, registers,
                                 dirty_bits);
-      OpenGlBgLargePaletteReload(&renderer->bg_palette_large, memory,
-                                 dirty_bits);
-      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
       break;
     case 5u:
       OpenGlBgAffineReload(&renderer->affine, registers, dirty_bits, 2u);
       OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5, memory, registers,
                                 dirty_bits);
-      OpenGlBgLargePaletteReload(&renderer->bg_palette_large, memory,
-                                 dirty_bits);
-      OpenGlMosaicReload(&renderer->mosaic, registers, dirty_bits);
       break;
   }
 }
@@ -293,8 +287,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
-  OpenGlBgLargePaletteReloadContext(&renderer->bg_palette_large);
-  OpenGlBgSmallPaletteReloadContext(&renderer->bg_palette_small);
+  OpenGlBgPaletteReloadContext(&renderer->bg_palette);
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
@@ -316,8 +309,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
-    OpenGlBgLargePaletteDestroy(&renderer->bg_palette_large);
-    OpenGlBgSmallPaletteDestroy(&renderer->bg_palette_small);
+    OpenGlBgPaletteDestroy(&renderer->bg_palette);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);
     glDeleteProgram(renderer->render_program);

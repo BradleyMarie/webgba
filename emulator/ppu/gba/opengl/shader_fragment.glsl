@@ -13,20 +13,20 @@ uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
 
-// Backdrop
-uniform lowp vec4 backdrop;
-
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
 uniform mediump sampler2D bg_mode4;
 uniform mediump sampler2D bg_mode5;
 
 // Background Mosaic
+uniform highp vec2 bg0_mosaic;
+uniform highp vec2 bg1_mosaic;
 uniform highp vec2 bg2_mosaic;
+uniform highp vec2 bg3_mosaic;
 
 // Palettes
-uniform lowp sampler2D bg_large_palette;
-const mediump float large_palette_offset = 1.0 / 512.0;
+uniform lowp sampler2D bg_palette;
+const mediump float bg_palette_sample_offset = 1.0 / 512.0;
 
 // Inputs
 varying highp vec2 bg2_affine_screencoord;
@@ -91,6 +91,11 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
+vec4 Backdrop() {
+  return texture2D(bg_palette,
+                   vec2(bg_palette_sample_offset, bg_palette_sample_offset));
+}
+
 vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
@@ -109,7 +114,7 @@ vec4 Background2Mode4() {
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   mediump vec4 index = texture2D(bg_mode4, lookup / bitmap_size);
   lowp vec4 color =
-      texture2D(bg_large_palette, vec2(index.r + large_palette_offset, 0.5));
+      texture2D(bg_palette, vec2(index.r + bg_palette_sample_offset, 0.5));
   color *= step(bg2_affine_screencoord.x, bitmap_size.x);
   color *= step(bg2_affine_screencoord.y, bitmap_size.y);
   color *= step(-bg2_affine_screencoord.x, 0.0);
@@ -129,31 +134,31 @@ vec4 Background2Mode5() {
   return color;
 }
 
-vec4 Mode0(WindowContents window) { return backdrop; }
+vec4 Mode0(WindowContents window) { return Backdrop(); }
 
-vec4 Mode1(WindowContents window) { return backdrop; }
+vec4 Mode1(WindowContents window) { return Backdrop(); }
 
-vec4 Mode2(WindowContents window) { return backdrop; }
+vec4 Mode2(WindowContents window) { return Backdrop(); }
 
 vec4 Mode3(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode3();
   }
-  return backdrop;
+  return Backdrop();
 }
 
 vec4 Mode4(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode4();
   }
-  return backdrop;
+  return Backdrop();
 }
 
 vec4 Mode5(WindowContents window) {
   if (window.bg2 && bg2_enabled) {
     return Background2Mode5();
   }
-  return backdrop;
+  return Backdrop();
 }
 
 void main(WindowContents window) {

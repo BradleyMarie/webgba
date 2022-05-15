@@ -1,13 +1,8 @@
 #include "emulator/ppu/gba/dirty.h"
 
 void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
-  bits->palette.bg_large_palette = true;
-  bits->palette.bg_backdrop = true;
-  bits->palette.obj_large_palette = true;
-  for (uint8_t i = 0u; i < GBA_NUM_SMALL_PALETTES; i++) {
-    bits->palette.bg_small_palettes[i] = true;
-    bits->palette.obj_small_palettes[i] = true;
-  }
+  bits->palette.bg_palette = true;
+  bits->palette.obj_palette = true;
 
   bits->vram.tile_mode.overall = true;
   bits->vram.mode_3.overall = true;
@@ -24,8 +19,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
     GbaPpuSetAdd(&bits->oam.rotations, i);
   }
 
-  bits->io.mosaic = true;
-
   bits->composite.bg_affine[0u] = true;
   bits->composite.bg_affine[1u] = true;
+  bits->composite.bg_mosaic = true;
 }

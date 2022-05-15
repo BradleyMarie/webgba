@@ -1,13 +1,14 @@
-#include "emulator/ppu/gba/opengl/palette_large.h"
+#include "emulator/ppu/gba/opengl/palette.h"
 
 #include <string.h>
 
-void OpenGlBgLargePaletteReload(OpenGlBgLargePalette* context,
-                                const GbaPpuMemory* memory,
-                                GbaPpuDirtyBits* dirty_bits) {
-  if (!dirty_bits->palette.bg_large_palette) {
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
+
+void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,
+                           GbaPpuDirtyBits* dirty_bits) {
+  if (!dirty_bits->palette.bg_palette) {
     return;
-  }        
+  }
 
   context->colors[0] = 0u;
   for (uint16_t i = 1; i < GBA_LARGE_PALETTE_SIZE; i++) {
@@ -20,15 +21,19 @@ void OpenGlBgLargePaletteReload(OpenGlBgLargePalette* context,
                   /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                   /*pixels=*/context->colors);
   glBindTexture(GL_TEXTURE_2D, 0);
-  
-  dirty_bits->palette.bg_large_palette = false;
+
+  dirty_bits->palette.bg_palette = false;
 }
 
-GLuint OpenGlBgLargePaletteGet(const OpenGlBgLargePalette* context) {
-  return context->palette;
+void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
+  GLint bg_palette = glGetUniformLocation(program, "bg_palette");
+  glUniform1i(bg_palette, BG_PALETTE_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + BG_PALETTE_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->palette);
 }
 
-void OpenGlBgLargePaletteReloadContext(OpenGlBgLargePalette* context) {
+void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context) {
   glGenTextures(1u, &context->palette);
   glBindTexture(GL_TEXTURE_2D, context->palette);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -44,6 +49,6 @@ void OpenGlBgLargePaletteReloadContext(OpenGlBgLargePalette* context) {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void OpenGlBgLargePaletteDestroy(OpenGlBgLargePalette* context) {
+void OpenGlBgPaletteDestroy(OpenGlBgPalette* context) {
   glDeleteTextures(1u, &context->palette);
 }
