@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode3.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
+#include "emulator/ppu/gba/opengl/bg_scrolling.h"
 #include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
@@ -25,6 +26,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
+  OpenGlBgScrolling bg_scrolling;
   OpenGlBlend blend;
   OpenGlBgPalette bg_palette;
   OpenGlControl control;
@@ -146,6 +148,7 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
   OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
   OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
+  OpenGlBgScrollingBind(&renderer->bg_scrolling, renderer->render_program);
   OpenGlBlendBind(&renderer->blend, renderer->render_program);
 
   GLuint vertex = glGetAttribLocation(renderer->render_program, "vertex");
@@ -186,13 +189,13 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
 
   switch (registers->dispcnt.mode) {
     case 0u:
-      // TuODO
+      OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       break;
     case 1u:
-      // TODO
+      OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       break;
     case 2u:
-      // TODO
+      OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       break;
     case 3u:
       OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3, memory, registers,
@@ -316,6 +319,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
+  OpenGlBgScrollingReloadContext(&renderer->bg_scrolling);
   OpenGlBgPaletteReloadContext(&renderer->bg_palette);
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
@@ -338,6 +342,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
+    OpenGlBgScrollingDestroy(&renderer->bg_scrolling);
     OpenGlBgPaletteDestroy(&renderer->bg_palette);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);

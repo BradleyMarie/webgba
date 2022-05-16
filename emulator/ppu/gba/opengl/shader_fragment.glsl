@@ -11,35 +11,31 @@ uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
 
-// Layer Controls
-uniform int obj_priority;
+// Background Control
 uniform int bg0_priority;
-uniform int bg1_priority;
-uniform int bg2_priority;
-uniform int bg3_priority;
-const int bd_priority = 5;
-
-// Scrolling Backgrounds
-uniform highp vec2 bg0_offset;
 uniform highp vec2 bg0_size;
 uniform highp float bg0_tilemap_base;
 uniform highp float bg0_tile_base;
 uniform bool bg0_large_palette;
-uniform highp vec2 bg1_offset;
+uniform int bg1_priority;
 uniform highp vec2 bg1_size;
 uniform highp float bg1_tilemap_base;
 uniform highp float bg1_tile_base;
 uniform bool bg1_large_palette;
-uniform highp vec2 bg2_offset;
+uniform int bg2_priority;
 uniform highp vec2 bg2_size;
 uniform highp float bg2_tilemap_base;
 uniform highp float bg2_tile_base;
 uniform bool bg2_large_palette;
-uniform highp vec2 bg3_offset;
+uniform int bg3_priority;
 uniform highp vec2 bg3_size;
 uniform highp float bg3_tilemap_base;
 uniform highp float bg3_tile_base;
 uniform bool bg3_large_palette;
+
+// Layer Controls
+uniform int obj_priority;
+const int bd_priority = 5;
 
 // Tilemap
 uniform lowp sampler2D tilemap_palette;
@@ -69,6 +65,10 @@ uniform lowp sampler2D bg_small_palette;
 const mediump float bg_small_palette_sample_offset = 1.0 / 32.0;
 
 // Inputs
+varying highp vec2 bg0_scrolling_screencoord;
+varying highp vec2 bg1_scrolling_screencoord;
+varying highp vec2 bg2_scrolling_screencoord;
+varying highp vec2 bg3_scrolling_screencoord;
 varying highp vec2 bg2_affine_screencoord;
 varying highp vec2 bg3_affine_screencoord;
 varying highp vec2 screencoord;
@@ -335,10 +335,10 @@ highp vec2 TileMapEntryCoordinate(highp float tilemap_base, highp vec2 lookup,
 lowp vec4 ScrollingBackgroundImpl(highp vec2 offset, highp vec2 size,
                                   highp vec2 mosaic, highp float tilemap_base,
                                   highp float tile_base, bool large_palette) {
-  const float tile_size = 8.0;
+  const highp float tile_size = 8.0;
 
-  vec2 lookup = mod(mod(screencoord + offset, size), mosaic);
-  vec2 tile_pixel = mod(lookup, float(tile_size));
+  highp vec2 lookup = mod(mod(screencoord + offset, size), mosaic);
+  highp vec2 tile_pixel = mod(lookup, float(tile_size));
 
   highp vec2 tilemap_entry =
       TileMapEntryCoordinate(tilemap_base, lookup, size.x);

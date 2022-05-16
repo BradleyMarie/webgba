@@ -12,13 +12,28 @@ static void GbaPpuDrawManagerUpdate(GbaPpuDrawManager* draw_manager,
 
   switch (registers->dispcnt.mode) {
     case 0:
-      // TODO
+      draw_manager->mode_0.bg0_enabled = registers->dispcnt.bg0_enable;
+      draw_manager->mode_0.bg1_enabled = registers->dispcnt.bg1_enable;
+      draw_manager->mode_0.bg2_enabled = registers->dispcnt.bg2_enable;
+      draw_manager->mode_0.bg3_enabled = registers->dispcnt.bg3_enable;
+      draw_manager->mode_0.bg0_mosaic = registers->bgcnt[0u].mosaic;
+      draw_manager->mode_0.bg1_mosaic = registers->bgcnt[1u].mosaic;
+      draw_manager->mode_0.bg2_mosaic = registers->bgcnt[2u].mosaic;
+      draw_manager->mode_0.bg3_mosaic = registers->bgcnt[3u].mosaic;
       break;
     case 1:
-      // TODO
+      draw_manager->mode_1.bg0_enabled = registers->dispcnt.bg0_enable;
+      draw_manager->mode_1.bg1_enabled = registers->dispcnt.bg1_enable;
+      draw_manager->mode_1.bg2_enabled = registers->dispcnt.bg2_enable;
+      draw_manager->mode_1.bg0_mosaic = registers->bgcnt[0u].mosaic;
+      draw_manager->mode_1.bg1_mosaic = registers->bgcnt[1u].mosaic;
+      draw_manager->mode_1.bg2_mosaic = registers->bgcnt[2u].mosaic;
       break;
     case 2:
-      // TODO
+      draw_manager->mode_2.bg2_enabled = registers->dispcnt.bg2_enable;
+      draw_manager->mode_2.bg3_enabled = registers->dispcnt.bg3_enable;
+      draw_manager->mode_2.bg2_mosaic = registers->bgcnt[2u].mosaic;
+      draw_manager->mode_2.bg3_mosaic = registers->bgcnt[3u].mosaic;
       break;
     case 3:
       draw_manager->mode_3.bg2_enabled = registers->dispcnt.bg2_enable;
@@ -40,22 +55,95 @@ static void GbaPpuDrawManagerUpdate(GbaPpuDrawManager* draw_manager,
 static bool GbaPpuDrawManagerCheckMode0(const GbaPpuDrawManager* draw_manager,
                                         const GbaPpuRegisters* registers,
                                         const GbaPpuDirtyBits* dirty_bits) {
-  // TODO
-  return false;
+  if (registers->dispcnt.bg0_enable != draw_manager->mode_0.bg0_enabled ||
+      registers->dispcnt.bg1_enable != draw_manager->mode_0.bg1_enabled ||
+      registers->dispcnt.bg2_enable != draw_manager->mode_0.bg2_enabled ||
+      registers->dispcnt.bg3_enable != draw_manager->mode_0.bg3_enabled) {
+    return true;
+  }
+
+  if (registers->bgcnt[0u].mosaic != draw_manager->mode_0.bg0_mosaic ||
+      registers->bgcnt[1u].mosaic != draw_manager->mode_0.bg1_mosaic ||
+      registers->bgcnt[2u].mosaic != draw_manager->mode_0.bg2_mosaic ||
+      registers->bgcnt[3u].mosaic != draw_manager->mode_0.bg3_mosaic) {
+    return true;
+  }
+
+  if ((registers->bgcnt[0u].mosaic || registers->bgcnt[1u].mosaic ||
+       registers->bgcnt[2u].mosaic || registers->bgcnt[3u].mosaic) &&
+      (registers->mosaic.bg_horiz != draw_manager->mosaic.bg_horiz ||
+       registers->mosaic.bg_vert != draw_manager->mosaic.bg_vert)) {
+    return true;
+  }
+
+  if (dirty_bits->io.bg_offset[0u] || dirty_bits->io.bg_offset[1u] ||
+      dirty_bits->io.bg_offset[2u] || dirty_bits->io.bg_offset[3u]) {
+    return true;
+  }
+
+  // TODO: Check tiles
+
+  return dirty_bits->palette.bg_palette;
 }
 
 static bool GbaPpuDrawManagerCheckMode1(const GbaPpuDrawManager* draw_manager,
                                         const GbaPpuRegisters* registers,
                                         const GbaPpuDirtyBits* dirty_bits) {
-  // TODO
-  return false;
+  if (registers->dispcnt.bg0_enable != draw_manager->mode_1.bg0_enabled ||
+      registers->dispcnt.bg1_enable != draw_manager->mode_1.bg1_enabled ||
+      registers->dispcnt.bg2_enable != draw_manager->mode_1.bg2_enabled) {
+    return true;
+  }
+
+  if (registers->bgcnt[0u].mosaic != draw_manager->mode_1.bg0_mosaic ||
+      registers->bgcnt[1u].mosaic != draw_manager->mode_1.bg1_mosaic ||
+      registers->bgcnt[2u].mosaic != draw_manager->mode_1.bg2_mosaic) {
+    return true;
+  }
+
+  if ((registers->bgcnt[0u].mosaic || registers->bgcnt[1u].mosaic ||
+       registers->bgcnt[2u].mosaic) &&
+      (registers->mosaic.bg_horiz != draw_manager->mosaic.bg_horiz ||
+       registers->mosaic.bg_vert != draw_manager->mosaic.bg_vert)) {
+    return true;
+  }
+
+  if (dirty_bits->io.bg_offset[0u] || dirty_bits->io.bg_offset[1u] ||
+      dirty_bits->io.bg_offset[2u]) {
+    return true;
+  }
+
+  // TODO: Check tiles
+
+  return dirty_bits->palette.bg_palette;
 }
 
 static bool GbaPpuDrawManagerCheckMode2(const GbaPpuDrawManager* draw_manager,
                                         const GbaPpuRegisters* registers,
                                         const GbaPpuDirtyBits* dirty_bits) {
-  // TODO
-  return false;
+  if (registers->dispcnt.bg2_enable != draw_manager->mode_2.bg2_enabled ||
+      registers->dispcnt.bg3_enable != draw_manager->mode_2.bg3_enabled) {
+    return true;
+  }
+
+  if (registers->bgcnt[2u].mosaic != draw_manager->mode_2.bg2_mosaic ||
+      registers->bgcnt[3u].mosaic != draw_manager->mode_2.bg3_mosaic) {
+    return true;
+  }
+
+  if ((registers->bgcnt[2u].mosaic || registers->bgcnt[3u].mosaic) &&
+      (registers->mosaic.bg_horiz != draw_manager->mosaic.bg_horiz ||
+       registers->mosaic.bg_vert != draw_manager->mosaic.bg_vert)) {
+    return true;
+  }
+
+  if (dirty_bits->io.bg_offset[2u] || dirty_bits->io.bg_offset[3u]) {
+    return true;
+  }
+
+  // TODO: Check tiles
+
+  return dirty_bits->palette.bg_palette;
 }
 
 static bool GbaPpuDrawManagerCheckMode3(const GbaPpuDrawManager* draw_manager,
@@ -109,7 +197,8 @@ static bool GbaPpuDrawManagerCheckMode4(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  return dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select];
+  return dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select] ||
+         dirty_bits->palette.bg_palette;
 }
 
 static bool GbaPpuDrawManagerCheckMode5(const GbaPpuDrawManager* draw_manager,
@@ -188,7 +277,7 @@ static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  return dirty_bits->palette.bg_palette;
+  return false;
 }
 
 void GbaPpuDrawManagerInitialize(GbaPpuDrawManager* draw_manager) {

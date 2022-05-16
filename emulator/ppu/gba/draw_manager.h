@@ -10,6 +10,30 @@ typedef struct {
   MosaicRegister mosaic;
   union {
     struct {
+      bool bg0_enabled;
+      bool bg1_enabled;
+      bool bg2_enabled;
+      bool bg3_enabled;
+      bool bg0_mosaic;
+      bool bg1_mosaic;
+      bool bg2_mosaic;
+      bool bg3_mosaic;
+    } mode_0;
+    struct {
+      bool bg0_enabled;
+      bool bg1_enabled;
+      bool bg2_enabled;
+      bool bg0_mosaic;
+      bool bg1_mosaic;
+      bool bg2_mosaic;
+    } mode_1;
+    struct {
+      bool bg2_enabled;
+      bool bg3_enabled;
+      bool bg2_mosaic;
+      bool bg3_mosaic;
+    } mode_2;
+    struct {
       bool bg2_enabled;
       bool bg2_mosaic;
     } mode_3;

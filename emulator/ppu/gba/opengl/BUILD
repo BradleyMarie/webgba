@@ -54,6 +54,17 @@ cc_library(
 )
 
 cc_library(
+    name = "bg_scrolling",
+    srcs = ["bg_scrolling.c"],
+    hdrs = ["bg_scrolling.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:registers",
+    ],
+)
+
+cc_library(
     name = "blend",
     srcs = ["blend.c"],
     hdrs = ["blend.h"],
@@ -109,6 +120,7 @@ cc_library(
         ":bg_bitmap_mode3",
         ":bg_bitmap_mode4",
         ":bg_bitmap_mode5",
+        ":bg_scrolling",
         ":blend",
         ":control",
         ":mosaic",
