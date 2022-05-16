@@ -19,6 +19,38 @@ uniform int bg2_priority;
 uniform int bg3_priority;
 const int bd_priority = 5;
 
+// Scrolling Backgrounds
+uniform highp vec2 bg0_offset;
+uniform highp vec2 bg0_size;
+uniform highp float bg0_tilemap_base;
+uniform highp float bg0_tile_base;
+uniform bool bg0_large_palette;
+uniform highp vec2 bg1_offset;
+uniform highp vec2 bg1_size;
+uniform highp float bg1_tilemap_base;
+uniform highp float bg1_tile_base;
+uniform bool bg1_large_palette;
+uniform highp vec2 bg2_offset;
+uniform highp vec2 bg2_size;
+uniform highp float bg2_tilemap_base;
+uniform highp float bg2_tile_base;
+uniform bool bg2_large_palette;
+uniform highp vec2 bg3_offset;
+uniform highp vec2 bg3_size;
+uniform highp float bg3_tilemap_base;
+uniform highp float bg3_tile_base;
+uniform bool bg3_large_palette;
+
+// Tilemap
+uniform lowp sampler2D tilemap_palette;
+uniform lowp sampler2D tilemap_flip_x;
+uniform lowp sampler2D tilemap_flip_y;
+uniform highp sampler2D tilemap_tile;
+
+// Tiles
+uniform lowp sampler2D tiles_s;
+uniform mediump sampler2D tiles_d;
+
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
 uniform mediump sampler2D bg_mode4;
@@ -31,8 +63,10 @@ uniform highp vec2 bg2_mosaic;
 uniform highp vec2 bg3_mosaic;
 
 // Palettes
-uniform lowp sampler2D bg_palette;
-const mediump float bg_palette_sample_offset = 1.0 / 512.0;
+uniform lowp sampler2D bg_large_palette;
+const mediump float bg_large_palette_sample_offset = 1.0 / 512.0;
+uniform lowp sampler2D bg_small_palette;
+const mediump float bg_small_palette_sample_offset = 1.0 / 32.0;
 
 // Inputs
 varying highp vec2 bg2_affine_screencoord;
@@ -84,7 +118,7 @@ void BlendUnitAddBackground(int priority, bool top, bool bottom,
     return;
   }
 
-  blend_contains_object = blend_contains_object ^^ blend_is_object[1];
+  blend_contains_object = blend_contains_object ^ ^blend_is_object[1];
 
   if (blend_priorities[0] > priority) {
     blend_priorities[1] = blend_priorities[0];
@@ -275,6 +309,79 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
+// Background Layers
+highp vec2 TileMapEntryCoordinate(highp float tilemap_base, highp vec2 lookup,
+                                  float tilemap_width) {
+  const highp float tilemap_block_size_pixels = 32.0;
+  const highp float tilemap_block_size_entries =
+      tilemap_block_size_pixels * tilemap_block_size_pixels;
+
+  highp vec2 tilemap_block = lookup / tilemap_block_size_pixels;
+
+  highp float tilemap_block_index =
+      tilemap_block.y * tilemap_width / tilemap_block_size_pixels +
+      tilemap_block.x;
+
+  highp float tilemap_entry_index =
+      tilemap_block_index * tilemap_block_size_entries +
+      mod(lookup.y, tilemap_block_size_pixels) * tilemap_block_size_pixels +
+      mod(lookup.x, tilemap_block_size_pixels);
+
+  highp float offset = (float(tilemap_entry_index) + 0.5) / float(96 * 1024);
+
+  return vec2(tilemap_base + offset, 0.5);
+}
+
+lowp vec4 ScrollingBackgroundImpl(highp vec2 offset, highp vec2 size,
+                                  highp vec2 mosaic, highp float tilemap_base,
+                                  highp float tile_base, bool large_palette) {
+  const float tile_size = 8.0;
+
+  vec2 lookup = mod(mod(screencoord + offset, size), mosaic);
+  vec2 tile_pixel = mod(lookup, float(tile_size));
+
+  highp vec2 tilemap_entry =
+      TileMapEntryCoordinate(tilemap_base, lookup, size.x);
+
+  if (texture2D(tilemap_flip_x, tilemap_entry).x != 0.0) {
+    tile_pixel.x = tile_size - tile_pixel.x;
+  }
+
+  if (texture2D(tilemap_flip_y, tilemap_entry).x != 0.0) {
+    tile_pixel.y = tile_size - tile_pixel.y;
+  }
+
+  lowp vec4 color;
+  if (large_palette) {
+    const highp float num_dtiles = 2048.0;
+    highp float tile_location =
+        (float(tile_pixel.y * tile_size + tile_pixel.x) + 0.5) / num_dtiles;
+    mediump vec4 color_index =
+        texture2D(tiles_d, vec2(tile_base + tile_location, 0.5));
+    if (color_index.r == 0.0) {
+      return vec4(0.0, 0.0, 0.0, 0.0);
+    }
+    color =
+        texture2D(bg_large_palette,
+                  vec2(color_index.r + bg_large_palette_sample_offset, 0.5));
+  } else {
+    const highp float num_dtiles = 1024.0;
+    highp float tile_location =
+        (float(tile_pixel.y * tile_size + tile_pixel.x) + 0.5) / num_dtiles;
+    mediump vec4 color_index =
+        texture2D(tiles_s, vec2(tile_base + tile_location, 0.5));
+    if (color_index.r == 0.0) {
+      return vec4(0.0, 0.0, 0.0, 0.0);
+    }
+    mediump float palette = texture2D(tilemap_palette, tilemap_entry).r;
+    color = texture2D(bg_large_palette,
+                      vec2(color_index.r + bg_small_palette_sample_offset,
+                           palette + bg_small_palette_sample_offset));
+  }
+
+  return color;
+}
+
 lowp vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
@@ -292,8 +399,8 @@ lowp vec4 Background2Mode4() {
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   mediump vec4 index = texture2D(bg_mode4, lookup / bitmap_size);
-  lowp vec4 color =
-      texture2D(bg_palette, vec2(index.r + bg_palette_sample_offset, 0.5));
+  lowp vec4 color = texture2D(
+      bg_large_palette, vec2(index.r + bg_large_palette_sample_offset, 0.5));
   color *= step(bg2_affine_screencoord.x, bitmap_size.x);
   color *= step(bg2_affine_screencoord.y, bitmap_size.y);
   color *= step(-bg2_affine_screencoord.x, 0.0);
@@ -314,7 +421,7 @@ lowp vec4 Background2Mode5() {
 }
 
 lowp vec4 Backdrop() {
-  return texture2D(bg_palette, vec2(bg_palette_sample_offset, 0.5));
+  return texture2D(bg_large_palette, vec2(bg_large_palette_sample_offset, 0.5));
 }
 
 void main() {
