@@ -11,7 +11,8 @@ typedef struct {
 } GbaPpuPaletteDirtyBits;
 
 typedef struct {
-  bool overall;
+  bool scrolling_tilemap[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
+  bool tiles[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS];
 } GbaPpuTileModeDirtyBits;
 
 typedef struct {
