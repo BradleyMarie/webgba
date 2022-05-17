@@ -127,6 +127,8 @@ cc_library(
         ":palette",
         ":shader_fragment",
         ":shader_vertex",
+        ":tilemap",
+        ":tiles",
         ":window",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:draw_manager",
@@ -164,6 +166,30 @@ cc_library(
 cc_library(
     name = "texture_bindings",
     hdrs = ["texture_bindings.h"],
+)
+
+cc_library(
+    name = "tilemap",
+    srcs = ["tilemap.c"],
+    hdrs = ["tilemap.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":texture_bindings",
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+    ],
+)
+
+cc_library(
+    name = "tiles",
+    srcs = ["tiles.c"],
+    hdrs = ["tiles.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":texture_bindings",
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+    ],
 )
 
 cc_library(

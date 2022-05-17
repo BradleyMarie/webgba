@@ -4,18 +4,25 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->palette.bg_palette = true;
   bits->palette.obj_palette = true;
 
-  bits->vram.tile_mode.overall = true;
+  for (uint8_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
+    bits->vram.tile_mode.scrolling_tilemap[i] = true;
+  }
+
+  for (uint8_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS; i++) {
+    bits->vram.tile_mode.tiles[i] = true;
+  }
+
   bits->vram.mode_3.overall = true;
   bits->vram.mode_4.pages[0u] = true;
   bits->vram.mode_4.pages[1u] = true;
   bits->vram.mode_5.pages[0u] = true;
   bits->vram.mode_5.pages[1u] = true;
 
-  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
+  for (uint8_t i = 0u; i < OAM_NUM_OBJECTS; i++) {
     GbaPpuSetAdd(&bits->oam.objects, i);
   }
 
-  for (uint8_t i = 0; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
+  for (uint8_t i = 0u; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
     GbaPpuSetAdd(&bits->oam.rotations, i);
   }
 

@@ -37,15 +37,13 @@ uniform bool bg3_large_palette;
 uniform int obj_priority;
 const int bd_priority = 5;
 
-// Tilemap
-uniform lowp sampler2D tilemap_palette;
-uniform lowp sampler2D tilemap_flip_x;
-uniform lowp sampler2D tilemap_flip_y;
-uniform highp sampler2D tilemap_tile;
+// Scrolling Tilemap
+uniform highp sampler2D bg_scrolling_tilemap_indices;
+uniform lowp sampler2D bg_scrolling_tilemap_params;
 
 // Tiles
-uniform lowp sampler2D tiles_s;
-uniform mediump sampler2D tiles_d;
+uniform lowp sampler2D bg_tiles_s;
+uniform mediump sampler2D bg_tiles_d;
 
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
@@ -118,7 +116,7 @@ void BlendUnitAddBackground(int priority, bool top, bool bottom,
     return;
   }
 
-  blend_contains_object = blend_contains_object ^ ^blend_is_object[1];
+  blend_contains_object = blend_contains_object ^^ blend_is_object[1];
 
   if (blend_priorities[0] > priority) {
     blend_priorities[1] = blend_priorities[0];
@@ -309,74 +307,92 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
-// Background Layers
-highp vec2 TileMapEntryCoordinate(highp float tilemap_base, highp vec2 lookup,
-                                  float tilemap_width) {
+// Scrolling Tile Map
+struct ScrollingTilemapEntry {
+  highp float tile_block_position;
+  bool flip_x;
+  bool flip_y;
+  lowp float palette;
+};
+
+ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
+                                               highp vec2 tilemap_size_pixels,
+                                               highp vec2 tilemap_pixel) {
   const highp float tilemap_block_size_pixels = 32.0;
-  const highp float tilemap_block_size_entries =
-      tilemap_block_size_pixels * tilemap_block_size_pixels;
+  const highp float number_of_tilemap_blocks = 32.0;
 
-  highp vec2 tilemap_block = lookup / tilemap_block_size_pixels;
+  highp float tilemap_width_blocks =
+      tilemap_size_pixels.x / tilemap_block_size_pixels;
 
-  highp float tilemap_block_index =
-      tilemap_block.y * tilemap_width / tilemap_block_size_pixels +
-      tilemap_block.x;
+  highp vec2 tilemap_block_location =
+      floor(tilemap_pixel / tilemap_block_size_pixels);
+  highp vec2 tilemap_block_pixel =
+      mod(tilemap_pixel, tilemap_block_size_pixels);
 
-  highp float tilemap_entry_index =
-      tilemap_block_index * tilemap_block_size_entries +
-      mod(lookup.y, tilemap_block_size_pixels) * tilemap_block_size_pixels +
-      mod(lookup.x, tilemap_block_size_pixels);
+  highp float tilemap_block_offset =
+      (tilemap_block_location.x +
+       tilemap_block_location.y * tilemap_width_blocks) /
+      number_of_tilemap_blocks;
 
-  highp float offset = (float(tilemap_entry_index) + 0.5) / float(96 * 1024);
+  highp vec2 lookup =
+      vec2(tilemap_block_pixel.x / tilemap_block_size_pixels,
+           tilemap_base + tilemap_block_offset +
+               (tilemap_block_pixel.y /
+                (tilemap_block_size_pixels * number_of_tilemap_blocks)));
 
-  return vec2(tilemap_base + offset, 0.5);
+  highp vec4 indices = texture2D(bg_scrolling_tilemap_indices, lookup);
+  lowp vec4 params = texture2D(bg_scrolling_tilemap_params, lookup);
+
+  ScrollingTilemapEntry result;
+  result.flip_x = params.x != 0.0;
+  result.flip_y = params.y != 0.0;
+  result.palette = params.z;
+  result.tile_block_position =
+      (65536.0 * indices.x + 256.0 * indices.y) / 65536.0;
+
+  return result;
 }
 
-lowp vec4 ScrollingBackgroundImpl(highp vec2 offset, highp vec2 size,
-                                  highp vec2 mosaic, highp float tilemap_base,
+lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
+                                  highp vec2 tilemap_size_pixels,
+                                  highp vec2 tilemap_pixel, highp vec2 mosaic,
                                   highp float tile_base, bool large_palette) {
   const highp float tile_size = 8.0;
 
-  highp vec2 lookup = mod(mod(screencoord + offset, size), mosaic);
-  highp vec2 tile_pixel = mod(lookup, float(tile_size));
+  highp vec2 lookup = mod(mod(tilemap_pixel, tilemap_size_pixels), mosaic);
+  ScrollingTilemapEntry entry =
+      GetScrollingTileMapEntry(tilemap_base, tilemap_size_pixels, lookup);
 
-  highp vec2 tilemap_entry =
-      TileMapEntryCoordinate(tilemap_base, lookup, size.x);
-
-  if (texture2D(tilemap_flip_x, tilemap_entry).x != 0.0) {
+  highp vec2 tile_pixel = mod(lookup, tile_size);
+  if (entry.flip_x) {
     tile_pixel.x = tile_size - tile_pixel.x;
   }
 
-  if (texture2D(tilemap_flip_y, tilemap_entry).x != 0.0) {
+  if (entry.flip_y) {
     tile_pixel.y = tile_size - tile_pixel.y;
   }
 
   lowp vec4 color;
   if (large_palette) {
-    const highp float num_dtiles = 2048.0;
-    highp float tile_location =
-        (float(tile_pixel.y * tile_size + tile_pixel.x) + 0.5) / num_dtiles;
-    mediump vec4 color_index =
-        texture2D(tiles_d, vec2(tile_base + tile_location, 0.5));
+    mediump vec4 color_index = texture2D(
+        bg_tiles_d, vec2(tile_pixel.x / tile_size,
+                         tile_base + entry.tile_block_position / 2.0));
     if (color_index.r == 0.0) {
       return vec4(0.0, 0.0, 0.0, 0.0);
     }
+
     color =
         texture2D(bg_large_palette,
                   vec2(color_index.r + bg_large_palette_sample_offset, 0.5));
   } else {
-    const highp float num_dtiles = 1024.0;
-    highp float tile_location =
-        (float(tile_pixel.y * tile_size + tile_pixel.x) + 0.5) / num_dtiles;
-    mediump vec4 color_index =
-        texture2D(tiles_s, vec2(tile_base + tile_location, 0.5));
+    mediump vec4 color_index = texture2D(
+        bg_tiles_d, vec2(tile_pixel.x / tile_size,
+                         tile_base + entry.tile_block_position / 4.0));
     if (color_index.r == 0.0) {
       return vec4(0.0, 0.0, 0.0, 0.0);
     }
-    mediump float palette = texture2D(tilemap_palette, tilemap_entry).r;
-    color = texture2D(bg_large_palette,
-                      vec2(color_index.r + bg_small_palette_sample_offset,
-                           palette + bg_small_palette_sample_offset));
+
+    color = texture2D(bg_small_palette, vec2(color_index.r, entry.palette));
   }
 
   return color;
