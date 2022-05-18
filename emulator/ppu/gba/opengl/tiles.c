@@ -13,8 +13,8 @@ void OpenGlBgTilesReload(OpenGlBgTiles* context, const GbaPpuMemory* memory,
 
     uint32_t insert_index = 0u;
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
-      for (uint8_t y = 0u; y < GBA_TILE_MAP_BLOCK_1D_SIZE; y++) {
-        for (uint8_t x = 0u; x < GBA_TILE_MAP_BLOCK_1D_SIZE; x++) {
+      for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
+        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
           STilePixelPair value =
               memory->vram.mode_012.bg.tiles.blocks[i].s_tiles->pixels[y][x];
 
@@ -28,19 +28,21 @@ void OpenGlBgTilesReload(OpenGlBgTiles* context, const GbaPpuMemory* memory,
     }
 
     glBindTexture(GL_TEXTURE_2D, context->s_tiles);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                    /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
-                    /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*format=*/GL_LUMINANCE_ALPHA, /*type=*/GL_UNSIGNED_BYTE,
-                    /*pixels=*/context->staging);
+    glTexSubImage2D(
+        GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+        /*yoffset=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES * i,
+        /*width=*/GBA_TILE_1D_SIZE,
+        /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
+        /*format=*/GL_LUMINANCE, /*type=*/GL_UNSIGNED_BYTE,
+        /*pixels=*/context->staging);
+
     glBindTexture(GL_TEXTURE_2D, context->d_tiles);
     glTexSubImage2D(
         GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-        /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
-        /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-        /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-        /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_SHORT_5_6_5,
+        /*yoffset=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES * i,
+        /*width=*/GBA_TILE_1D_SIZE,
+        /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES,
+        /*format=*/GL_LUMINANCE, /*type=*/GL_UNSIGNED_BYTE,
         /*pixels=*/memory->vram.mode_012.bg.tiles.blocks[i].d_tiles);
     glBindTexture(GL_TEXTURE_2D, 0);
 
