@@ -398,6 +398,30 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
   return color;
 }
 
+lowp vec4 ScrollingBackground0() {
+  return ScrollingBackgroundImpl(bg0_tilemap_base, bg0_size,
+                                 bg0_scrolling_screencoord, bg0_mosaic,
+                                 bg0_tile_base, bg0_large_palette);
+}
+
+lowp vec4 ScrollingBackground1() {
+  return ScrollingBackgroundImpl(bg1_tilemap_base, bg1_size,
+                                 bg1_scrolling_screencoord, bg1_mosaic,
+                                 bg1_tile_base, bg1_large_palette);
+}
+
+lowp vec4 ScrollingBackground2() {
+  return ScrollingBackgroundImpl(bg2_tilemap_base, bg2_size,
+                                 bg2_scrolling_screencoord, bg2_mosaic,
+                                 bg2_tile_base, bg2_large_palette);
+}
+
+lowp vec4 ScrollingBackground3() {
+  return ScrollingBackgroundImpl(bg3_tilemap_base, bg3_size,
+                                 bg3_scrolling_screencoord, bg3_mosaic,
+                                 bg3_tile_base, bg3_large_palette);
+}
+
 lowp vec4 Background2Mode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
@@ -451,8 +475,31 @@ void main() {
   WindowContents window = CheckWindow(false);
 
   if (mode == 0) {
-    // TODO
+    if (bg0_enabled && window.bg0) {
+      lowp vec4 bg0 = ScrollingBackground0();
+      BlendUnitAddBackground0(bg0);
+    }
+    if (bg1_enabled && window.bg1) {
+      lowp vec4 bg1 = ScrollingBackground1();
+      BlendUnitAddBackground1(bg1);
+    }
+    if (bg2_enabled && window.bg2) {
+      lowp vec4 bg2 = ScrollingBackground2();
+      BlendUnitAddBackground2(bg2);
+    }
+    if (bg3_enabled && window.bg3) {
+      lowp vec4 bg3 = ScrollingBackground3();
+      BlendUnitAddBackground3(bg3);
+    }
   } else if (mode == 1) {
+    if (bg0_enabled && window.bg0) {
+      lowp vec4 bg0 = ScrollingBackground0();
+      BlendUnitAddBackground0(bg0);
+    }
+    if (bg1_enabled && window.bg1) {
+      lowp vec4 bg1 = ScrollingBackground1();
+      BlendUnitAddBackground1(bg1);
+    }
     // TODO
   } else if (mode == 2) {
     // TODO
