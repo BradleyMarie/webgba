@@ -82,6 +82,7 @@ static bool GbaPpuDrawManagerCheckMode0(const GbaPpuDrawManager* draw_manager,
   }
 
   // TODO: Check tiles
+  // TODO: Check bgcnt
 
   return dirty_bits->palette.bg_palette;
 }
@@ -114,6 +115,7 @@ static bool GbaPpuDrawManagerCheckMode1(const GbaPpuDrawManager* draw_manager,
   }
 
   // TODO: Check tiles
+  // TODO: Check bgcnt
 
   return dirty_bits->palette.bg_palette;
 }
@@ -142,6 +144,7 @@ static bool GbaPpuDrawManagerCheckMode2(const GbaPpuDrawManager* draw_manager,
   }
 
   // TODO: Check tiles
+  // TODO: Check bgcnt
 
   return dirty_bits->palette.bg_palette;
 }
