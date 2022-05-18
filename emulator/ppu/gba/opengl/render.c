@@ -9,6 +9,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode3.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode5.h"
+#include "emulator/ppu/gba/opengl/bg_control.h"
 #include "emulator/ppu/gba/opengl/bg_scrolling.h"
 #include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
@@ -28,6 +29,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
   OpenGlBgBitmapMode5 bg_bitmap_mode5;
+  OpenGlBgControl bg_control;
   OpenGlBgScrolling bg_scrolling;
   OpenGlBlend blend;
   OpenGlBgPalette bg_palette;
@@ -152,6 +154,7 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
   OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
   OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
+  OpenGlBgControlBind(&renderer->bg_control, renderer->render_program);
   OpenGlBgScrollingBind(&renderer->bg_scrolling, renderer->render_program);
   OpenGlBgTilemapBind(&renderer->bg_tilemap, renderer->render_program);
   OpenGlBgTilesBind(&renderer->bg_tiles, renderer->render_program);
@@ -188,6 +191,7 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
     return;
   }
 
+  OpenGlBgControlReload(&renderer->bg_control, registers, dirty_bits);
   OpenGlBgPaletteReload(&renderer->bg_palette, memory, dirty_bits);
   OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
   OpenGlWindowReload(&renderer->window, registers, dirty_bits);

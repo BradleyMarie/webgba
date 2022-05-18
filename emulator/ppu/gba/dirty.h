@@ -46,6 +46,7 @@ typedef struct {
   bool bg_affine_y[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   bool bg_affine_params[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   bool bg_offset[GBA_PPU_NUM_BACKGROUNDS];
+  bool bg_control[GBA_PPU_NUM_BACKGROUNDS];
 } GbaPpuIoDirtyBits;
 
 typedef struct {
