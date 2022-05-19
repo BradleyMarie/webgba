@@ -348,7 +348,7 @@ ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
   result.flip_y = params.y != 0.0;
   result.palette = params.z;
   result.tile_block_position =
-      (65536.0 * indices.x + 256.0 * indices.y) / 65536.0;
+      (65536.0 * indices.r + 256.0 * indices.a) / 65536.0;
 
   return result;
 }
@@ -359,7 +359,10 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
                                   highp float tile_base, bool large_palette) {
   const highp float tile_size = 8.0;
 
-  highp vec2 lookup = mod(mod(tilemap_pixel, tilemap_size_pixels), mosaic);
+  highp vec2 wrapped_tilemap_pixel = mod(tilemap_pixel, tilemap_size_pixels);
+  highp vec2 lookup = wrapped_tilemap_pixel -
+                      mod(wrapped_tilemap_pixel, mosaic) + vec2(0.5, 0.5);
+
   ScrollingTilemapEntry entry =
       GetScrollingTileMapEntry(tilemap_base, tilemap_size_pixels, lookup);
 
