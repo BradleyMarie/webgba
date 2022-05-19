@@ -389,13 +389,15 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
                   vec2(color_index.r + bg_large_palette_sample_offset, 0.5));
   } else {
     mediump vec4 color_index = texture2D(
-        bg_tiles_d, vec2(tile_pixel.x / tile_size,
+        bg_tiles_s, vec2(tile_pixel.x / tile_size,
                          tile_base + entry.tile_block_position / 4.0));
     if (color_index.r == 0.0) {
       return vec4(0.0, 0.0, 0.0, 0.0);
     }
 
-    color = texture2D(bg_small_palette, vec2(color_index.r, entry.palette));
+    color = texture2D(bg_small_palette,
+                      vec2(color_index.r + bg_small_palette_sample_offset,
+                           entry.palette + bg_small_palette_sample_offset));
   }
 
   return color;
