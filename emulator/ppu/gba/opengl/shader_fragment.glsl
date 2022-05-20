@@ -346,7 +346,7 @@ ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
   result.palette = (params.z * 15.0 + 0.5) / 16.0;
   result.tile_block_position =
       (indices.r != 0.0)
-          ? (indices.a * 255.0 * 256.0 + indices.r * 255.0 + 0.5) / 1024.0
+          ? (indices.a * 255.0 * 256.0 + indices.r * 255.0) / 1024.0
           : 0.0;
 
   return result;
