@@ -6,7 +6,7 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits) {
   const static GLfloat tilemap_sizes[4u][2u] = {
-      {32.0, 32.0}, {64.0, 32.0}, {32.0, 64.0}, {64.0, 64.0}};
+      {256.0, 256.0}, {512.0, 256.0}, {256.0, 512.0}, {512.0, 512.0}};
 
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (!dirty_bits->io.bg_control[i]) {
