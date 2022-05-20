@@ -19,7 +19,7 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
     context->tilemap_base[i] =
         (GLfloat)registers->bgcnt[i].tile_map_base_block /
         (GLfloat)GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS;
-    context->tilemap_base[i] =
+    context->tile_base[i] =
         (GLfloat)registers->bgcnt[i].tile_base_block /
         (GLfloat)GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS;
     context->large_palette[i] = registers->bgcnt[i].large_palette;
