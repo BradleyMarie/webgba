@@ -14,15 +14,11 @@ void OpenGlBgTilesReload(OpenGlBgTiles* context, const GbaPpuMemory* memory,
     uint32_t insert_index = 0u;
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
-        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
+        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE / 2u; x++) {
           STilePixelPair value =
-              memory->vram.mode_012.bg.tiles.blocks[i].s_tiles->pixels[y][x];
-
-          if (x % 2 == 0u) {
-            context->staging[insert_index++] = value.first << 4u;
-          } else {
-            context->staging[insert_index++] = value.second << 4u;
-          }
+              memory->vram.mode_012.bg.tiles.blocks[i].s_tiles[t].pixels[y][x];
+          context->staging[insert_index++] = value.first << 4u;
+          context->staging[insert_index++] = value.second << 4u;
         }
       }
     }
