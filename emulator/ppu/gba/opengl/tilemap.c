@@ -11,13 +11,15 @@ void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
       continue;
     }
 
-    uint16_t indices[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE];
+    uint8_t indices[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE][2u];
     uint16_t params[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE];
     for (uint8_t y = 0u; y < GBA_TILE_MAP_BLOCK_1D_SIZE; y++) {
       for (uint8_t x = 0u; x < GBA_TILE_MAP_BLOCK_1D_SIZE; x++) {
-        indices[y][x] =
-            memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index
-            << 6u;
+        indices[y][x][0u] =
+            memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index;
+        indices[y][x][1u] =
+            memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index >>
+            8u;
 
         uint16_t r = 0u;
         if (memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].h_flip) {
