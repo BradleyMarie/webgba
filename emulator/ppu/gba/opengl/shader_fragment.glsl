@@ -160,7 +160,7 @@ void BlendUnitAddBackdrop(lowp vec4 color) {
 }
 
 lowp vec3 BlendUnitAdditiveBlendImpl() {
-  return max((blend_layers[0] * blend_eva) + (blend_layers[1] * blend_evb),
+  return min((blend_layers[0] * blend_eva) + (blend_layers[1] * blend_evb),
              1.0);
 }
 
@@ -192,7 +192,7 @@ lowp vec3 BlendUnitBrighten() {
     return BlendUnitAdditiveBlendImpl();
   }
 
-  return min(blend_layers[0] * (1.0 - blend_evy), 0.0);
+  return max(blend_layers[0] * (1.0 - blend_evy), 0.0);
 }
 
 lowp vec3 BlendUnitDarken() {
@@ -204,7 +204,7 @@ lowp vec3 BlendUnitDarken() {
     return BlendUnitAdditiveBlendImpl();
   }
 
-  return max(blend_layers[0] * blend_evy, 1.0);
+  return min(blend_layers[0] * blend_evy, 1.0);
 }
 
 lowp vec4 BlendUnitBlend(bool enable_blend) {
@@ -233,7 +233,7 @@ struct WindowContents {
   bool bg2;
   bool bg3;
   bool obj;
-  bool blend;
+  bool bld;
 };
 
 uniform WindowContents win0;
@@ -249,7 +249,7 @@ uniform highp vec2 win1_end;
 bool IsInsideWindow1D(highp float start, highp float end,
                       highp float location) {
   return ((start <= end && start <= location && location <= end) ||
-          (end > start && (location < start || end < location)));
+          (end < start && (location < start || end < location)));
 }
 
 bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
@@ -280,7 +280,7 @@ WindowContents CheckWindow(bool on_object) {
   result.bg2 = true;
   result.bg3 = true;
   result.obj = true;
-  result.blend = true;
+  result.bld = true;
 
   return result;
 }
@@ -567,5 +567,5 @@ void main() {
   lowp vec4 backdrop = Backdrop();
   BlendUnitAddBackdrop(backdrop);
 
-  gl_FragColor = BlendUnitBlend(window.blend);
+  gl_FragColor = BlendUnitBlend(window.bld);
 }
