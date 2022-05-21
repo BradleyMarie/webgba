@@ -36,7 +36,8 @@ bool GbaPpuAffineBackgroundPixel(
                                                        0x3FFu};
     lookup_x &= screen_size_masks[bgcnt.size];
     lookup_y &= screen_size_masks[bgcnt.size];
-  } else if (lookup_x >= screen_size || lookup_y >= screen_size) {
+  } else if (lookup_x < 0 || screen_size <= lookup_x || lookup_y < 0 ||
+             screen_size <= lookup_y) {
     return false;
   }
 
