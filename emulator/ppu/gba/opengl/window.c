@@ -6,33 +6,33 @@ void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
     return;
   }
 
-  context->win0[0u] = registers->winin.win0.bg0;
-  context->win0[1u] = registers->winin.win0.bg1;
-  context->win0[2u] = registers->winin.win0.bg2;
-  context->win0[3u] = registers->winin.win0.bg3;
-  context->win0[4u] = registers->winin.win0.obj;
-  context->win0[5u] = registers->winin.win0.bld;
+  context->win0_bg0 = registers->winin.win0.bg0;
+  context->win0_bg1 = registers->winin.win0.bg1;
+  context->win0_bg2 = registers->winin.win0.bg2;
+  context->win0_bg3 = registers->winin.win0.bg3;
+  context->win0_obj = registers->winin.win0.obj;
+  context->win0_bld = registers->winin.win0.bld;
 
-  context->win1[0u] = registers->winin.win1.bg0;
-  context->win1[1u] = registers->winin.win1.bg1;
-  context->win1[2u] = registers->winin.win1.bg2;
-  context->win1[3u] = registers->winin.win1.bg3;
-  context->win1[4u] = registers->winin.win1.obj;
-  context->win1[5u] = registers->winin.win1.bld;
+  context->win1_bg0 = registers->winin.win1.bg0;
+  context->win1_bg1 = registers->winin.win1.bg1;
+  context->win1_bg2 = registers->winin.win1.bg2;
+  context->win1_bg3 = registers->winin.win1.bg3;
+  context->win1_obj = registers->winin.win1.obj;
+  context->win1_bld = registers->winin.win1.bld;
 
-  context->winobj[0u] = registers->winout.winobj.bg0;
-  context->winobj[1u] = registers->winout.winobj.bg1;
-  context->winobj[2u] = registers->winout.winobj.bg2;
-  context->winobj[3u] = registers->winout.winobj.bg3;
-  context->winobj[4u] = registers->winout.winobj.obj;
-  context->winobj[5u] = registers->winout.winobj.bld;
+  context->winobj_bg0 = registers->winout.winobj.bg0;
+  context->winobj_bg1 = registers->winout.winobj.bg1;
+  context->winobj_bg2 = registers->winout.winobj.bg2;
+  context->winobj_bg3 = registers->winout.winobj.bg3;
+  context->winobj_obj = registers->winout.winobj.obj;
+  context->winobj_bld = registers->winout.winobj.bld;
 
-  context->winout[0u] = registers->winout.winout.bg0;
-  context->winout[1u] = registers->winout.winout.bg1;
-  context->winout[2u] = registers->winout.winout.bg2;
-  context->winout[3u] = registers->winout.winout.bg3;
-  context->winout[4u] = registers->winout.winout.obj;
-  context->winout[5u] = registers->winout.winout.bld;
+  context->winout_bg0 = registers->winout.winout.bg0;
+  context->winout_bg1 = registers->winout.winout.bg1;
+  context->winout_bg2 = registers->winout.winout.bg2;
+  context->winout_bg3 = registers->winout.winout.bg3;
+  context->winout_obj = registers->winout.winout.obj;
+  context->winout_bld = registers->winout.winout.bld;
 
   context->win0_start[0u] = registers->win0h.start;
   context->win0_start[1u] = registers->win0v.start;
@@ -48,17 +48,77 @@ void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
 }
 
 void OpenGlWindowBind(const OpenGlWindow* context, GLuint program) {
-  GLint win0_contents = glGetUniformLocation(program, "win0_contents");
-  glUniform1iv(win0_contents, 6u, context->win0);
+  GLint win0_bg0 = glGetUniformLocation(program, "win0.bg0");
+  glUniform1i(win0_bg0, context->win0_bg0);
 
-  GLint win1_contents = glGetUniformLocation(program, "win1_contents");
-  glUniform1iv(win1_contents, 6u, context->win1);
+  GLint win0_bg1 = glGetUniformLocation(program, "win0.bg1");
+  glUniform1i(win0_bg1, context->win0_bg1);
 
-  GLint winobj_contents = glGetUniformLocation(program, "winobj_contents");
-  glUniform1iv(winobj_contents, 6u, context->winobj);
+  GLint win0_bg2 = glGetUniformLocation(program, "win0.bg2");
+  glUniform1i(win0_bg2, context->win0_bg2);
 
-  GLint winout_contents = glGetUniformLocation(program, "winout_contents");
-  glUniform1iv(winout_contents, 6u, context->winout);
+  GLint win0_bg3 = glGetUniformLocation(program, "win0.bg3");
+  glUniform1i(win0_bg3, context->win0_bg3);
+
+  GLint win0_obj = glGetUniformLocation(program, "win0.obj");
+  glUniform1i(win0_obj, context->win0_obj);
+
+  GLint win0_bld = glGetUniformLocation(program, "win0.bld");
+  glUniform1i(win0_bld, context->win0_bld);
+
+  GLint win1_bg0 = glGetUniformLocation(program, "win1.bg0");
+  glUniform1i(win1_bg0, context->win1_bg0);
+
+  GLint win1_bg1 = glGetUniformLocation(program, "win1.bg1");
+  glUniform1i(win1_bg1, context->win1_bg1);
+
+  GLint win1_bg2 = glGetUniformLocation(program, "win1.bg2");
+  glUniform1i(win1_bg2, context->win1_bg2);
+
+  GLint win1_bg3 = glGetUniformLocation(program, "win1.bg3");
+  glUniform1i(win1_bg3, context->win1_bg3);
+
+  GLint win1_obj = glGetUniformLocation(program, "win1.obj");
+  glUniform1i(win1_obj, context->win1_obj);
+
+  GLint win1_bld = glGetUniformLocation(program, "win1.bld");
+  glUniform1i(win1_bld, context->win1_bld);
+
+  GLint winobj_bg0 = glGetUniformLocation(program, "winobj.bg0");
+  glUniform1i(winobj_bg0, context->winobj_bg0);
+
+  GLint winobj_bg1 = glGetUniformLocation(program, "winobj.bg1");
+  glUniform1i(winobj_bg1, context->winobj_bg1);
+
+  GLint winobj_bg2 = glGetUniformLocation(program, "winobj.bg2");
+  glUniform1i(winobj_bg2, context->winobj_bg2);
+
+  GLint winobj_bg3 = glGetUniformLocation(program, "winobj.bg3");
+  glUniform1i(winobj_bg3, context->winobj_bg3);
+
+  GLint winobj_obj = glGetUniformLocation(program, "winobj.obj");
+  glUniform1i(winobj_obj, context->winobj_obj);
+
+  GLint winobj_bld = glGetUniformLocation(program, "winobj.bld");
+  glUniform1i(winobj_bld, context->winobj_bld);
+
+  GLint winout_bg0 = glGetUniformLocation(program, "winout.bg0");
+  glUniform1i(winout_bg0, context->winout_bg0);
+
+  GLint winout_bg1 = glGetUniformLocation(program, "winout.bg1");
+  glUniform1i(winout_bg1, context->winout_bg1);
+
+  GLint winout_bg2 = glGetUniformLocation(program, "winout.bg2");
+  glUniform1i(winout_bg2, context->winout_bg2);
+
+  GLint winout_bg3 = glGetUniformLocation(program, "winout.bg3");
+  glUniform1i(winout_bg3, context->winout_bg3);
+
+  GLint winout_obj = glGetUniformLocation(program, "winout.obj");
+  glUniform1i(winout_obj, context->winout_obj);
+
+  GLint winout_bld = glGetUniformLocation(program, "winout.bld");
+  glUniform1i(winout_bld, context->winout_bld);
 
   GLint win0_start = glGetUniformLocation(program, "win0_start");
   glUniform2f(win0_start, context->win0_start[0u], context->win0_start[1u]);

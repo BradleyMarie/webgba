@@ -7,6 +7,7 @@
 #include "emulator/ppu/gba/memory.h"
 
 typedef struct {
+  GLuint affine;
   GLuint indices;
   GLuint params;
 } OpenGlBgTilemap;

@@ -6,61 +6,83 @@
 
 void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
                            GbaPpuDirtyBits* dirty_bits) {
-  for (uint8_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
-    if (!dirty_bits->vram.tile_mode.scrolling_tilemap[i]) {
-      continue;
-    }
+  for (uint32_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
+    if (dirty_bits->vram.tile_mode.scrolling_tilemap[i]) {
+      uint8_t indices[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE]
+                     [2u];
+      uint16_t params[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE];
+      for (uint8_t y = 0u; y < GBA_TILE_MAP_BLOCK_1D_SIZE; y++) {
+        for (uint8_t x = 0u; x < GBA_TILE_MAP_BLOCK_1D_SIZE; x++) {
+          indices[y][x][0u] =
+              memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index;
+          indices[y][x][1u] =
+              memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index >>
+              8u;
 
-    uint8_t indices[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE][2u];
-    uint16_t params[GBA_TILE_MAP_BLOCK_1D_SIZE][GBA_TILE_MAP_BLOCK_1D_SIZE];
-    for (uint8_t y = 0u; y < GBA_TILE_MAP_BLOCK_1D_SIZE; y++) {
-      for (uint8_t x = 0u; x < GBA_TILE_MAP_BLOCK_1D_SIZE; x++) {
-        indices[y][x][0u] =
-            memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index;
-        indices[y][x][1u] =
-            memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].index >>
-            8u;
+          uint16_t r = 0u;
+          if (memory->vram.mode_012.bg.tile_map.blocks[i]
+                  .entries[y][x]
+                  .h_flip) {
+            r = 0xF800u;
+          }
 
-        uint16_t r = 0u;
-        if (memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].h_flip) {
-          r = 0xF800u;
+          uint16_t g = 0u;
+          if (memory->vram.mode_012.bg.tile_map.blocks[i]
+                  .entries[y][x]
+                  .v_flip) {
+            g = 0x07E0;
+          }
+
+          uint16_t b = (uint16_t)memory->vram.mode_012.bg.tile_map.blocks[i]
+                           .entries[y][x]
+                           .palette
+                       << 1u;
+
+          params[y][x] = r | g | b;
         }
-
-        uint16_t g = 0u;
-        if (memory->vram.mode_012.bg.tile_map.blocks[i].entries[y][x].v_flip) {
-          g = 0x07E0;
-        }
-
-        uint16_t b = (uint16_t)memory->vram.mode_012.bg.tile_map.blocks[i]
-                         .entries[y][x]
-                         .palette
-                     << 1u;
-
-        params[y][x] = r | g | b;
       }
+
+      glBindTexture(GL_TEXTURE_2D, context->indices);
+      glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                      /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
+                      /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
+                      /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
+                      /*format=*/GL_LUMINANCE_ALPHA, /*type=*/GL_UNSIGNED_BYTE,
+                      /*pixels=*/indices);
+
+      glBindTexture(GL_TEXTURE_2D, context->params);
+      glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                      /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
+                      /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
+                      /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE, /*format=*/GL_RGB,
+                      /*type=*/GL_UNSIGNED_SHORT_5_6_5,
+                      /*pixels=*/params);
+
+      dirty_bits->vram.tile_mode.scrolling_tilemap[i] = false;
     }
 
-    glBindTexture(GL_TEXTURE_2D, context->indices);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                    /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
-                    /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*format=*/GL_LUMINANCE_ALPHA, /*type=*/GL_UNSIGNED_BYTE,
-                    /*pixels=*/indices);
-    glBindTexture(GL_TEXTURE_2D, context->params);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                    /*yoffset=*/GBA_TILE_MAP_BLOCK_1D_SIZE * i,
-                    /*width=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE,
-                    /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_SHORT_5_6_5,
-                    /*pixels=*/params);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if (dirty_bits->vram.tile_mode.affine_tilemap[i]) {
+      glBindTexture(GL_TEXTURE_2D, context->affine);
+      glTexSubImage2D(
+          GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/8 * i,
+          /*width=*/256, /*height=*/8, /*format=*/GL_LUMINANCE,
+          /*type=*/GL_UNSIGNED_BYTE,
+          /*pixels=*/memory->vram.mode_012.bg.tile_map.blocks[i].indices);
 
-    dirty_bits->vram.tile_mode.scrolling_tilemap[i] = false;
+      dirty_bits->vram.tile_mode.affine_tilemap[i] = false;
+    }
   }
+
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program) {
+  GLint bg_affine_tilemap = glGetUniformLocation(program, "bg_affine_tilemap");
+  glUniform1i(bg_affine_tilemap, BG_AFFINE_TILEMAP_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + BG_AFFINE_TILEMAP_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->affine);
+
   GLint bg_scrolling_tilemap_indices =
       glGetUniformLocation(program, "bg_scrolling_tilemap_indices");
   glUniform1i(bg_scrolling_tilemap_indices,
@@ -78,6 +100,17 @@ void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program) {
 }
 
 void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
+  glGenTextures(1u, &context->affine);
+  glBindTexture(GL_TEXTURE_2D, context->affine);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_LUMINANCE,
+               /*width=*/256, /*height=*/256, /*border=*/0,
+               /*format=*/GL_LUMINANCE, /*type=*/GL_UNSIGNED_BYTE,
+               /*pixels=*/NULL);
+
   glGenTextures(1u, &context->indices);
   glBindTexture(GL_TEXTURE_2D, context->indices);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -90,8 +123,7 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
                /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE *
                    GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS,
                /*border=*/0, /*format=*/GL_LUMINANCE_ALPHA,
-               /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
+               /*type=*/GL_UNSIGNED_BYTE, /*pixels=*/NULL);
 
   glGenTextures(1u, &context->params);
   glBindTexture(GL_TEXTURE_2D, context->params);
@@ -104,8 +136,7 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
                /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE *
                    GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS,
                /*border=*/0, /*format=*/GL_RGB,
-               /*type=*/GL_UNSIGNED_SHORT_5_6_5,
-               /*pixels=*/NULL);
+               /*type=*/GL_UNSIGNED_SHORT_5_6_5, /*pixels=*/NULL);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }

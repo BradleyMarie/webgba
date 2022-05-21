@@ -5,6 +5,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->palette.obj_palette = true;
 
   for (uint8_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
+    bits->vram.tile_mode.affine_tilemap[i] = true;
     bits->vram.tile_mode.scrolling_tilemap[i] = true;
   }
 
