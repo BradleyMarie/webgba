@@ -5,23 +5,36 @@
 void OpenGlBgControlReload(OpenGlBgControl* context,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits) {
-  const static GLfloat tilemap_sizes[4u][2u] = {
-      {256.0, 256.0}, {512.0, 256.0}, {256.0, 512.0}, {512.0, 512.0}};
+  static const GLfloat tilemap_sizes[2u][4u][2u] = {
+      {{256.0, 256.0}, {512.0, 256.0}, {256.0, 512.0}, {512.0, 512.0}},
+      {{128.0, 128.0}, {256.0, 256.0}, {512.0, 512.0}, {1024.0, 1024.0}}};
+
+  static const bool tilemap_index[6u][4u] = {
+      {false, false, false, false}, {false, false, true, true},
+      {true, true, true, true},     {false, false, false, false},
+      {false, false, false, false}, {false, false, false, false},
+  };
 
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
+    context->size[i][0u] =
+        tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
+                     [registers->bgcnt[i].size][0u];
+    context->size[i][1u] =
+        tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
+                     [registers->bgcnt[i].size][1u];
+
     if (!dirty_bits->io.bg_control[i]) {
       continue;
     }
 
     context->priority[i] = registers->bgcnt[i].priority;
-    context->size[i][0u] = tilemap_sizes[registers->bgcnt[i].size][0u];
-    context->size[i][1u] = tilemap_sizes[registers->bgcnt[i].size][1u];
     context->tilemap_base[i] =
         (GLfloat)registers->bgcnt[i].tile_map_base_block /
         (GLfloat)GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS;
     context->tile_base[i] = (GLfloat)registers->bgcnt[i].tile_base_block /
                             (GLfloat)GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS;
     context->large_palette[i] = registers->bgcnt[i].large_palette;
+    context->wraparound[i] = registers->bgcnt[i].wraparound;
 
     dirty_bits->io.bg_control[i] = false;
   }
@@ -73,6 +86,9 @@ void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {
   GLint bg2_large_palette = glGetUniformLocation(program, "bg2_large_palette");
   glUniform1i(bg2_large_palette, context->large_palette[2u]);
 
+  GLint bg2_wraparound = glGetUniformLocation(program, "bg2_wraparound");
+  glUniform1i(bg2_wraparound, context->wraparound[2u]);
+
   GLint bg3_priority = glGetUniformLocation(program, "bg3_priority");
   glUniform1i(bg3_priority, context->priority[3u]);
 
@@ -87,4 +103,7 @@ void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {
 
   GLint bg3_large_palette = glGetUniformLocation(program, "bg3_large_palette");
   glUniform1i(bg3_large_palette, context->large_palette[3u]);
+
+  GLint bg3_wraparound = glGetUniformLocation(program, "bg3_wraparound");
+  glUniform1i(bg3_wraparound, context->wraparound[3u]);
 }

@@ -81,6 +81,7 @@ static bool GbaPpuDrawManagerCheckMode0(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
+  // TODO: Check tilemap
   // TODO: Check tiles
   // TODO: Check bgcnt
 
@@ -114,6 +115,7 @@ static bool GbaPpuDrawManagerCheckMode1(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
+  // TODO: Check tilemap
   // TODO: Check tiles
   // TODO: Check bgcnt
 
@@ -143,6 +145,7 @@ static bool GbaPpuDrawManagerCheckMode2(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
+  // TODO: Check tilemap
   // TODO: Check tiles
   // TODO: Check bgcnt
 

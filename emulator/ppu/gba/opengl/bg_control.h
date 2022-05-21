@@ -12,6 +12,7 @@ typedef struct {
   GLfloat tilemap_base[4u];
   GLfloat tile_base[4u];
   GLint large_palette[4u];
+  GLint wraparound[4u];
 } OpenGlBgControl;
 
 void OpenGlBgControlReload(OpenGlBgControl* context,

@@ -7,10 +7,30 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLint win0[6u];
-  GLint win1[6u];
-  GLint winobj[6u];
-  GLint winout[6u];
+  GLint win0_bg0;
+  GLint win0_bg1;
+  GLint win0_bg2;
+  GLint win0_bg3;
+  GLint win0_obj;
+  GLint win0_bld;
+  GLint win1_bg0;
+  GLint win1_bg1;
+  GLint win1_bg2;
+  GLint win1_bg3;
+  GLint win1_obj;
+  GLint win1_bld;
+  GLint winobj_bg0;
+  GLint winobj_bg1;
+  GLint winobj_bg2;
+  GLint winobj_bg3;
+  GLint winobj_obj;
+  GLint winobj_bld;
+  GLint winout_bg0;
+  GLint winout_bg1;
+  GLint winout_bg2;
+  GLint winout_bg3;
+  GLint winout_obj;
+  GLint winout_bld;
   GLfloat win0_start[2u];
   GLfloat win0_end[2u];
   GLfloat win1_start[2u];
