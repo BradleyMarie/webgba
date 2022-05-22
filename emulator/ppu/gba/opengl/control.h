@@ -9,6 +9,8 @@
 typedef struct {
   GLint blank;
   GLint mode;
+  GLint obj_mode;
+  GLint obj_enabled;
   GLint bg0_enabled;
   GLint bg1_enabled;
   GLint bg2_enabled;
