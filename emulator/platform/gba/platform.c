@@ -281,7 +281,7 @@ static bool GbaPlatformRegistersStore8Impl(GbaPlatform *platform,
 
   uint32_t read_address = address & 0xFFFFFFFEu;
 
-  uint16_t value16;
+  uint16_t value16 = 0u;
   switch (address) {
     case IE_OFFSET:
       value16 = platform->registers.interrupt_enable.value;
