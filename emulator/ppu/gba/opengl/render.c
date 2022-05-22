@@ -34,7 +34,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBlend blend;
   OpenGlBgPalette bg_palette;
   OpenGlBgTilemap bg_tilemap;
-  OpenGlBgTiles bg_tiles;
+  OpenGlTiles tiles;
   OpenGlControl control;
   OpenGlBgMosaic mosaic;
   OpenGlWindow window;
@@ -157,7 +157,7 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgControlBind(&renderer->bg_control, renderer->render_program);
   OpenGlBgScrollingBind(&renderer->bg_scrolling, renderer->render_program);
   OpenGlBgTilemapBind(&renderer->bg_tilemap, renderer->render_program);
-  OpenGlBgTilesBind(&renderer->bg_tiles, renderer->render_program);
+  OpenGlTilesBind(&renderer->tiles, renderer->render_program);
   OpenGlBlendBind(&renderer->blend, renderer->render_program);
 
   GLuint vertex = glGetAttribLocation(renderer->render_program, "vertex");
@@ -196,22 +196,20 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
   OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
   OpenGlWindowReload(&renderer->window, registers, dirty_bits);
   OpenGlBlendReload(&renderer->blend, registers, dirty_bits);
+  OpenGlTilesReload(&renderer->tiles, memory, registers, dirty_bits);
 
   switch (registers->dispcnt.mode) {
     case 0u:
       OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       OpenGlBgTilemapReload(&renderer->bg_tilemap, memory, dirty_bits);
-      OpenGlBgTilesReload(&renderer->bg_tiles, memory, dirty_bits);
       break;
     case 1u:
       OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       OpenGlBgTilemapReload(&renderer->bg_tilemap, memory, dirty_bits);
-      OpenGlBgTilesReload(&renderer->bg_tiles, memory, dirty_bits);
       break;
     case 2u:
       OpenGlBgScrollingReload(&renderer->bg_scrolling, registers, dirty_bits);
       OpenGlBgTilemapReload(&renderer->bg_tilemap, memory, dirty_bits);
-      OpenGlBgTilesReload(&renderer->bg_tiles, memory, dirty_bits);
       break;
     case 3u:
       OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3, memory, registers,
@@ -337,7 +335,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
   OpenGlBgScrollingReloadContext(&renderer->bg_scrolling);
   OpenGlBgTilemapReloadContext(&renderer->bg_tilemap);
-  OpenGlBgTilesReloadContext(&renderer->bg_tiles);
+  OpenGlTilesReloadContext(&renderer->tiles);
   OpenGlBgPaletteReloadContext(&renderer->bg_palette);
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
@@ -362,7 +360,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
     OpenGlBgScrollingDestroy(&renderer->bg_scrolling);
     OpenGlBgTilemapDestroy(&renderer->bg_tilemap);
-    OpenGlBgTilesDestroy(&renderer->bg_tiles);
+    OpenGlTilesDestroy(&renderer->tiles);
     OpenGlBgPaletteDestroy(&renderer->bg_palette);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);

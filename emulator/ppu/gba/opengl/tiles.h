@@ -5,21 +5,25 @@
 
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint s_tiles;
-  GLuint d_tiles;
+  GLuint bg_s_tiles;
+  GLuint bg_d_tiles;
+  GLuint obj_s_tiles;
+  GLuint obj_d_tiles;
   uint8_t staging[GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES * GBA_TILE_1D_SIZE *
                   GBA_TILE_1D_SIZE];
-} OpenGlBgTiles;
+} OpenGlTiles;
 
-void OpenGlBgTilesReload(OpenGlBgTiles* context, const GbaPpuMemory* memory,
-                         GbaPpuDirtyBits* dirty_bits);
+void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
+                       const GbaPpuRegisters* registers,
+                       GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgTilesBind(const OpenGlBgTiles* context, GLuint program);
+void OpenGlTilesBind(const OpenGlTiles* context, GLuint program);
 
-void OpenGlBgTilesReloadContext(OpenGlBgTiles* context);
+void OpenGlTilesReloadContext(OpenGlTiles* context);
 
-void OpenGlBgTilesDestroy(OpenGlBgTiles* context);
+void OpenGlTilesDestroy(OpenGlTiles* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILES_

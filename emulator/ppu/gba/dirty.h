@@ -33,6 +33,7 @@ typedef struct {
   GbaPpuMode3DirtyBits mode_3;
   GbaPpuMode4DirtyBits mode_4;
   GbaPpuMode5DirtyBits mode_5;
+  bool obj_tilemode_tiles[2u];
 } GbaPpuVramDirtyBits;
 
 typedef struct {
