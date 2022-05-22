@@ -11,6 +11,8 @@ void OpenGlControlReload(OpenGlControl* context,
 
   context->blank = registers->dispcnt.forced_blank;
   context->mode = registers->dispcnt.mode;
+  context->obj_mode = registers->dispcnt.object_mode;
+  context->obj_enabled = registers->dispcnt.object_enable;
   context->bg0_enabled = registers->dispcnt.bg0_enable;
   context->bg1_enabled = registers->dispcnt.bg1_enable;
   context->bg2_enabled = registers->dispcnt.bg2_enable;
@@ -28,6 +30,12 @@ void OpenGlControlBind(const OpenGlControl* context, GLuint program) {
 
   GLint mode = glGetUniformLocation(program, "mode");
   glUniform1i(mode, context->mode);
+
+  GLint obj_mode = glGetUniformLocation(program, "obj_mode");
+  glUniform1i(obj_mode, context->obj_mode);
+
+  GLint obj_enabled = glGetUniformLocation(program, "obj_enabled");
+  glUniform1i(obj_enabled, context->obj_enabled);
 
   GLint bg0_enabled = glGetUniformLocation(program, "bg0_enabled");
   glUniform1i(bg0_enabled, context->bg0_enabled);
