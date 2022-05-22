@@ -7,9 +7,11 @@ uniform bool bg0_enabled;
 uniform bool bg1_enabled;
 uniform bool bg2_enabled;
 uniform bool bg3_enabled;
+uniform bool obj_enabled;
 uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
+uniform bool obj_mode;
 
 // Background Control
 uniform int bg0_priority;
@@ -72,6 +74,132 @@ varying highp vec2 bg2_affine_screencoord;
 varying highp vec2 bg3_affine_screencoord;
 varying highp vec2 screencoord;
 
+// Objects
+struct ObjectAttributes {
+  bool enabled;
+  highp mat2 affine;
+  highp vec2 origin;
+  highp vec2 size;
+  mediump vec2 mosaic;
+  highp float tile_base;
+  bool large_palette;
+  bool rendered;
+  bool blended;
+  bool flip_x;
+  bool flip_y;
+  int palette;
+  int priority;
+};
+
+uniform ObjectAttributes obj_attributes[128];
+uniform mediump sampler2D obj_tiles_d;
+uniform lowp sampler2D obj_tiles_s;
+uniform lowp sampler2D obj_large_palette;
+uniform lowp sampler2D obj_small_palette;
+
+struct ObjectLayer {
+  lowp vec4 color;
+  int priority;
+  bool winobj;
+  bool blended;
+};
+
+ObjectLayer Objects() {
+  ObjectLayer result;
+  result.color = vec4(0.0, 0.0, 0.0, 0.0);
+  result.priority = 5;
+  result.winobj = false;
+  result.blended = false;
+
+  for (int i = 0; i < 128; i++) {
+    if (!obj_attributes[i].enabled) {
+      continue;
+    }
+
+    if (screencoord.x < obj_attributes[i].origin.x ||
+        screencoord.y < obj_attributes[i].origin.y) {
+      continue;
+    }
+
+    highp vec2 end = obj_attributes[i].origin + obj_attributes[i].size;
+
+    if (end.x < screencoord.x || end.y < screencoord.y) {
+      continue;
+    }
+
+    highp vec2 half_size = obj_attributes[i].size / 2.0;
+    highp vec2 center = obj_attributes[i].origin + half_size;
+    highp vec2 from_center = screencoord - center;
+
+    highp vec2 lookup = obj_attributes[i].affine * from_center + half_size;
+
+    if (lookup.x < 0.0 || obj_attributes[i].size.x < lookup.x ||
+        lookup.y < 0.0 || obj_attributes[i].size.y < lookup.y) {
+      continue;
+    }
+
+    lookup = mod(lookup, obj_attributes[i].mosaic) + vec2(0.5, 0.5);
+
+    highp vec2 lookup_tile = floor(lookup / 8.0);
+
+    highp float tile_index = obj_attributes[i].tile_base;
+    if (obj_mode) {
+      tile_index +=
+          lookup_tile.x + lookup_tile.y * obj_attributes[i].size.x / 8.0;
+    } else {
+      highp float row_width = (obj_attributes[i].large_palette) ? 16.0 : 32.0;
+      tile_index += lookup_tile.x + lookup_tile.y * row_width;
+    }
+
+    highp vec2 tile_pixel = mod(lookup_tile, 8.0) / 8.0;
+
+    if (obj_attributes[i].flip_x) {
+      tile_pixel.x = 1.0 - tile_pixel.x;
+    }
+
+    if (obj_attributes[i].flip_y) {
+      tile_pixel.y = 1.0 - tile_pixel.y;
+    }
+
+    lowp vec4 color;
+    if (obj_attributes[i].large_palette) {
+      const highp float num_tiles = 512.0;
+      mediump vec4 color_index = texture2D(
+          obj_tiles_d,
+          vec2(tile_pixel.x, (tile_index + tile_pixel.y) / num_tiles));
+      if (color_index.r == 0.0) {
+        continue;
+      }
+
+      color = texture2D(obj_large_palette, vec2(color_index.r, 0.5));
+    } else {
+      const highp float num_tiles = 1024.0;
+      mediump vec4 color_index = texture2D(
+          obj_tiles_s,
+          vec2(tile_pixel.x, (tile_index + tile_pixel.y) / num_tiles));
+      if (color_index.r == 0.0) {
+        continue;
+      }
+
+      color = texture2D(obj_small_palette,
+                        vec2(color_index.r, obj_attributes[i].palette));
+    }
+
+    if (!obj_attributes[i].rendered) {
+      result.winobj = true;
+      continue;
+    }
+
+    if (obj_attributes[i].priority < result.priority) {
+      result.priority = obj_attributes[i].priority;
+      result.color = color;
+      result.blended = obj_attributes[i].blended;
+    }
+  }
+
+  return result;
+}
+
 // Blend Unit
 uniform int blend_mode;
 uniform lowp float blend_eva;
@@ -109,6 +237,20 @@ void BlendUnitInitialize() {
   blend_is_object[1] = false;
   blend_contains_object = false;
   blend_obj_semi_transparent = false;
+}
+
+void BlendUnitAddObject(ObjectLayer obj) {
+  if (obj.color.a == 0.0) {
+    return;
+  }
+
+  blend_priorities[0] = obj.priority;
+  blend_layers[0] = obj.color.rgb;
+  blend_top[0] = obj.blended || obj_top;
+  blend_bottom[0] = obj_bottom;
+  blend_is_object[0] = true;
+  blend_contains_object = true;
+  blend_obj_semi_transparent = obj.blended;
 }
 
 void BlendUnitAddBackground(int priority, bool top, bool bottom,
@@ -223,7 +365,7 @@ lowp vec4 BlendUnitBlend(bool enable_blend) {
     }
   }
 
-  return vec4(color.b, color.g, color.r, 1.0);
+  return vec4(color.bgr, 1.0);
 }
 
 // Window
@@ -506,7 +648,20 @@ void main() {
 
   BlendUnitInitialize();
 
-  WindowContents window = CheckWindow(false);
+  ObjectLayer object;
+  if (obj_enabled) {
+    object = Objects();
+  } else {
+    object.color = vec4(0.0, 0.0, 0.0, 0.0);
+    object.priority = 5;
+    object.winobj = false;
+    object.blended = false;
+  }
+
+  WindowContents window = CheckWindow(object.winobj);
+  if (window.obj) {
+    BlendUnitAddObject(object);
+  }
 
   if (mode == 0) {
     if (bg0_enabled && window.bg0) {
