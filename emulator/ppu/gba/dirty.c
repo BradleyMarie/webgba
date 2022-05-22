@@ -18,6 +18,8 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->vram.mode_4.pages[1u] = true;
   bits->vram.mode_5.pages[0u] = true;
   bits->vram.mode_5.pages[1u] = true;
+  bits->vram.obj_tilemode_tiles[0u] = true;
+  bits->vram.obj_tilemode_tiles[1u] = true;
 
   for (uint8_t i = 0u; i < OAM_NUM_OBJECTS; i++) {
     GbaPpuSetAdd(&bits->oam.objects, i);
