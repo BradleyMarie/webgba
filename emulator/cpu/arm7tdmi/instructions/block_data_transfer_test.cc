@@ -1225,7 +1225,7 @@ class StmTest : public testing::TestWithParam<uint16_t> {
       }
     }
     while (address != initial_address + 4) {
-      uint8_t value;
+      uint8_t value = 1u;
       EXPECT_TRUE(Load8(memory_, address, &value));
       EXPECT_EQ(0u, value);
       address -= 1;
@@ -1240,7 +1240,7 @@ class StmTest : public testing::TestWithParam<uint16_t> {
                                        uint32_t address_register_initial_value,
                                        uint_fast16_t register_list) {
     if (register_list == 0u) {
-      uint32_t value;
+      uint32_t value = 1u;
       EXPECT_TRUE(Load32LE(memory_, address, &value));
       EXPECT_EQ(20u, value);
       return;
@@ -1262,7 +1262,7 @@ class StmTest : public testing::TestWithParam<uint16_t> {
       }
     }
     while (address != initial_address) {
-      uint8_t value;
+      uint8_t value = 1u;
       EXPECT_TRUE(Load8(memory_, address, &value));
       EXPECT_EQ(0u, value);
       address += 1;
