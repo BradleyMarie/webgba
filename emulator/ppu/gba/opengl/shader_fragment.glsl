@@ -140,7 +140,7 @@ ObjectLayer Objects() {
       continue;
     }
 
-    lookup = mod(lookup, obj_attributes[i].mosaic) + vec2(0.5, 0.5);
+    lookup = lookup - mod(lookup, obj_attributes[i].mosaic) + vec2(0.5, 0.5);
 
     highp vec2 lookup_tile = floor(lookup / 8.0);
 
@@ -153,7 +153,7 @@ ObjectLayer Objects() {
       tile_index += lookup_tile.x + lookup_tile.y * row_width;
     }
 
-    highp vec2 tile_pixel = mod(lookup_tile, 8.0) / 8.0;
+    highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
 
     if (obj_attributes[i].flip_x) {
       tile_pixel.x = 1.0 - tile_pixel.x;

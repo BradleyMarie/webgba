@@ -14,10 +14,8 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
   static const int_fast16_t shape_size_to_y_size_pixels[3][4] = {
       {8u, 16u, 32u, 64u}, {8u, 8u, 16u, 32u}, {16u, 32u, 32u, 64u}};
 
-  for (uint8_t i = 0; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
-    if (!dirty_bits->vram.obj_rotations[i]) {
-      continue;
-    }
+  while (!GbaPpuSetEmpty(&dirty_bits->oam.rotations)) {
+    uint8_t i = GbaPpuSetPop(&dirty_bits->oam.rotations);
 
     GLfloat pa = FixedToFloat(memory->oam.rotate_scale[i].pa);
     GLfloat pb = FixedToFloat(memory->oam.rotate_scale[i].pc);
@@ -32,16 +30,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[object].affine[1u][0u] = pb;
       context->attributes[object].affine[1u][1u] = pd;
     }
-
-    dirty_bits->vram.obj_rotations[i] = false;
   }
 
-  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
-    if (!dirty_bits->vram.obj_attributes[i]) {
-      continue;
-    }
-
-    dirty_bits->vram.obj_attributes[i] = false;
+  while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
+    uint8_t i = GbaPpuSetPop(&dirty_bits->oam.objects);
 
     if (!memory->oam.object_attributes[i].affine &&
         memory->oam.object_attributes[i].flex_param_0) {
@@ -145,6 +137,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[i].flip_x = false;
       context->attributes[i].flip_y = false;
     } else {
+      context->attributes[i].affine[0u][0u] = 1.0;
+      context->attributes[i].affine[0u][1u] = 0.0;
+      context->attributes[i].affine[1u][0u] = 0.0;
+      context->attributes[i].affine[1u][1u] = 1.0;
+
       context->attributes[i].flip_x =
           memory->oam.object_attributes[i].flex_param_1 & 0x8u;
       context->attributes[i].flip_y =
