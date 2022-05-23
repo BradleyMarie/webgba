@@ -251,6 +251,8 @@ static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
+  // TODO: Check objects and rotations
+
   bool bg_changed = false;
   switch (registers->dispcnt.mode) {
     case 0:

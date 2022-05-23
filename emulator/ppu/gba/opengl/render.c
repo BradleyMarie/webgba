@@ -14,6 +14,7 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
 #include "emulator/ppu/gba/opengl/mosaic.h"
+#include "emulator/ppu/gba/opengl/obj_attributes.h"
 #include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
 #include "emulator/ppu/gba/opengl/shader_vertex.h"
@@ -34,6 +35,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBlend blend;
   OpenGlBgPalette bg_palette;
   OpenGlBgTilemap bg_tilemap;
+  OpenGlObjectAttributes obj_attributes;
   OpenGlTiles tiles;
   OpenGlControl control;
   OpenGlBgMosaic mosaic;
@@ -157,6 +159,8 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlBgControlBind(&renderer->bg_control, renderer->render_program);
   OpenGlBgScrollingBind(&renderer->bg_scrolling, renderer->render_program);
   OpenGlBgTilemapBind(&renderer->bg_tilemap, renderer->render_program);
+  OpenGlBgObjectAttributesBind(&renderer->obj_attributes,
+                               renderer->render_program);
   OpenGlTilesBind(&renderer->tiles, renderer->render_program);
   OpenGlBlendBind(&renderer->blend, renderer->render_program);
 
@@ -197,6 +201,8 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
   OpenGlWindowReload(&renderer->window, registers, dirty_bits);
   OpenGlBlendReload(&renderer->blend, registers, dirty_bits);
   OpenGlTilesReload(&renderer->tiles, memory, registers, dirty_bits);
+  OpenGlObjectAttributesReload(&renderer->obj_attributes, memory, registers,
+                               dirty_bits);
 
   switch (registers->dispcnt.mode) {
     case 0u:

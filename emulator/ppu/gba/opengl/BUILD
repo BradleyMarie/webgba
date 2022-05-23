@@ -110,6 +110,19 @@ cc_library(
 )
 
 cc_library(
+    name = "obj_attributes",
+    srcs = ["obj_attributes.c"],
+    hdrs = ["obj_attributes.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:memory",
+        "//emulator/ppu/gba:registers",
+        "//emulator/ppu/gba:set",
+    ],
+)
+
+cc_library(
     name = "palette",
     srcs = ["palette.c"],
     hdrs = ["palette.h"],
@@ -136,6 +149,7 @@ cc_library(
         ":blend",
         ":control",
         ":mosaic",
+        ":obj_attributes",
         ":palette",
         ":shader_fragment",
         ":shader_vertex",
