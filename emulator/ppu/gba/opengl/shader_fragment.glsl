@@ -87,8 +87,7 @@ struct ObjectAttributes {
   bool large_palette;
   bool rendered;
   bool blended;
-  bool flip_x;
-  bool flip_y;
+  lowp vec2 flip;
   int priority;
 };
 
@@ -156,13 +155,7 @@ ObjectLayer Objects() {
 
     highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
 
-    if (obj_attributes[i].flip_x) {
-      tile_pixel.x = 1.0 - tile_pixel.x;
-    }
-
-    if (obj_attributes[i].flip_y) {
-      tile_pixel.y = 1.0 - tile_pixel.y;
-    }
+    tile_pixel = abs(obj_attributes[i].flip - tile_pixel);
 
     lowp vec4 color;
     if (obj_attributes[i].large_palette) {
@@ -436,9 +429,8 @@ WindowContents CheckWindow(bool on_object) {
 // Scrolling Tile Map
 struct ScrollingTilemapEntry {
   highp float tile_block_position;
-  bool flip_x;
-  bool flip_y;
   lowp float palette;
+  lowp vec2 flip;
 };
 
 ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
@@ -469,9 +461,8 @@ ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
   lowp vec4 params = texture2D(bg_scrolling_tilemap_params, lookup);
 
   ScrollingTilemapEntry result;
-  result.flip_x = params.x != 0.0;
-  result.flip_y = params.y != 0.0;
   result.palette = (params.z * 15.0 + 0.5) / 16.0;
+  result.flip = params.xy;
   result.tile_block_position =
       (indices.r != 0.0)
           ? (indices.a * 255.0 * 256.0 + indices.r * 255.0) / 1024.0
@@ -494,13 +485,7 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
   const highp float tile_size = 8.0;
   highp vec2 tile_pixel = mod(lookup, tile_size) / tile_size;
 
-  if (entry.flip_x) {
-    tile_pixel.x = 1.0 - tile_pixel.x;
-  }
-
-  if (entry.flip_y) {
-    tile_pixel.y = 1.0 - tile_pixel.y;
-  }
+  tile_pixel = abs(entry.flip - tile_pixel);
 
   lowp vec4 color;
   if (large_palette) {

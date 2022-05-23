@@ -134,18 +134,18 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
-      context->attributes[i].flip_x = false;
-      context->attributes[i].flip_y = false;
+      context->attributes[i].flip[0] = 0.0;
+      context->attributes[i].flip[1] = 0.0;
     } else {
       context->attributes[i].affine[0u][0u] = 1.0;
       context->attributes[i].affine[0u][1u] = 0.0;
       context->attributes[i].affine[1u][0u] = 0.0;
       context->attributes[i].affine[1u][1u] = 1.0;
 
-      context->attributes[i].flip_x =
-          memory->oam.object_attributes[i].flex_param_1 & 0x8u;
-      context->attributes[i].flip_y =
-          memory->oam.object_attributes[i].flex_param_1 & 0x10u;
+      context->attributes[i].flip[0] =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x08u) ? 1.0 : 0.0;
+      context->attributes[i].flip[1] =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x10u) ? 1.0 : 0.0;
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {
@@ -191,6 +191,11 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     glUniform2f(mosaic, context->attributes[i].mosaic[0u],
                 context->attributes[i].mosaic[1u]);
 
+    sprintf(variable_name, "obj_attributes[%u].flip", i);
+    GLint flip = glGetUniformLocation(program, variable_name);
+    glUniform2f(flip, context->attributes[i].flip[0u],
+                context->attributes[i].flip[1u]);
+
     sprintf(variable_name, "obj_attributes[%u].tile_base", i);
     GLint tile_base = glGetUniformLocation(program, variable_name);
     glUniform1f(tile_base, context->attributes[i].tile_base);
@@ -210,14 +215,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     sprintf(variable_name, "obj_attributes[%u].blended", i);
     GLint blended = glGetUniformLocation(program, variable_name);
     glUniform1i(blended, context->attributes[i].blended);
-
-    sprintf(variable_name, "obj_attributes[%u].flip_x", i);
-    GLint flip_x = glGetUniformLocation(program, variable_name);
-    glUniform1i(flip_x, context->attributes[i].flip_x);
-
-    sprintf(variable_name, "obj_attributes[%u].flip_y", i);
-    GLint flip_y = glGetUniformLocation(program, variable_name);
-    glUniform1i(flip_y, context->attributes[i].flip_y);
 
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);

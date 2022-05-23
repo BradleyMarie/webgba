@@ -16,13 +16,12 @@ typedef struct {
     GLfloat sprite_size[2u];
     GLfloat render_size[2u];
     GLfloat mosaic[2u];
+    GLfloat flip[2u];
     GLfloat tile_base;
     GLfloat palette;
     GLint large_palette;
     GLint rendered;
     GLint blended;
-    GLint flip_x;
-    GLint flip_y;
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
