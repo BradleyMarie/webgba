@@ -83,8 +83,8 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         (memory->oam.object_attributes[i].obj_mode != 2u);
     context->attributes[i].blended =
         (memory->oam.object_attributes[i].obj_mode == 1u);
-    context->attributes[i].palette = memory->oam.object_attributes[i].palette
-                                     << 4u;
+    context->attributes[i].palette =
+        ((GLfloat)memory->oam.object_attributes[i].palette + 0.5) / 16.0;
     context->attributes[i].priority = memory->oam.object_attributes[i].priority;
 
     context->attributes[i].sprite_size[0u] =
@@ -168,7 +168,7 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 
     sprintf(variable_name, "obj_attributes[%u].affine", i);
     GLint affine = glGetUniformLocation(program, variable_name);
-    glUniformMatrix2fv(affine, 4, false,
+    glUniformMatrix2fv(affine, 1, false,
                        &context->attributes[i].affine[0u][0u]);
 
     sprintf(variable_name, "obj_attributes[%u].origin", i);
@@ -195,6 +195,10 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint tile_base = glGetUniformLocation(program, variable_name);
     glUniform1f(tile_base, context->attributes[i].tile_base);
 
+    sprintf(variable_name, "obj_attributes[%u].palette", i);
+    GLint palette = glGetUniformLocation(program, variable_name);
+    glUniform1f(palette, context->attributes[i].palette);
+
     sprintf(variable_name, "obj_attributes[%u].large_palette", i);
     GLint large_palette = glGetUniformLocation(program, variable_name);
     glUniform1i(large_palette, context->attributes[i].large_palette);
@@ -214,10 +218,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     sprintf(variable_name, "obj_attributes[%u].flip_y", i);
     GLint flip_y = glGetUniformLocation(program, variable_name);
     glUniform1i(flip_y, context->attributes[i].flip_y);
-
-    sprintf(variable_name, "obj_attributes[%u].palette", i);
-    GLint palette = glGetUniformLocation(program, variable_name);
-    glUniform1i(palette, context->attributes[i].palette);
 
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);
