@@ -47,7 +47,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
 
   uint8_t starting_tile = (registers->dispcnt.mode < 3) ? 0u : 1u;
   for (uint8_t i = starting_tile; i < 2; i++) {
-    if (!dirty_bits->vram.obj_tilemode_tiles[i]) {
+    if (!dirty_bits->vram.obj_tiles[i]) {
       continue;
     }
 
@@ -84,7 +84,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
         /*pixels=*/&memory->vram.mode_012.obj.d_tiles[d_tile_base]);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    dirty_bits->vram.obj_tilemode_tiles[i] = false;
+    dirty_bits->vram.obj_tiles[i] = false;
   }
 }
 

@@ -79,7 +79,8 @@ struct ObjectAttributes {
   bool enabled;
   highp mat2 affine;
   highp vec2 origin;
-  highp vec2 size;
+  highp vec2 sprite_size;
+  highp vec2 render_size;
   mediump vec2 mosaic;
   highp float tile_base;
   bool large_palette;
@@ -121,20 +122,21 @@ ObjectLayer Objects() {
       continue;
     }
 
-    highp vec2 end = obj_attributes[i].origin + obj_attributes[i].size;
+    highp vec2 end = obj_attributes[i].origin + obj_attributes[i].render_size;
 
     if (end.x < screencoord.x || end.y < screencoord.y) {
       continue;
     }
 
-    highp vec2 half_size = obj_attributes[i].size / 2.0;
-    highp vec2 center = obj_attributes[i].origin + half_size;
+    highp vec2 half_render_size = obj_attributes[i].render_size / 2.0;
+    highp vec2 center = obj_attributes[i].origin + half_render_size;
     highp vec2 from_center = screencoord - center;
 
-    highp vec2 lookup = obj_attributes[i].affine * from_center + half_size;
+    highp vec2 lookup =
+        obj_attributes[i].affine * from_center + half_render_size;
 
-    if (lookup.x < 0.0 || obj_attributes[i].size.x < lookup.x ||
-        lookup.y < 0.0 || obj_attributes[i].size.y < lookup.y) {
+    if (lookup.x < 0.0 || obj_attributes[i].sprite_size.x < lookup.x ||
+        lookup.y < 0.0 || obj_attributes[i].sprite_size.y < lookup.y) {
       continue;
     }
 
@@ -145,7 +147,7 @@ ObjectLayer Objects() {
     highp float tile_index = obj_attributes[i].tile_base;
     if (obj_mode) {
       tile_index +=
-          lookup_tile.x + lookup_tile.y * obj_attributes[i].size.x / 8.0;
+          lookup_tile.x + lookup_tile.y * obj_attributes[i].sprite_size.x / 8.0;
     } else {
       highp float row_width = (obj_attributes[i].large_palette) ? 16.0 : 32.0;
       tile_index += lookup_tile.x + lookup_tile.y * row_width;
