@@ -83,12 +83,12 @@ struct ObjectAttributes {
   highp vec2 render_size;
   mediump vec2 mosaic;
   highp float tile_base;
+  lowp float palette;
   bool large_palette;
   bool rendered;
   bool blended;
   bool flip_x;
   bool flip_y;
-  int palette;
   int priority;
 };
 
@@ -132,8 +132,9 @@ ObjectLayer Objects() {
     highp vec2 center = obj_attributes[i].origin + half_render_size;
     highp vec2 from_center = screencoord - center;
 
+    highp vec2 half_sprite_size = obj_attributes[i].sprite_size / 2.0;
     highp vec2 lookup =
-        obj_attributes[i].affine * from_center + half_render_size;
+        obj_attributes[i].affine * from_center + half_sprite_size;
 
     if (lookup.x < 0.0 || obj_attributes[i].sprite_size.x < lookup.x ||
         lookup.y < 0.0 || obj_attributes[i].sprite_size.y < lookup.y) {
@@ -144,13 +145,13 @@ ObjectLayer Objects() {
 
     highp vec2 lookup_tile = floor(lookup / 8.0);
 
-    highp float tile_index = obj_attributes[i].tile_base;
+    highp float tile_index;
     if (obj_mode) {
-      tile_index +=
+      tile_index =
           lookup_tile.x + lookup_tile.y * obj_attributes[i].sprite_size.x / 8.0;
     } else {
       highp float row_width = (obj_attributes[i].large_palette) ? 16.0 : 32.0;
-      tile_index += lookup_tile.x + lookup_tile.y * row_width;
+      tile_index = lookup_tile.x + lookup_tile.y * row_width;
     }
 
     highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
@@ -168,7 +169,8 @@ ObjectLayer Objects() {
       const highp float num_tiles = 512.0;
       mediump vec4 color_index = texture2D(
           obj_tiles_d,
-          vec2(tile_pixel.x, (tile_index + tile_pixel.y) / num_tiles));
+          vec2(tile_pixel.x, obj_attributes[i].tile_base +
+                                 (tile_index + tile_pixel.y) / num_tiles));
       if (color_index.r == 0.0) {
         continue;
       }
@@ -178,13 +180,15 @@ ObjectLayer Objects() {
       const highp float num_tiles = 1024.0;
       mediump vec4 color_index = texture2D(
           obj_tiles_s,
-          vec2(tile_pixel.x, (tile_index + tile_pixel.y) / num_tiles));
+          vec2(tile_pixel.x, obj_attributes[i].tile_base +
+                                 (tile_index + tile_pixel.y) / num_tiles));
       if (color_index.r == 0.0) {
-        continue;
+        return result;
       }
 
-      color = texture2D(obj_small_palette,
-                        vec2(color_index.r, obj_attributes[i].palette));
+      color = texture2D(
+          obj_small_palette,
+          vec2((color_index.r * 15.0 + 0.5) / 16.0, obj_attributes[i].palette));
     }
 
     if (!obj_attributes[i].rendered) {
