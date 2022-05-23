@@ -32,12 +32,16 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[object].affine[1u][0u] = pb;
       context->attributes[object].affine[1u][1u] = pd;
     }
+
+    dirty_bits->vram.obj_rotations[i] = false;
   }
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     if (!dirty_bits->vram.obj_attributes[i]) {
       continue;
     }
+
+    dirty_bits->vram.obj_attributes[i] = false;
 
     if (!memory->oam.object_attributes[i].affine &&
         memory->oam.object_attributes[i].flex_param_0) {
