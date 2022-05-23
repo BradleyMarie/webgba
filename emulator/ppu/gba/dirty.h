@@ -33,8 +33,6 @@ typedef struct {
   GbaPpuMode3DirtyBits mode_3;
   GbaPpuMode4DirtyBits mode_4;
   GbaPpuMode5DirtyBits mode_5;
-  bool obj_attributes[OAM_NUM_OBJECTS];
-  bool obj_rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
   bool obj_tiles[2u];
 } GbaPpuVramDirtyBits;
 
