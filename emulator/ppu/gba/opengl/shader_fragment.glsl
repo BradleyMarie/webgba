@@ -47,8 +47,7 @@ uniform highp sampler2D bg_scrolling_tilemap_indices;
 uniform lowp sampler2D bg_scrolling_tilemap_params;
 
 // Tiles
-uniform lowp sampler2D bg_tiles_s;
-uniform mediump sampler2D bg_tiles_d;
+uniform lowp sampler2D bg_tiles;
 
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
@@ -62,8 +61,7 @@ uniform highp vec2 bg2_mosaic;
 uniform highp vec2 bg3_mosaic;
 
 // Palettes
-uniform lowp sampler2D bg_large_palette;
-uniform lowp sampler2D bg_small_palette;
+uniform lowp sampler2D bg_palette;
 
 // Inputs
 varying highp vec2 bg0_scrolling_screencoord;
@@ -176,7 +174,7 @@ ObjectLayer Objects() {
           vec2(tile_pixel.x, obj_attributes[i].tile_base +
                                  (tile_index + tile_pixel.y) / num_tiles));
       if (color_index.r == 0.0) {
-        return result;
+        continue;
       }
 
       color = texture2D(
@@ -461,12 +459,10 @@ ScrollingTilemapEntry GetScrollingTileMapEntry(highp float tilemap_base,
   lowp vec4 params = texture2D(bg_scrolling_tilemap_params, lookup);
 
   ScrollingTilemapEntry result;
-  result.palette = (params.z * 15.0 + 0.5) / 16.0;
+  result.palette = (params.z * 31.0) / 32.0;
   result.flip = params.xy;
   result.tile_block_position =
-      (indices.r != 0.0)
-          ? (indices.a * 255.0 * 256.0 + indices.r * 255.0) / 1024.0
-          : 0.0;
+    (indices.a * 255.0 * 256.0 + indices.r * 255.0) / 1024.0;
 
   return result;
 }
@@ -475,6 +471,9 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
                                   highp vec2 tilemap_size_pixels,
                                   highp vec2 tilemap_pixel, highp vec2 mosaic,
                                   highp float tile_base, bool large_palette) {
+  mediump float num_tiles = large_palette ? 1024.0 : 2048.0;
+  mediump float tile_block_divisor = large_palette ? 1.0 : 2.0;
+
   highp vec2 wrapped_tilemap_pixel = mod(tilemap_pixel, tilemap_size_pixels);
   highp vec2 lookup = wrapped_tilemap_pixel -
                       mod(wrapped_tilemap_pixel, mosaic) + vec2(0.5, 0.5);
@@ -487,31 +486,16 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
 
   tile_pixel = abs(entry.flip - tile_pixel);
 
-  lowp vec4 color;
-  if (large_palette) {
-    const highp float num_tiles = 1024.0;
-    mediump vec4 color_index = texture2D(
-        bg_tiles_d, vec2(tile_pixel.x, tile_base + entry.tile_block_position +
-                                           tile_pixel.y / num_tiles));
-    if (color_index.r == 0.0) {
-      return vec4(0.0, 0.0, 0.0, 0.0);
-    }
+  lowp vec4 color_indices = texture2D(
+      bg_tiles, vec2(tile_pixel.x,
+                  tile_base + entry.tile_block_position / tile_block_divisor +
+                      tile_pixel.y / num_tiles));
+  lowp float color_index = large_palette ? color_indices.r : color_indices.a;
 
-    color = texture2D(bg_large_palette, vec2(color_index.r, 0.5));
-  } else {
-    const highp float num_tiles = 2048.0;
-    mediump vec4 color_index = texture2D(
-        bg_tiles_s,
-        vec2(tile_pixel.x, tile_base + entry.tile_block_position / 2.0 +
-                               tile_pixel.y / num_tiles));
-    if (color_index.r == 0.0) {
-      return vec4(0.0, 0.0, 0.0, 0.0);
-    }
-
-    color = texture2D(bg_small_palette, vec2(color_index.r, entry.palette));
-  }
-
-  return color;
+  lowp float palette = large_palette ? 0.0 : entry.palette;
+  lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
+  lowp vec4 color = texture2D(bg_palette, vec2(palette + palette_offset, 0.5));
+  return vec4(color.rgb, sign(color_index));
 }
 
 lowp vec4 ScrollingBackground0() {
@@ -567,14 +551,14 @@ lowp vec4 AffineBackgroundImpl(highp float tilemap_base,
   highp vec2 tile_pixel = mod(lookup_pixel, tile_size) / tile_size;
 
   const highp float num_tiles = 1024.0;
-  mediump vec4 color_index = texture2D(
-      bg_tiles_d,
+  lowp vec4 color_indices = texture2D(
+      bg_tiles,
       vec2(tile_pixel.x, tile_base + index / 4.0 + tile_pixel.y / num_tiles));
-  if (color_index.r == 0.0) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
-  }
+  lowp float color_index = color_indices.r;
 
-  return texture2D(bg_large_palette, vec2(color_index.r, 0.5));
+  lowp vec4 color = texture2D(bg_palette, vec2(color_index, 0.5));
+
+  return vec4(color.rgb, sign(color_index));
 }
 
 lowp vec4 AffineBackground2() {
@@ -607,7 +591,7 @@ lowp vec4 Background2Mode4() {
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
   mediump vec4 normalized_index = texture2D(bg_mode4, lookup / bitmap_size);
   mediump float index = (normalized_index.r * 255.0 + 0.5) / 256.0;
-  lowp vec4 color = texture2D(bg_large_palette, vec2(index, 0.5));
+  lowp vec4 color = texture2D(bg_palette, vec2(index, 0.5));
   color *= step(bg2_affine_screencoord.x, bitmap_size.x);
   color *= step(bg2_affine_screencoord.y, bitmap_size.y);
   color *= step(-bg2_affine_screencoord.x, 0.0);
@@ -628,7 +612,7 @@ lowp vec4 Background2Mode5() {
 }
 
 lowp vec4 Backdrop() {
-  return texture2D(bg_large_palette, vec2(1.0 / 512.0, 0.5));
+  return texture2D(bg_palette, vec2(1.0 / 512.0, 0.5));
 }
 
 void main() {
