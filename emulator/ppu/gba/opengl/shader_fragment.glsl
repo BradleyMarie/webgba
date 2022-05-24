@@ -387,8 +387,8 @@ uniform highp vec2 win1_end;
 
 bool IsInsideWindow1D(highp float start, highp float end,
                       highp float location) {
-  return ((start <= end && start <= location && location <= end) ||
-          (end < start && (location < start || end < location)));
+  bool between = start <= location && location <= end;
+  return (start < end && between) || (start >= end && !between);
 }
 
 bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
@@ -397,29 +397,39 @@ bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
 }
 
 WindowContents CheckWindow(bool on_object) {
-  if (win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord)) {
-    return win0;
-  }
+  bool use_win0 =
+      win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord);
+  bool done = use_win0;
 
-  if (win1_enabled && IsInsideWindow2D(win1_start, win1_end, screencoord)) {
-    return win1;
-  }
+  bool use_win1 = !done && win1_enabled &&
+                  IsInsideWindow2D(win1_start, win1_end, screencoord);
+  done = done || use_win1;
 
-  if (winobj_enabled && on_object) {
-    return winobj;
-  }
+  bool use_winobj = !done && winobj_enabled && on_object;
+  done = done || use_winobj;
 
-  if (win0_enabled || win1_enabled || winobj_enabled) {
-    return winout;
-  }
+  bool use_winout = !done && (win0_enabled || win1_enabled || winobj_enabled);
+  done = done || use_winout;
 
   WindowContents result;
-  result.bg0 = true;
-  result.bg1 = true;
-  result.bg2 = true;
-  result.bg3 = true;
-  result.obj = true;
-  result.bld = true;
+  result.bg0 = (use_win0 && win0.bg0) || (use_win1 && win1.bg0) ||
+               (use_winobj && winobj.bg0) || (use_winout && winout.bg0) ||
+               (!done && true);
+  result.bg1 = (use_win0 && win0.bg1) || (use_win1 && win1.bg1) ||
+               (use_winobj && winobj.bg1) || (use_winout && winout.bg1) ||
+               (!done && true);
+  result.bg2 = (use_win0 && win0.bg2) || (use_win1 && win1.bg2) ||
+               (use_winobj && winobj.bg2) || (use_winout && winout.bg2) ||
+               (!done && true);
+  result.bg3 = (use_win0 && win0.bg3) || (use_win1 && win1.bg3) ||
+               (use_winobj && winobj.bg3) || (use_winout && winout.bg3) ||
+               (!done && true);
+  result.obj = (use_win0 && win0.obj) || (use_win1 && win1.obj) ||
+               (use_winobj && winobj.obj) || (use_winout && winout.obj) ||
+               (!done && true);
+  result.bld = (use_win0 && win0.bld) || (use_win1 && win1.bld) ||
+               (use_winobj && winobj.bld) || (use_winout && winout.bld) ||
+               (!done && true);
 
   return result;
 }
@@ -597,11 +607,6 @@ lowp vec4 Backdrop() {
 }
 
 void main() {
-  if (blank) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    return;
-  }
-
   BlendUnitInitialize();
 
   ObjectLayer object;
@@ -615,62 +620,73 @@ void main() {
   }
 
   WindowContents window = CheckWindow(object.winobj);
-  if (window.obj) {
-    BlendUnitAddObject(object);
-  }
+  object.color.a *= float(window.obj);
+  BlendUnitAddObject(object);
 
   if (mode == 0) {
-    if (bg0_enabled && window.bg0) {
+    if (bg0_enabled) {
       lowp vec4 bg0 = ScrollingBackground0();
+      bg0.a *= float(window.bg0);
       BlendUnitAddBackground0(bg0);
     }
-    if (bg1_enabled && window.bg1) {
+    if (bg1_enabled) {
       lowp vec4 bg1 = ScrollingBackground1();
+      bg1.a *= float(window.bg1);
       BlendUnitAddBackground1(bg1);
     }
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = ScrollingBackground2();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
-    if (bg3_enabled && window.bg3) {
+    if (bg3_enabled) {
       lowp vec4 bg3 = ScrollingBackground3();
+      bg3.a *= float(window.bg3);
       BlendUnitAddBackground3(bg3);
     }
   } else if (mode == 1) {
-    if (bg0_enabled && window.bg0) {
+    if (bg0_enabled) {
       lowp vec4 bg0 = ScrollingBackground0();
+      bg0.a *= float(window.bg0);
       BlendUnitAddBackground0(bg0);
     }
-    if (bg1_enabled && window.bg1) {
+    if (bg1_enabled) {
       lowp vec4 bg1 = ScrollingBackground1();
+      bg1.a *= float(window.bg1);
       BlendUnitAddBackground1(bg1);
     }
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = AffineBackground2();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   } else if (mode == 2) {
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = AffineBackground2();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
     if (bg3_enabled && window.bg3) {
       lowp vec4 bg3 = AffineBackground3();
+      bg3.a *= float(window.bg3);
       BlendUnitAddBackground3(bg3);
     }
   } else if (mode == 3) {
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = Background2Mode3();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   } else if (mode == 4) {
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = Background2Mode4();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   } else if (mode == 5) {
-    if (bg2_enabled && window.bg2) {
+    if (bg2_enabled) {
       lowp vec4 bg2 = Background2Mode5();
+      bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   }
@@ -678,5 +694,5 @@ void main() {
   lowp vec4 backdrop = Backdrop();
   BlendUnitAddBackdrop(backdrop);
 
-  gl_FragColor = BlendUnitBlend(window.bld);
+  gl_FragColor = BlendUnitBlend(window.bld) * float(!blank);
 }
