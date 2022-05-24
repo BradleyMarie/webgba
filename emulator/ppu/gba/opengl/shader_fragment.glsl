@@ -526,13 +526,8 @@ lowp vec4 AffineBackgroundImpl(highp float tilemap_base,
                                highp vec2 tilemap_size_pixels,
                                highp vec2 tilemap_pixel, highp vec2 mosaic,
                                highp float tile_base, bool wraparound) {
-  if (!wraparound && tilemap_pixel.x < 0.0 || tilemap_pixel.y < 0.0 ||
-      tilemap_pixel.x > tilemap_size_pixels.x ||
-      tilemap_pixel.y > tilemap_size_pixels.y) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
-  }
-
-  highp vec2 wrapped_tilemap_pixel = mod(tilemap_pixel, tilemap_size_pixels);
+  highp vec2 wrapped_tilemap_pixel =
+      wraparound ? mod(tilemap_pixel, tilemap_size_pixels) : tilemap_pixel;
   highp vec2 lookup_pixel =
       wrapped_tilemap_pixel - mod(wrapped_tilemap_pixel, mosaic);
 
@@ -558,7 +553,11 @@ lowp vec4 AffineBackgroundImpl(highp float tilemap_base,
 
   lowp vec4 color = texture2D(bg_palette, vec2(color_index, 0.5));
 
-  return vec4(color.rgb, sign(color_index));
+  lowp float visible = step(0.0, wrapped_tilemap_pixel.x) *
+                       step(0.0, wrapped_tilemap_pixel.y) *
+                       step(wrapped_tilemap_pixel.x, tilemap_size_pixels.x) *
+                       step(wrapped_tilemap_pixel.y, tilemap_size_pixels.y);
+  return vec4(color.rgb, sign(color_index) * sign(visible));
 }
 
 lowp vec4 AffineBackground2() {
