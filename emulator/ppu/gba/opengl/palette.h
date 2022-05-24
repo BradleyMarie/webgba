@@ -7,8 +7,7 @@
 #include "emulator/ppu/gba/memory.h"
 
 typedef struct {
-  GLuint bg_large_palette;
-  GLuint bg_small_palette;
+  GLuint bg_palette;
   GLuint obj_large_palette;
   GLuint obj_small_palette;
   uint16_t colors[GBA_LARGE_PALETTE_SIZE];
