@@ -6,7 +6,7 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
                              GLsizei height) {
   for (uint_fast8_t y = 0u; y < GBA_SCREEN_HEIGHT; y++) {
     for (uint_fast8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
-      screen->pixels[y][x] <<= 1u;
+      screen->pixels[y][x] = screen->pixels[y][x] << 1u | 1u;
     }
   }
 
@@ -58,7 +58,7 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
       "varying mediump vec2 texcoord;\n"
       "void main() {\n"
       "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.b, color.g, color.r, 0.0);\n"
+      "  gl_FragColor = vec4(color.bgr, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
