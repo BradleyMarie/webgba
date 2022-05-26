@@ -61,22 +61,9 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       }
     }
 
-    static const GLfloat num_tiles[6u][2u] = {
-        {GBA_TILE_MODE_NUM_OBJECT_S_TILES, GBA_TILE_MODE_NUM_OBJECT_D_TILES},
-        {GBA_TILE_MODE_NUM_OBJECT_S_TILES, GBA_TILE_MODE_NUM_OBJECT_D_TILES},
-        {GBA_TILE_MODE_NUM_OBJECT_S_TILES, GBA_TILE_MODE_NUM_OBJECT_D_TILES},
-        {GBA_BITMAP_MODE_NUM_OBJECT_S_TILES,
-         GBA_BITMAP_MODE_NUM_OBJECT_D_TILES},
-        {GBA_BITMAP_MODE_NUM_OBJECT_S_TILES,
-         GBA_BITMAP_MODE_NUM_OBJECT_D_TILES},
-        {GBA_BITMAP_MODE_NUM_OBJECT_S_TILES,
-         GBA_BITMAP_MODE_NUM_OBJECT_D_TILES}};
-
     context->attributes[i].enabled = true;
     context->attributes[i].tile_base =
-        (GLfloat)character_name /
-        num_tiles[registers->dispcnt.mode]
-                 [memory->oam.object_attributes[i].palette_mode];
+        (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
     context->attributes[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
     context->attributes[i].rendered =
@@ -84,7 +71,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     context->attributes[i].blended =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->attributes[i].palette =
-        ((GLfloat)memory->oam.object_attributes[i].palette + 0.5) / 16.0;
+        (GLfloat)memory->oam.object_attributes[i].palette / 16.0;
     context->attributes[i].priority = memory->oam.object_attributes[i].priority;
 
     context->attributes[i].sprite_size[0u] =

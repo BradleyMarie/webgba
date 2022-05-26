@@ -8,8 +8,7 @@
 
 typedef struct {
   GLuint bg_palette;
-  GLuint obj_large_palette;
-  GLuint obj_small_palette;
+  GLuint obj_palette;
   uint16_t colors[GBA_LARGE_PALETTE_SIZE];
 } OpenGlBgPalette;
 

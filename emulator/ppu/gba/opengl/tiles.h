@@ -9,12 +9,9 @@
 
 typedef struct {
   GLuint bg_tiles;
-  GLuint obj_s_tiles;
-  GLuint obj_d_tiles;
-  uint8_t bg_staging[GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES][GBA_TILE_1D_SIZE]
-                    [GBA_TILE_1D_SIZE][2u];
-  uint8_t obj_staging[GBA_TILE_MODE_NUM_OBJECT_S_TILES][GBA_TILE_1D_SIZE]
-                     [GBA_TILE_1D_SIZE];
+  GLuint obj_tiles;
+  uint8_t staging[GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES][GBA_TILE_1D_SIZE]
+                 [GBA_TILE_1D_SIZE][2u];
 } OpenGlTiles;
 
 void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
