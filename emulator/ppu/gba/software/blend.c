@@ -13,29 +13,26 @@ static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
     return;
   }
 
-  // The bottom element is always removed. If the bottom element is an object,
-  // the blend unit no longer contains any objects.
-  blend_unit->contains_object ^= blend_unit->is_object[1u];
-
   if (blend_unit->priorities[0u] > priority) {
     blend_unit->priorities[1u] = blend_unit->priorities[0u];
     blend_unit->layers[1u] = blend_unit->layers[0u];
     blend_unit->top[1u] = blend_unit->top[0u];
     blend_unit->bottom[1u] = blend_unit->bottom[0u];
-    blend_unit->is_object[1u] = blend_unit->is_object[0u];
+    blend_unit->is_blended_object[1u] = blend_unit->is_blended_object[0u];
     blend_unit->priorities[0u] = priority;
     blend_unit->layers[0u] = color;
     blend_unit->top[0u] = top;
     blend_unit->bottom[0u] = bottom;
-    blend_unit->is_object[0u] = false;
+    blend_unit->is_blended_object[0u] = false;
   } else {
     blend_unit->priorities[1u] = priority;
     blend_unit->layers[1u] = color;
     blend_unit->top[1u] = top;
     blend_unit->bottom[1u] = bottom;
-    blend_unit->is_object[1u] = false;
+    blend_unit->is_blended_object[1u] = false;
   }
 }
+
 static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
     const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
   assert(blend_unit->top[0u]);
@@ -91,7 +88,7 @@ static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
 
 static uint16_t GbaPpuBlendUnitNoBlendInternal(
     const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
-  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+  if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->top[0u] & blend_unit->bottom[1u]) {
     return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
@@ -105,7 +102,7 @@ static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
-  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+  if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->bottom[1u]) {
     return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
@@ -131,7 +128,7 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
     return GbaPpuBlendUnitNoBlend(blend_unit);
   }
 
-  if (blend_unit->contains_object & blend_unit->obj_semi_transparent &
+  if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->bottom[1u]) {
     return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
   }
@@ -183,9 +180,7 @@ void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
   blend_unit->layers[0u] = color;
   blend_unit->top[0u] = semi_transparent | registers->bldcnt.a_obj;
   blend_unit->bottom[0u] = registers->bldcnt.b_obj;
-  blend_unit->is_object[0u] = true;
-  blend_unit->contains_object = true;
-  blend_unit->obj_semi_transparent = semi_transparent;
+  blend_unit->is_blended_object[0u] = semi_transparent;
 }
 
 void GbaPpuBlendUnitAddBackground0(GbaPpuBlendUnit* blend_unit,
