@@ -48,6 +48,7 @@ uniform lowp sampler2D bg_scrolling_tilemap_params;
 
 // Tiles
 uniform lowp sampler2D bg_tiles;
+uniform lowp sampler2D bg_palette;
 
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
@@ -59,9 +60,6 @@ uniform highp vec2 bg0_mosaic;
 uniform highp vec2 bg1_mosaic;
 uniform highp vec2 bg2_mosaic;
 uniform highp vec2 bg3_mosaic;
-
-// Palettes
-uniform lowp sampler2D bg_palette;
 
 // Inputs
 varying highp vec2 bg0_scrolling_screencoord;
@@ -90,10 +88,8 @@ struct ObjectAttributes {
 };
 
 uniform ObjectAttributes obj_attributes[128];
-uniform mediump sampler2D obj_tiles_d;
-uniform lowp sampler2D obj_tiles_s;
-uniform lowp sampler2D obj_large_palette;
-uniform lowp sampler2D obj_small_palette;
+uniform lowp sampler2D obj_tiles;
+uniform lowp sampler2D obj_palette;
 
 struct ObjectLayer {
   lowp vec4 color;
@@ -155,32 +151,21 @@ ObjectLayer Objects() {
 
     tile_pixel = abs(obj_attributes[i].flip - tile_pixel);
 
-    lowp vec4 color;
-    if (obj_attributes[i].large_palette) {
-      const highp float num_tiles = 512.0;
-      mediump vec4 color_index = texture2D(
-          obj_tiles_d,
-          vec2(tile_pixel.x, obj_attributes[i].tile_base +
-                                 (tile_index + tile_pixel.y) / num_tiles));
-      if (color_index.r == 0.0) {
-        continue;
-      }
-
-      color = texture2D(obj_large_palette, vec2(color_index.r, 0.5));
-    } else {
-      const highp float num_tiles = 1024.0;
-      mediump vec4 color_index = texture2D(
-          obj_tiles_s,
-          vec2(tile_pixel.x, obj_attributes[i].tile_base +
-                                 (tile_index + tile_pixel.y) / num_tiles));
-      if (color_index.r == 0.0) {
-        continue;
-      }
-
-      color = texture2D(
-          obj_small_palette,
-          vec2((color_index.r * 15.0 + 0.5) / 16.0, obj_attributes[i].palette));
+    lowp vec4 color_indices =
+        texture2D(obj_tiles,
+                  vec2(tile_pixel.x, obj_attributes[i].tile_base +
+                                         (tile_index + tile_pixel.y) / 1024.0));
+    lowp float color_index =
+        obj_attributes[i].large_palette ? color_indices.r : color_indices.a;
+    if (color_index == 0.0) {
+      continue;
     }
+
+    lowp float palette =
+        obj_attributes[i].large_palette ? 0.0 : obj_attributes[i].palette;
+    lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
+    lowp vec4 color =
+        texture2D(obj_palette, vec2(palette + palette_offset, 0.5));
 
     if (!obj_attributes[i].rendered) {
       result.winobj = true;
@@ -575,7 +560,8 @@ lowp vec4 AffineBackground3() {
                               bg3_wraparound);
 }
 
-lowp vec4 Background2Mode3() {
+// Bitmap Backgrounds
+lowp vec4 BitmapBackgroundMode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -587,7 +573,7 @@ lowp vec4 Background2Mode3() {
   return color;
 }
 
-lowp vec4 Background2Mode4() {
+lowp vec4 BitmapBackgroundMode4() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -601,7 +587,7 @@ lowp vec4 Background2Mode4() {
   return color;
 }
 
-lowp vec4 Background2Mode5() {
+lowp vec4 BitmapBackgroundMode5() {
   const highp vec2 bitmap_size = vec2(160.0, 128.0);
   highp vec2 lookup = bg2_affine_screencoord -
                       mod(bg2_affine_screencoord, bg2_mosaic) + vec2(0.5, 0.5);
@@ -613,10 +599,12 @@ lowp vec4 Background2Mode5() {
   return color;
 }
 
+// Backdrop
 lowp vec4 Backdrop() {
   return texture2D(bg_palette, vec2(1.0 / 512.0, 0.5));
 }
 
+// Main
 void main() {
   BlendUnitInitialize();
 
@@ -684,19 +672,19 @@ void main() {
     }
   } else if (mode == 3) {
     if (bg2_enabled) {
-      lowp vec4 bg2 = Background2Mode3();
+      lowp vec4 bg2 = BitmapBackgroundMode3();
       bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   } else if (mode == 4) {
     if (bg2_enabled) {
-      lowp vec4 bg2 = Background2Mode4();
+      lowp vec4 bg2 = BitmapBackgroundMode4();
       bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
   } else if (mode == 5) {
     if (bg2_enabled) {
-      lowp vec4 bg2 = Background2Mode5();
+      lowp vec4 bg2 = BitmapBackgroundMode5();
       bg2.a *= float(window.bg2);
       BlendUnitAddBackground2(bg2);
     }
