@@ -1,6 +1,10 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 
-static GLfloat FixedToFloat(uint8_t fixed) { return (double)fixed / 16.0; }
+#include <math.h>
+
+static GLfloat FixedToFloat(uint8_t fixed) {
+  return fmin((double)fixed / 16.0, 1.0);
+}
 
 void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
                        GbaPpuDirtyBits* dirty_bits) {

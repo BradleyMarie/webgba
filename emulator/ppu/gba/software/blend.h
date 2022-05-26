@@ -11,9 +11,7 @@ typedef struct {
   uint_fast8_t priorities[2u];
   bool top[2u];
   bool bottom[2u];
-  bool is_object[2u];
-  bool contains_object;
-  bool obj_semi_transparent;
+  bool is_blended_object[2u];
 } GbaPpuBlendUnit;
 
 //
@@ -36,10 +34,8 @@ static inline void GbaPpuBlendUnitReset(GbaPpuBlendUnit* blend_unit) {
   blend_unit->priorities[1u] = 6u;
   blend_unit->top[1u] = false;
   blend_unit->bottom[1u] = false;
-  blend_unit->is_object[0u] = false;
-  blend_unit->is_object[1u] = false;
-  blend_unit->contains_object = false;
-  blend_unit->obj_semi_transparent = false;
+  blend_unit->is_blended_object[0u] = false;
+  blend_unit->is_blended_object[1u] = false;
 }
 
 void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
