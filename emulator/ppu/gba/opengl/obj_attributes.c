@@ -61,7 +61,6 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       }
     }
 
-    context->attributes[i].enabled = true;
     context->attributes[i].sprite_size[0u] =
         shape_size_to_x_size_pixels[memory->oam.object_attributes[i].obj_shape]
                                    [memory->oam.object_attributes[i].obj_size];
@@ -105,6 +104,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       continue;
     }
 
+    context->attributes[i].enabled = true;
     context->attributes[i].tile_base =
         (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
     context->attributes[i].large_palette =
@@ -159,64 +159,70 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
-  char variable_name[100u];
+  uint8_t object_count = 0u;
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
-    sprintf(variable_name, "obj_attributes[%u].enabled", i);
-    GLint enabled = glGetUniformLocation(program, variable_name);
-    glUniform1i(enabled, context->attributes[i].enabled);
+    if (!context->attributes[i].enabled) {
+      continue;
+    }
 
-    sprintf(variable_name, "obj_attributes[%u].affine", i);
+    char variable_name[100u];
+    sprintf(variable_name, "obj_attributes[%u].affine", object_count);
     GLint affine = glGetUniformLocation(program, variable_name);
     glUniformMatrix2fv(affine, 1, false,
                        &context->attributes[i].affine[0u][0u]);
 
-    sprintf(variable_name, "obj_attributes[%u].origin", i);
+    sprintf(variable_name, "obj_attributes[%u].origin", object_count);
     GLint origin = glGetUniformLocation(program, variable_name);
     glUniform2f(origin, context->attributes[i].origin[0u],
                 context->attributes[i].origin[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].sprite_size", i);
+    sprintf(variable_name, "obj_attributes[%u].sprite_size", object_count);
     GLint sprite_size = glGetUniformLocation(program, variable_name);
     glUniform2f(sprite_size, context->attributes[i].sprite_size[0u],
                 context->attributes[i].sprite_size[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].render_size", i);
+    sprintf(variable_name, "obj_attributes[%u].render_size", object_count);
     GLint render_size = glGetUniformLocation(program, variable_name);
     glUniform2f(render_size, context->attributes[i].render_size[0u],
                 context->attributes[i].render_size[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].mosaic", i);
+    sprintf(variable_name, "obj_attributes[%u].mosaic", object_count);
     GLint mosaic = glGetUniformLocation(program, variable_name);
     glUniform2f(mosaic, context->attributes[i].mosaic[0u],
                 context->attributes[i].mosaic[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].flip", i);
+    sprintf(variable_name, "obj_attributes[%u].flip", object_count);
     GLint flip = glGetUniformLocation(program, variable_name);
     glUniform2f(flip, context->attributes[i].flip[0u],
                 context->attributes[i].flip[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].tile_base", i);
+    sprintf(variable_name, "obj_attributes[%u].tile_base", object_count);
     GLint tile_base = glGetUniformLocation(program, variable_name);
     glUniform1f(tile_base, context->attributes[i].tile_base);
 
-    sprintf(variable_name, "obj_attributes[%u].palette", i);
+    sprintf(variable_name, "obj_attributes[%u].palette", object_count);
     GLint palette = glGetUniformLocation(program, variable_name);
     glUniform1f(palette, context->attributes[i].palette);
 
-    sprintf(variable_name, "obj_attributes[%u].large_palette", i);
+    sprintf(variable_name, "obj_attributes[%u].large_palette", object_count);
     GLint large_palette = glGetUniformLocation(program, variable_name);
     glUniform1i(large_palette, context->attributes[i].large_palette);
 
-    sprintf(variable_name, "obj_attributes[%u].rendered", i);
+    sprintf(variable_name, "obj_attributes[%u].rendered", object_count);
     GLint rendered = glGetUniformLocation(program, variable_name);
     glUniform1i(rendered, context->attributes[i].rendered);
 
-    sprintf(variable_name, "obj_attributes[%u].blended", i);
+    sprintf(variable_name, "obj_attributes[%u].blended", object_count);
     GLint blended = glGetUniformLocation(program, variable_name);
     glUniform1i(blended, context->attributes[i].blended);
 
-    sprintf(variable_name, "obj_attributes[%u].priority", i);
+    sprintf(variable_name, "obj_attributes[%u].priority", object_count);
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1i(priority, context->attributes[i].priority);
+
+    object_count += 1u;
   }
+
+  GLint obj_count = glGetUniformLocation(program, "obj_count");
+  glUniform1i(obj_count, object_count);
 }
