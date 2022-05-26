@@ -62,18 +62,6 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     }
 
     context->attributes[i].enabled = true;
-    context->attributes[i].tile_base =
-        (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
-    context->attributes[i].large_palette =
-        memory->oam.object_attributes[i].palette_mode;
-    context->attributes[i].rendered =
-        (memory->oam.object_attributes[i].obj_mode != 2u);
-    context->attributes[i].blended =
-        (memory->oam.object_attributes[i].obj_mode == 1u);
-    context->attributes[i].palette =
-        (GLfloat)memory->oam.object_attributes[i].palette / 16.0;
-    context->attributes[i].priority = memory->oam.object_attributes[i].priority;
-
     context->attributes[i].sprite_size[0u] =
         shape_size_to_x_size_pixels[memory->oam.object_attributes[i].obj_shape]
                                    [memory->oam.object_attributes[i].obj_size];
@@ -104,6 +92,30 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[i].origin[1u] =
           memory->oam.object_attributes[i].y_coordinate_u;
     }
+
+    if (context->attributes[i].origin[0] >= (GLfloat)GBA_SCREEN_WIDTH ||
+        context->attributes[i].origin[1] >= (GLfloat)GBA_SCREEN_HEIGHT ||
+        context->attributes[i].origin[0] +
+                context->attributes[i].render_size[0] <=
+            0.0 ||
+        context->attributes[i].origin[1] +
+                context->attributes[i].render_size[1] <=
+            0.0) {
+      context->attributes[i].enabled = false;
+      continue;
+    }
+
+    context->attributes[i].tile_base =
+        (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
+    context->attributes[i].large_palette =
+        memory->oam.object_attributes[i].palette_mode;
+    context->attributes[i].rendered =
+        (memory->oam.object_attributes[i].obj_mode != 2u);
+    context->attributes[i].blended =
+        (memory->oam.object_attributes[i].obj_mode == 1u);
+    context->attributes[i].palette =
+        (GLfloat)memory->oam.object_attributes[i].palette / 16.0;
+    context->attributes[i].priority = memory->oam.object_attributes[i].priority;
 
     for (uint8_t rot = 0; rot < OAM_NUM_ROTATE_SCALE_GROUPS; rot++) {
       GbaPpuSetRemove(&context->rotations[rot], i);
