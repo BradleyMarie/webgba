@@ -12,12 +12,11 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
       continue;
     }
 
-    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
+    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
         for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
-          uint8_t value = memory->vram.mode_012.bg.tiles.blocks[i]
-                              .d_tiles[t / 2u]
-                              .pixels[y / 2u + (t % 2u) * 4u][x];
+          uint8_t value =
+              memory->vram.mode_012.bg.tiles.blocks[i].d_tiles[t].pixels[y][x];
           context->staging[t][y][x][0u] = value;
         }
       }
