@@ -72,7 +72,6 @@ varying highp vec2 screencoord;
 
 // Objects
 struct ObjectAttributes {
-  bool enabled;
   highp mat2 affine;
   highp vec2 origin;
   highp vec2 sprite_size;
@@ -90,6 +89,7 @@ struct ObjectAttributes {
 uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
+uniform int obj_count;
 
 struct ObjectLayer {
   lowp vec4 color;
@@ -105,11 +105,7 @@ ObjectLayer Objects() {
   result.winobj = false;
   result.blended = false;
 
-  for (int i = 0; i < 128; i++) {
-    if (!obj_attributes[i].enabled) {
-      continue;
-    }
-
+  for (int i = 0; i < obj_count; i++) {
     if (screencoord.x < obj_attributes[i].origin.x ||
         screencoord.y < obj_attributes[i].origin.y) {
       continue;

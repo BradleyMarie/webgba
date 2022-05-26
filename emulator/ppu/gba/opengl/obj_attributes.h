@@ -10,7 +10,7 @@
 
 typedef struct {
   struct {
-    GLint enabled;
+    bool enabled;
     GLfloat affine[2u][2u];
     GLfloat origin[2u];
     GLfloat sprite_size[2u];
