@@ -440,9 +440,6 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
   const highp float tilemap_block_size_pixels =
       number_of_tilemap_blocks * tile_size;
 
-  mediump float num_tiles = large_palette ? 1024.0 : 2048.0;
-  mediump float tile_block_divisor = large_palette ? 1.0 : 2.0;
-
   tilemap_pixel = mod(tilemap_pixel, tilemap_size_pixels);
   tilemap_pixel -= mod(tilemap_pixel, mosaic);
   tilemap_pixel += vec2(0.5, 0.5);
@@ -466,16 +463,16 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
   highp vec4 indices = texture2D(bg_scrolling_tilemap_indices, tile);
   lowp vec4 params = texture2D(bg_scrolling_tilemap_params, tile);
 
+  mediump float num_tiles = 2048.0;
   mediump float tile_block_position =
-      (indices.a * 255.0 * 256.0 + indices.r * 255.0) / 1024.0;
+      (indices.a * 255.0 * 256.0 + indices.r * 255.0) / num_tiles;
 
   highp vec2 tile_pixel = mod(tilemap_pixel, tile_size) / tile_size;
   tile_pixel = abs(params.xy - tile_pixel);
 
-  lowp vec4 color_indices = texture2D(
-      bg_tiles,
-      vec2(tile_pixel.x, tile_base + tile_block_position / tile_block_divisor +
-                             tile_pixel.y / num_tiles));
+  lowp vec4 color_indices =
+      texture2D(bg_tiles, vec2(tile_pixel.x, tile_base + tile_block_position +
+                                                 tile_pixel.y / num_tiles));
   lowp float color_index = large_palette ? color_indices.r : color_indices.a;
 
   lowp float palette = large_palette ? 0.0 : (params.z * 31.0) / 32.0;
@@ -513,7 +510,7 @@ lowp vec4 AffineBackgroundImpl(highp float tilemap_base,
                                highp vec2 tilemap_size_pixels,
                                highp vec2 tilemap_pixel, highp vec2 mosaic,
                                highp float tile_base, bool wraparound) {
-  const highp float num_tiles = 1024.0;
+  const highp float num_tiles = 2048.0;
   const highp float tile_size = 8.0;
 
   highp vec2 wrapped_tilemap_pixel =
@@ -536,7 +533,7 @@ lowp vec4 AffineBackgroundImpl(highp float tilemap_base,
 
   lowp vec4 color_indices = texture2D(
       bg_tiles,
-      vec2(tile_pixel.x, tile_base + index / 4.0 + tile_pixel.y / num_tiles));
+      vec2(tile_pixel.x, tile_base + index / 8.0 + tile_pixel.y / num_tiles));
   lowp float color_index = color_indices.r;
 
   lowp vec4 color = texture2D(bg_palette, vec2(color_index, 0.5));
