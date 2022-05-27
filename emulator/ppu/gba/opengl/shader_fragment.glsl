@@ -430,9 +430,10 @@ lowp vec4 ScrollingBackgroundImpl(highp float tilemap_base,
                                   highp vec2 tilemap_pixel, highp vec2 mosaic,
                                   highp float tile_base, bool large_palette) {
   const highp float number_of_tilemap_blocks = 32.0;
+  const highp float tilemap_block_size_tiles = 32.0;
   const highp float tile_size = 8.0;
   const highp float tilemap_block_size_pixels =
-      number_of_tilemap_blocks * tile_size;
+      tilemap_block_size_tiles * tile_size;
 
   tilemap_pixel = mod(tilemap_pixel, tilemap_size_pixels);
   tilemap_pixel -= mod(tilemap_pixel, mosaic);
