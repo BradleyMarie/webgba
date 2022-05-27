@@ -142,9 +142,13 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[i].affine[1u][1u] = 1.0;
 
       context->attributes[i].flip[0] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x08u) ? 1.0 : 0.0;
+          (memory->oam.object_attributes[i].flex_param_1 & 0x08u)
+              ? context->attributes[i].sprite_size[0]
+              : 0.0;
       context->attributes[i].flip[1] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x10u) ? 1.0 : 0.0;
+          (memory->oam.object_attributes[i].flex_param_1 & 0x10u)
+              ? context->attributes[i].sprite_size[0]
+              : 0.0;
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {

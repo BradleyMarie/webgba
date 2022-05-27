@@ -131,6 +131,7 @@ ObjectLayer Objects() {
     }
 
     lookup = lookup - mod(lookup, obj_attributes[i].mosaic) + vec2(0.5, 0.5);
+    lookup = abs(obj_attributes[i].flip - lookup);
 
     highp vec2 lookup_tile = floor(lookup / 8.0);
 
@@ -144,9 +145,6 @@ ObjectLayer Objects() {
     }
 
     highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
-
-    tile_pixel = abs(obj_attributes[i].flip - tile_pixel);
-
     lowp vec4 color_indices =
         texture2D(obj_tiles,
                   vec2(tile_pixel.x, obj_attributes[i].tile_base +
