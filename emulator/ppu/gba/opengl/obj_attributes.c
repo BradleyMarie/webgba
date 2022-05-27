@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)16.0; }
+static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)256.0; }
 
 void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
                                   const GbaPpuMemory* memory,
@@ -126,9 +126,9 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[i].affine[0u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pa);
       context->attributes[i].affine[0u][1u] =
-          FixedToFloat(memory->oam.rotate_scale[rot].pc);
-      context->attributes[i].affine[1u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pb);
+      context->attributes[i].affine[1u][0u] =
+          FixedToFloat(memory->oam.rotate_scale[rot].pc);
       context->attributes[i].affine[1u][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
