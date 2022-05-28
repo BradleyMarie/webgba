@@ -1,5 +1,6 @@
 #include "emulator/ppu/gba/software/screen.h"
 
+#include <stdio.h>
 #include <string.h>
 
 void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
@@ -11,12 +12,6 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
   }
 
   glUseProgram(screen->program);
-
-  GLuint coord_attrib = glGetAttribLocation(screen->program, "coord");
-  glBindBuffer(GL_ARRAY_BUFFER, screen->vertices);
-  glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
-                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
-  glEnableVertexAttribArray(coord_attrib);
 
   GLint texture_location = glGetUniformLocation(screen->program, "image");
   glUniform1i(texture_location, 0);
@@ -30,20 +25,21 @@ void GbaPpuScreenRenderToFbo(GbaPpuScreen* screen, GLuint fbo, GLsizei width,
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glViewport(0, 0, width, height);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+  glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
 void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   screen->program = glCreateProgram();
 
   static const char* vertex_shader_source =
-      "#version 100\n"
-      "attribute highp vec2 coord;\n"
-      "varying mediump vec2 texcoord;\n"
+      "#version 300 es\n"
+      "out vec2 texcoord;\n"
       "void main() {\n"
-      "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
-      "  texcoord.y = (coord.y - 1.0) * -0.5;\n"
-      "  gl_Position = vec4(coord, 0.0, 1.0);\n"
+      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  texcoord.x = (x + 1.0) * 0.5;\n"
+      "  texcoord.y = (y - 1.0) * -0.5;\n"
+      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
       "}\n";
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -53,12 +49,13 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   glDeleteShader(vertex_shader);
 
   static const char* fragment_shader_source =
-      "#version 100\n"
-      "uniform lowp sampler2D image;\n"
-      "varying mediump vec2 texcoord;\n"
+      "#version 300 es\n"
+      "uniform sampler2D image;\n"
+      "in mediump vec2 texcoord;\n"
+      "out lowp vec4 color;"
       "void main() {\n"
-      "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.bgr, 1.0);\n"
+      "  lowp vec4 texcolor = texture2D(image, texcoord);\n"
+      "  color = vec4(texcolor.bgr, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -68,14 +65,6 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
   glDeleteShader(fragment_shader);
 
   glLinkProgram(screen->program);
-
-  static const GLfloat vertices[8u] = {-1.0, -1.0, -1.0, 1.0,
-                                       1.0,  1.0,  1.0,  -1.0};
-
-  glGenBuffers(1, &screen->vertices);
-  glBindBuffer(GL_ARRAY_BUFFER, screen->vertices);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glGenTextures(1u, &screen->texture);
   glBindTexture(GL_TEXTURE_2D, screen->texture);
@@ -93,6 +82,5 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
 
 void GbaPpuScreenDestroy(GbaPpuScreen* screen) {
   glDeleteProgram(screen->program);
-  glDeleteBuffers(1u, &screen->vertices);
   glDeleteTextures(1u, &screen->texture);
 }

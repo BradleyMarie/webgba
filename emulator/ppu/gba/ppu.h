@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_
 #define _WEBGBA_EMULATOR_PPU_GBA_PPU_
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 
 #include "emulator/dma/gba/dma.h"
 #include "emulator/memory/memory.h"

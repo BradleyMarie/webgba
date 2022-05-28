@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install Dependencies
-      run: sudo apt update && sudo apt install -y libgles2-mesa-dev libgoogle-perftools-dev libsdl1.2-dev
+      run: sudo apt update && sudo apt install -y mesa-common-dev libgoogle-perftools-dev libsdl1.2-dev
 
     - name: Test Emulator
       run: bazel test -c opt emulator/...

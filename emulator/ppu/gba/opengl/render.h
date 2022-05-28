@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_OPENGL_RENDER_
 #define _WEBGBA_EMULATOR_PPU_GBA_PPU_OPENGL_RENDER_
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"

@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_GBA_
 #define _WEBGBA_EMULATOR_GBA_
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <stdint.h>
 
 #include "emulator/peripherals/gamepad.h"
