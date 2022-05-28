@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_CONTROL_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_CONTROL_
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/registers.h"

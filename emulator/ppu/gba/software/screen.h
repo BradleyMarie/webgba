@@ -1,7 +1,7 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_SCREEN_
 #define _WEBGBA_EMULATOR_PPU_GBA_PPU_SOFTWARE_SCREEN_
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <assert.h>
 
 #include "emulator/ppu/gba/memory.h"

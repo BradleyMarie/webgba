@@ -160,9 +160,9 @@ void retro_run() {
 static bool retro_init_hw_context() {
   memset(&hw_render, 0, sizeof(struct retro_hw_render_callback));
 
-  hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+  hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
   hw_render.version_major = 3;
-  hw_render.version_minor = 1;
+  hw_render.version_minor = 0;
   hw_render.context_reset = ContextReset;
   hw_render.context_destroy = NULL;
   hw_render.depth = true;

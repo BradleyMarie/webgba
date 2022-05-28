@@ -18,6 +18,7 @@ cc_binary(
             "--preload-file=$(location //third_party/varooom:game.gba)@/game.gba",
             "-s MINIFY_HTML=0",
             "-s INITIAL_MEMORY=134217728",
+            "-s USE_WEBGL2=1",
         ],
     }),
     deps = select({
