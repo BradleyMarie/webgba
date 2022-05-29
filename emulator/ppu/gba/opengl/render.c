@@ -139,6 +139,13 @@ static void CreateRenderProgram(GLuint* program) {
 
 static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
                                      GLuint fbo) {
+  if (renderer->control.blank) {
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    return;
+  }
+
   glUseProgram(renderer->render_program);
 
   OpenGlControlBind(&renderer->control, renderer->render_program);

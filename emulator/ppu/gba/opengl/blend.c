@@ -51,33 +51,33 @@ void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {
   GLint obj_bottom = glGetUniformLocation(program, "obj_bottom");
   glUniform1i(obj_bottom, context->obj_bottom);
 
-  GLint bg0_top = glGetUniformLocation(program, "bg0_top");
+  GLint bg0_top = glGetUniformLocation(program, "bg_top[0]");
   glUniform1i(bg0_top, context->bg0_top);
 
-  GLint bg0_bottom = glGetUniformLocation(program, "bg0_bottom");
+  GLint bg0_bottom = glGetUniformLocation(program, "bg_bottom[0]");
   glUniform1i(bg0_bottom, context->bg0_bottom);
 
-  GLint bg1_top = glGetUniformLocation(program, "bg1_top");
+  GLint bg1_top = glGetUniformLocation(program, "bg_top[1]");
   glUniform1i(bg1_top, context->bg1_top);
 
-  GLint bg1_bottom = glGetUniformLocation(program, "bg1_bottom");
+  GLint bg1_bottom = glGetUniformLocation(program, "bg_bottom[1]");
   glUniform1i(bg1_bottom, context->bg1_bottom);
 
-  GLint bg2_top = glGetUniformLocation(program, "bg2_top");
+  GLint bg2_top = glGetUniformLocation(program, "bg_top[2]");
   glUniform1i(bg2_top, context->bg2_top);
 
-  GLint bg2_bottom = glGetUniformLocation(program, "bg2_bottom");
+  GLint bg2_bottom = glGetUniformLocation(program, "bg_bottom[2]");
   glUniform1i(bg2_bottom, context->bg2_bottom);
 
-  GLint bg3_top = glGetUniformLocation(program, "bg3_top");
+  GLint bg3_top = glGetUniformLocation(program, "bg_top[3]");
   glUniform1i(bg3_top, context->bg3_top);
 
-  GLint bg3_bottom = glGetUniformLocation(program, "bg3_bottom");
+  GLint bg3_bottom = glGetUniformLocation(program, "bg_bottom[3]");
   glUniform1i(bg3_bottom, context->bg3_bottom);
 
-  GLint bd_top = glGetUniformLocation(program, "bd_top");
+  GLint bd_top = glGetUniformLocation(program, "bg_top[4]");
   glUniform1i(bd_top, context->bd_top);
 
-  GLint bd_bottom = glGetUniformLocation(program, "bd_bottom");
+  GLint bd_bottom = glGetUniformLocation(program, "bg_bottom[4]");
   glUniform1i(bd_bottom, context->bd_bottom);
 }

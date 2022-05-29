@@ -22,6 +22,8 @@ cc_binary(
             "-s MINIFY_HTML=0",
             "-s INITIAL_MEMORY=134217728",
             "-s ASSERTIONS=0",
+            "-s MAX_WEBGL_VERSION=2",
+            "-s MIN_WEBGL_VERSION=2",
         ],
     }),
     deps = [
