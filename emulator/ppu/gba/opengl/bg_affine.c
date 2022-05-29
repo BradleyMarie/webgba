@@ -38,7 +38,7 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
     int32_t top_left_y =
         registers->affine[i].y - registers->vcount * registers->affine[i].pd;
 
-    GLfloat array[8u];
+    GLfloat array[6u];
 
     // Bottom Left
     array[0] =
@@ -46,26 +46,22 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
     array[1] =
         FixedToFloat(top_left_y + GBA_SCREEN_HEIGHT * registers->affine[i].pd);
 
-    // Top Left
-    array[2] = FixedToFloat(top_left_x);
-    array[3] = FixedToFloat(top_left_y);
-
-    // Top Right
-    array[4] =
-        FixedToFloat(top_left_x + GBA_SCREEN_WIDTH * registers->affine[i].pa);
-    array[5] =
-        FixedToFloat(top_left_y + GBA_SCREEN_WIDTH * registers->affine[i].pc);
-
     // Bottom Right
-    array[6] =
+    array[2] =
         FixedToFloat(top_left_x + GBA_SCREEN_HEIGHT * registers->affine[i].pb +
-                     GBA_SCREEN_WIDTH * registers->affine[i].pa);
-    array[7] =
+                     2u * GBA_SCREEN_WIDTH * registers->affine[i].pa);
+    array[3] =
         FixedToFloat(top_left_y + GBA_SCREEN_HEIGHT * registers->affine[i].pd +
-                     GBA_SCREEN_WIDTH * registers->affine[i].pc);
+                     2u * GBA_SCREEN_WIDTH * registers->affine[i].pc);
+
+    // Top Left
+    array[4] =
+        FixedToFloat(top_left_x - GBA_SCREEN_HEIGHT * registers->affine[i].pb);
+    array[5] =
+        FixedToFloat(top_left_y - GBA_SCREEN_HEIGHT * registers->affine[i].pd);
 
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
-    glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 8, array);
+    glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 6, array);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     dirty_bits->io.bg_affine_params[i] = false;
@@ -90,7 +86,7 @@ void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
   glGenBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->buffers);
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6, NULL, GL_STATIC_DRAW);
   }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
