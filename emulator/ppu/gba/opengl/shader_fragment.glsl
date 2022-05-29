@@ -430,12 +430,8 @@ lowp vec4 AffineBackground(lowp uint bg) {
   const highp float num_tiles = 2048.0;
   const highp float tile_size = 8.0;
 
-  highp vec2 tilemap_pixel = affine_screencoord[bg - 2u];
-  highp vec2 wrapped_tilemap_pixel = bg_cnt[bg].wraparound
-                                         ? mod(tilemap_pixel, bg_cnt[bg].size)
-                                         : tilemap_pixel;
-  highp vec2 lookup_pixel =
-      wrapped_tilemap_pixel - mod(wrapped_tilemap_pixel, bg_mosaic[bg]);
+  highp vec2 tilemap_pixel = mod(affine_screencoord[bg - 2u], bg_cnt[bg].size);
+  highp vec2 lookup_pixel = tilemap_pixel - mod(tilemap_pixel, bg_mosaic[bg]);
 
   highp vec2 lookup_tile = floor(lookup_pixel / tile_size);
   highp vec2 tilemap_size_tiles = bg_cnt[bg].size / tile_size;
@@ -458,11 +454,7 @@ lowp vec4 AffineBackground(lowp uint bg) {
 
   lowp vec4 color = texture2D(bg_palette, vec2(color_index, 0.5));
 
-  lowp float visible = step(0.0, wrapped_tilemap_pixel.x) *
-                       step(0.0, wrapped_tilemap_pixel.y) *
-                       step(wrapped_tilemap_pixel.x, bg_cnt[bg].size.x) *
-                       step(wrapped_tilemap_pixel.y, bg_cnt[bg].size.y);
-  return vec4(color.rgb, sign(color_index) * sign(visible));
+  return vec4(color.rgb, sign(color_index));
 }
 
 lowp vec4 BitmapBackgroundMode3() {
@@ -529,36 +521,57 @@ void main() {
   object.color.a *= float(window.obj);
   BlendUnitAddObject(object);
 
+  // Scrolling Backgrounds
+  lowp uint enabled_scrolling_backgrounds[4];
+  lowp uint num_enabled_scrolling_backgrounds = 0u;
   for (lowp uint i = 0u; i < num_scrolling_backgrounds; i++) {
     lowp uint bg = scrolling_backgrounds[i];
+    enabled_scrolling_backgrounds[num_enabled_scrolling_backgrounds] = bg;
+    num_enabled_scrolling_backgrounds += uint(window.bg[bg]);
+  }
+
+  for (lowp uint i = 0u; i < num_enabled_scrolling_backgrounds; i++) {
+    lowp uint bg = enabled_scrolling_backgrounds[i];
     lowp vec4 color = ScrollingBackground(bg);
-    color.a *= float(window.bg[bg]);
     BlendUnitAddBackground(bg, color, bg_cnt[bg].priority);
   }
 
+  // Affine Backgrounds
+  lowp uint enabled_affine_backgrounds[2];
+  lowp uint num_enabled_affine_backgrounds = 0u;
   for (lowp uint i = 0u; i < num_affine_backgrounds; i++) {
     lowp uint bg = affine_backgrounds[i];
+    enabled_affine_backgrounds[num_enabled_affine_backgrounds] = bg;
+    bool above_min =
+        all(greaterThan(affine_screencoord[bg - 2u], vec2(0.0, 0.0)));
+    bool below_max =
+        all(lessThan(affine_screencoord[bg - 2u], bg_cnt[bg].size));
+    num_enabled_affine_backgrounds += uint(
+        window.bg[bg] && (bg_cnt[bg].wraparound || (above_min && below_max)));
+  }
+
+  for (lowp uint i = 0u; i < num_enabled_affine_backgrounds; i++) {
+    lowp uint bg = enabled_affine_backgrounds[i];
     lowp vec4 color = AffineBackground(bg);
-    color.a *= float(window.bg[bg]);
     BlendUnitAddBackground(bg, color, bg_cnt[bg].priority);
   }
 
-  if (bitmap_backgrounds_mode3) {
+  // Bitmap Backgrounds
+  if (bitmap_backgrounds_mode3 && window.bg[2]) {
     lowp vec4 color = BitmapBackgroundMode3();
-    color.a *= float(window.bg[2]);
     BlendUnitAddBackground(2u, color, bg_cnt[2].priority);
-  } else if (bitmap_backgrounds_mode4) {
+  } else if (bitmap_backgrounds_mode4 && window.bg[2]) {
     lowp vec4 color = BitmapBackgroundMode4();
-    color.a *= float(window.bg[2]);
     BlendUnitAddBackground(2u, color, bg_cnt[2].priority);
-  } else if (bitmap_backgrounds_mode5) {
+  } else if (bitmap_backgrounds_mode5 && window.bg[2]) {
     lowp vec4 color = BitmapBackgroundMode5();
-    color.a *= float(window.bg[2]);
     BlendUnitAddBackground(2u, color, bg_cnt[2].priority);
   }
 
+  // Backdrop
   lowp vec4 backdrop = Backdrop();
   BlendUnitAddBackdrop(backdrop);
 
+  // Blend
   fragColor = BlendUnitBlend(window.bld);
 }
