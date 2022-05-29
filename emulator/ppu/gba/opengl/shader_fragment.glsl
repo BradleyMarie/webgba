@@ -1,4 +1,4 @@
-#version 100
+#version 300 es
 
 // Display Controls
 uniform bool blank;
@@ -62,13 +62,13 @@ uniform highp vec2 bg2_mosaic;
 uniform highp vec2 bg3_mosaic;
 
 // Inputs
-varying highp vec2 bg0_scrolling_screencoord;
-varying highp vec2 bg1_scrolling_screencoord;
-varying highp vec2 bg2_scrolling_screencoord;
-varying highp vec2 bg3_scrolling_screencoord;
-varying highp vec2 bg2_affine_screencoord;
-varying highp vec2 bg3_affine_screencoord;
-varying highp vec2 screencoord;
+in highp vec2 bg0_scrolling_screencoord;
+in highp vec2 bg1_scrolling_screencoord;
+in highp vec2 bg2_scrolling_screencoord;
+in highp vec2 bg3_scrolling_screencoord;
+in highp vec2 bg2_affine_screencoord;
+in highp vec2 bg3_affine_screencoord;
+in highp vec2 screencoord;
 
 // Objects
 struct ObjectAttributes {
@@ -597,6 +597,8 @@ lowp vec4 Backdrop() {
 }
 
 // Main
+out lowp vec4 fragColor;
+
 void main() {
   BlendUnitInitialize();
 
@@ -685,5 +687,5 @@ void main() {
   lowp vec4 backdrop = Backdrop();
   BlendUnitAddBackdrop(backdrop);
 
-  gl_FragColor = BlendUnitBlend(window.bld) * float(!blank);
+  fragColor = BlendUnitBlend(window.bld) * float(!blank);
 }

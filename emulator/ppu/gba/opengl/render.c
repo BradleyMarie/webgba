@@ -47,7 +47,6 @@ struct _GbaPpuOpenGlRenderer {
   uint8_t last_frame_contents;
   GLuint staging_texture;
   GLuint staging_fbo;
-  GLuint vertices;
   GLuint render_program;
   GLuint upscale_program;
   bool initialized;
@@ -81,25 +80,18 @@ static void CreateStagingFbo(GLuint* fbo, GLuint staging_texture) {
   UpdateStagingFbo(*fbo, staging_texture);
 }
 
-static void CreateVertices(GLuint* vertices) {
-  static const GLfloat data[8u] = {-1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0};
-  glGenBuffers(1, vertices);
-  glBindBuffer(GL_ARRAY_BUFFER, *vertices);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
 static void CreateUpscaleProgram(GLuint* program) {
   *program = glCreateProgram();
 
   static const char* upscale_vertex_shader_source =
-      "#version 100\n"
-      "attribute highp vec2 coord;\n"
-      "varying mediump vec2 texcoord;\n"
+      "#version 300 es\n"
+      "out vec2 texcoord;\n"
       "void main() {\n"
-      "  texcoord.x = (coord.x + 1.0) * 0.5;\n"
-      "  texcoord.y = (coord.y + 1.0) * 0.5;\n"
-      "  gl_Position = vec4(coord, 0.0, 1.0);\n"
+      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  texcoord.x = (x + 1.0) * 0.5;\n"
+      "  texcoord.y = (y - 1.0) * -0.5;\n"
+      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
       "}\n";
 
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -109,12 +101,13 @@ static void CreateUpscaleProgram(GLuint* program) {
   glDeleteShader(vertex_shader);
 
   static const char* upscale_fragment_shader_source =
-      "#version 100\n"
-      "uniform lowp sampler2D image;\n"
-      "varying mediump vec2 texcoord;\n"
+      "#version 300 es\n"
+      "uniform sampler2D image;\n"
+      "in mediump vec2 texcoord;\n"
+      "out lowp vec4 color;"
       "void main() {\n"
-      "  lowp vec4 color = texture2D(image, texcoord);\n"
-      "  gl_FragColor = vec4(color.r, color.g, color.b, 1.0);\n"
+      "  lowp vec4 texcolor = texture2D(image, texcoord);\n"
+      "  color = vec4(texcolor.bgr, 1.0);\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -164,14 +157,8 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
   OpenGlTilesBind(&renderer->tiles, renderer->render_program);
   OpenGlBlendBind(&renderer->blend, renderer->render_program);
 
-  GLuint vertex = glGetAttribLocation(renderer->render_program, "vertex");
-  glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
-  glVertexAttribPointer(vertex, /*size=*/2, /*type=*/GL_FLOAT,
-                        /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
-  glEnableVertexAttribArray(vertex);
-
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+  glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
 static void GbaPpuOpenGlRendererFlush(const GbaPpuOpenGlRenderer* renderer) {
@@ -312,13 +299,6 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
 
     glUseProgram(renderer->upscale_program);
 
-    GLuint coord_attrib =
-        glGetAttribLocation(renderer->upscale_program, "coord");
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->vertices);
-    glVertexAttribPointer(coord_attrib, /*size=*/2, /*type=*/GL_FLOAT,
-                          /*normalized=*/false, /*stride=*/0, /*pointer=*/NULL);
-    glEnableVertexAttribArray(coord_attrib);
-
     GLint texture_location =
         glGetUniformLocation(renderer->upscale_program, "image");
     glUniform1i(texture_location, 0);
@@ -328,7 +308,7 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, width, height);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4u);
+    glDrawArrays(GL_TRIANGLES, 0, 3u);
   }
 
   *fbo_contents = ++renderer->last_frame_contents;
@@ -348,7 +328,6 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
   CreateRenderProgram(&renderer->render_program);
   CreateUpscaleProgram(&renderer->upscale_program);
-  CreateVertices(&renderer->vertices);
 
   renderer->initialized = true;
 }
@@ -372,7 +351,6 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     glDeleteTextures(1u, &renderer->staging_texture);
     glDeleteProgram(renderer->render_program);
     glDeleteProgram(renderer->upscale_program);
-    glDeleteBuffers(1u, &renderer->vertices);
   }
 
   free(renderer);

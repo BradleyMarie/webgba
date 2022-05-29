@@ -10,26 +10,22 @@ void OpenGlBgScrollingReload(OpenGlBgScrolling* context,
       continue;
     }
 
-    GLfloat array[8u];
+    GLfloat array[6u];
 
     // Bottom Left
-    array[0] = registers->bg_offsets[i].x;
-    array[1] = registers->bg_offsets[i].y + GBA_SCREEN_HEIGHT;
-
-    // Top Left
-    array[2] = registers->bg_offsets[i].x;
-    array[3] = registers->bg_offsets[i].y;
-
-    // Top Right
-    array[4] = registers->bg_offsets[i].x + GBA_SCREEN_WIDTH;
-    array[5] = registers->bg_offsets[i].y;
+    array[0u] = registers->bg_offsets[i].x;
+    array[1u] = registers->bg_offsets[i].y + GBA_SCREEN_HEIGHT;
 
     // Bottom Right
-    array[6] = registers->bg_offsets[i].x + GBA_SCREEN_WIDTH;
-    array[7] = registers->bg_offsets[i].y + GBA_SCREEN_HEIGHT;
+    array[2u] = registers->bg_offsets[i].x + 2u * GBA_SCREEN_WIDTH;
+    array[3u] = registers->bg_offsets[i].y + GBA_SCREEN_HEIGHT;
+
+    // Top Left
+    array[4u] = registers->bg_offsets[i].x;
+    array[5u] = (int)registers->bg_offsets[i].y - GBA_SCREEN_HEIGHT;
 
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
-    glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 8, array);
+    glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 6, array);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     dirty_bits->io.bg_offset[i] = false;
@@ -66,7 +62,7 @@ void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context) {
   glGenBuffers(GBA_PPU_NUM_BACKGROUNDS, context->buffers);
   for (uint8_t i = 0; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6, NULL, GL_STATIC_DRAW);
   }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
