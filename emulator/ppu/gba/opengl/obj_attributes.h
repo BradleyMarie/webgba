@@ -10,11 +10,9 @@
 
 typedef struct {
   struct {
-    bool enabled;
     GLfloat affine[2u][2u];
-    GLfloat origin[2u];
+    GLfloat center[2u];
     GLfloat sprite_size[2u];
-    GLfloat render_size[2u];
     GLfloat mosaic[2u];
     GLfloat flip[2u];
     GLfloat tile_base;
@@ -24,6 +22,8 @@ typedef struct {
     GLint blended;
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
+  GbaPpuSet rows[GBA_SCREEN_HEIGHT];
+  GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
 } OpenGlObjectAttributes;
 
