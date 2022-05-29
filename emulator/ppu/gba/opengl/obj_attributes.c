@@ -222,11 +222,11 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 
     sprintf(variable_name, "obj_attributes[%u].priority", object_count);
     GLint priority = glGetUniformLocation(program, variable_name);
-    glUniform1i(priority, context->attributes[i].priority);
+    glUniform1ui(priority, context->attributes[i].priority);
 
     object_count += 1u;
   }
 
   GLint obj_count = glGetUniformLocation(program, "obj_count");
-  glUniform1i(obj_count, object_count);
+  glUniform1ui(obj_count, object_count);
 }
