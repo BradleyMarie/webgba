@@ -88,7 +88,7 @@ lowp float GetObjectColorIndex(lowp uint obj) {
   }
 
   highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
-  lowp vec4 color_indices = texture2D(
+  lowp vec4 color_indices = texture(
       obj_tiles, vec2(tile_pixel.x, obj_attributes[obj].tile_base +
                                         (tile_index + tile_pixel.y) / 1024.0));
   return obj_attributes[obj].large_palette ? color_indices.r : color_indices.a;
@@ -354,8 +354,8 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
                              (tilemap_block_pixel.y + tilemap_block_index_1d) /
                                  number_of_tilemap_blocks);
 
-  highp vec4 indices = texture2D(bg_scrolling_tilemap_indices, tile);
-  lowp vec4 params = texture2D(bg_scrolling_tilemap_params, tile);
+  highp vec4 indices = texture(bg_scrolling_tilemap_indices, tile);
+  lowp vec4 params = texture(bg_scrolling_tilemap_params, tile);
 
   mediump float num_tiles = 2048.0;
   mediump float tile_block_position =
@@ -364,7 +364,7 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
   highp vec2 tile_pixel = mod(tilemap_pixel, tile_size) / tile_size;
   tile_pixel = abs(params.xy - tile_pixel);
 
-  lowp vec4 color_indices = texture2D(
+  lowp vec4 color_indices = texture(
       bg_tiles, vec2(tile_pixel.x, bg_cnt[bg].tile_base + tile_block_position +
                                        tile_pixel.y / num_tiles));
   lowp float color_index =
@@ -373,7 +373,7 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
   lowp float palette =
       bg_cnt[bg].large_palette ? 0.0 : (params.z * 31.0) / 32.0;
   lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
-  lowp vec4 color = texture2D(bg_palette, vec2(palette + palette_offset, 0.5));
+  lowp vec4 color = texture(bg_palette, vec2(palette + palette_offset, 0.5));
   return vec4(color.rgb, sign(color_index));
 }
 
@@ -392,18 +392,18 @@ lowp vec4 AffineBackground(lowp uint bg) {
       bg_cnt[bg].tilemap_base + (tile_index + 0.5) / 65536.0;
 
   mediump vec4 raw_index =
-      texture2D(bg_affine_tilemap,
+      texture(bg_affine_tilemap,
                 vec2(lookup_tile_1d / 256.0, mod(lookup_tile_1d, 256.0)));
   mediump float index = raw_index.r * 255.0 / 256.0;
 
   highp vec2 tile_pixel = mod(lookup_pixel, tile_size) / tile_size;
 
-  lowp vec4 color_indices = texture2D(
+  lowp vec4 color_indices = texture(
       bg_tiles, vec2(tile_pixel.x, bg_cnt[bg].tile_base + index / 8.0 +
                                        tile_pixel.y / num_tiles));
   lowp float color_index = color_indices.r;
 
-  lowp vec4 color = texture2D(bg_palette, vec2(color_index, 0.5));
+  lowp vec4 color = texture(bg_palette, vec2(color_index, 0.5));
 
   return vec4(color.rgb, sign(color_index));
 }
@@ -412,7 +412,7 @@ lowp vec4 BitmapBackgroundMode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = affine_screencoord[0] -
                       mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  lowp vec4 color = texture2D(bg_mode3, lookup / bitmap_size);
+  lowp vec4 color = texture(bg_mode3, lookup / bitmap_size);
   color *= step(affine_screencoord[0].x, bitmap_size.x);
   color *= step(affine_screencoord[0].y, bitmap_size.y);
   color *= step(-affine_screencoord[0].x, 0.0);
@@ -424,9 +424,9 @@ lowp vec4 BitmapBackgroundMode4() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = affine_screencoord[0] -
                       mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  mediump vec4 normalized_index = texture2D(bg_mode4, lookup / bitmap_size);
+  mediump vec4 normalized_index = texture(bg_mode4, lookup / bitmap_size);
   mediump float index = (normalized_index.r * 255.0 + 0.5) / 256.0;
-  lowp vec4 color = texture2D(bg_palette, vec2(index, 0.5));
+  lowp vec4 color = texture(bg_palette, vec2(index, 0.5));
   color *= step(affine_screencoord[0].x, bitmap_size.x);
   color *= step(affine_screencoord[0].y, bitmap_size.y);
   color *= step(-affine_screencoord[0].x, 0.0);
@@ -438,7 +438,7 @@ lowp vec4 BitmapBackgroundMode5() {
   const highp vec2 bitmap_size = vec2(160.0, 128.0);
   highp vec2 lookup = affine_screencoord[0] -
                       mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  lowp vec4 color = texture2D(bg_mode5, lookup / bitmap_size);
+  lowp vec4 color = texture(bg_mode5, lookup / bitmap_size);
   color *= step(affine_screencoord[0].x, bitmap_size.x);
   color *= step(affine_screencoord[0].y, bitmap_size.y);
   color *= step(-affine_screencoord[0].x, 0.0);
@@ -447,7 +447,7 @@ lowp vec4 BitmapBackgroundMode5() {
 }
 
 // Backdrop
-lowp vec4 Backdrop() { return texture2D(bg_palette, vec2(1.0 / 512.0, 0.5)); }
+lowp vec4 Backdrop() { return texture(bg_palette, vec2(1.0 / 512.0, 0.5)); }
 
 // Count Trailing Zeroes
 lowp uint CountTrailingZeroes(highp uint value) {
@@ -543,7 +543,7 @@ void main() {
           obj_attributes[obj].large_palette ? 0.0 : obj_attributes[obj].palette;
       lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
       lowp vec4 obj_color =
-          texture2D(obj_palette, vec2(palette + palette_offset, 0.5));
+          texture(obj_palette, vec2(palette + palette_offset, 0.5));
 
       if (obj_attributes[obj].priority < priority) {
         color = obj_color;

@@ -102,11 +102,11 @@ static void CreateUpscaleProgram(GLuint* program) {
 
   static const char* upscale_fragment_shader_source =
       "#version 300 es\n"
-      "uniform sampler2D image;\n"
+      "uniform lowp sampler2D image;\n"
       "in mediump vec2 texcoord;\n"
       "out lowp vec4 color;"
       "void main() {\n"
-      "  lowp vec4 texcolor = texture2D(image, texcoord);\n"
+      "  lowp vec4 texcolor = texture(image, texcoord);\n"
       "  color = vec4(texcolor.bgr, 1.0);\n"
       "}\n";
 
