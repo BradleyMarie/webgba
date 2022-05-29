@@ -11,10 +11,7 @@ typedef struct {
   GLint mode;
   GLint obj_mode;
   GLint obj_enabled;
-  GLint bg0_enabled;
-  GLint bg1_enabled;
-  GLint bg2_enabled;
-  GLint bg3_enabled;
+  GLint bg_enabled[GBA_PPU_NUM_BACKGROUNDS];
   GLint win0_enabled;
   GLint win1_enabled;
   GLint winobj_enabled;
