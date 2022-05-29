@@ -56,91 +56,41 @@ struct ObjectAttributes {
 uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
-uniform int obj_count;
+uniform lowp uint obj_count;
 
-struct ObjectLayer {
-  lowp vec4 color;
-  lowp uint priority;
-  bool winobj;
-  bool blended;
-};
+lowp float GetObjectColorIndex(lowp uint obj) {
+  highp vec2 half_render_size = obj_attributes[obj].render_size / 2.0;
+  highp vec2 center = obj_attributes[obj].origin + half_render_size;
+  highp vec2 from_center = screencoord - center;
 
-ObjectLayer Objects() {
-  ObjectLayer result;
-  result.color = vec4(0.0, 0.0, 0.0, 0.0);
-  result.priority = 5u;
-  result.winobj = false;
-  result.blended = false;
+  highp vec2 half_sprite_size = obj_attributes[obj].sprite_size / 2.0;
+  highp vec2 lookup =
+      obj_attributes[obj].affine * from_center + half_sprite_size;
 
-  for (int i = 0; i < obj_count; i++) {
-    if (screencoord.x < obj_attributes[i].origin.x ||
-        screencoord.y < obj_attributes[i].origin.y) {
-      continue;
-    }
-
-    highp vec2 end = obj_attributes[i].origin + obj_attributes[i].render_size;
-
-    if (end.x < screencoord.x || end.y < screencoord.y) {
-      continue;
-    }
-
-    highp vec2 half_render_size = obj_attributes[i].render_size / 2.0;
-    highp vec2 center = obj_attributes[i].origin + half_render_size;
-    highp vec2 from_center = screencoord - center;
-
-    highp vec2 half_sprite_size = obj_attributes[i].sprite_size / 2.0;
-    highp vec2 lookup =
-        obj_attributes[i].affine * from_center + half_sprite_size;
-
-    if (lookup.x < 0.0 || obj_attributes[i].sprite_size.x < lookup.x ||
-        lookup.y < 0.0 || obj_attributes[i].sprite_size.y < lookup.y) {
-      continue;
-    }
-
-    lookup = lookup - mod(lookup, obj_attributes[i].mosaic) + vec2(0.5, 0.5);
-    lookup = abs(obj_attributes[i].flip - lookup);
-
-    highp vec2 lookup_tile = floor(lookup / 8.0);
-
-    highp float tile_index;
-    if (obj_mode) {
-      tile_index =
-          lookup_tile.x + lookup_tile.y * obj_attributes[i].sprite_size.x / 8.0;
-    } else {
-      highp float row_width = (obj_attributes[i].large_palette) ? 16.0 : 32.0;
-      tile_index = lookup_tile.x + lookup_tile.y * row_width;
-    }
-
-    highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
-    lowp vec4 color_indices =
-        texture2D(obj_tiles,
-                  vec2(tile_pixel.x, obj_attributes[i].tile_base +
-                                         (tile_index + tile_pixel.y) / 1024.0));
-    lowp float color_index =
-        obj_attributes[i].large_palette ? color_indices.r : color_indices.a;
-    if (color_index == 0.0) {
-      continue;
-    }
-
-    lowp float palette =
-        obj_attributes[i].large_palette ? 0.0 : obj_attributes[i].palette;
-    lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
-    lowp vec4 color =
-        texture2D(obj_palette, vec2(palette + palette_offset, 0.5));
-
-    if (!obj_attributes[i].rendered) {
-      result.winobj = true;
-      continue;
-    }
-
-    if (obj_attributes[i].priority < result.priority) {
-      result.priority = obj_attributes[i].priority;
-      result.color = color;
-      result.blended = obj_attributes[i].blended;
-    }
+  if (lookup.x < 0.0 || obj_attributes[obj].sprite_size.x < lookup.x ||
+      lookup.y < 0.0 || obj_attributes[obj].sprite_size.y < lookup.y) {
+    return 0.0;
   }
 
-  return result;
+  lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);
+  lookup = abs(obj_attributes[obj].flip - lookup);
+
+  highp vec2 lookup_tile = floor(lookup / 8.0);
+
+  highp float tile_index;
+  if (obj_mode) {
+    tile_index =
+        lookup_tile.x + lookup_tile.y * obj_attributes[obj].sprite_size.x / 8.0;
+  } else {
+    highp float row_width = (obj_attributes[obj].large_palette) ? 16.0 : 32.0;
+    tile_index = lookup_tile.x + lookup_tile.y * row_width;
+  }
+
+  highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
+  lowp vec4 color_indices = texture2D(
+      obj_tiles, vec2(tile_pixel.x, obj_attributes[obj].tile_base +
+                                        (tile_index + tile_pixel.y) / 1024.0));
+  return obj_attributes[obj].large_palette ? color_indices.r : color_indices.a;
 }
 
 // Blend Unit
@@ -178,13 +128,13 @@ void BlendUnitInitialize() {
   blend_order[2] = 2u;
 }
 
-void BlendUnitAddObject(ObjectLayer obj) {
-  bool inserted = (obj.color.a != 0.0);
-  blend_priorities[0] = inserted ? obj.priority : 6u;
-  blend_layers[0] = obj.color.rgb;
-  blend_top[0] = inserted && (obj.blended || obj_top);
+void BlendUnitAddObject(lowp vec4 color, lowp uint priority, bool blended) {
+  bool inserted = (color.a != 0.0);
+  blend_priorities[0] = inserted ? priority : 6u;
+  blend_layers[0] = color.rgb;
+  blend_top[0] = inserted && (blended || obj_top);
   blend_bottom[0] = inserted && obj_bottom;
-  blend_is_semi_transparent[0] = inserted && obj.blended;
+  blend_is_semi_transparent[0] = inserted && blended;
 }
 
 void BlendUnitAddBackground(lowp uint bg, lowp vec4 color, lowp uint priority) {
@@ -460,8 +410,7 @@ lowp vec4 AffineBackground(lowp uint bg) {
 lowp vec4 BitmapBackgroundMode3() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) +
-                      vec2(0.5, 0.5);
+                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
   lowp vec4 color = texture2D(bg_mode3, lookup / bitmap_size);
   color *= step(affine_screencoord[0].x, bitmap_size.x);
   color *= step(affine_screencoord[0].y, bitmap_size.y);
@@ -473,8 +422,7 @@ lowp vec4 BitmapBackgroundMode3() {
 lowp vec4 BitmapBackgroundMode4() {
   const highp vec2 bitmap_size = vec2(240.0, 160.0);
   highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) +
-                      vec2(0.5, 0.5);
+                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
   mediump vec4 normalized_index = texture2D(bg_mode4, lookup / bitmap_size);
   mediump float index = (normalized_index.r * 255.0 + 0.5) / 256.0;
   lowp vec4 color = texture2D(bg_palette, vec2(index, 0.5));
@@ -488,8 +436,7 @@ lowp vec4 BitmapBackgroundMode4() {
 lowp vec4 BitmapBackgroundMode5() {
   const highp vec2 bitmap_size = vec2(160.0, 128.0);
   highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) +
-                      vec2(0.5, 0.5);
+                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
   lowp vec4 color = texture2D(bg_mode5, lookup / bitmap_size);
   color *= step(affine_screencoord[0].x, bitmap_size.x);
   color *= step(affine_screencoord[0].y, bitmap_size.y);
@@ -507,19 +454,64 @@ out lowp vec4 fragColor;
 void main() {
   BlendUnitInitialize();
 
-  ObjectLayer object;
+  // Sort Objects and Check Object Window
+  lowp uint object_window_objects[128];
+  lowp uint num_object_window_objects = 0u;
+  lowp uint drawn_objects[128];
+  lowp uint num_drawn_objects = 0u;
+  bool on_object_window = false;
+
   if (obj_enabled) {
-    object = Objects();
-  } else {
-    object.color = vec4(0.0, 0.0, 0.0, 0.0);
-    object.priority = 5u;
-    object.winobj = false;
-    object.blended = false;
+    for (lowp uint i = 0u; i < obj_count; i++) {
+      bool above_min = all(greaterThan(screencoord, obj_attributes[i].origin));
+      highp vec2 end = obj_attributes[i].origin + obj_attributes[i].render_size;
+      bool below_max = all(lessThan(screencoord, end));
+      object_window_objects[num_object_window_objects] = i;
+      num_object_window_objects +=
+          uint(above_min && below_max && !obj_attributes[i].rendered);
+      drawn_objects[num_drawn_objects] = i;
+      num_drawn_objects +=
+          uint(above_min && below_max && obj_attributes[i].rendered);
+    }
+
+    // Check Object Window
+    for (lowp uint i = 0u; i < num_object_window_objects; i++) {
+      lowp float color_index = GetObjectColorIndex(object_window_objects[i]);
+      on_object_window = on_object_window || (color_index != 0.0);
+    }
   }
 
-  WindowContents window = CheckWindow(object.winobj);
-  object.color.a *= float(window.obj);
-  BlendUnitAddObject(object);
+  // Window
+  WindowContents window = CheckWindow(on_object_window);
+
+  // Objects
+  num_drawn_objects = window.obj ? num_drawn_objects : 0u;
+  if (window.obj) {
+    lowp vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+    lowp uint priority = 5u;
+    bool blended = false;
+    for (lowp uint i = 0u; i < num_drawn_objects; i++) {
+      lowp uint obj = drawn_objects[i];
+
+      lowp float color_index = GetObjectColorIndex(obj);
+      if (color_index == 0.0) {
+        continue;
+      }
+
+      lowp float palette =
+          obj_attributes[obj].large_palette ? 0.0 : obj_attributes[obj].palette;
+      lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
+      lowp vec4 obj_color =
+          texture2D(obj_palette, vec2(palette + palette_offset, 0.5));
+
+      if (obj_attributes[obj].priority < priority) {
+        color = obj_color;
+        priority = obj_attributes[obj].priority;
+        blended = obj_attributes[obj].blended;
+      }
+    }
+    BlendUnitAddObject(color, priority, blended);
+  }
 
   // Scrolling Backgrounds
   lowp uint enabled_scrolling_backgrounds[4];
