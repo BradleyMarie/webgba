@@ -35,14 +35,20 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
   while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
     uint8_t i = GbaPpuSetPop(&dirty_bits->oam.objects);
 
+    for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
+      GbaPpuSetRemove(context->columns + x, i);
+    }
+
+    for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
+      GbaPpuSetRemove(context->rows + y, i);
+    }
+
     if (!memory->oam.object_attributes[i].affine &&
         memory->oam.object_attributes[i].flex_param_0) {
-      context->attributes[i].enabled = false;
       continue;
     }
 
     if (memory->oam.object_attributes[i].obj_shape == 3u) {
-      context->attributes[i].enabled = false;
       continue;
     }
 
@@ -56,55 +62,59 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
           GBA_BITMAP_MODE_NUM_OBJECT_D_TILES};
       if (character_name <
           minimum_index[memory->oam.object_attributes[i].palette_mode]) {
-        context->attributes[i].enabled = false;
         continue;
       }
     }
 
-    context->attributes[i].sprite_size[0u] =
+    int_fast16_t sprite_size[2u];
+    sprite_size[0u] =
         shape_size_to_x_size_pixels[memory->oam.object_attributes[i].obj_shape]
                                    [memory->oam.object_attributes[i].obj_size];
-    context->attributes[i].sprite_size[1u] =
+    sprite_size[1u] =
         shape_size_to_y_size_pixels[memory->oam.object_attributes[i].obj_shape]
                                    [memory->oam.object_attributes[i].obj_size];
 
+    context->attributes[i].sprite_size[0u] = sprite_size[0u];
+    context->attributes[i].sprite_size[1u] = sprite_size[1u];
+
+    int_fast16_t render_size[2u];
     if (memory->oam.object_attributes[i].flex_param_0) {
-      context->attributes[i].render_size[0u] =
-          2.0 * context->attributes[i].sprite_size[0u];
-      context->attributes[i].render_size[1u] =
-          2.0 * context->attributes[i].sprite_size[1u];
+      render_size[0u] = 2u * sprite_size[0];
+      render_size[1u] = 2u * sprite_size[1];
     } else {
-      context->attributes[i].render_size[0u] =
-          context->attributes[i].sprite_size[0u];
-      context->attributes[i].render_size[1u] =
-          context->attributes[i].sprite_size[1u];
+      render_size[0u] = sprite_size[0];
+      render_size[1u] = sprite_size[1];
     }
 
-    context->attributes[i].origin[0u] =
-        memory->oam.object_attributes[i].x_coordinate;
-    context->attributes[i].origin[1u] =
-        memory->oam.object_attributes[i].y_coordinate;
+    int_fast16_t origin[2u];
+    origin[0] = memory->oam.object_attributes[i].x_coordinate;
+    origin[1] = memory->oam.object_attributes[i].y_coordinate;
 
-    if (context->attributes[i].origin[1u] +
-            context->attributes[i].render_size[1u] <
-        0.0) {
-      context->attributes[i].origin[1u] =
-          memory->oam.object_attributes[i].y_coordinate_u;
+    if (origin[1u] + render_size[1u] < 0u) {
+      origin[1u] = memory->oam.object_attributes[i].y_coordinate_u;
     }
 
-    if (context->attributes[i].origin[0] >= (GLfloat)GBA_SCREEN_WIDTH ||
-        context->attributes[i].origin[1] >= (GLfloat)GBA_SCREEN_HEIGHT ||
-        context->attributes[i].origin[0] +
-                context->attributes[i].render_size[0] <=
-            0.0 ||
-        context->attributes[i].origin[1] +
-                context->attributes[i].render_size[1] <=
-            0.0) {
-      context->attributes[i].enabled = false;
-      continue;
+    origin[0u] = (origin[0u] < 0u) ? 0u : origin[0u];
+    origin[1u] = (origin[1u] < 0u) ? 0u : origin[1u];
+
+    int_fast16_t max[2u];
+    max[0u] = origin[0u] + render_size[0u];
+    max[1u] = origin[1u] + render_size[1u];
+
+    max[0u] = (max[0u] < GBA_SCREEN_WIDTH) ? max[0u] : GBA_SCREEN_WIDTH;
+    max[1u] = (max[1u] < GBA_SCREEN_HEIGHT) ? max[1u] : GBA_SCREEN_HEIGHT;
+
+    for (int_fast16_t x = origin[0u]; x < max[0u]; x++) {
+      GbaPpuSetAdd(context->columns + x, i);
     }
 
-    context->attributes[i].enabled = true;
+    for (int_fast16_t y = origin[1u]; y < max[1u]; y++) {
+      GbaPpuSetAdd(context->rows + y, i);
+    }
+
+    context->attributes[i].center[0u] = origin[0u] + render_size[0u] / 2u;
+    context->attributes[i].center[1u] = origin[1u] + render_size[1u] / 2u;
+
     context->attributes[i].tile_base =
         (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
     context->attributes[i].large_palette =
@@ -163,70 +173,77 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
-  uint8_t object_count = 0u;
-  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
-    if (!context->attributes[i].enabled) {
-      continue;
-    }
-
+  for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
     char variable_name[100u];
-    sprintf(variable_name, "obj_attributes[%u].affine", object_count);
+    sprintf(variable_name, "object_columns[%u]", x);
+    GLint location = glGetUniformLocation(program, variable_name);
+    uint32_t v0 = context->columns[x].objects[0u];
+    uint32_t v1 = context->columns[x].objects[0u] >> 32u;
+    uint32_t v2 = context->columns[x].objects[1u];
+    uint32_t v3 = context->columns[x].objects[1u] >> 32u;
+    glUniform4ui(location, v0, v1, v2, v3);
+  }
+
+  for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
+    char variable_name[100u];
+    sprintf(variable_name, "object_rows[%u]", y);
+    GLint location = glGetUniformLocation(program, variable_name);
+    uint32_t v0 = context->rows[y].objects[0u];
+    uint32_t v1 = context->rows[y].objects[0u] >> 32u;
+    uint32_t v2 = context->rows[y].objects[1u];
+    uint32_t v3 = context->rows[y].objects[1u] >> 32u;
+    glUniform4ui(location, v0, v1, v2, v3);
+  }
+
+  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
+    char variable_name[100u];
+    sprintf(variable_name, "obj_attributes[%u].affine", i);
     GLint affine = glGetUniformLocation(program, variable_name);
     glUniformMatrix2fv(affine, 1, false,
                        &context->attributes[i].affine[0u][0u]);
 
-    sprintf(variable_name, "obj_attributes[%u].origin", object_count);
-    GLint origin = glGetUniformLocation(program, variable_name);
-    glUniform2f(origin, context->attributes[i].origin[0u],
-                context->attributes[i].origin[1u]);
-
-    sprintf(variable_name, "obj_attributes[%u].sprite_size", object_count);
+    sprintf(variable_name, "obj_attributes[%u].sprite_size", i);
     GLint sprite_size = glGetUniformLocation(program, variable_name);
     glUniform2f(sprite_size, context->attributes[i].sprite_size[0u],
                 context->attributes[i].sprite_size[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].render_size", object_count);
-    GLint render_size = glGetUniformLocation(program, variable_name);
-    glUniform2f(render_size, context->attributes[i].render_size[0u],
-                context->attributes[i].render_size[1u]);
+    sprintf(variable_name, "obj_attributes[%u].center", i);
+    GLint origin = glGetUniformLocation(program, variable_name);
+    glUniform2f(origin, context->attributes[i].center[0u],
+                context->attributes[i].center[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].mosaic", object_count);
+    sprintf(variable_name, "obj_attributes[%u].mosaic", i);
     GLint mosaic = glGetUniformLocation(program, variable_name);
     glUniform2f(mosaic, context->attributes[i].mosaic[0u],
                 context->attributes[i].mosaic[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].flip", object_count);
+    sprintf(variable_name, "obj_attributes[%u].flip", i);
     GLint flip = glGetUniformLocation(program, variable_name);
     glUniform2f(flip, context->attributes[i].flip[0u],
                 context->attributes[i].flip[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].tile_base", object_count);
+    sprintf(variable_name, "obj_attributes[%u].tile_base", i);
     GLint tile_base = glGetUniformLocation(program, variable_name);
     glUniform1f(tile_base, context->attributes[i].tile_base);
 
-    sprintf(variable_name, "obj_attributes[%u].palette", object_count);
+    sprintf(variable_name, "obj_attributes[%u].palette", i);
     GLint palette = glGetUniformLocation(program, variable_name);
     glUniform1f(palette, context->attributes[i].palette);
 
-    sprintf(variable_name, "obj_attributes[%u].large_palette", object_count);
+    sprintf(variable_name, "obj_attributes[%u].large_palette", i);
     GLint large_palette = glGetUniformLocation(program, variable_name);
     glUniform1i(large_palette, context->attributes[i].large_palette);
 
-    sprintf(variable_name, "obj_attributes[%u].rendered", object_count);
+    sprintf(variable_name, "obj_attributes[%u].rendered", i);
     GLint rendered = glGetUniformLocation(program, variable_name);
     glUniform1i(rendered, context->attributes[i].rendered);
 
-    sprintf(variable_name, "obj_attributes[%u].blended", object_count);
+    sprintf(variable_name, "obj_attributes[%u].blended", i);
     GLint blended = glGetUniformLocation(program, variable_name);
     glUniform1i(blended, context->attributes[i].blended);
 
-    sprintf(variable_name, "obj_attributes[%u].priority", object_count);
+    sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1ui(priority, context->attributes[i].priority);
-
-    object_count += 1u;
   }
-
-  GLint obj_count = glGetUniformLocation(program, "obj_count");
-  glUniform1ui(obj_count, object_count);
 }

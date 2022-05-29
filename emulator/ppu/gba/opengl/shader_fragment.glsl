@@ -1,3 +1,5 @@
+
+
 #version 300 es
 
 // Display Controls
@@ -38,11 +40,13 @@ in highp vec2 affine_screencoord[2];
 in highp vec2 screencoord;
 
 // Objects
+uniform highp uvec4 object_rows[160];
+uniform highp uvec4 object_columns[240];
+
 struct ObjectAttributes {
   highp mat2 affine;
-  highp vec2 origin;
   highp vec2 sprite_size;
-  highp vec2 render_size;
+  highp vec2 center;
   mediump vec2 mosaic;
   highp float tile_base;
   lowp float palette;
@@ -56,12 +60,9 @@ struct ObjectAttributes {
 uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
-uniform lowp uint obj_count;
 
 lowp float GetObjectColorIndex(lowp uint obj) {
-  highp vec2 half_render_size = obj_attributes[obj].render_size / 2.0;
-  highp vec2 center = obj_attributes[obj].origin + half_render_size;
-  highp vec2 from_center = screencoord - center;
+  highp vec2 from_center = screencoord - obj_attributes[obj].center;
 
   highp vec2 half_sprite_size = obj_attributes[obj].sprite_size / 2.0;
   highp vec2 lookup =
@@ -448,6 +449,16 @@ lowp vec4 BitmapBackgroundMode5() {
 // Backdrop
 lowp vec4 Backdrop() { return texture2D(bg_palette, vec2(1.0 / 512.0, 0.5)); }
 
+// Count Trailing Zeroes
+lowp uint CountTrailingZeroes(highp uint value) {
+  const highp uint debrujin_sequence = 0x077CB531u;
+  const lowp uint position[32] =
+      uint[32](0u, 1u, 28u, 2u, 29u, 14u, 24u, 3u, 30u, 22u, 20u, 15u, 25u, 17u,
+               4u, 8u, 31u, 27u, 13u, 23u, 21u, 19u, 16u, 7u, 26u, 12u, 18u, 6u,
+               11u, 5u, 10u, 9u);
+  return position[((value & -value) * debrujin_sequence) >> 27u];
+}
+
 // Main
 out lowp vec4 fragColor;
 
@@ -462,16 +473,46 @@ void main() {
   bool on_object_window = false;
 
   if (obj_enabled) {
-    for (lowp uint i = 0u; i < obj_count; i++) {
-      bool above_min = all(greaterThan(screencoord, obj_attributes[i].origin));
-      highp vec2 end = obj_attributes[i].origin + obj_attributes[i].render_size;
-      bool below_max = all(lessThan(screencoord, end));
-      object_window_objects[num_object_window_objects] = i;
-      num_object_window_objects +=
-          uint(above_min && below_max && !obj_attributes[i].rendered);
-      drawn_objects[num_drawn_objects] = i;
-      num_drawn_objects +=
-          uint(above_min && below_max && obj_attributes[i].rendered);
+    highp uvec4 visible_objects =
+        object_rows[uint(screencoord.y)] & object_columns[uint(screencoord.x)];
+
+    highp uint visible_object_sets[4];
+    lowp uint visible_object_set_base[4];
+    lowp uint num_object_sets = 0u;
+    visible_object_sets[num_object_sets] = visible_objects.x;
+    visible_object_set_base[num_object_sets] = 0u;
+    num_object_sets += uint(visible_objects.x != 0u);
+    visible_object_sets[num_object_sets] = visible_objects.y;
+    visible_object_set_base[num_object_sets] = 32u;
+    num_object_sets += uint(visible_objects.y != 0u);
+    visible_object_sets[num_object_sets] = visible_objects.z;
+    visible_object_set_base[num_object_sets] = 64u;
+    num_object_sets += uint(visible_objects.z != 0u);
+    visible_object_sets[num_object_sets] = visible_objects.w;
+    visible_object_set_base[num_object_sets] = 96u;
+    num_object_sets += uint(visible_objects.w != 0u);
+
+    lowp uint visible_object_set_index = 0u;
+    for (lowp uint i = 0u; i < num_object_sets * 32u; i++) {
+      lowp uint base = visible_object_set_base[visible_object_set_index];
+      lowp uint index =
+          CountTrailingZeroes(visible_object_sets[visible_object_set_index]);
+      lowp uint obj = base + index;
+
+      object_window_objects[num_object_window_objects] = obj;
+      num_object_window_objects += uint(!obj_attributes[obj].rendered);
+
+      drawn_objects[num_drawn_objects] = obj;
+      num_drawn_objects += uint(obj_attributes[obj].rendered);
+
+      visible_object_sets[visible_object_set_index] =
+          visible_object_sets[visible_object_set_index] ^ (1u << index);
+      visible_object_set_index +=
+          uint(visible_object_sets[visible_object_set_index] == 0u);
+
+      if (visible_object_set_index == num_object_sets) {
+        break;
+      }
     }
 
     // Check Object Window
