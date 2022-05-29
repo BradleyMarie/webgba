@@ -94,6 +94,9 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       origin[1u] = memory->oam.object_attributes[i].y_coordinate_u;
     }
 
+    context->attributes[i].center[0u] = origin[0u] + render_size[0u] / 2u;
+    context->attributes[i].center[1u] = origin[1u] + render_size[1u] / 2u;
+
     origin[0u] = (origin[0u] < 0u) ? 0u : origin[0u];
     origin[1u] = (origin[1u] < 0u) ? 0u : origin[1u];
 
@@ -111,9 +114,6 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     for (int_fast16_t y = origin[1u]; y < max[1u]; y++) {
       GbaPpuSetAdd(context->rows + y, i);
     }
-
-    context->attributes[i].center[0u] = origin[0u] + render_size[0u] / 2u;
-    context->attributes[i].center[1u] = origin[1u] + render_size[1u] / 2u;
 
     context->attributes[i].tile_base =
         (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
