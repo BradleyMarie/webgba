@@ -1,5 +1,3 @@
-
-
 #version 300 es
 
 // Display Controls
@@ -163,7 +161,7 @@ void BlendUnitAddBackground(lowp uint bg, lowp vec4 color, lowp uint priority) {
 }
 
 void BlendUnitAddBackdrop(lowp vec4 color) {
-  BlendUnitAddBackground(5u, color, 5u);
+  BlendUnitAddBackground(4u, color, 5u);
 }
 
 lowp vec3 BlendUnitNoBlend() {
