@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
+
 static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)256.0; }
 
 void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
@@ -169,31 +171,55 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->attributes[i].mosaic[1u] = 1.0;
     }
   }
+
+  for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
+    context->visibility_staging[0u][x][0u] = context->columns[x].objects[0u];
+    context->visibility_staging[0u][x][1u] =
+        context->columns[x].objects[0u] >> 32u;
+    context->visibility_staging[0u][x][2u] = context->columns[x].objects[1u];
+    context->visibility_staging[0u][x][3u] =
+        context->columns[x].objects[1u] >> 32u;
+  }
+
+  for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
+    context->visibility_staging[1u][y][0u] = context->rows[y].objects[0u];
+    context->visibility_staging[1u][y][1u] =
+        context->rows[y].objects[0u] >> 32u;
+    context->visibility_staging[1u][y][2u] = context->rows[y].objects[1u];
+    context->visibility_staging[1u][y][3u] =
+        context->rows[y].objects[1u] >> 32u;
+  }
+
+  glBindTexture(GL_TEXTURE_2D, context->visibility);
+  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                  /*yoffset=*/0, /*width=*/GBA_SCREEN_WIDTH, /*height=*/2,
+                  /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                  /*pixels=*/context->visibility_staging);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
+  glGenTextures(1u, &context->visibility);
+  glBindTexture(GL_TEXTURE_2D, context->visibility);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+               /*width=*/GBA_SCREEN_WIDTH,
+               /*height=*/2u,
+               /*border=*/0, /*format=*/GL_RGBA_INTEGER,
+               /*type=*/GL_UNSIGNED_INT,
+               /*pixels=*/NULL);
 }
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
-  for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-    char variable_name[100u];
-    sprintf(variable_name, "object_columns[%u]", x);
-    GLint location = glGetUniformLocation(program, variable_name);
-    uint32_t v0 = context->columns[x].objects[0u];
-    uint32_t v1 = context->columns[x].objects[0u] >> 32u;
-    uint32_t v2 = context->columns[x].objects[1u];
-    uint32_t v3 = context->columns[x].objects[1u] >> 32u;
-    glUniform4ui(location, v0, v1, v2, v3);
-  }
+  GLint object_visibility = glGetUniformLocation(program, "object_visibility");
+  glUniform1i(object_visibility, OBJ_VISIBILITY_TEXTURE);
 
-  for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    char variable_name[100u];
-    sprintf(variable_name, "object_rows[%u]", y);
-    GLint location = glGetUniformLocation(program, variable_name);
-    uint32_t v0 = context->rows[y].objects[0u];
-    uint32_t v1 = context->rows[y].objects[0u] >> 32u;
-    uint32_t v2 = context->rows[y].objects[1u];
-    uint32_t v3 = context->rows[y].objects[1u] >> 32u;
-    glUniform4ui(location, v0, v1, v2, v3);
-  }
+  glActiveTexture(GL_TEXTURE0 + OBJ_VISIBILITY_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->visibility);
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
@@ -246,4 +272,8 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1ui(priority, context->attributes[i].priority);
   }
+}
+
+void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
+  glDeleteTextures(1u, &context->visibility);
 }

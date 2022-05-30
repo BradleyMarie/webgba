@@ -22,6 +22,8 @@ typedef struct {
     GLint blended;
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
+  uint32_t visibility_staging[2u][GBA_SCREEN_WIDTH][4u];
+  GLuint visibility;
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
@@ -32,7 +34,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
                                   const GbaPpuRegisters* registers,
                                   GbaPpuDirtyBits* dirty_bits);
 
+void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context);
+
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program);
+
+void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_OBJ_ATTRIBUTES_
