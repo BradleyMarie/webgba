@@ -8,8 +8,7 @@
 
 typedef struct {
   GLuint affine;
-  GLuint indices;
-  GLuint params;
+  GLuint scrolling;
 } OpenGlBgTilemap;
 
 void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,

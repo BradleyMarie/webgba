@@ -16,21 +16,20 @@ uniform bool win1_enabled;
 uniform bool winobj_enabled;
 
 // Tilemaps
-uniform mediump sampler2D bg_affine_tilemap;
-uniform highp sampler2D bg_scrolling_tilemap_indices;
-uniform lowp sampler2D bg_scrolling_tilemap_params;
+uniform mediump isampler2D bg_affine_tilemap;
+uniform mediump isampler2D bg_scrolling_tilemap;
 
 // Tiles
-uniform lowp sampler2D bg_tiles;
+uniform mediump isampler2D bg_tiles;
 uniform lowp sampler2D bg_palette;
 
 // Background Bitmaps
 uniform lowp sampler2D bg_mode3;
-uniform mediump sampler2D bg_mode4;
-uniform mediump sampler2D bg_mode5;
+uniform lowp usampler2D bg_mode4;
+uniform lowp sampler2D bg_mode5;
 
 // Background Mosaic
-uniform highp vec2 bg_mosaic[4];
+uniform lowp ivec2 bg_mosaic[4];
 
 // Inputs
 in highp vec2 scrolling_screencoord[4];
@@ -73,15 +72,15 @@ lowp float GetObjectColorIndex(lowp uint obj) {
   lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);
   lookup = abs(obj_attributes[obj].flip - lookup);
 
-  highp vec2 lookup_tile = floor(lookup / 8.0);
+  highp vec2 tile = floor(lookup / 8.0);
 
   highp float tile_index;
   if (obj_mode) {
     tile_index =
-        lookup_tile.x + lookup_tile.y * obj_attributes[obj].sprite_size.x / 8.0;
+        tile.x + tile.y * obj_attributes[obj].sprite_size.x / 8.0;
   } else {
     highp float row_width = (obj_attributes[obj].large_palette) ? 16.0 : 32.0;
-    tile_index = lookup_tile.x + lookup_tile.y * row_width;
+    tile_index = tile.x + tile.y * row_width;
   }
 
   highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
@@ -313,10 +312,10 @@ WindowContents CheckWindow(bool on_object) {
 
 // Backgrounds
 struct BackgroundControl {
+  mediump ivec2 size;
+  mediump int tilemap_base;
+  mediump int tile_base;
   lowp uint priority;
-  highp vec2 size;
-  highp float tilemap_base;
-  highp float tile_base;
   bool large_palette;
   bool wraparound;
 };
@@ -324,123 +323,95 @@ struct BackgroundControl {
 uniform BackgroundControl bg_cnt[4];
 
 lowp vec4 ScrollingBackground(lowp uint bg) {
-  const highp float number_of_tilemap_blocks = 32.0;
-  const highp float tilemap_block_size_tiles = 32.0;
-  const highp float tile_size = 8.0;
-  const highp float tilemap_block_size_pixels =
-      tilemap_block_size_tiles * tile_size;
+  highp ivec2 tilemap_pixel = ivec2(scrolling_screencoord[bg]);
+  tilemap_pixel &= bg_cnt[bg].size - 1;
+  tilemap_pixel -= tilemap_pixel % bg_mosaic[bg];
 
-  highp vec2 tilemap_pixel = scrolling_screencoord[bg];
-  tilemap_pixel = mod(tilemap_pixel, bg_cnt[bg].size);
-  tilemap_pixel -= mod(tilemap_pixel, bg_mosaic[bg]);
-  tilemap_pixel += vec2(0.5, 0.5);
+  lowp ivec2 tilemap_block = tilemap_pixel / 256;
+  lowp int tilemap_block_index =
+      tilemap_block.x + tilemap_block.y * (bg_cnt[bg].size.x / 256);
 
-  highp vec2 tilemap_block_index_2d =
-      floor(tilemap_pixel / tilemap_block_size_pixels);
-  highp float tilemap_width_blocks =
-      bg_cnt[bg].size.x / tilemap_block_size_pixels;
-  highp float tilemap_block_index_1d =
-      tilemap_block_index_2d.x +
-      tilemap_block_index_2d.y * tilemap_width_blocks;
+  mediump ivec2 tilemap_block_tile = (tilemap_pixel / 8) % 32;
+  mediump ivec2 tilemap_index =
+      ivec2(tilemap_block_tile.x, bg_cnt[bg].tilemap_base / 64 +
+                                      32 * tilemap_block_index +
+                                      tilemap_block_tile.y);
 
-  highp vec2 tilemap_block_pixel =
-      mod(tilemap_pixel, tilemap_block_size_pixels) / tilemap_block_size_pixels;
+  mediump ivec4 tilemap_entry =
+      texelFetch(bg_scrolling_tilemap, tilemap_index, 0);
+  mediump int tileblock_offset =
+      tilemap_entry.x >> int(bg_cnt[bg].large_palette);
+  lowp ivec2 flip = tilemap_entry.yz;
+  lowp int palette = tilemap_entry.w;
 
-  highp vec2 tile = vec2(tilemap_block_pixel.x,
-                         bg_cnt[bg].tilemap_base +
-                             (tilemap_block_pixel.y + tilemap_block_index_1d) /
-                                 number_of_tilemap_blocks);
+  lowp ivec2 tile_pixel = abs(flip - (tilemap_pixel % 8));
 
-  highp vec4 indices = texture(bg_scrolling_tilemap_indices, tile);
-  lowp vec4 params = texture(bg_scrolling_tilemap_params, tile);
+  mediump ivec4 color_indices =
+      texelFetch(bg_tiles,
+                 ivec2(tile_pixel.x, bg_cnt[bg].tile_base +
+                                         tileblock_offset * 8 + tile_pixel.y),
+                 0);
 
-  mediump float num_tiles = 2048.0;
-  mediump float tile_block_position =
-      (indices.a * 255.0 * 256.0 + indices.r * 255.0) / num_tiles;
+  mediump int color_index =
+      bg_cnt[bg].large_palette ? color_indices.r : color_indices.g;
 
-  highp vec2 tile_pixel = mod(tilemap_pixel, tile_size) / tile_size;
-  tile_pixel = abs(params.xy - tile_pixel);
-
-  lowp vec4 color_indices = texture(
-      bg_tiles, vec2(tile_pixel.x, bg_cnt[bg].tile_base + tile_block_position +
-                                       tile_pixel.y / num_tiles));
-  lowp float color_index =
-      bg_cnt[bg].large_palette ? color_indices.r : color_indices.a;
-
-  lowp float palette =
-      bg_cnt[bg].large_palette ? 0.0 : (params.z * 31.0) / 32.0;
-  lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
-  lowp vec4 color = texture(bg_palette, vec2(palette + palette_offset, 0.5));
-  return vec4(color.rgb, sign(color_index));
+  mediump int palette_base = bg_cnt[bg].large_palette ? 0 : palette;
+  lowp vec4 color =
+      texelFetch(bg_palette, ivec2(palette_base + color_index, 0), 0);
+  return vec4(color.rgb, float(color_index != 0));
 }
 
 lowp vec4 AffineBackground(lowp uint bg) {
-  const highp float num_tiles = 2048.0;
-  const highp float tile_size = 8.0;
+  highp ivec2 tilemap_pixel = ivec2(affine_screencoord[bg - 2u]);
+  tilemap_pixel &= bg_cnt[bg].size - 1;
+  tilemap_pixel -= tilemap_pixel % bg_mosaic[bg];
 
-  highp vec2 tilemap_pixel = mod(affine_screencoord[bg - 2u], bg_cnt[bg].size);
-  highp vec2 lookup_pixel = tilemap_pixel - mod(tilemap_pixel, bg_mosaic[bg]);
+  lowp ivec2 tile = tilemap_pixel / 8;
+  lowp ivec2 tile_pixel = tilemap_pixel % 8;
 
-  highp vec2 lookup_tile = floor(lookup_pixel / tile_size);
-  highp vec2 tilemap_size_tiles = bg_cnt[bg].size / tile_size;
+  mediump int tile_offset = tile.x + tile.y * (bg_cnt[bg].size.x / 8);
+  mediump int tile_index = bg_cnt[bg].tilemap_base + tile_offset;
 
-  highp float tile_index = lookup_tile.x + lookup_tile.y * tilemap_size_tiles.x;
-  highp float lookup_tile_1d =
-      bg_cnt[bg].tilemap_base + (tile_index + 0.5) / 65536.0;
+  mediump int index =
+      texelFetch(bg_affine_tilemap,
+                ivec2(tile_index % 256, tile_index / 256), 0).r;
 
-  mediump vec4 raw_index =
-      texture(bg_affine_tilemap,
-                vec2(lookup_tile_1d / 256.0, mod(lookup_tile_1d, 256.0)));
-  mediump float index = raw_index.r * 255.0 / 256.0;
-
-  highp vec2 tile_pixel = mod(lookup_pixel, tile_size) / tile_size;
-
-  lowp vec4 color_indices = texture(
-      bg_tiles, vec2(tile_pixel.x, bg_cnt[bg].tile_base + index / 8.0 +
-                                       tile_pixel.y / num_tiles));
-  lowp float color_index = color_indices.r;
-
-  lowp vec4 color = texture(bg_palette, vec2(color_index, 0.5));
-
-  return vec4(color.rgb, sign(color_index));
+  mediump int color_index = texelFetch(
+      bg_tiles, ivec2(tile_pixel.x, bg_cnt[bg].tile_base + index * 8 +
+                                       tile_pixel.y), 0).r;
+  lowp vec4 color = texelFetch(bg_palette, ivec2(color_index, 0), 0);
+  return vec4(color.rgb, float(color_index != 0));
 }
 
 lowp vec4 BitmapBackgroundMode3() {
-  const highp vec2 bitmap_size = vec2(240.0, 160.0);
-  highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  lowp vec4 color = texture(bg_mode3, lookup / bitmap_size);
-  color *= step(affine_screencoord[0].x, bitmap_size.x);
-  color *= step(affine_screencoord[0].y, bitmap_size.y);
-  color *= step(-affine_screencoord[0].x, 0.0);
-  color *= step(-affine_screencoord[0].y, 0.0);
-  return color;
+  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
+      any(greaterThan(affine_screencoord[0], vec2(240.0, 160.0)))) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
+  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  lookup -= lookup % bg_mosaic[2];
+  return texelFetch(bg_mode3, lookup, 0);
 }
 
 lowp vec4 BitmapBackgroundMode4() {
-  const highp vec2 bitmap_size = vec2(240.0, 160.0);
-  highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  mediump vec4 normalized_index = texture(bg_mode4, lookup / bitmap_size);
-  mediump float index = (normalized_index.r * 255.0 + 0.5) / 256.0;
-  lowp vec4 color = texture(bg_palette, vec2(index, 0.5));
-  color *= step(affine_screencoord[0].x, bitmap_size.x);
-  color *= step(affine_screencoord[0].y, bitmap_size.y);
-  color *= step(-affine_screencoord[0].x, 0.0);
-  color *= step(-affine_screencoord[0].y, 0.0);
-  return color;
+  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
+      any(greaterThan(affine_screencoord[0], vec2(240.0, 160.0)))) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
+  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  lookup -= lookup % bg_mosaic[2];
+  lowp uint index = texelFetch(bg_mode4, lookup, 0).r;
+  return texelFetch(bg_palette, ivec2(index, 0), 0);
 }
 
 lowp vec4 BitmapBackgroundMode5() {
-  const highp vec2 bitmap_size = vec2(160.0, 128.0);
-  highp vec2 lookup = affine_screencoord[0] -
-                      mod(affine_screencoord[0], bg_mosaic[2]) + vec2(0.5, 0.5);
-  lowp vec4 color = texture(bg_mode5, lookup / bitmap_size);
-  color *= step(affine_screencoord[0].x, bitmap_size.x);
-  color *= step(affine_screencoord[0].y, bitmap_size.y);
-  color *= step(-affine_screencoord[0].x, 0.0);
-  color *= step(-affine_screencoord[0].y, 0.0);
-  return color;
+  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
+      any(greaterThan(affine_screencoord[0], vec2(160.0, 120.0)))) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
+  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  lookup -= lookup % bg_mosaic[2];
+  return texelFetch(bg_mode5, lookup, 0);
 }
 
 // Backdrop
@@ -576,7 +547,7 @@ void main() {
     bool above_min =
         all(greaterThan(affine_screencoord[bg - 2u], vec2(0.0, 0.0)));
     bool below_max =
-        all(lessThan(affine_screencoord[bg - 2u], bg_cnt[bg].size));
+        all(lessThan(affine_screencoord[bg - 2u], vec2(bg_cnt[bg].size)));
     num_enabled_affine_backgrounds += uint(
         window.bg[bg] && (bg_cnt[bg].wraparound || (above_min && below_max)));
   }

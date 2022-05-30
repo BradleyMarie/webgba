@@ -7,10 +7,10 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLint priority[4u];
-  GLfloat size[4u][2u];
-  GLfloat tilemap_base[4u];
-  GLfloat tile_base[4u];
+  GLint size[4u][2u];
+  GLint tilemap_base[4u];
+  GLint tile_base[4u];
+  GLuint priority[4u];
   GLint large_palette[4u];
   GLint wraparound[4u];
 } OpenGlBgControl;

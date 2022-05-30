@@ -33,7 +33,7 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                 context->textures[registers->dispcnt.page_select]);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                   /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
-                  /*format=*/GL_LUMINANCE, /*type=*/GL_UNSIGNED_BYTE,
+                  /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
                   /*pixels=*/context->staging);
   glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -57,9 +57,9 @@ void OpenGlBgBitmapMode4ReloadContext(OpenGlBgBitmapMode4* context) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_LUMINANCE,
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_R8UI,
                  /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
-                 /*border=*/0, /*format=*/GL_LUMINANCE,
+                 /*border=*/0, /*format=*/GL_RED_INTEGER,
                  /*type=*/GL_UNSIGNED_BYTE,
                  /*pixels=*/NULL);
   }

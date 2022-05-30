@@ -8,7 +8,7 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat mosaic[4][2];
+  GLint mosaic[4][2];
 } OpenGlBgMosaic;
 
 void OpenGlBgMosaicReload(OpenGlBgMosaic* context,
