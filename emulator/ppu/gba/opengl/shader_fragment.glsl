@@ -38,8 +38,7 @@ in highp vec2 affine_screencoord[2];
 in highp vec2 screencoord;
 
 // Objects
-uniform highp uvec4 object_rows[160];
-uniform highp uvec4 object_columns[240];
+uniform highp usampler2D object_visibility;
 
 struct ObjectAttributes {
   highp mat2 affine;
@@ -472,7 +471,8 @@ void main() {
 
   if (obj_enabled) {
     highp uvec4 visible_objects =
-        object_rows[uint(screencoord.y)] & object_columns[uint(screencoord.x)];
+        texelFetch(object_visibility, ivec2(screencoord.x, 0), 0) &
+        texelFetch(object_visibility, ivec2(screencoord.y, 1), 0);
 
     highp uint visible_object_sets[4];
     lowp uint visible_object_set_base[4];
