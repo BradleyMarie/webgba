@@ -444,7 +444,7 @@ lowp vec4 BitmapBackgroundMode5() {
 }
 
 // Backdrop
-lowp vec4 Backdrop() { return texture(bg_palette, vec2(1.0 / 512.0, 0.5)); }
+lowp vec4 Backdrop() { return texelFetch(bg_palette, ivec2(0, 0), 0); }
 
 // Count Trailing Zeroes
 lowp uint CountTrailingZeroes(highp uint value) {
