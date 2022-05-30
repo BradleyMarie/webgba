@@ -14,8 +14,8 @@ void OpenGlBgMosaicReload(OpenGlBgMosaic* context,
       context->mosaic[i][0u] = registers->mosaic.bg_horiz + 1;
       context->mosaic[i][1u] = registers->mosaic.bg_vert + 1;
     } else {
-      context->mosaic[i][0u] = 1.0;
-      context->mosaic[i][1u] = 1.0;
+      context->mosaic[i][0u] = 1;
+      context->mosaic[i][1u] = 1;
     }
   }
 
@@ -27,6 +27,6 @@ void OpenGlBgMosaicBind(const OpenGlBgMosaic* context, GLuint program) {
     char variable_name[100u];
     sprintf(variable_name, "bg_mosaic[%u]", i);
     GLint location = glGetUniformLocation(program, variable_name);
-    glUniform2f(location, context->mosaic[i][0u], context->mosaic[i][1u]);
+    glUniform2i(location, context->mosaic[i][0u], context->mosaic[i][1u]);
   }
 }
