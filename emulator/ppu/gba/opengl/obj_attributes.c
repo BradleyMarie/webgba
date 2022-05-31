@@ -224,6 +224,9 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
   GbaPpuSet semi_transparent;
   GbaPpuSetClear(&semi_transparent);
 
+  GbaPpuSet large_palette;
+  GbaPpuSetClear(&semi_transparent);
+
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
     sprintf(variable_name, "obj_attributes[%u].affine", i);
@@ -259,10 +262,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint palette = glGetUniformLocation(program, variable_name);
     glUniform1f(palette, context->attributes[i].palette);
 
-    sprintf(variable_name, "obj_attributes[%u].large_palette", i);
-    GLint large_palette = glGetUniformLocation(program, variable_name);
-    glUniform1i(large_palette, context->attributes[i].large_palette);
-
     sprintf(variable_name, "obj_attributes[%u].rendered", i);
     GLint rendered = glGetUniformLocation(program, variable_name);
     glUniform1i(rendered, context->attributes[i].rendered);
@@ -274,6 +273,10 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     if (context->attributes[i].blended) {
       GbaPpuSetAdd(&semi_transparent, i);
     }
+
+    if (context->attributes[i].large_palette) {
+      GbaPpuSetAdd(&large_palette, i);
+    }
   }
 
   GLint object_semi_transparent =
@@ -282,6 +285,12 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                semi_transparent.objects[0u] >> 32u,
                semi_transparent.objects[1u],
                semi_transparent.objects[1u] >> 32u);
+
+  GLint object_large_palette =
+      glGetUniformLocation(program, "object_large_palette");
+  glUniform4ui(object_large_palette, large_palette.objects[0u],
+               large_palette.objects[0u] >> 32u, large_palette.objects[1u],
+               large_palette.objects[1u] >> 32u);
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
