@@ -37,7 +37,10 @@ in highp vec2 affine_screencoord[2];
 in highp vec2 screencoord;
 
 // Objects
+uniform highp sampler2D object_transformations;
 uniform highp usampler2D object_visibility;
+
+uniform highp uvec4 object_affine;
 uniform highp uvec4 object_flip_x;
 uniform highp uvec4 object_flip_y;
 uniform highp uvec4 object_large_palette;
@@ -57,6 +60,10 @@ struct ObjectAttributes {
 uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
+
+bool ObjectAffine(lowp uint obj) {
+  return (object_affine[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
 
 bool ObjectFlipX(lowp uint obj) {
   return (object_flip_x[obj / 32u] & (1u << (obj % 32u))) != 0u;
@@ -80,14 +87,18 @@ bool ObjectWindow(lowp uint obj) {
 
 lowp float GetObjectColorIndex(lowp uint obj) {
   highp vec2 from_center = screencoord - obj_attributes[obj].center;
-
   highp vec2 half_sprite_size = obj_attributes[obj].sprite_size / 2.0;
-  highp vec2 lookup =
-      obj_attributes[obj].affine * from_center + half_sprite_size;
 
-  if (lookup.x < 0.0 || obj_attributes[obj].sprite_size.x < lookup.x ||
-      lookup.y < 0.0 || obj_attributes[obj].sprite_size.y < lookup.y) {
-    return 0.0;
+  highp vec2 lookup;
+  if (ObjectAffine(obj)) {
+    highp vec4 matrix = texelFetch(object_transformations, ivec2(obj, 0), 0);
+    lookup = mat2(matrix) * from_center + half_sprite_size;
+    if (lookup.x < 0.0 || obj_attributes[obj].sprite_size.x < lookup.x ||
+        lookup.y < 0.0 || obj_attributes[obj].sprite_size.y < lookup.y) {
+      return 0.0;
+    }
+  } else {
+    lookup = from_center + half_sprite_size;
   }
 
   lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);

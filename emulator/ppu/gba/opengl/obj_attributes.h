@@ -10,12 +10,12 @@
 
 typedef struct {
   struct {
-    GLfloat affine[2u][2u];
     GLfloat center[2u];
     GLfloat sprite_size[2u];
     GLfloat mosaic[2u];
     GLfloat tile_base;
     GLfloat palette;
+    bool affine;
     bool flip_x;
     bool flip_y;
     bool large_palette;
@@ -24,7 +24,9 @@ typedef struct {
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
   uint32_t visibility_staging[2u][GBA_SCREEN_WIDTH][4u];
-  GLuint visibility;
+  GLfloat transformations[OAM_NUM_OBJECTS][4u];
+  GLuint object_transformations;
+  GLuint object_visibility;
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
