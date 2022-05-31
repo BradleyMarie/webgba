@@ -14,12 +14,13 @@ typedef struct {
     GLfloat center[2u];
     GLfloat sprite_size[2u];
     GLfloat mosaic[2u];
-    GLfloat flip[2u];
     GLfloat tile_base;
     GLfloat palette;
-    GLint large_palette;
-    GLint rendered;
-    GLint blended;
+    bool flip_x;
+    bool flip_y;
+    bool large_palette;
+    bool semi_transparent;
+    bool window;
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
   uint32_t visibility_staging[2u][GBA_SCREEN_WIDTH][4u];
