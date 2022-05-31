@@ -38,6 +38,7 @@ in highp vec2 screencoord;
 
 // Objects
 uniform highp usampler2D object_visibility;
+uniform highp uvec4 object_semi_transparent;
 
 struct ObjectAttributes {
   highp mat2 affine;
@@ -48,7 +49,6 @@ struct ObjectAttributes {
   lowp float palette;
   bool large_palette;
   bool rendered;
-  bool blended;
   lowp vec2 flip;
   lowp uint priority;
 };
@@ -56,6 +56,10 @@ struct ObjectAttributes {
 uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
+
+bool ObjectSemiTransparent(lowp uint obj) {
+  return (object_semi_transparent[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
 
 lowp float GetObjectColorIndex(lowp uint obj) {
   highp vec2 from_center = screencoord - obj_attributes[obj].center;
@@ -517,7 +521,7 @@ void main() {
       if (obj_attributes[obj].priority < priority) {
         color = obj_color;
         priority = obj_attributes[obj].priority;
-        blended = obj_attributes[obj].blended;
+        blended = ObjectSemiTransparent(obj);
       }
     }
     BlendUnitAddObject(color, priority, blended);

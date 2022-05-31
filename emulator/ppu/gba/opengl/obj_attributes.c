@@ -221,6 +221,9 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
   glActiveTexture(GL_TEXTURE0 + OBJ_VISIBILITY_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->visibility);
 
+  GbaPpuSet semi_transparent;
+  GbaPpuSetClear(&semi_transparent);
+
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
     sprintf(variable_name, "obj_attributes[%u].affine", i);
@@ -264,14 +267,21 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint rendered = glGetUniformLocation(program, variable_name);
     glUniform1i(rendered, context->attributes[i].rendered);
 
-    sprintf(variable_name, "obj_attributes[%u].blended", i);
-    GLint blended = glGetUniformLocation(program, variable_name);
-    glUniform1i(blended, context->attributes[i].blended);
-
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1ui(priority, context->attributes[i].priority);
+
+    if (context->attributes[i].blended) {
+      GbaPpuSetAdd(&semi_transparent, i);
+    }
   }
+
+  GLint object_semi_transparent =
+      glGetUniformLocation(program, "object_semi_transparent");
+  glUniform4ui(object_semi_transparent, semi_transparent.objects[0u],
+               semi_transparent.objects[0u] >> 32u,
+               semi_transparent.objects[1u],
+               semi_transparent.objects[1u] >> 32u);
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
