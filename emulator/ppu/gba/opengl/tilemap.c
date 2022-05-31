@@ -30,7 +30,7 @@ void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
           if (memory->vram.mode_012.bg.tile_map.blocks[i]
                   .entries[y][x]
                   .h_flip) {
-            h_flip = 8u;
+            h_flip = 7u;
           }
 
           staging[y][x][1u] = h_flip;
@@ -39,7 +39,7 @@ void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
           if (memory->vram.mode_012.bg.tile_map.blocks[i]
                   .entries[y][x]
                   .v_flip) {
-            v_flip = 8;
+            v_flip = 7u;
           }
 
           staging[y][x][2u] = v_flip;
