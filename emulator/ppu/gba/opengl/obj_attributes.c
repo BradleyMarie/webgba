@@ -121,9 +121,9 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
     context->attributes[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
-    context->attributes[i].rendered =
-        (memory->oam.object_attributes[i].obj_mode != 2u);
-    context->attributes[i].blended =
+    context->attributes[i].window =
+        (memory->oam.object_attributes[i].obj_mode == 2u);
+    context->attributes[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->attributes[i].palette =
         (GLfloat)memory->oam.object_attributes[i].palette / 16.0;
@@ -145,22 +145,18 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
-      context->attributes[i].flip[0] = 0.0;
-      context->attributes[i].flip[1] = 0.0;
+      context->attributes[i].flip_x = false;
+      context->attributes[i].flip_y = false;
     } else {
       context->attributes[i].affine[0u][0u] = 1.0;
       context->attributes[i].affine[0u][1u] = 0.0;
       context->attributes[i].affine[1u][0u] = 0.0;
       context->attributes[i].affine[1u][1u] = 1.0;
 
-      context->attributes[i].flip[0] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x08u)
-              ? context->attributes[i].sprite_size[0]
-              : 0.0;
-      context->attributes[i].flip[1] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x10u)
-              ? context->attributes[i].sprite_size[0]
-              : 0.0;
+      context->attributes[i].flip_x =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x08u);
+      context->attributes[i].flip_y =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x10u);
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {
@@ -221,11 +217,20 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
   glActiveTexture(GL_TEXTURE0 + OBJ_VISIBILITY_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->visibility);
 
+  GbaPpuSet flip_x;
+  GbaPpuSetClear(&flip_x);
+
+  GbaPpuSet flip_y;
+  GbaPpuSetClear(&flip_y);
+
+  GbaPpuSet large_palette;
+  GbaPpuSetClear(&large_palette);
+
   GbaPpuSet semi_transparent;
   GbaPpuSetClear(&semi_transparent);
 
-  GbaPpuSet large_palette;
-  GbaPpuSetClear(&semi_transparent);
+  GbaPpuSet window;
+  GbaPpuSetClear(&window);
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
@@ -249,11 +254,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     glUniform2f(mosaic, context->attributes[i].mosaic[0u],
                 context->attributes[i].mosaic[1u]);
 
-    sprintf(variable_name, "obj_attributes[%u].flip", i);
-    GLint flip = glGetUniformLocation(program, variable_name);
-    glUniform2f(flip, context->attributes[i].flip[0u],
-                context->attributes[i].flip[1u]);
-
     sprintf(variable_name, "obj_attributes[%u].tile_base", i);
     GLint tile_base = glGetUniformLocation(program, variable_name);
     glUniform1f(tile_base, context->attributes[i].tile_base);
@@ -262,22 +262,48 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint palette = glGetUniformLocation(program, variable_name);
     glUniform1f(palette, context->attributes[i].palette);
 
-    sprintf(variable_name, "obj_attributes[%u].rendered", i);
-    GLint rendered = glGetUniformLocation(program, variable_name);
-    glUniform1i(rendered, context->attributes[i].rendered);
-
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1ui(priority, context->attributes[i].priority);
 
-    if (context->attributes[i].blended) {
-      GbaPpuSetAdd(&semi_transparent, i);
+    if (context->attributes[i].flip_x) {
+      GbaPpuSetAdd(&flip_x, i);
+    }
+
+    if (context->attributes[i].flip_y) {
+      GbaPpuSetAdd(&flip_y, i);
     }
 
     if (context->attributes[i].large_palette) {
       GbaPpuSetAdd(&large_palette, i);
     }
+
+    if (context->attributes[i].large_palette) {
+      GbaPpuSetAdd(&large_palette, i);
+    }
+
+    if (context->attributes[i].semi_transparent) {
+      GbaPpuSetAdd(&semi_transparent, i);
+    }
+
+    if (context->attributes[i].window) {
+      GbaPpuSetAdd(&window, i);
+    }
   }
+
+  GLint object_flip_x = glGetUniformLocation(program, "object_flip_x");
+  glUniform4ui(object_flip_x, flip_x.objects[0u], flip_x.objects[0u] >> 32u,
+               flip_x.objects[1u], flip_x.objects[1u] >> 32u);
+
+  GLint object_flip_y = glGetUniformLocation(program, "object_flip_y");
+  glUniform4ui(object_flip_y, flip_y.objects[0u], flip_y.objects[0u] >> 32u,
+               flip_y.objects[1u], flip_y.objects[1u] >> 32u);
+
+  GLint object_large_palette =
+      glGetUniformLocation(program, "object_large_palette");
+  glUniform4ui(object_large_palette, large_palette.objects[0u],
+               large_palette.objects[0u] >> 32u, large_palette.objects[1u],
+               large_palette.objects[1u] >> 32u);
 
   GLint object_semi_transparent =
       glGetUniformLocation(program, "object_semi_transparent");
@@ -286,11 +312,9 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                semi_transparent.objects[1u],
                semi_transparent.objects[1u] >> 32u);
 
-  GLint object_large_palette =
-      glGetUniformLocation(program, "object_large_palette");
-  glUniform4ui(object_large_palette, large_palette.objects[0u],
-               large_palette.objects[0u] >> 32u, large_palette.objects[1u],
-               large_palette.objects[1u] >> 32u);
+  GLint object_window = glGetUniformLocation(program, "object_window");
+  glUniform4ui(object_window, window.objects[0u], window.objects[0u] >> 32u,
+               window.objects[1u], window.objects[1u] >> 32u);
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {

@@ -38,8 +38,11 @@ in highp vec2 screencoord;
 
 // Objects
 uniform highp usampler2D object_visibility;
-uniform highp uvec4 object_semi_transparent;
+uniform highp uvec4 object_flip_x;
+uniform highp uvec4 object_flip_y;
 uniform highp uvec4 object_large_palette;
+uniform highp uvec4 object_semi_transparent;
+uniform highp uvec4 object_window;
 
 struct ObjectAttributes {
   highp mat2 affine;
@@ -48,8 +51,6 @@ struct ObjectAttributes {
   mediump vec2 mosaic;
   highp float tile_base;
   lowp float palette;
-  bool rendered;
-  lowp vec2 flip;
   lowp uint priority;
 };
 
@@ -57,12 +58,24 @@ uniform ObjectAttributes obj_attributes[128];
 uniform lowp sampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
 
-bool ObjectSemiTransparent(lowp uint obj) {
-  return (object_semi_transparent[obj / 32u] & (1u << (obj % 32u))) != 0u;
+bool ObjectFlipX(lowp uint obj) {
+  return (object_flip_x[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
+
+bool ObjectFlipY(lowp uint obj) {
+  return (object_flip_y[obj / 32u] & (1u << (obj % 32u))) != 0u;
 }
 
 bool ObjectLargePalette(lowp uint obj) {
   return (object_large_palette[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
+
+bool ObjectSemiTransparent(lowp uint obj) {
+  return (object_semi_transparent[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
+
+bool ObjectWindow(lowp uint obj) {
+  return (object_window[obj / 32u] & (1u << (obj % 32u))) != 0u;
 }
 
 lowp float GetObjectColorIndex(lowp uint obj) {
@@ -78,7 +91,12 @@ lowp float GetObjectColorIndex(lowp uint obj) {
   }
 
   lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);
-  lookup = abs(obj_attributes[obj].flip - lookup);
+  lookup.x = ObjectFlipX(obj)
+                 ? abs(obj_attributes[obj].sprite_size.x - lookup.x)
+                 : lookup.x;
+  lookup.y = ObjectFlipY(obj)
+                 ? abs(obj_attributes[obj].sprite_size.y - lookup.y)
+                 : lookup.y;
 
   highp vec2 tile = floor(lookup / 8.0);
 
@@ -478,10 +496,10 @@ void main() {
       lowp uint obj = base + index;
 
       object_window_objects[num_object_window_objects] = obj;
-      num_object_window_objects += uint(!obj_attributes[obj].rendered);
+      num_object_window_objects += uint(ObjectWindow(obj));
 
       drawn_objects[num_drawn_objects] = obj;
-      num_drawn_objects += uint(obj_attributes[obj].rendered);
+      num_drawn_objects += uint(!ObjectWindow(obj));
 
       visible_object_sets[visible_object_set_index] =
           visible_object_sets[visible_object_set_index] ^ (1u << index);
