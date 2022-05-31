@@ -48,7 +48,6 @@ uniform highp uvec4 object_semi_transparent;
 uniform highp uvec4 object_window;
 
 struct ObjectAttributes {
-  highp mat2 affine;
   highp vec2 sprite_size;
   highp vec2 center;
   mediump vec2 mosaic;
