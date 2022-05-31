@@ -27,10 +27,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     GbaPpuSet objects = context->rotations[i];
     while (!GbaPpuSetEmpty(&objects)) {
       uint_fast8_t object = GbaPpuSetPop(&objects);
-      context->attributes[object].affine[0u][0u] = pa;
-      context->attributes[object].affine[0u][1u] = pc;
-      context->attributes[object].affine[1u][0u] = pb;
-      context->attributes[object].affine[1u][1u] = pd;
+      context->transformations[object][0u] = pa;
+      context->transformations[object][1u] = pc;
+      context->transformations[object][2u] = pb;
+      context->transformations[object][3u] = pd;
     }
   }
 
@@ -119,6 +119,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
     context->attributes[i].tile_base =
         (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
+    context->attributes[i].affine = memory->oam.object_attributes[i].affine;
     context->attributes[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
     context->attributes[i].window =
@@ -135,23 +136,23 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
     if (memory->oam.object_attributes[i].affine) {
       uint8_t rot = memory->oam.object_attributes[i].flex_param_1;
-      context->attributes[i].affine[0u][0u] =
+      context->transformations[i][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pa);
-      context->attributes[i].affine[0u][1u] =
+      context->transformations[i][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pb);
-      context->attributes[i].affine[1u][0u] =
+      context->transformations[i][2u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pc);
-      context->attributes[i].affine[1u][1u] =
+      context->transformations[i][3u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
       context->attributes[i].flip_x = false;
       context->attributes[i].flip_y = false;
     } else {
-      context->attributes[i].affine[0u][0u] = 1.0;
-      context->attributes[i].affine[0u][1u] = 0.0;
-      context->attributes[i].affine[1u][0u] = 0.0;
-      context->attributes[i].affine[1u][1u] = 1.0;
+      context->transformations[i][0u] = 1.0;
+      context->transformations[i][1u] = 0.0;
+      context->transformations[i][2u] = 0.0;
+      context->transformations[i][3u] = 1.0;
 
       context->attributes[i].flip_x =
           (memory->oam.object_attributes[i].flex_param_1 & 0x08u);
@@ -186,17 +187,37 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         context->rows[y].objects[1u] >> 32u;
   }
 
-  glBindTexture(GL_TEXTURE_2D, context->visibility);
+  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
+  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                  /*yoffset=*/0, /*width=*/OAM_NUM_OBJECTS, /*height=*/1,
+                  /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
+                  /*pixels=*/context->transformations);
+
+  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
                   /*yoffset=*/0, /*width=*/GBA_SCREEN_WIDTH, /*height=*/2,
                   /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
                   /*pixels=*/context->visibility_staging);
+
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
-  glGenTextures(1u, &context->visibility);
-  glBindTexture(GL_TEXTURE_2D, context->visibility);
+  glGenTextures(1u, &context->object_transformations);
+  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
+               /*width=*/OAM_NUM_OBJECTS,
+               /*height=*/1,
+               /*border=*/0, /*format=*/GL_RGBA,
+               /*type=*/GL_FLOAT,
+               /*pixels=*/NULL);
+
+  glGenTextures(1u, &context->object_visibility);
+  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -211,11 +232,21 @@ void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
+  GLint object_transformations =
+      glGetUniformLocation(program, "object_transformations");
+  glUniform1i(object_transformations, OBJ_TRANSFORMATIONS_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + OBJ_TRANSFORMATIONS_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
+
   GLint object_visibility = glGetUniformLocation(program, "object_visibility");
   glUniform1i(object_visibility, OBJ_VISIBILITY_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + OBJ_VISIBILITY_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->visibility);
+  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
+
+  GbaPpuSet affine;
+  GbaPpuSetClear(&affine);
 
   GbaPpuSet flip_x;
   GbaPpuSetClear(&flip_x);
@@ -234,11 +265,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
-    sprintf(variable_name, "obj_attributes[%u].affine", i);
-    GLint affine = glGetUniformLocation(program, variable_name);
-    glUniformMatrix2fv(affine, 1, false,
-                       &context->attributes[i].affine[0u][0u]);
-
     sprintf(variable_name, "obj_attributes[%u].sprite_size", i);
     GLint sprite_size = glGetUniformLocation(program, variable_name);
     glUniform2f(sprite_size, context->attributes[i].sprite_size[0u],
@@ -266,6 +292,10 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     GLint priority = glGetUniformLocation(program, variable_name);
     glUniform1ui(priority, context->attributes[i].priority);
 
+    if (context->attributes[i].affine) {
+      GbaPpuSetAdd(&affine, i);
+    }
+
     if (context->attributes[i].flip_x) {
       GbaPpuSetAdd(&flip_x, i);
     }
@@ -290,6 +320,10 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
       GbaPpuSetAdd(&window, i);
     }
   }
+
+  GLint object_affine = glGetUniformLocation(program, "object_affine");
+  glUniform4ui(object_affine, affine.objects[0u], affine.objects[0u] >> 32u,
+               affine.objects[1u], affine.objects[1u] >> 32u);
 
   GLint object_flip_x = glGetUniformLocation(program, "object_flip_x");
   glUniform4ui(object_flip_x, flip_x.objects[0u], flip_x.objects[0u] >> 32u,
@@ -318,5 +352,5 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
-  glDeleteTextures(1u, &context->visibility);
+  glDeleteTextures(1u, &context->object_visibility);
 }
