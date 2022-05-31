@@ -39,6 +39,7 @@ in highp vec2 screencoord;
 // Objects
 uniform highp usampler2D object_visibility;
 uniform highp uvec4 object_semi_transparent;
+uniform highp uvec4 object_large_palette;
 
 struct ObjectAttributes {
   highp mat2 affine;
@@ -47,7 +48,6 @@ struct ObjectAttributes {
   mediump vec2 mosaic;
   highp float tile_base;
   lowp float palette;
-  bool large_palette;
   bool rendered;
   lowp vec2 flip;
   lowp uint priority;
@@ -59,6 +59,10 @@ uniform lowp sampler2D obj_palette;
 
 bool ObjectSemiTransparent(lowp uint obj) {
   return (object_semi_transparent[obj / 32u] & (1u << (obj % 32u))) != 0u;
+}
+
+bool ObjectLargePalette(lowp uint obj) {
+  return (object_large_palette[obj / 32u] & (1u << (obj % 32u))) != 0u;
 }
 
 lowp float GetObjectColorIndex(lowp uint obj) {
@@ -78,12 +82,13 @@ lowp float GetObjectColorIndex(lowp uint obj) {
 
   highp vec2 tile = floor(lookup / 8.0);
 
+  bool large_palette = ObjectLargePalette(obj);
+
   highp float tile_index;
   if (obj_mode) {
-    tile_index =
-        tile.x + tile.y * obj_attributes[obj].sprite_size.x / 8.0;
+    tile_index = tile.x + tile.y * obj_attributes[obj].sprite_size.x / 8.0;
   } else {
-    highp float row_width = (obj_attributes[obj].large_palette) ? 16.0 : 32.0;
+    highp float row_width = large_palette ? 16.0 : 32.0;
     tile_index = tile.x + tile.y * row_width;
   }
 
@@ -91,7 +96,7 @@ lowp float GetObjectColorIndex(lowp uint obj) {
   lowp vec4 color_indices = texture(
       obj_tiles, vec2(tile_pixel.x, obj_attributes[obj].tile_base +
                                         (tile_index + tile_pixel.y) / 1024.0));
-  return obj_attributes[obj].large_palette ? color_indices.r : color_indices.a;
+  return large_palette ? color_indices.r : color_indices.a;
 }
 
 // Blend Unit
@@ -513,7 +518,7 @@ void main() {
       }
 
       lowp float palette =
-          obj_attributes[obj].large_palette ? 0.0 : obj_attributes[obj].palette;
+          ObjectLargePalette(obj) ? 0.0 : obj_attributes[obj].palette;
       lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
       lowp vec4 obj_color =
           texture(obj_palette, vec2(palette + palette_offset, 0.5));
