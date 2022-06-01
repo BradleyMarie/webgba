@@ -10,8 +10,6 @@
 
 typedef struct {
   struct {
-    GLfloat center[2u];
-    GLfloat sprite_size[2u];
     GLfloat mosaic[2u];
     GLfloat tile_base;
     GLfloat palette;
@@ -23,8 +21,10 @@ typedef struct {
     bool window;
     GLint priority;
   } attributes[OAM_NUM_OBJECTS];
-  uint32_t visibility_staging[2u][GBA_SCREEN_WIDTH][4u];
+  GLfloat center_and_half_size[OAM_NUM_OBJECTS][4u];
   GLfloat transformations[OAM_NUM_OBJECTS][4u];
+  uint32_t visibility_staging[2u][GBA_SCREEN_WIDTH][4u];
+  GLuint object_center_and_half_size;
   GLuint object_transformations;
   GLuint object_visibility;
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];

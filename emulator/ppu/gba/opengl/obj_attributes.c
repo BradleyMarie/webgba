@@ -76,9 +76,6 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         shape_size_to_y_size_pixels[memory->oam.object_attributes[i].obj_shape]
                                    [memory->oam.object_attributes[i].obj_size];
 
-    context->attributes[i].sprite_size[0u] = sprite_size[0u];
-    context->attributes[i].sprite_size[1u] = sprite_size[1u];
-
     int_fast16_t render_size[2u];
     if (memory->oam.object_attributes[i].flex_param_0) {
       render_size[0u] = 2u * sprite_size[0];
@@ -96,8 +93,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       origin[1u] = memory->oam.object_attributes[i].y_coordinate_u;
     }
 
-    context->attributes[i].center[0u] = origin[0u] + render_size[0u] / 2u;
-    context->attributes[i].center[1u] = origin[1u] + render_size[1u] / 2u;
+    context->center_and_half_size[i][0u] = origin[0u] + render_size[0u] / 2u;
+    context->center_and_half_size[i][1u] = origin[1u] + render_size[1u] / 2u;
+    context->center_and_half_size[i][2u] = sprite_size[0u] / 2;
+    context->center_and_half_size[i][3u] = sprite_size[1u] / 2;
 
     origin[0u] = (origin[0u] < 0u) ? 0u : origin[0u];
     origin[1u] = (origin[1u] < 0u) ? 0u : origin[1u];
@@ -187,6 +186,12 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         context->rows[y].objects[1u] >> 32u;
   }
 
+  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
+  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                  /*yoffset=*/0, /*width=*/OAM_NUM_OBJECTS, /*height=*/1,
+                  /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
+                  /*pixels=*/context->center_and_half_size);
+
   glBindTexture(GL_TEXTURE_2D, context->object_transformations);
   glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
                   /*yoffset=*/0, /*width=*/OAM_NUM_OBJECTS, /*height=*/1,
@@ -203,6 +208,19 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 }
 
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
+  glGenTextures(1u, &context->object_center_and_half_size);
+  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
+               /*width=*/OAM_NUM_OBJECTS,
+               /*height=*/1,
+               /*border=*/0, /*format=*/GL_RGBA,
+               /*type=*/GL_FLOAT,
+               /*pixels=*/NULL);
+
   glGenTextures(1u, &context->object_transformations);
   glBindTexture(GL_TEXTURE_2D, context->object_transformations);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -232,6 +250,13 @@ void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
+  GLint object_center_and_half_size =
+      glGetUniformLocation(program, "object_center_and_half_size");
+  glUniform1i(object_center_and_half_size, OBJ_CENTER_AND_HALF_SIZE_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + OBJ_CENTER_AND_HALF_SIZE_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
+
   GLint object_transformations =
       glGetUniformLocation(program, "object_transformations");
   glUniform1i(object_transformations, OBJ_TRANSFORMATIONS_TEXTURE);
@@ -265,16 +290,6 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 
   for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
     char variable_name[100u];
-    sprintf(variable_name, "obj_attributes[%u].sprite_size", i);
-    GLint sprite_size = glGetUniformLocation(program, variable_name);
-    glUniform2f(sprite_size, context->attributes[i].sprite_size[0u],
-                context->attributes[i].sprite_size[1u]);
-
-    sprintf(variable_name, "obj_attributes[%u].center", i);
-    GLint origin = glGetUniformLocation(program, variable_name);
-    glUniform2f(origin, context->attributes[i].center[0u],
-                context->attributes[i].center[1u]);
-
     sprintf(variable_name, "obj_attributes[%u].mosaic", i);
     GLint mosaic = glGetUniformLocation(program, variable_name);
     glUniform2f(mosaic, context->attributes[i].mosaic[0u],

@@ -37,6 +37,7 @@ in highp vec2 affine_screencoord[2];
 in highp vec2 screencoord;
 
 // Objects
+uniform highp sampler2D object_center_and_half_size;
 uniform highp sampler2D object_transformations;
 uniform highp usampler2D object_visibility;
 
@@ -48,8 +49,6 @@ uniform highp uvec4 object_semi_transparent;
 uniform highp uvec4 object_window;
 
 struct ObjectAttributes {
-  highp vec2 sprite_size;
-  highp vec2 center;
   mediump vec2 mosaic;
   highp float tile_base;
   lowp float palette;
@@ -85,28 +84,24 @@ bool ObjectWindow(lowp uint obj) {
 }
 
 lowp float GetObjectColorIndex(lowp uint obj) {
-  highp vec2 from_center = screencoord - obj_attributes[obj].center;
-  highp vec2 half_sprite_size = obj_attributes[obj].sprite_size / 2.0;
+  highp vec4 center_and_half_size =
+      texelFetch(object_center_and_half_size, ivec2(obj, 0), 0);
+  highp vec2 from_center = screencoord - center_and_half_size.xy;
 
-  highp vec2 lookup;
+  highp vec2 lookup = from_center;
   if (ObjectAffine(obj)) {
     highp vec4 matrix = texelFetch(object_transformations, ivec2(obj, 0), 0);
-    lookup = mat2(matrix) * from_center + half_sprite_size;
-    if (lookup.x < 0.0 || obj_attributes[obj].sprite_size.x < lookup.x ||
-        lookup.y < 0.0 || obj_attributes[obj].sprite_size.y < lookup.y) {
+    lookup = mat2(matrix) * lookup;
+    if (any(greaterThan(abs(lookup), center_and_half_size.zw))) {
       return 0.0;
     }
-  } else {
-    lookup = from_center + half_sprite_size;
   }
 
+  lookup.x = ObjectFlipX(obj) ? center_and_half_size.z - lookup.x
+                              : center_and_half_size.z + lookup.x;
+  lookup.y = ObjectFlipY(obj) ? center_and_half_size.w - lookup.y
+                              : center_and_half_size.w + lookup.y;
   lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);
-  lookup.x = ObjectFlipX(obj)
-                 ? abs(obj_attributes[obj].sprite_size.x - lookup.x)
-                 : lookup.x;
-  lookup.y = ObjectFlipY(obj)
-                 ? abs(obj_attributes[obj].sprite_size.y - lookup.y)
-                 : lookup.y;
 
   highp vec2 tile = floor(lookup / 8.0);
 
@@ -114,7 +109,7 @@ lowp float GetObjectColorIndex(lowp uint obj) {
 
   highp float tile_index;
   if (obj_mode) {
-    tile_index = tile.x + tile.y * obj_attributes[obj].sprite_size.x / 8.0;
+    tile_index = tile.x + tile.y * center_and_half_size.z / 4.0;
   } else {
     highp float row_width = large_palette ? 16.0 : 32.0;
     tile_index = tile.x + tile.y * row_width;
@@ -455,13 +450,13 @@ lowp vec4 BitmapBackgroundMode5() {
 lowp vec4 Backdrop() { return texelFetch(bg_palette, ivec2(0, 0), 0); }
 
 // Count Trailing Zeroes
+const lowp uint clz_lut[32] = uint[32](
+    0u, 1u, 28u, 2u, 29u, 14u, 24u, 3u, 30u, 22u, 20u, 15u, 25u, 17u, 4u, 8u,
+    31u, 27u, 13u, 23u, 21u, 19u, 16u, 7u, 26u, 12u, 18u, 6u, 11u, 5u, 10u, 9u);
+
 lowp uint CountTrailingZeroes(highp uint value) {
   const highp uint debrujin_sequence = 0x077CB531u;
-  const lowp uint position[32] =
-      uint[32](0u, 1u, 28u, 2u, 29u, 14u, 24u, 3u, 30u, 22u, 20u, 15u, 25u, 17u,
-               4u, 8u, 31u, 27u, 13u, 23u, 21u, 19u, 16u, 7u, 26u, 12u, 18u, 6u,
-               11u, 5u, 10u, 9u);
-  return position[((value & -value) * debrujin_sequence) >> 27u];
+  return clz_lut[((value & -value) * debrujin_sequence) >> 27u];
 }
 
 // Main
