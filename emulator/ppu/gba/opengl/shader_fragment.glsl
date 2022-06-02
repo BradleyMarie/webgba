@@ -1,9 +1,9 @@
 #version 300 es
 
 // Inputs
-in highp vec2 scrolling_screencoord[4];
-in highp vec2 affine_screencoord[2];
-in highp vec2 screencoord;
+in mediump vec2 scrolling_screencoord[4];
+in mediump vec2 affine_screencoord[2];
+in mediump vec2 screencoord;
 
 // Outputs
 out lowp vec4 frag_color;
@@ -25,6 +25,27 @@ uniform lowp sampler2D mode3_bitmap;
 uniform lowp usampler2D mode4_bitmap;
 uniform lowp sampler2D mode5_bitmap;
 
+// Objects
+struct Object {
+  mediump mat2 transformation;
+  mediump vec2 center;
+  mediump ivec2 half_size;
+  lowp ivec2 mosaic;
+  lowp ivec2 flip;
+  mediump int tile_base;
+  lowp uint palette;
+  lowp uint priority;
+  bool semi_transparent;
+  bool large_palette;
+  bool window;
+};
+
+layout(std140) uniform Objects {
+  highp uvec4 object_columns[240];
+  highp uvec4 object_rows[160];
+  Object objects[128];
+};
+
 // Display Controls
 uniform lowp uint scrolling_backgrounds[4];
 uniform lowp uint num_scrolling_backgrounds;
@@ -42,94 +63,6 @@ uniform bool winobj_enabled;
 
 // Background Mosaic
 uniform lowp ivec2 bg_mosaic[4];
-
-// Objects
-uniform highp sampler2D object_center_and_half_size;
-uniform highp sampler2D object_transformations;
-uniform highp usampler2D object_visibility;
-
-uniform highp uvec4 object_affine;
-uniform highp uvec4 object_flip_x;
-uniform highp uvec4 object_flip_y;
-uniform highp uvec4 object_large_palette;
-uniform highp uvec4 object_semi_transparent;
-uniform highp uvec4 object_window;
-
-struct ObjectAttributes {
-  lowp ivec2 mosaic;
-  mediump int tile_base;
-  lowp uint palette;
-  lowp uint priority;
-};
-
-uniform ObjectAttributes obj_attributes[128];
-
-bool ObjectAffine(lowp uint obj) {
-  return (object_affine[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-bool ObjectFlipX(lowp uint obj) {
-  return (object_flip_x[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-bool ObjectFlipY(lowp uint obj) {
-  return (object_flip_y[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-bool ObjectLargePalette(lowp uint obj) {
-  return (object_large_palette[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-bool ObjectSemiTransparent(lowp uint obj) {
-  return (object_semi_transparent[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-bool ObjectWindow(lowp uint obj) {
-  return (object_window[obj / 32u] & (1u << (obj % 32u))) != 0u;
-}
-
-lowp uint GetObjectColorIndex(lowp uint obj) {
-  highp vec4 center_and_half_size =
-      texelFetch(object_center_and_half_size, ivec2(obj, 0), 0);
-  highp vec2 from_center = screencoord - center_and_half_size.xy;
-
-  highp vec2 lookup = from_center;
-  if (ObjectAffine(obj)) {
-    highp vec4 matrix = texelFetch(object_transformations, ivec2(obj, 0), 0);
-    lookup = mat2(matrix) * lookup;
-    if (any(greaterThan(abs(lookup), center_and_half_size.zw))) {
-      return 0u;
-    }
-  }
-
-  lookup.x = ObjectFlipX(obj) ? center_and_half_size.z - lookup.x
-                              : center_and_half_size.z + lookup.x;
-  lookup.y = ObjectFlipY(obj) ? center_and_half_size.w - lookup.y
-                              : center_and_half_size.w + lookup.y;
-
-  mediump ivec2 object_pixel = ivec2(lookup);
-  object_pixel -= object_pixel % obj_attributes[obj].mosaic;
-
-  mediump int tile_index;
-  mediump ivec2 tile = object_pixel / 8;
-  bool large_palette = ObjectLargePalette(obj);
-  if (obj_mode) {
-    tile_index = tile.x + tile.y * int(center_and_half_size.z) / 4;
-  } else {
-    lowp int row_width = large_palette ? 16 : 32;
-    tile_index = tile.x + tile.y * row_width;
-  }
-
-  tile_index <<= large_palette ? 1 : 0;
-
-  highp ivec2 tile_pixel = object_pixel % 8;
-  lowp uvec4 color_indices =
-      texelFetch(object_tiles,
-                 ivec2(tile_pixel.x, obj_attributes[obj].tile_base +
-                                         8 * tile_index + tile_pixel.y),
-                 0);
-  return large_palette ? color_indices.r : color_indices.g;
-}
 
 // Blend Unit
 uniform int blend_mode;
@@ -351,6 +284,37 @@ WindowContents CheckWindow(bool on_object) {
   return result;
 }
 
+// Objects
+lowp uint ObjectColorIndex(lowp uint obj) {
+  mediump ivec2 lookup =
+      ivec2(objects[obj].transformation * (screencoord - objects[obj].center));
+  if (any(lessThan(lookup, -objects[obj].half_size)) ||
+      any(greaterThanEqual(lookup, objects[obj].half_size))) {
+    return 0u;
+  }
+
+  lookup = lookup * objects[obj].flip + objects[obj].half_size;
+  lookup -= lookup % objects[obj].mosaic;
+
+  mediump int tile_index;
+  lowp ivec2 tile = lookup / 8;
+  if (obj_mode) {
+    tile_index = tile.x + tile.y * objects[obj].half_size.x / 4;
+  } else {
+    lowp int row_width = objects[obj].large_palette ? 16 : 32;
+    tile_index = tile.x + tile.y * row_width;
+  }
+
+  lowp ivec2 tile_pixel = lookup % 8;
+  lowp int tile_height = objects[obj].large_palette ? 16 : 8;
+  lowp uvec4 color_indices = texelFetch(
+      object_tiles,
+      ivec2(tile_pixel.x,
+            objects[obj].tile_base + tile_height * tile_index + tile_pixel.y),
+      0);
+  return objects[obj].large_palette ? color_indices.r : color_indices.g;
+}
+
 // Backgrounds
 struct BackgroundControl {
   mediump ivec2 size;
@@ -482,24 +446,23 @@ void main() {
 
   if (obj_enabled) {
     highp uvec4 visible_objects =
-        texelFetch(object_visibility, ivec2(screencoord.x, 0), 0) &
-        texelFetch(object_visibility, ivec2(screencoord.y, 1), 0);
+        object_columns[uint(screencoord.x)] & object_rows[uint(screencoord.y)];
 
     highp uint visible_object_sets[4];
     lowp uint visible_object_set_base[4];
     lowp uint num_object_sets = 0u;
     visible_object_sets[num_object_sets] = visible_objects.x;
     visible_object_set_base[num_object_sets] = 0u;
-    num_object_sets += uint(visible_objects.x != 0u);
+    num_object_sets += (visible_objects.x != 0u) ? 1u : 0u;
     visible_object_sets[num_object_sets] = visible_objects.y;
     visible_object_set_base[num_object_sets] = 32u;
-    num_object_sets += uint(visible_objects.y != 0u);
+    num_object_sets += (visible_objects.y != 0u) ? 1u : 0u;
     visible_object_sets[num_object_sets] = visible_objects.z;
     visible_object_set_base[num_object_sets] = 64u;
-    num_object_sets += uint(visible_objects.z != 0u);
+    num_object_sets += (visible_objects.z != 0u) ? 1u : 0u;
     visible_object_sets[num_object_sets] = visible_objects.w;
     visible_object_set_base[num_object_sets] = 96u;
-    num_object_sets += uint(visible_objects.w != 0u);
+    num_object_sets += (visible_objects.w != 0u) ? 1u : 0u;
 
     lowp uint visible_object_set_index = 0u;
     for (lowp uint i = 0u; i < num_object_sets * 32u; i++) {
@@ -509,15 +472,15 @@ void main() {
       lowp uint obj = base + index;
 
       object_window_objects[num_object_window_objects] = obj;
-      num_object_window_objects += uint(ObjectWindow(obj));
+      num_object_window_objects += objects[obj].window ? 1u : 0u;
 
       drawn_objects[num_drawn_objects] = obj;
-      num_drawn_objects += uint(!ObjectWindow(obj));
+      num_drawn_objects += objects[obj].window ? 0u : 1u;
 
       visible_object_sets[visible_object_set_index] =
           visible_object_sets[visible_object_set_index] ^ (1u << index);
       visible_object_set_index +=
-          uint(visible_object_sets[visible_object_set_index] == 0u);
+          (visible_object_sets[visible_object_set_index] == 0u) ? 1u : 0u;
 
       if (visible_object_set_index == num_object_sets) {
         break;
@@ -526,7 +489,7 @@ void main() {
 
     // Check Object Window
     for (lowp uint i = 0u; i < num_object_window_objects; i++) {
-      lowp uint color_index = GetObjectColorIndex(object_window_objects[i]);
+      lowp uint color_index = ObjectColorIndex(object_window_objects[i]);
       on_object_window = on_object_window || (color_index != 0u);
     }
   }
@@ -543,19 +506,19 @@ void main() {
     for (lowp uint i = 0u; i < num_drawn_objects; i++) {
       lowp uint obj = drawn_objects[i];
 
-      lowp uint color_index = GetObjectColorIndex(obj);
+      lowp uint color_index = ObjectColorIndex(obj);
       if (color_index == 0u) {
         continue;
       }
 
       lowp uint palette =
-          ObjectLargePalette(obj) ? 0u : obj_attributes[obj].palette;
+          objects[obj].large_palette ? 0u : objects[obj].palette;
       lowp vec4 obj_color = object_palette[palette + color_index];
 
-      if (obj_attributes[obj].priority < priority) {
+      if (objects[obj].priority < priority) {
         color = obj_color;
-        priority = obj_attributes[obj].priority;
-        blended = ObjectSemiTransparent(obj);
+        priority = objects[obj].priority;
+        blended = objects[obj].semi_transparent;
       }
     }
     BlendUnitAddObject(color, priority, blended);

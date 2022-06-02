@@ -53,13 +53,13 @@ void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
   glUniformBlockBinding(program, bg_palette, BG_PALETTE_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-  glBindBufferBase(GL_UNIFORM_BUFFER, bg_palette, context->bg_palette);
+  glBindBufferBase(GL_UNIFORM_BUFFER, BG_PALETTE_BUFFER, context->bg_palette);
 
   GLint obj_palette = glGetUniformBlockIndex(program, "ObjectPalette");
   glUniformBlockBinding(program, obj_palette, OBJ_PALETTE_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-  glBindBufferBase(GL_UNIFORM_BUFFER, obj_palette, context->obj_palette);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJ_PALETTE_BUFFER, context->obj_palette);
 }
 
 void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context) {
