@@ -27,10 +27,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     GbaPpuSet objects = context->rotations[i];
     while (!GbaPpuSetEmpty(&objects)) {
       uint_fast8_t object = GbaPpuSetPop(&objects);
-      context->transformations[object][0u] = pa;
-      context->transformations[object][1u] = pc;
-      context->transformations[object][2u] = pb;
-      context->transformations[object][3u] = pd;
+      context->staging.objects[object].transformation[0u][0u] = pa;
+      context->staging.objects[object].transformation[0u][1u] = pc;
+      context->staging.objects[object].transformation[1u][0u] = pb;
+      context->staging.objects[object].transformation[1u][1u] = pd;
     }
   }
 
@@ -87,10 +87,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       origin[1u] = memory->oam.object_attributes[i].y_coordinate_u;
     }
 
-    context->center_and_half_size[i][0u] = origin[0u] + render_size[0u] / 2u;
-    context->center_and_half_size[i][1u] = origin[1u] + render_size[1u] / 2u;
-    context->center_and_half_size[i][2u] = sprite_size[0u] / 2;
-    context->center_and_half_size[i][3u] = sprite_size[1u] / 2;
+    context->staging.objects[i].center[0u] = origin[0u] + render_size[0u] / 2u;
+    context->staging.objects[i].center[1u] = origin[1u] + render_size[1u] / 2u;
+    context->staging.objects[i].half_size[0u] = sprite_size[0u] / 2;
+    context->staging.objects[i].half_size[1u] = sprite_size[1u] / 2;
 
     origin[0u] = (origin[0u] < 0u) ? 0u : origin[0u];
     origin[1u] = (origin[1u] < 0u) ? 0u : origin[1u];
@@ -110,17 +110,17 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       GbaPpuSetAdd(context->rows + y, i);
     }
 
-    context->attributes[i].tile_base = character_name * 8;
-    context->attributes[i].affine = memory->oam.object_attributes[i].affine;
-    context->attributes[i].large_palette =
+    context->staging.objects[i].tile_base = character_name * 8u;
+    context->staging.objects[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
-    context->attributes[i].window =
+    context->staging.objects[i].window =
         (memory->oam.object_attributes[i].obj_mode == 2u);
-    context->attributes[i].semi_transparent =
+    context->staging.objects[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
-    context->attributes[i].palette =
+    context->staging.objects[i].palette =
         memory->oam.object_attributes[i].palette * 16u;
-    context->attributes[i].priority = memory->oam.object_attributes[i].priority;
+    context->staging.objects[i].priority =
+        memory->oam.object_attributes[i].priority;
 
     for (uint8_t rot = 0; rot < OAM_NUM_ROTATE_SCALE_GROUPS; rot++) {
       GbaPpuSetRemove(&context->rotations[rot], i);
@@ -128,237 +128,79 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
     if (memory->oam.object_attributes[i].affine) {
       uint8_t rot = memory->oam.object_attributes[i].flex_param_1;
-      context->transformations[i][0u] =
+      context->staging.objects[i].transformation[0u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pa);
-      context->transformations[i][1u] =
+      context->staging.objects[i].transformation[0u][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pb);
-      context->transformations[i][2u] =
+      context->staging.objects[i].transformation[1u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pc);
-      context->transformations[i][3u] =
+      context->staging.objects[i].transformation[1u][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
-      context->attributes[i].flip_x = false;
-      context->attributes[i].flip_y = false;
+      context->staging.objects[i].flip[0] = 1;
+      context->staging.objects[i].flip[1] = 1;
     } else {
-      context->transformations[i][0u] = 1.0;
-      context->transformations[i][1u] = 0.0;
-      context->transformations[i][2u] = 0.0;
-      context->transformations[i][3u] = 1.0;
+      context->staging.objects[i].transformation[0u][0u] = 1.0;
+      context->staging.objects[i].transformation[0u][1u] = 0.0;
+      context->staging.objects[i].transformation[1u][0u] = 0.0;
+      context->staging.objects[i].transformation[1u][1u] = 1.0;
 
-      context->attributes[i].flip_x =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x08u);
-      context->attributes[i].flip_y =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x10u);
+      context->staging.objects[i].flip[0] =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x08u) ? -1 : 1;
+      context->staging.objects[i].flip[1] =
+          (memory->oam.object_attributes[i].flex_param_1 & 0x10u) ? -1 : 1;
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {
-      context->attributes[i].mosaic[0u] = 1 + registers->mosaic.obj_horiz;
-      context->attributes[i].mosaic[1u] = 1 + registers->mosaic.obj_vert;
+      context->staging.objects[i].mosaic[0u] = 1 + registers->mosaic.obj_horiz;
+      context->staging.objects[i].mosaic[1u] = 1 + registers->mosaic.obj_vert;
     } else {
-      context->attributes[i].mosaic[0u] = 1;
-      context->attributes[i].mosaic[1u] = 1;
+      context->staging.objects[i].mosaic[0u] = 1;
+      context->staging.objects[i].mosaic[1u] = 1;
     }
   }
 
   for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-    context->visibility_staging[0u][x][0u] = context->columns[x].objects[0u];
-    context->visibility_staging[0u][x][1u] =
+    context->staging.object_columns[x][0u] = context->columns[x].objects[0u];
+    context->staging.object_columns[x][1u] =
         context->columns[x].objects[0u] >> 32u;
-    context->visibility_staging[0u][x][2u] = context->columns[x].objects[1u];
-    context->visibility_staging[0u][x][3u] =
+    context->staging.object_columns[x][2u] = context->columns[x].objects[1u];
+    context->staging.object_columns[x][3u] =
         context->columns[x].objects[1u] >> 32u;
   }
 
   for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    context->visibility_staging[1u][y][0u] = context->rows[y].objects[0u];
-    context->visibility_staging[1u][y][1u] =
-        context->rows[y].objects[0u] >> 32u;
-    context->visibility_staging[1u][y][2u] = context->rows[y].objects[1u];
-    context->visibility_staging[1u][y][3u] =
-        context->rows[y].objects[1u] >> 32u;
+    context->staging.object_rows[y][0u] = context->rows[y].objects[0u];
+    context->staging.object_rows[y][1u] = context->rows[y].objects[0u] >> 32u;
+    context->staging.object_rows[y][2u] = context->rows[y].objects[1u];
+    context->staging.object_rows[y][3u] = context->rows[y].objects[1u] >> 32u;
   }
 
-  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
-  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                  /*yoffset=*/0, /*width=*/OAM_NUM_OBJECTS, /*height=*/1,
-                  /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
-                  /*pixels=*/context->center_and_half_size);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                  /*size=*/sizeof(context->staging),
+                  /*data=*/&context->staging);
 
-  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
-  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                  /*yoffset=*/0, /*width=*/OAM_NUM_OBJECTS, /*height=*/1,
-                  /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
-                  /*pixels=*/context->transformations);
-
-  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
-  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                  /*yoffset=*/0, /*width=*/GBA_SCREEN_WIDTH, /*height=*/2,
-                  /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                  /*pixels=*/context->visibility_staging);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
-  glGenTextures(1u, &context->object_center_and_half_size);
-  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
-               /*width=*/OAM_NUM_OBJECTS,
-               /*height=*/1,
-               /*border=*/0, /*format=*/GL_RGBA,
-               /*type=*/GL_FLOAT,
-               /*pixels=*/NULL);
-
-  glGenTextures(1u, &context->object_transformations);
-  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
-               /*width=*/OAM_NUM_OBJECTS,
-               /*height=*/1,
-               /*border=*/0, /*format=*/GL_RGBA,
-               /*type=*/GL_FLOAT,
-               /*pixels=*/NULL);
-
-  glGenTextures(1u, &context->object_visibility);
-  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-               /*width=*/GBA_SCREEN_WIDTH,
-               /*height=*/2u,
-               /*border=*/0, /*format=*/GL_RGBA_INTEGER,
-               /*type=*/GL_UNSIGNED_INT,
-               /*pixels=*/NULL);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                                   GLuint program) {
-  GLint object_center_and_half_size =
-      glGetUniformLocation(program, "object_center_and_half_size");
-  glUniform1i(object_center_and_half_size, OBJ_CENTER_AND_HALF_SIZE_TEXTURE);
+  GLint objects = glGetUniformBlockIndex(program, "Objects");
+  glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
 
-  glActiveTexture(GL_TEXTURE0 + OBJ_CENTER_AND_HALF_SIZE_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->object_center_and_half_size);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffer);
+}
 
-  GLint object_transformations =
-      glGetUniformLocation(program, "object_transformations");
-  glUniform1i(object_transformations, OBJ_TRANSFORMATIONS_TEXTURE);
-
-  glActiveTexture(GL_TEXTURE0 + OBJ_TRANSFORMATIONS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->object_transformations);
-
-  GLint object_visibility = glGetUniformLocation(program, "object_visibility");
-  glUniform1i(object_visibility, OBJ_VISIBILITY_TEXTURE);
-
-  glActiveTexture(GL_TEXTURE0 + OBJ_VISIBILITY_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->object_visibility);
-
-  GbaPpuSet affine;
-  GbaPpuSetClear(&affine);
-
-  GbaPpuSet flip_x;
-  GbaPpuSetClear(&flip_x);
-
-  GbaPpuSet flip_y;
-  GbaPpuSetClear(&flip_y);
-
-  GbaPpuSet large_palette;
-  GbaPpuSetClear(&large_palette);
-
-  GbaPpuSet semi_transparent;
-  GbaPpuSetClear(&semi_transparent);
-
-  GbaPpuSet window;
-  GbaPpuSetClear(&window);
-
-  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
-    char variable_name[100u];
-    sprintf(variable_name, "obj_attributes[%u].mosaic", i);
-    GLint mosaic = glGetUniformLocation(program, variable_name);
-    glUniform2i(mosaic, context->attributes[i].mosaic[0u],
-                context->attributes[i].mosaic[1u]);
-
-    sprintf(variable_name, "obj_attributes[%u].tile_base", i);
-    GLint tile_base = glGetUniformLocation(program, variable_name);
-    glUniform1i(tile_base, context->attributes[i].tile_base);
-
-    sprintf(variable_name, "obj_attributes[%u].palette", i);
-    GLint palette = glGetUniformLocation(program, variable_name);
-    glUniform1ui(palette, context->attributes[i].palette);
-
-    sprintf(variable_name, "obj_attributes[%u].priority", i);
-    GLint priority = glGetUniformLocation(program, variable_name);
-    glUniform1ui(priority, context->attributes[i].priority);
-
-    if (context->attributes[i].affine) {
-      GbaPpuSetAdd(&affine, i);
-    }
-
-    if (context->attributes[i].flip_x) {
-      GbaPpuSetAdd(&flip_x, i);
-    }
-
-    if (context->attributes[i].flip_y) {
-      GbaPpuSetAdd(&flip_y, i);
-    }
-
-    if (context->attributes[i].large_palette) {
-      GbaPpuSetAdd(&large_palette, i);
-    }
-
-    if (context->attributes[i].large_palette) {
-      GbaPpuSetAdd(&large_palette, i);
-    }
-
-    if (context->attributes[i].semi_transparent) {
-      GbaPpuSetAdd(&semi_transparent, i);
-    }
-
-    if (context->attributes[i].window) {
-      GbaPpuSetAdd(&window, i);
-    }
-  }
-
-  GLint object_affine = glGetUniformLocation(program, "object_affine");
-  glUniform4ui(object_affine, affine.objects[0u], affine.objects[0u] >> 32u,
-               affine.objects[1u], affine.objects[1u] >> 32u);
-
-  GLint object_flip_x = glGetUniformLocation(program, "object_flip_x");
-  glUniform4ui(object_flip_x, flip_x.objects[0u], flip_x.objects[0u] >> 32u,
-               flip_x.objects[1u], flip_x.objects[1u] >> 32u);
-
-  GLint object_flip_y = glGetUniformLocation(program, "object_flip_y");
-  glUniform4ui(object_flip_y, flip_y.objects[0u], flip_y.objects[0u] >> 32u,
-               flip_y.objects[1u], flip_y.objects[1u] >> 32u);
-
-  GLint object_large_palette =
-      glGetUniformLocation(program, "object_large_palette");
-  glUniform4ui(object_large_palette, large_palette.objects[0u],
-               large_palette.objects[0u] >> 32u, large_palette.objects[1u],
-               large_palette.objects[1u] >> 32u);
-
-  GLint object_semi_transparent =
-      glGetUniformLocation(program, "object_semi_transparent");
-  glUniform4ui(object_semi_transparent, semi_transparent.objects[0u],
-               semi_transparent.objects[0u] >> 32u,
-               semi_transparent.objects[1u],
-               semi_transparent.objects[1u] >> 32u);
-
-  GLint object_window = glGetUniformLocation(program, "object_window");
-  glUniform4ui(object_window, window.objects[0u], window.objects[0u] >> 32u,
-               window.objects[1u], window.objects[1u] >> 32u);
+void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
+  glGenBuffers(1, &context->buffer);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+               GL_DYNAMIC_DRAW);
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
-  glDeleteTextures(1u, &context->object_visibility);
+  glDeleteBuffers(1u, &context->buffer);
 }

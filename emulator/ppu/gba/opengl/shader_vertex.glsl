@@ -9,9 +9,9 @@ in highp vec2 bg2_affine; // In GBA screen space
 in highp vec2 bg3_affine; // In GBA screen space
 
 // Outputs
-out highp vec2 scrolling_screencoord[4];
-out highp vec2 affine_screencoord[2];
-out highp vec2 screencoord;
+out mediump vec2 scrolling_screencoord[4];
+out mediump vec2 affine_screencoord[2];
+out mediump vec2 screencoord;
 
 void main() {
   highp float x = -1.0 + float((gl_VertexID & 1) << 2);
