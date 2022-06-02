@@ -119,7 +119,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     context->attributes[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->attributes[i].palette =
-        memory->oam.object_attributes[i].palette * 16;
+        memory->oam.object_attributes[i].palette * 16u;
     context->attributes[i].priority = memory->oam.object_attributes[i].priority;
 
     for (uint8_t rot = 0; rot < OAM_NUM_ROTATE_SCALE_GROUPS; rot++) {
@@ -294,7 +294,7 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 
     sprintf(variable_name, "obj_attributes[%u].palette", i);
     GLint palette = glGetUniformLocation(program, variable_name);
-    glUniform1i(palette, context->attributes[i].palette);
+    glUniform1ui(palette, context->attributes[i].palette);
 
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);

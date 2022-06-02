@@ -8,6 +8,23 @@ in highp vec2 screencoord;
 // Outputs
 out lowp vec4 frag_color;
 
+// Palettes
+layout(std140) uniform BackgroundPalette { lowp vec4 background_palette[256]; };
+layout(std140) uniform ObjectPalette { lowp vec4 object_palette[256]; };
+
+// Tiles
+uniform lowp usampler2D background_tiles;
+uniform lowp usampler2D object_tiles;
+
+// Tilemaps
+uniform mediump isampler2D affine_tilemap;
+uniform mediump isampler2D scrolling_tilemap;
+
+// Background Bitmaps
+uniform lowp sampler2D mode3_bitmap;
+uniform lowp usampler2D mode4_bitmap;
+uniform lowp sampler2D mode5_bitmap;
+
 // Display Controls
 uniform lowp uint scrolling_backgrounds[4];
 uniform lowp uint num_scrolling_backgrounds;
@@ -22,19 +39,6 @@ uniform bool obj_enabled;
 uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
-
-// Tilemaps
-uniform mediump isampler2D bg_affine_tilemap;
-uniform mediump isampler2D bg_scrolling_tilemap;
-
-// Tiles
-uniform mediump isampler2D bg_tiles;
-uniform lowp sampler2D bg_palette;
-
-// Background Bitmaps
-uniform lowp sampler2D bg_mode3;
-uniform lowp usampler2D bg_mode4;
-uniform lowp sampler2D bg_mode5;
 
 // Background Mosaic
 uniform lowp ivec2 bg_mosaic[4];
@@ -54,13 +58,11 @@ uniform highp uvec4 object_window;
 struct ObjectAttributes {
   lowp ivec2 mosaic;
   mediump int tile_base;
-  mediump int palette;
+  lowp uint palette;
   lowp uint priority;
 };
 
 uniform ObjectAttributes obj_attributes[128];
-uniform mediump isampler2D obj_tiles;
-uniform lowp sampler2D obj_palette;
 
 bool ObjectAffine(lowp uint obj) {
   return (object_affine[obj / 32u] & (1u << (obj % 32u))) != 0u;
@@ -86,7 +88,7 @@ bool ObjectWindow(lowp uint obj) {
   return (object_window[obj / 32u] & (1u << (obj % 32u))) != 0u;
 }
 
-mediump int GetObjectColorIndex(lowp uint obj) {
+lowp uint GetObjectColorIndex(lowp uint obj) {
   highp vec4 center_and_half_size =
       texelFetch(object_center_and_half_size, ivec2(obj, 0), 0);
   highp vec2 from_center = screencoord - center_and_half_size.xy;
@@ -96,7 +98,7 @@ mediump int GetObjectColorIndex(lowp uint obj) {
     highp vec4 matrix = texelFetch(object_transformations, ivec2(obj, 0), 0);
     lookup = mat2(matrix) * lookup;
     if (any(greaterThan(abs(lookup), center_and_half_size.zw))) {
-      return 0;
+      return 0u;
     }
   }
 
@@ -121,9 +123,11 @@ mediump int GetObjectColorIndex(lowp uint obj) {
   tile_index <<= large_palette ? 1 : 0;
 
   highp ivec2 tile_pixel = object_pixel % 8;
-  mediump ivec4 color_indices = texelFetch(
-      obj_tiles, ivec2(tile_pixel.x, obj_attributes[obj].tile_base +
-                                         8 * tile_index + tile_pixel.y), 0);
+  lowp uvec4 color_indices =
+      texelFetch(object_tiles,
+                 ivec2(tile_pixel.x, obj_attributes[obj].tile_base +
+                                         8 * tile_index + tile_pixel.y),
+                 0);
   return large_palette ? color_indices.r : color_indices.g;
 }
 
@@ -374,28 +378,26 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
                                       32 * tilemap_block_index +
                                       tilemap_block_tile.y);
 
-  mediump ivec4 tilemap_entry =
-      texelFetch(bg_scrolling_tilemap, tilemap_index, 0);
+  mediump ivec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
   mediump int tileblock_offset =
       tilemap_entry.x >> int(bg_cnt[bg].large_palette);
   lowp ivec2 flip = tilemap_entry.yz;
-  lowp int palette = tilemap_entry.w;
+  lowp uint palette = uint(tilemap_entry.w);
 
   lowp ivec2 tile_pixel = abs(flip - (tilemap_pixel % 8));
 
-  mediump ivec4 color_indices =
-      texelFetch(bg_tiles,
+  lowp uvec4 color_indices =
+      texelFetch(background_tiles,
                  ivec2(tile_pixel.x, bg_cnt[bg].tile_base +
                                          tileblock_offset * 8 + tile_pixel.y),
                  0);
 
-  mediump int color_index =
+  lowp uint color_index =
       bg_cnt[bg].large_palette ? color_indices.r : color_indices.g;
 
-  mediump int palette_base = bg_cnt[bg].large_palette ? 0 : palette;
-  lowp vec4 color =
-      texelFetch(bg_palette, ivec2(palette_base + color_index, 0), 0);
-  return vec4(color.rgb, float(color_index != 0));
+  lowp uint palette_base = bg_cnt[bg].large_palette ? 0u : palette;
+  lowp vec4 color = background_palette[palette_base + color_index];
+  return vec4(color.rgb, float(color_index != 0u));
 }
 
 lowp vec4 AffineBackground(lowp uint bg) {
@@ -410,14 +412,17 @@ lowp vec4 AffineBackground(lowp uint bg) {
   mediump int tile_index = bg_cnt[bg].tilemap_base + tile_offset;
 
   mediump int index =
-      texelFetch(bg_affine_tilemap,
-                ivec2(tile_index % 256, tile_index / 256), 0).r;
+      texelFetch(affine_tilemap, ivec2(tile_index % 256, tile_index / 256), 0)
+          .r;
 
-  mediump int color_index = texelFetch(
-      bg_tiles, ivec2(tile_pixel.x, bg_cnt[bg].tile_base + index * 8 +
-                                       tile_pixel.y), 0).r;
-  lowp vec4 color = texelFetch(bg_palette, ivec2(color_index, 0), 0);
-  return vec4(color.rgb, float(color_index != 0));
+  lowp uint color_index =
+      texelFetch(
+          background_tiles,
+          ivec2(tile_pixel.x, bg_cnt[bg].tile_base + index * 8 + tile_pixel.y),
+          0)
+          .r;
+  lowp vec4 color = background_palette[color_index];
+  return vec4(color.rgb, float(color_index != 0u));
 }
 
 lowp vec4 BitmapBackgroundMode3() {
@@ -427,7 +432,7 @@ lowp vec4 BitmapBackgroundMode3() {
   }
   highp ivec2 lookup = ivec2(affine_screencoord[0]);
   lookup -= lookup % bg_mosaic[2];
-  return texelFetch(bg_mode3, lookup, 0);
+  return texelFetch(mode3_bitmap, lookup, 0);
 }
 
 lowp vec4 BitmapBackgroundMode4() {
@@ -437,8 +442,8 @@ lowp vec4 BitmapBackgroundMode4() {
   }
   highp ivec2 lookup = ivec2(affine_screencoord[0]);
   lookup -= lookup % bg_mosaic[2];
-  lowp uint index = texelFetch(bg_mode4, lookup, 0).r;
-  return texelFetch(bg_palette, ivec2(index, 0), 0);
+  lowp uint index = texelFetch(mode4_bitmap, lookup, 0).r;
+  return background_palette[index];
 }
 
 lowp vec4 BitmapBackgroundMode5() {
@@ -448,11 +453,11 @@ lowp vec4 BitmapBackgroundMode5() {
   }
   highp ivec2 lookup = ivec2(affine_screencoord[0]);
   lookup -= lookup % bg_mosaic[2];
-  return texelFetch(bg_mode5, lookup, 0);
+  return texelFetch(mode5_bitmap, lookup, 0);
 }
 
 // Backdrop
-lowp vec4 Backdrop() { return texelFetch(bg_palette, ivec2(0, 0), 0); }
+lowp vec4 Backdrop() { return background_palette[0]; }
 
 // Count Trailing Zeroes
 const lowp uint clz_lut[32] = uint[32](
@@ -521,8 +526,8 @@ void main() {
 
     // Check Object Window
     for (lowp uint i = 0u; i < num_object_window_objects; i++) {
-      mediump int color_index = GetObjectColorIndex(object_window_objects[i]);
-      on_object_window = on_object_window || (color_index != 0);
+      lowp uint color_index = GetObjectColorIndex(object_window_objects[i]);
+      on_object_window = on_object_window || (color_index != 0u);
     }
   }
 
@@ -538,15 +543,14 @@ void main() {
     for (lowp uint i = 0u; i < num_drawn_objects; i++) {
       lowp uint obj = drawn_objects[i];
 
-      mediump int color_index = GetObjectColorIndex(obj);
-      if (color_index == 0) {
+      lowp uint color_index = GetObjectColorIndex(obj);
+      if (color_index == 0u) {
         continue;
       }
 
-      mediump int palette =
-          ObjectLargePalette(obj) ? 0 : obj_attributes[obj].palette;
-      lowp vec4 obj_color =
-          texelFetch(obj_palette, ivec2(palette + color_index, 0), 0);
+      lowp uint palette =
+          ObjectLargePalette(obj) ? 0u : obj_attributes[obj].palette;
+      lowp vec4 obj_color = object_palette[palette + color_index];
 
       if (obj_attributes[obj].priority < priority) {
         color = obj_color;

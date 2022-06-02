@@ -9,7 +9,7 @@
 typedef struct {
   GLuint bg_palette;
   GLuint obj_palette;
-  uint16_t colors[GBA_LARGE_PALETTE_SIZE];
+  GLfloat staging[GBA_LARGE_PALETTE_SIZE][4u];
 } OpenGlBgPalette;
 
 void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,

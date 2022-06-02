@@ -42,7 +42,7 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
 
 void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
                              GLuint program) {
-  GLint bg_mode4 = glGetUniformLocation(program, "bg_mode4");
+  GLint bg_mode4 = glGetUniformLocation(program, "mode4_bitmap");
   glUniform1i(bg_mode4, BG2_MODE4_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG2_MODE4_TEXTURE);

@@ -90,13 +90,13 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
 }
 
 void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
-  GLint bg_tiles_s = glGetUniformLocation(program, "bg_tiles");
+  GLint bg_tiles_s = glGetUniformLocation(program, "background_tiles");
   glUniform1i(bg_tiles_s, BG_TILES_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG_TILES_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->bg_tiles);
 
-  GLint obj_tiles_s = glGetUniformLocation(program, "obj_tiles");
+  GLint obj_tiles_s = glGetUniformLocation(program, "object_tiles");
   glUniform1i(obj_tiles_s, OBJ_TILES_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + OBJ_TILES_TEXTURE);

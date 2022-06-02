@@ -12,7 +12,7 @@ typedef struct {
   struct {
     GLint mosaic[2u];
     GLint tile_base;
-    GLint palette;
+    GLuint palette;
     bool affine;
     bool flip_x;
     bool flip_y;
