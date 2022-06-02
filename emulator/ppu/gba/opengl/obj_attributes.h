@@ -10,9 +10,9 @@
 
 typedef struct {
   struct {
-    GLfloat mosaic[2u];
-    GLfloat tile_base;
-    GLfloat palette;
+    GLint mosaic[2u];
+    GLint tile_base;
+    GLint palette;
     bool affine;
     bool flip_x;
     bool flip_y;

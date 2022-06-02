@@ -55,17 +55,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     }
 
     unsigned short character_name =
-        memory->oam.object_attributes[i].character_name >>
-        memory->oam.object_attributes[i].palette_mode;
+        memory->oam.object_attributes[i].character_name;
 
-    if (registers->dispcnt.mode >= 3) {
-      static const uint_least16_t minimum_index[2] = {
-          GBA_BITMAP_MODE_NUM_OBJECT_S_TILES,
-          GBA_BITMAP_MODE_NUM_OBJECT_D_TILES};
-      if (character_name <
-          minimum_index[memory->oam.object_attributes[i].palette_mode]) {
-        continue;
-      }
+    if (registers->dispcnt.mode >= 3 &&
+        character_name < GBA_BITMAP_MODE_NUM_OBJECT_S_TILES) {
+      continue;
     }
 
     int_fast16_t sprite_size[2u];
@@ -116,8 +110,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       GbaPpuSetAdd(context->rows + y, i);
     }
 
-    context->attributes[i].tile_base =
-        (GLfloat)character_name / (GLfloat)GBA_TILE_MODE_NUM_OBJECT_S_TILES;
+    context->attributes[i].tile_base = character_name * 8;
     context->attributes[i].affine = memory->oam.object_attributes[i].affine;
     context->attributes[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
@@ -126,7 +119,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     context->attributes[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->attributes[i].palette =
-        (GLfloat)memory->oam.object_attributes[i].palette / 16.0;
+        memory->oam.object_attributes[i].palette * 16;
     context->attributes[i].priority = memory->oam.object_attributes[i].priority;
 
     for (uint8_t rot = 0; rot < OAM_NUM_ROTATE_SCALE_GROUPS; rot++) {
@@ -160,11 +153,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {
-      context->attributes[i].mosaic[0u] = 1.0 + registers->mosaic.obj_horiz;
-      context->attributes[i].mosaic[1u] = 1.0 + registers->mosaic.obj_vert;
+      context->attributes[i].mosaic[0u] = 1 + registers->mosaic.obj_horiz;
+      context->attributes[i].mosaic[1u] = 1 + registers->mosaic.obj_vert;
     } else {
-      context->attributes[i].mosaic[0u] = 1.0;
-      context->attributes[i].mosaic[1u] = 1.0;
+      context->attributes[i].mosaic[0u] = 1;
+      context->attributes[i].mosaic[1u] = 1;
     }
   }
 
@@ -292,16 +285,16 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
     char variable_name[100u];
     sprintf(variable_name, "obj_attributes[%u].mosaic", i);
     GLint mosaic = glGetUniformLocation(program, variable_name);
-    glUniform2f(mosaic, context->attributes[i].mosaic[0u],
+    glUniform2i(mosaic, context->attributes[i].mosaic[0u],
                 context->attributes[i].mosaic[1u]);
 
     sprintf(variable_name, "obj_attributes[%u].tile_base", i);
     GLint tile_base = glGetUniformLocation(program, variable_name);
-    glUniform1f(tile_base, context->attributes[i].tile_base);
+    glUniform1i(tile_base, context->attributes[i].tile_base);
 
     sprintf(variable_name, "obj_attributes[%u].palette", i);
     GLint palette = glGetUniformLocation(program, variable_name);
-    glUniform1f(palette, context->attributes[i].palette);
+    glUniform1i(palette, context->attributes[i].palette);
 
     sprintf(variable_name, "obj_attributes[%u].priority", i);
     GLint priority = glGetUniformLocation(program, variable_name);
