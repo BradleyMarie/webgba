@@ -1,5 +1,13 @@
 #version 300 es
 
+// Inputs
+in highp vec2 scrolling_screencoord[4];
+in highp vec2 affine_screencoord[2];
+in highp vec2 screencoord;
+
+// Outputs
+out lowp vec4 frag_color;
+
 // Display Controls
 uniform lowp uint scrolling_backgrounds[4];
 uniform lowp uint num_scrolling_backgrounds;
@@ -31,11 +39,6 @@ uniform lowp sampler2D bg_mode5;
 // Background Mosaic
 uniform lowp ivec2 bg_mosaic[4];
 
-// Inputs
-in highp vec2 scrolling_screencoord[4];
-in highp vec2 affine_screencoord[2];
-in highp vec2 screencoord;
-
 // Objects
 uniform highp sampler2D object_center_and_half_size;
 uniform highp sampler2D object_transformations;
@@ -49,14 +52,14 @@ uniform highp uvec4 object_semi_transparent;
 uniform highp uvec4 object_window;
 
 struct ObjectAttributes {
-  mediump vec2 mosaic;
-  highp float tile_base;
-  lowp float palette;
+  lowp ivec2 mosaic;
+  mediump int tile_base;
+  mediump int palette;
   lowp uint priority;
 };
 
 uniform ObjectAttributes obj_attributes[128];
-uniform lowp sampler2D obj_tiles;
+uniform mediump isampler2D obj_tiles;
 uniform lowp sampler2D obj_palette;
 
 bool ObjectAffine(lowp uint obj) {
@@ -83,7 +86,7 @@ bool ObjectWindow(lowp uint obj) {
   return (object_window[obj / 32u] & (1u << (obj % 32u))) != 0u;
 }
 
-lowp float GetObjectColorIndex(lowp uint obj) {
+mediump int GetObjectColorIndex(lowp uint obj) {
   highp vec4 center_and_half_size =
       texelFetch(object_center_and_half_size, ivec2(obj, 0), 0);
   highp vec2 from_center = screencoord - center_and_half_size.xy;
@@ -93,7 +96,7 @@ lowp float GetObjectColorIndex(lowp uint obj) {
     highp vec4 matrix = texelFetch(object_transformations, ivec2(obj, 0), 0);
     lookup = mat2(matrix) * lookup;
     if (any(greaterThan(abs(lookup), center_and_half_size.zw))) {
-      return 0.0;
+      return 0;
     }
   }
 
@@ -101,25 +104,27 @@ lowp float GetObjectColorIndex(lowp uint obj) {
                               : center_and_half_size.z + lookup.x;
   lookup.y = ObjectFlipY(obj) ? center_and_half_size.w - lookup.y
                               : center_and_half_size.w + lookup.y;
-  lookup = lookup - mod(lookup, obj_attributes[obj].mosaic) + vec2(0.5, 0.5);
 
-  highp vec2 tile = floor(lookup / 8.0);
+  mediump ivec2 object_pixel = ivec2(lookup);
+  object_pixel -= object_pixel % obj_attributes[obj].mosaic;
 
+  mediump int tile_index;
+  mediump ivec2 tile = object_pixel / 8;
   bool large_palette = ObjectLargePalette(obj);
-
-  highp float tile_index;
   if (obj_mode) {
-    tile_index = tile.x + tile.y * center_and_half_size.z / 4.0;
+    tile_index = tile.x + tile.y * int(center_and_half_size.z) / 4;
   } else {
-    highp float row_width = large_palette ? 16.0 : 32.0;
+    lowp int row_width = large_palette ? 16 : 32;
     tile_index = tile.x + tile.y * row_width;
   }
 
-  highp vec2 tile_pixel = mod(lookup, 8.0) / 8.0;
-  lowp vec4 color_indices = texture(
-      obj_tiles, vec2(tile_pixel.x, obj_attributes[obj].tile_base +
-                                        (tile_index + tile_pixel.y) / 1024.0));
-  return large_palette ? color_indices.r : color_indices.a;
+  tile_index <<= large_palette ? 1 : 0;
+
+  highp ivec2 tile_pixel = object_pixel % 8;
+  mediump ivec4 color_indices = texelFetch(
+      obj_tiles, ivec2(tile_pixel.x, obj_attributes[obj].tile_base +
+                                         8 * tile_index + tile_pixel.y), 0);
+  return large_palette ? color_indices.r : color_indices.g;
 }
 
 // Blend Unit
@@ -460,8 +465,6 @@ lowp uint CountTrailingZeroes(highp uint value) {
 }
 
 // Main
-out lowp vec4 fragColor;
-
 void main() {
   BlendUnitInitialize();
 
@@ -518,8 +521,8 @@ void main() {
 
     // Check Object Window
     for (lowp uint i = 0u; i < num_object_window_objects; i++) {
-      lowp float color_index = GetObjectColorIndex(object_window_objects[i]);
-      on_object_window = on_object_window || (color_index != 0.0);
+      mediump int color_index = GetObjectColorIndex(object_window_objects[i]);
+      on_object_window = on_object_window || (color_index != 0);
     }
   }
 
@@ -535,16 +538,15 @@ void main() {
     for (lowp uint i = 0u; i < num_drawn_objects; i++) {
       lowp uint obj = drawn_objects[i];
 
-      lowp float color_index = GetObjectColorIndex(obj);
-      if (color_index == 0.0) {
+      mediump int color_index = GetObjectColorIndex(obj);
+      if (color_index == 0) {
         continue;
       }
 
-      lowp float palette =
-          ObjectLargePalette(obj) ? 0.0 : obj_attributes[obj].palette;
-      lowp float palette_offset = (color_index * 255.0 + 0.5) / 256.0;
+      mediump int palette =
+          ObjectLargePalette(obj) ? 0 : obj_attributes[obj].palette;
       lowp vec4 obj_color =
-          texture(obj_palette, vec2(palette + palette_offset, 0.5));
+          texelFetch(obj_palette, ivec2(palette + color_index, 0), 0);
 
       if (obj_attributes[obj].priority < priority) {
         color = obj_color;
@@ -607,5 +609,5 @@ void main() {
   BlendUnitAddBackdrop(backdrop);
 
   // Blend
-  fragColor = BlendUnitBlend(window.bld);
+  frag_color = BlendUnitBlend(window.bld);
 }

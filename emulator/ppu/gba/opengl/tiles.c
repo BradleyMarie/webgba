@@ -57,7 +57,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
         for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
           uint8_t value =
               memory->vram.mode_012.obj.d_tiles[d_tile_base + t].pixels[y][x];
-          context->staging[t][y][x][0u] = value;
+          context->staging[2u * t][y][x][0u] = value;
         }
       }
     }
@@ -80,7 +80,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
         /*yoffset=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES * i,
         /*width=*/GBA_TILE_1D_SIZE,
         /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
-        /*format=*/GL_LUMINANCE_ALPHA, /*type=*/GL_UNSIGNED_BYTE,
+        /*format=*/GL_RG_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
         /*pixels=*/context->staging);
 
     dirty_bits->vram.obj_tiles[i] = false;
@@ -124,12 +124,12 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(
-      GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_LUMINANCE_ALPHA,
-      /*width=*/GBA_TILE_1D_SIZE,
-      /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_NUM_OBJECT_S_TILES,
-      /*border=*/0, /*format=*/GL_LUMINANCE_ALPHA, /*type=*/GL_UNSIGNED_BYTE,
-      /*pixels=*/NULL);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RG8UI,
+               /*width=*/GBA_TILE_1D_SIZE,
+               /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_NUM_OBJECT_S_TILES,
+               /*border=*/0, /*format=*/GL_RG_INTEGER,
+               /*type=*/GL_UNSIGNED_BYTE,
+               /*pixels=*/NULL);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }
