@@ -67,14 +67,14 @@ void OpenGlBgTilemapReload(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
 }
 
 void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program) {
-  GLint bg_affine_tilemap = glGetUniformLocation(program, "bg_affine_tilemap");
+  GLint bg_affine_tilemap = glGetUniformLocation(program, "affine_tilemap");
   glUniform1i(bg_affine_tilemap, BG_AFFINE_TILEMAP_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG_AFFINE_TILEMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->affine);
 
   GLint bg_scrolling_tilemap =
-      glGetUniformLocation(program, "bg_scrolling_tilemap");
+      glGetUniformLocation(program, "scrolling_tilemap");
   glUniform1i(bg_scrolling_tilemap, BG_SCROLLING_TILEMAP_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG_SCROLLING_TILEMAP_TEXTURE);

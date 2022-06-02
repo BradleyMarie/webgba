@@ -39,7 +39,7 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
                              GLuint program) {
-  GLint bg_mode3 = glGetUniformLocation(program, "bg_mode3");
+  GLint bg_mode3 = glGetUniformLocation(program, "mode3_bitmap");
   glUniform1i(bg_mode3, BG2_MODE3_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG2_MODE3_TEXTURE);

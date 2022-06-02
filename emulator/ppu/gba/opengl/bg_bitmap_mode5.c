@@ -44,7 +44,7 @@ void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
 
 void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
                              GLuint program) {
-  GLint bg_mode5 = glGetUniformLocation(program, "bg_mode5");
+  GLint bg_mode5 = glGetUniformLocation(program, "mode5_bitmap");
   glUniform1i(bg_mode5, BG2_MODE5_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG2_MODE5_TEXTURE);
