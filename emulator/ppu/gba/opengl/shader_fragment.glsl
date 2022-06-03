@@ -231,28 +231,22 @@ layout(std140) uniform Windows {
   Window window1;
   Window window_object;
   Window window_outside;
-  mediump vec2 window_start[2];
-  mediump vec2 window_end[2];
+  mediump uvec2 window_shift[2];
+  mediump uvec2 window_bounds[2];
   bool window_object_enabled;
 };
 
-bool IsInsideWindow1D(highp float start, highp float end,
-                      highp float location) {
-  bool between = start <= location && location <= end;
-  return (start < end && between) || (start >= end && !between);
-}
-
-bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
-  return IsInsideWindow1D(start.x, end.x, location.x) &&
-         IsInsideWindow1D(start.y, end.y, location.y);
-}
-
 Window CheckWindow(bool on_object) {
-  if (IsInsideWindow2D(window_start[0], window_end[0], screencoord)) {
+  const mediump uvec2 screen_size = uvec2(240u, 160u);
+  mediump uvec2 pixel = uvec2(screencoord);
+
+  mediump uvec2 window0_location = (pixel + window_shift[0]) % screen_size;
+  if (all(lessThan(window0_location, window_bounds[0]))) {
     return window0;
   }
 
-  if (IsInsideWindow2D(window_start[1], window_end[1], screencoord)) {
+  mediump uvec2 window1_location = (pixel + window_shift[1]) % screen_size;
+  if (all(lessThan(window1_location, window_bounds[1]))) {
     return window1;
   }
 

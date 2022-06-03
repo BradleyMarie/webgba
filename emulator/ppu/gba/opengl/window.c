@@ -45,27 +45,75 @@ void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
   }
 
   if (registers->dispcnt.win0_enable) {
-    context->staging.start[0u][0u] = registers->win0h.start;
-    context->staging.start[0u][1u] = registers->win0v.start;
-    context->staging.end[0u][0u] = registers->win0h.end;
-    context->staging.end[0u][1u] = registers->win0v.end;
+    uint16_t start = (registers->win0h.start < GBA_SCREEN_WIDTH)
+                         ? registers->win0h.start
+                         : GBA_SCREEN_WIDTH;
+    uint16_t end = (registers->win0h.end < GBA_SCREEN_WIDTH)
+                       ? registers->win0h.end
+                       : GBA_SCREEN_WIDTH;
+
+    if (start <= end) {
+      context->staging.shift[0u][0u] = GBA_SCREEN_WIDTH - start;
+      context->staging.bounds[0u][0u] = end - start;
+    } else {
+      context->staging.shift[0u][0u] = GBA_SCREEN_WIDTH - start;
+      context->staging.bounds[0u][0u] = GBA_SCREEN_WIDTH - (start - end);
+    }
+
+    start = (registers->win0v.start < GBA_SCREEN_HEIGHT)
+                ? registers->win0v.start
+                : GBA_SCREEN_HEIGHT;
+    end = (registers->win0v.end < GBA_SCREEN_HEIGHT) ? registers->win0v.end
+                                                     : GBA_SCREEN_HEIGHT;
+
+    if (start <= end) {
+      context->staging.shift[0u][1u] = GBA_SCREEN_HEIGHT - start;
+      context->staging.bounds[0u][1u] = end - start;
+    } else {
+      context->staging.shift[0u][1u] = GBA_SCREEN_HEIGHT - start;
+      context->staging.bounds[0u][1u] = GBA_SCREEN_HEIGHT - (start - end);
+    }
   } else {
-    context->staging.start[0u][0u] = 241.0;
-    context->staging.start[0u][1u] = 161.0;
-    context->staging.end[0u][0u] = 242.0;
-    context->staging.end[0u][1u] = 162.0;
+    context->staging.shift[0u][0u] = 1u;
+    context->staging.shift[0u][1u] = 1u;
+    context->staging.bounds[0u][0u] = 0u;
+    context->staging.bounds[0u][1u] = 0u;
   }
 
   if (registers->dispcnt.win1_enable) {
-    context->staging.start[1u][0u] = registers->win1h.start;
-    context->staging.start[1u][1u] = registers->win1v.start;
-    context->staging.end[1u][0u] = registers->win1h.end;
-    context->staging.end[1u][1u] = registers->win1v.end;
+    uint16_t start = (registers->win1h.start < GBA_SCREEN_WIDTH)
+                         ? registers->win1h.start
+                         : GBA_SCREEN_WIDTH;
+    uint16_t end = (registers->win1h.end < GBA_SCREEN_WIDTH)
+                       ? registers->win1h.end
+                       : GBA_SCREEN_WIDTH;
+
+    if (start <= end) {
+      context->staging.shift[1u][0u] = GBA_SCREEN_WIDTH - start;
+      context->staging.bounds[1u][0u] = end - start;
+    } else {
+      context->staging.shift[1u][0u] = GBA_SCREEN_WIDTH - start;
+      context->staging.bounds[1u][0u] = GBA_SCREEN_WIDTH - (start - end);
+    }
+
+    start = (registers->win1v.start < GBA_SCREEN_HEIGHT)
+                ? registers->win1v.start
+                : GBA_SCREEN_HEIGHT;
+    end = (registers->win1v.end < GBA_SCREEN_HEIGHT) ? registers->win1v.end
+                                                     : GBA_SCREEN_HEIGHT;
+
+    if (start <= end) {
+      context->staging.shift[1u][1u] = GBA_SCREEN_HEIGHT - start;
+      context->staging.bounds[1u][1u] = end - start;
+    } else {
+      context->staging.shift[1u][1u] = GBA_SCREEN_HEIGHT - start;
+      context->staging.bounds[1u][1u] = GBA_SCREEN_HEIGHT - (start - end);
+    }
   } else {
-    context->staging.start[1u][0u] = 241.0;
-    context->staging.start[1u][1u] = 161.0;
-    context->staging.end[1u][0u] = 242.0;
-    context->staging.end[1u][1u] = 162.0;
+    context->staging.shift[1u][0u] = 1u;
+    context->staging.shift[1u][1u] = 1u;
+    context->staging.bounds[1u][0u] = 0u;
+    context->staging.bounds[1u][1u] = 0u;
   }
 
   context->staging.winobj_enabled = registers->dispcnt.winobj_enable;

@@ -17,8 +17,8 @@ typedef struct {
       GLuint bld;
       GLuint padding[2u];
     } windows[4u];
-    GLfloat start[2u][4u];
-    GLfloat end[2u][4u];
+    GLuint shift[2u][4u];
+    GLuint bounds[2u][4u];
     GLuint winobj_enabled;
   } staging;
   GLuint buffer;
