@@ -45,6 +45,17 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
     dirty_bits->io.bg_control[i] = false;
   }
 
+  if (registers->dispcnt.mode == 3u) {
+    context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
+    context->staging[2u].size[1] = GBA_SCREEN_WIDTH;
+  } else if (registers->dispcnt.mode == 4u) {
+    context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
+    context->staging[2u].size[1] = GBA_SCREEN_WIDTH;
+  } else if (registers->dispcnt.mode == 5u) {
+    context->staging[2u].size[0] = GBA_REDUCED_FRAME_WIDTH;
+    context->staging[2u].size[1] = GBA_REDUCED_FRAME_HEIGHT;
+  }
+
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
                   /*size=*/sizeof(context->staging),

@@ -9,7 +9,7 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits) {
-  if (!registers->dispcnt.bg2_enable) {
+  if (!registers->dispcnt.bg2_enable || registers->dispcnt.mode != 3) {
     context->enabled = false;
     return;
   }
@@ -39,10 +39,14 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
                              GLuint program) {
-  GLint bg_mode3 = glGetUniformLocation(program, "mode3_bitmap");
-  glUniform1i(bg_mode3, BG2_MODE3_TEXTURE);
+  if (!context->enabled) {
+    return;
+  }
 
-  glActiveTexture(GL_TEXTURE0 + BG2_MODE3_TEXTURE);
+  GLint bg_mode3 = glGetUniformLocation(program, "bitmap");
+  glUniform1i(bg_mode3, BITMAP_TEXTURE);
+
+  glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->texture);
 }
 
