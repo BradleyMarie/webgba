@@ -416,9 +416,40 @@ const lowp uint clz_lut[32] = uint[32](
     0u, 1u, 28u, 2u, 29u, 14u, 24u, 3u, 30u, 22u, 20u, 15u, 25u, 17u, 4u, 8u,
     31u, 27u, 13u, 23u, 21u, 19u, 16u, 7u, 26u, 12u, 18u, 6u, 11u, 5u, 10u, 9u);
 
-lowp uint CountTrailingZeroes(highp uint value) {
+lowp uint CountTrailingZeroes32(highp uint value) {
   const highp uint debrujin_sequence = 0x077CB531u;
   return clz_lut[((value & -value) * debrujin_sequence) >> 27u];
+}
+
+lowp uint CountTrailingZeroes(highp uvec4 value) {
+  if (value.x != 0u) {
+    return CountTrailingZeroes32(value.x);
+  }
+  if (value.y != 0u) {
+    return 32u + CountTrailingZeroes32(value.y);
+  }
+  if (value.z != 0u) {
+    return 64u + CountTrailingZeroes32(value.z);
+  }
+  return 96u + CountTrailingZeroes32(value.w);
+}
+
+highp uvec4 FlipBit(highp uvec4 value, lowp uint index) {
+  if (index < 32u) {
+    value.x ^= (1u << index);
+  } else if (index < 64u) {
+    value.y ^= (1u << (index - 32u));
+  } else if (index < 96u) {
+    value.z ^= (1u << (index - 64u));
+  } else {
+    value.w ^= (1u << (index - 96u));
+  }
+  return value;
+}
+
+bool NotEmpty(highp uvec4 value) {
+  const uvec4 zero = uvec4(0u, 0u, 0u, 0u);
+  return any(notEqual(value, zero));
 }
 
 // Main
@@ -426,59 +457,38 @@ void main() {
   BlendUnitInitialize();
 
   // Sort Objects and Check Object Window
-  lowp uint object_window_objects[128];
-  lowp uint num_object_window_objects = 0u;
-  lowp uint drawn_objects[128];
-  lowp uint num_drawn_objects = 0u;
+  lowp vec4 obj_color = vec4(0.0, 0.0, 0.0, 0.0);
+  lowp uint obj_priority = 5u;
+  bool obj_blended = false;
   bool on_object_window = false;
 
   if (obj_enabled) {
     highp uvec4 visible_objects =
         object_columns[uint(screencoord.x)] & object_rows[uint(screencoord.y)];
 
-    highp uint visible_object_sets[4];
-    lowp uint visible_object_set_base[4];
-    lowp uint num_object_sets = 0u;
-    visible_object_sets[num_object_sets] = visible_objects.x;
-    visible_object_set_base[num_object_sets] = 0u;
-    num_object_sets += (visible_objects.x != 0u) ? 1u : 0u;
-    visible_object_sets[num_object_sets] = visible_objects.y;
-    visible_object_set_base[num_object_sets] = 32u;
-    num_object_sets += (visible_objects.y != 0u) ? 1u : 0u;
-    visible_object_sets[num_object_sets] = visible_objects.z;
-    visible_object_set_base[num_object_sets] = 64u;
-    num_object_sets += (visible_objects.z != 0u) ? 1u : 0u;
-    visible_object_sets[num_object_sets] = visible_objects.w;
-    visible_object_set_base[num_object_sets] = 96u;
-    num_object_sets += (visible_objects.w != 0u) ? 1u : 0u;
+    while (NotEmpty(visible_objects)) {
+      lowp uint obj = CountTrailingZeroes(visible_objects);
+      visible_objects = FlipBit(visible_objects, obj);
 
-    lowp uint visible_object_set_index = 0u;
-    for (lowp uint i = 0u; i < num_object_sets * 32u; i++) {
-      lowp uint base = visible_object_set_base[visible_object_set_index];
-      lowp uint index =
-          CountTrailingZeroes(visible_object_sets[visible_object_set_index]);
-      lowp uint obj = base + index;
-
-      object_window_objects[num_object_window_objects] = obj;
-      num_object_window_objects += objects[obj].window ? 1u : 0u;
-
-      drawn_objects[num_drawn_objects] = obj;
-      num_drawn_objects += objects[obj].window ? 0u : 1u;
-
-      visible_object_sets[visible_object_set_index] =
-          visible_object_sets[visible_object_set_index] ^ (1u << index);
-      visible_object_set_index +=
-          (visible_object_sets[visible_object_set_index] == 0u) ? 1u : 0u;
-
-      if (visible_object_set_index == num_object_sets) {
-        break;
+      lowp uint color_index = ObjectColorIndex(obj);
+      if (color_index == 0u) {
+        continue;
       }
-    }
 
-    // Check Object Window
-    for (lowp uint i = 0u; i < num_object_window_objects; i++) {
-      lowp uint color_index = ObjectColorIndex(object_window_objects[i]);
-      on_object_window = on_object_window || (color_index != 0u);
+      if (objects[obj].window) {
+        on_object_window = true;
+        continue;
+      }
+
+      lowp uint palette =
+          objects[obj].large_palette ? 0u : objects[obj].palette;
+      lowp vec4 color = object_palette[palette + color_index];
+
+      if (objects[obj].priority < obj_priority) {
+        obj_color = color;
+        obj_priority = objects[obj].priority;
+        obj_blended = objects[obj].semi_transparent;
+      }
     }
   }
 
@@ -486,30 +496,8 @@ void main() {
   WindowContents window = CheckWindow(on_object_window);
 
   // Objects
-  num_drawn_objects = window.obj ? num_drawn_objects : 0u;
   if (window.obj) {
-    lowp vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
-    lowp uint priority = 5u;
-    bool blended = false;
-    for (lowp uint i = 0u; i < num_drawn_objects; i++) {
-      lowp uint obj = drawn_objects[i];
-
-      lowp uint color_index = ObjectColorIndex(obj);
-      if (color_index == 0u) {
-        continue;
-      }
-
-      lowp uint palette =
-          objects[obj].large_palette ? 0u : objects[obj].palette;
-      lowp vec4 obj_color = object_palette[palette + color_index];
-
-      if (objects[obj].priority < priority) {
-        color = obj_color;
-        priority = objects[obj].priority;
-        blended = objects[obj].semi_transparent;
-      }
-    }
-    BlendUnitAddObject(color, priority, blended);
+    BlendUnitAddObject(obj_color, obj_priority, obj_blended);
   }
 
   // Scrolling Backgrounds
