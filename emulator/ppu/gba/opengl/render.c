@@ -305,6 +305,7 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlProgramsReloadContext(&renderer->programs);
   OpenGlBgAffineReloadContext(&renderer->affine);
+  OpenGlWindowReloadContext(&renderer->window);
   OpenGlBgControlReloadContext(&renderer->bg_control);
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
@@ -331,6 +332,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
   if (renderer->initialized) {
     OpenGlProgramsDestroy(&renderer->programs);
     OpenGlBgAffineDestroy(&renderer->affine);
+    OpenGlWindowDestroy(&renderer->window);
     OpenGlBgControlDestroy(&renderer->bg_control);
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);

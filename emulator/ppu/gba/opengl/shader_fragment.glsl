@@ -226,19 +226,15 @@ struct Window {
   bool bld;
 };
 
-uniform bool win0_enabled;
-uniform bool win1_enabled;
-uniform bool winobj_enabled;
-
-uniform Window win0;
-uniform Window win1;
-uniform Window winobj;
-uniform Window winout;
-
-uniform highp vec2 win0_start;
-uniform highp vec2 win0_end;
-uniform highp vec2 win1_start;
-uniform highp vec2 win1_end;
+layout(std140) uniform Windows {
+  Window window0;
+  Window window1;
+  Window window_object;
+  Window window_outside;
+  mediump vec2 window_start[2];
+  mediump vec2 window_end[2];
+  bool window_object_enabled;
+};
 
 bool IsInsideWindow1D(highp float start, highp float end,
                       highp float location) {
@@ -252,31 +248,19 @@ bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
 }
 
 Window CheckWindow(bool on_object) {
-  if (win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord)) {
-    return win0;
+  if (IsInsideWindow2D(window_start[0], window_end[0], screencoord)) {
+    return window0;
   }
 
-  if (win1_enabled && IsInsideWindow2D(win1_start, win1_end, screencoord)) {
-    return win1;
+  if (IsInsideWindow2D(window_start[1], window_end[1], screencoord)) {
+    return window1;
   }
 
-  if (winobj_enabled && on_object) {
-    return winobj;
+  if (on_object && window_object_enabled) {
+    return window_object;
   }
 
-  if (win0_enabled || win1_enabled || winobj_enabled) {
-    return winout;
-  }
-
-  Window result;
-  result.bg0 = true;
-  result.bg1 = true;
-  result.bg2 = true;
-  result.bg3 = true;
-  result.obj = true;
-  result.bld = true;
-
-  return result;
+  return window_outside;
 }
 
 // Objects
