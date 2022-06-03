@@ -85,145 +85,137 @@ uniform bool obj_bottom;
 uniform bool bg_top[5];
 uniform bool bg_bottom[5];
 
-lowp uint blend_priorities[3];
-lowp uint blend_order[3];
-bool blend_top[3];
-bool blend_bottom[3];
-bool blend_is_semi_transparent[3];
-lowp vec3 blend_layers[3];
+struct BlendUnit {
+  lowp vec3 color[2];
+  lowp uint priority[2];
+  bool top[2];
+  bool bottom[2];
+  bool semi_transparent[2];
+};
 
-void BlendUnitInitialize() {
-  blend_priorities[0] = 6u;
-  blend_priorities[1] = 6u;
-  blend_priorities[2] = 6u;
-  blend_top[0] = false;
-  blend_top[1] = false;
-  blend_top[2] = false;
-  blend_bottom[0] = false;
-  blend_bottom[1] = false;
-  blend_bottom[2] = false;
-  blend_is_semi_transparent[0] = false;
-  blend_is_semi_transparent[1] = false;
-  blend_is_semi_transparent[2] = false;
-  blend_order[0] = 0u;
-  blend_order[1] = 1u;
-  blend_order[2] = 2u;
+BlendUnit CreateBlendUnit() {
+  BlendUnit result;
+  result.priority[0] = 6u;
+  result.priority[1] = 6u;
+  result.top[0] = false;
+  result.top[1] = false;
+  result.bottom[0] = false;
+  result.bottom[1] = false;
+  result.semi_transparent[0] = false;
+  result.semi_transparent[1] = false;
+  return result;
 }
 
-void BlendUnitAddObject(lowp vec4 color, lowp uint priority, bool blended) {
-  bool inserted = (color.a != 0.0);
-  blend_priorities[0] = inserted ? priority : 6u;
-  blend_layers[0] = color.rgb;
-  blend_top[0] = inserted && (blended || obj_top);
-  blend_bottom[0] = inserted && obj_bottom;
-  blend_is_semi_transparent[0] = inserted && blended;
+BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec4 color,
+                             lowp uint priority, bool blended) {
+  if (color.a != 0.0) {
+    blend_unit.color[0] = color.rgb;
+    blend_unit.priority[0] = priority;
+    blend_unit.top[0] = blended || obj_top;
+    blend_unit.bottom[0] = obj_bottom;
+    blend_unit.semi_transparent[0] = blended;
+  }
+  return blend_unit;
 }
 
-void BlendUnitAddBackground(lowp uint bg, lowp vec4 color, lowp uint priority) {
-  priority = (color.a != 0.0) ? priority : 6u;
+BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
+                                 lowp vec4 color, lowp uint priority) {
+  if (color.a != 0.0) {
+    if (priority < blend_unit.priority[1]) {
+      blend_unit.color[1] = color.rgb;
+      blend_unit.priority[1] = priority;
+      blend_unit.top[1] = bg_top[bg];
+      blend_unit.bottom[1] = bg_bottom[bg];
+      blend_unit.semi_transparent[1] = false;
 
-  lowp uint insert_index = blend_order[2];
-  blend_priorities[insert_index] = priority;
-  blend_layers[insert_index] = color.rgb;
-  blend_top[insert_index] = bg_top[bg];
-  blend_bottom[insert_index] = bg_bottom[bg];
-  blend_is_semi_transparent[insert_index] = false;
+      if (blend_unit.priority[1] < blend_unit.priority[0]) {
+        lowp vec3 temp_color = blend_unit.color[0];
+        blend_unit.color[0] = blend_unit.color[1];
+        blend_unit.color[1] = temp_color;
 
-  lowp uint bottom_index = blend_order[1];
-  bool do_first_swap =
-      blend_priorities[insert_index] < blend_priorities[bottom_index];
-  blend_order[1] = do_first_swap ? insert_index : bottom_index;
-  blend_order[2] = do_first_swap ? bottom_index : insert_index;
-  bottom_index = blend_order[1];
+        lowp uint temp_uint = blend_unit.priority[0];
+        blend_unit.priority[0] = blend_unit.priority[1];
+        blend_unit.priority[1] = temp_uint;
 
-  lowp uint top_index = blend_order[0];
-  bool do_second_swap =
-      blend_priorities[bottom_index] < blend_priorities[top_index];
-  blend_order[0] = do_second_swap ? bottom_index : top_index;
-  blend_order[1] = do_second_swap ? top_index : bottom_index;
+        bool temp_bool = blend_unit.top[0];
+        blend_unit.top[0] = blend_unit.top[1];
+        blend_unit.top[1] = temp_bool;
+
+        temp_bool = blend_unit.bottom[0];
+        blend_unit.bottom[0] = blend_unit.bottom[1];
+        blend_unit.bottom[1] = temp_bool;
+
+        temp_bool = blend_unit.semi_transparent[0];
+        blend_unit.semi_transparent[0] = blend_unit.semi_transparent[1];
+        blend_unit.semi_transparent[1] = temp_bool;
+      }
+    }
+  }
+  return blend_unit;
 }
 
-void BlendUnitAddBackdrop(lowp vec4 color) {
-  BlendUnitAddBackground(4u, color, 5u);
+BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec4 color) {
+  return BlendUnitAddBackground(blend_unit, 4u, color, 5u);
 }
 
-lowp vec3 BlendUnitNoBlend() {
-  lowp uint top_index = blend_order[0];
-  lowp uint bottom_index = blend_order[1];
-
-  bool do_blend = (blend_is_semi_transparent[top_index] ||
-                   blend_is_semi_transparent[bottom_index]) &&
-                  blend_top[top_index] && blend_bottom[bottom_index];
+lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit) {
+  bool do_blend =
+      (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
+      blend_unit.top[0] && blend_unit.bottom[1];
 
   lowp float eva = do_blend ? blend_eva : 1.0;
   lowp float evb = do_blend ? blend_evb : 0.0;
 
-  return min(
-      (blend_layers[top_index] * eva) + (blend_layers[bottom_index] * evb),
-      1.0);
+  return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec3 BlendUnitAdditiveBlend() {
-  lowp uint top_index = blend_order[0];
-  lowp uint bottom_index = blend_order[1];
-
-  bool do_blend = blend_top[top_index] && blend_bottom[bottom_index];
+lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit) {
+  bool do_blend = blend_unit.top[0] && blend_unit.bottom[1];
   lowp float eva = do_blend ? blend_eva : 1.0;
   lowp float evb = do_blend ? blend_evb : 0.0;
 
-  return min(
-      (blend_layers[top_index] * eva) + (blend_layers[bottom_index] * evb),
-      1.0);
+  return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec3 BlendUnitBrighten() {
-  lowp uint top_index = blend_order[0];
-  lowp uint bottom_index = blend_order[1];
-
-  bool do_brighten = blend_top[top_index];
-  bool do_blend = (blend_is_semi_transparent[top_index] ||
-                   blend_is_semi_transparent[bottom_index]) &&
-                  blend_top[top_index] && blend_bottom[bottom_index];
+lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
+  bool do_brighten = blend_unit.top[0];
+  bool do_blend =
+      (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
+      blend_unit.top[0] && blend_unit.bottom[1];
 
   lowp float eva = do_blend ? blend_eva : 1.0;
   lowp float evy = do_brighten ? blend_evy : 0.0;
   lowp float evb = do_blend ? blend_evb : evy;
-  lowp vec3 bottom =
-      do_blend ? blend_layers[bottom_index] : 1.0 - blend_layers[top_index];
+  lowp vec3 bottom = do_blend ? blend_unit.color[1] : 1.0 - blend_unit.color[0];
 
-  return min((blend_layers[top_index] * eva) + (bottom * evb), 1.0);
+  return min((blend_unit.color[0] * eva) + (bottom * evb), 1.0);
 }
 
-lowp vec3 BlendUnitDarken() {
-  lowp uint top_index = blend_order[0];
-  lowp uint bottom_index = blend_order[1];
-
-  bool do_darken = blend_top[top_index];
-  bool do_blend = (blend_is_semi_transparent[top_index] ||
-                   blend_is_semi_transparent[bottom_index]) &&
-                  blend_top[top_index] && blend_bottom[bottom_index];
+lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
+  bool do_darken = blend_unit.top[0];
+  bool do_blend =
+      (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
+      blend_unit.top[0] && blend_unit.bottom[1];
 
   lowp float evy = do_darken ? (1.0 - blend_evy) : 1.0;
   lowp float eva = do_blend ? blend_eva : evy;
   lowp float evb = do_blend ? blend_evb : 0.0;
 
-  return min(
-      (blend_layers[top_index] * eva) + (blend_layers[bottom_index] * evb),
-      1.0);
+  return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec4 BlendUnitBlend(bool enable_blend) {
+lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
   lowp vec3 color;
   if (!enable_blend) {
-    color = blend_layers[blend_order[0]];
+    color = blend_unit.color[0];
   } else if (blend_mode == 0) {
-    color = BlendUnitNoBlend();
+    color = BlendUnitNoBlend(blend_unit);
   } else if (blend_mode == 1) {
-    color = BlendUnitAdditiveBlend();
+    color = BlendUnitAdditiveBlend(blend_unit);
   } else if (blend_mode == 2) {
-    color = BlendUnitBrighten();
+    color = BlendUnitBrighten(blend_unit);
   } else {
-    color = BlendUnitDarken();
+    color = BlendUnitDarken(blend_unit);
   }
 
   return vec4(color.bgr, 1.0);
@@ -453,7 +445,7 @@ bool NotEmpty(highp uvec4 value) {
 
 // Entry Point
 void main() {
-  BlendUnitInitialize();
+  BlendUnit blend_unit = CreateBlendUnit();
 
 #if OBJECTS != 0
   lowp vec4 obj_color = vec4(0.0, 0.0, 0.0, 0.0);
@@ -498,67 +490,76 @@ void main() {
 
 #if OBJECTS != 0
   if (window.obj) {
-    BlendUnitAddObject(obj_color, obj_priority, obj_blended);
+    blend_unit =
+        BlendUnitAddObject(blend_unit, obj_color, obj_priority, obj_blended);
   }
 #endif  // OBJECTS != 0
 
 #if SCROLLING_BACKGROUND_0 != 0
   if (window.bg[0]) {
     lowp vec4 color = ScrollingBackground(0u);
-    BlendUnitAddBackground(0u, color, backgrounds[0].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 0u, color, backgrounds[0].priority);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (window.bg[1]) {
     lowp vec4 color = ScrollingBackground(1u);
-    BlendUnitAddBackground(1u, color, backgrounds[1].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 1u, color, backgrounds[1].priority);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (window.bg[2]) {
     lowp vec4 color = ScrollingBackground(2u);
-    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (window.bg[3]) {
     lowp vec4 color = ScrollingBackground(3u);
-    BlendUnitAddBackground(3u, color, backgrounds[3].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 3u, color, backgrounds[3].priority);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
   if (window.bg[2]) {
     lowp vec4 color = AffineBackground(2u);
-    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
   if (window.bg[3]) {
     lowp vec4 color = AffineBackground(3u);
-    BlendUnitAddBackground(3u, color, backgrounds[3].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 3u, color, backgrounds[3].priority);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if BITMAP_BACKGROUND != 0
   if (window.bg[2]) {
     lowp vec4 color = BitmapBackground();
-    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
   if (window.bg[2]) {
     lowp vec4 color = PaletteBitmapBackground();
-    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
+    blend_unit =
+        BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
-  BlendUnitAddBackdrop(background_palette[0]);
+  blend_unit = BlendUnitAddBackdrop(blend_unit, background_palette[0]);
 
-  frag_color = BlendUnitBlend(window.bld);
+  frag_color = BlendUnitBlend(blend_unit, window.bld);
 }
