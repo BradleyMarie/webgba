@@ -13,7 +13,6 @@
 #include "emulator/ppu/gba/opengl/bg_scrolling.h"
 #include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
-#include "emulator/ppu/gba/opengl/mosaic.h"
 #include "emulator/ppu/gba/opengl/obj_attributes.h"
 #include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
@@ -38,7 +37,6 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlObjectAttributes obj_attributes;
   OpenGlTiles tiles;
   OpenGlControl control;
-  OpenGlBgMosaic mosaic;
   OpenGlWindow window;
   uint8_t flush_start_row;
   uint8_t flush_size;
@@ -150,7 +148,6 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
 
   OpenGlControlBind(&renderer->control, renderer->render_program);
   OpenGlBgPaletteBind(&renderer->bg_palette, renderer->render_program);
-  OpenGlBgMosaicBind(&renderer->mosaic, renderer->render_program);
   OpenGlWindowBind(&renderer->window, renderer->render_program);
   OpenGlBgAffineBind(&renderer->affine, renderer->render_program);
   OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
@@ -191,7 +188,6 @@ static void GbaPpuOpenGlRendererReload(GbaPpuOpenGlRenderer* renderer,
 
   OpenGlBgControlReload(&renderer->bg_control, registers, dirty_bits);
   OpenGlBgPaletteReload(&renderer->bg_palette, memory, dirty_bits);
-  OpenGlBgMosaicReload(&renderer->mosaic, registers, dirty_bits);
   OpenGlWindowReload(&renderer->window, registers, dirty_bits);
   OpenGlBlendReload(&renderer->blend, registers, dirty_bits);
   OpenGlTilesReload(&renderer->tiles, memory, registers, dirty_bits);
@@ -323,6 +319,7 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgAffineReloadContext(&renderer->affine);
+  OpenGlBgControlReloadContext(&renderer->bg_control);
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
@@ -348,6 +345,7 @@ void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
   if (renderer->initialized) {
     OpenGlBgAffineDestroy(&renderer->affine);
+    OpenGlBgControlDestroy(&renderer->bg_control);
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);

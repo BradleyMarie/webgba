@@ -1,7 +1,8 @@
 #include "emulator/ppu/gba/opengl/bg_control.h"
 
-#include <stdio.h>
 #include <string.h>
+
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 void OpenGlBgControlReload(OpenGlBgControl* context,
                            const GbaPpuRegisters* registers,
@@ -17,56 +18,60 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
   };
 
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
-    context->size[i][0u] =
+    context->staging[i].size[0u] =
         tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
                      [registers->bgcnt[i].size][0u];
-    context->size[i][1u] =
+    context->staging[i].size[1u] =
         tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
                      [registers->bgcnt[i].size][1u];
-
-    if (!dirty_bits->io.bg_control[i]) {
-      continue;
-    }
-
-    context->priority[i] = registers->bgcnt[i].priority;
-    context->tilemap_base[i] =
+    context->staging[i].priority = registers->bgcnt[i].priority;
+    context->staging[i].tilemap_base =
         registers->bgcnt[i].tile_map_base_block * GBA_TILE_MAP_BLOCK_1D_SIZE *
         GBA_TILE_MAP_BLOCK_1D_SIZE * sizeof(TileMapEntry);
-    context->tile_base[i] = registers->bgcnt[i].tile_base_block *
-                            GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES *
-                            GBA_TILE_1D_SIZE;
-    context->large_palette[i] = registers->bgcnt[i].large_palette;
-    context->wraparound[i] = registers->bgcnt[i].wraparound;
+    context->staging[i].tile_base = registers->bgcnt[i].tile_base_block *
+                                    GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES *
+                                    GBA_TILE_1D_SIZE;
+    context->staging[i].large_palette = registers->bgcnt[i].large_palette;
+    context->staging[i].wraparound = registers->bgcnt[i].wraparound;
+
+    if (registers->bgcnt[i].mosaic) {
+      context->staging[i].mosaic[0u] = registers->mosaic.bg_horiz + 1;
+      context->staging[i].mosaic[1u] = registers->mosaic.bg_vert + 1;
+    } else {
+      context->staging[i].mosaic[0u] = 1;
+      context->staging[i].mosaic[1u] = 1;
+    }
 
     dirty_bits->io.bg_control[i] = false;
   }
+
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                  /*size=*/sizeof(context->staging),
+                  /*data=*/&context->staging);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+  dirty_bits->composite.bg_mosaic = false;
 }
 
 void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {
-  for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
-    char variable_name[100u];
-    sprintf(variable_name, "bg_cnt[%u].size", i);
-    GLint size = glGetUniformLocation(program, variable_name);
-    glUniform2i(size, context->size[i][0u], context->size[i][1u]);
+  GLint backgrounds = glGetUniformBlockIndex(program, "Backgrounds");
+  glUniformBlockBinding(program, backgrounds, BACKGROUNDS_BUFFER);
 
-    sprintf(variable_name, "bg_cnt[%u].tilemap_base", i);
-    GLint tilemap_base = glGetUniformLocation(program, variable_name);
-    glUniform1i(tilemap_base, context->tilemap_base[i]);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBindBufferBase(GL_UNIFORM_BUFFER, BACKGROUNDS_BUFFER, context->buffer);
+}
 
-    sprintf(variable_name, "bg_cnt[%u].tile_base", i);
-    GLint tile_base = glGetUniformLocation(program, variable_name);
-    glUniform1i(tile_base, context->tile_base[i]);
+void OpenGlBgControlReloadContext(OpenGlBgControl* context) {
+  glGenBuffers(1, &context->buffer);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+               GL_DYNAMIC_DRAW);
 
-    sprintf(variable_name, "bg_cnt[%u].priority", i);
-    GLint priority = glGetUniformLocation(program, variable_name);
-    glUniform1ui(priority, context->priority[i]);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
-    sprintf(variable_name, "bg_cnt[%u].large_palette", i);
-    GLint large_palette = glGetUniformLocation(program, variable_name);
-    glUniform1i(large_palette, context->large_palette[i]);
-
-    sprintf(variable_name, "bg_cnt[%u].wraparound", i);
-    GLint wraparound = glGetUniformLocation(program, variable_name);
-    glUniform1i(wraparound, context->wraparound[i]);
-  }
+void OpenGlBgControlDestroy(OpenGlBgControl* context) {
+  glDeleteBuffers(1, &context->buffer);
 }

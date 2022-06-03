@@ -1,6 +1,6 @@
 #include "emulator/ppu/gba/opengl/obj_attributes.h"
 
-#include <stdio.h>
+#include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 

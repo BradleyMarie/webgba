@@ -59,6 +59,7 @@ cc_library(
     hdrs = ["bg_control.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],
@@ -93,18 +94,6 @@ cc_library(
     linkopts = ["-lGL"],
     deps = [
         "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:registers",
-    ],
-)
-
-cc_library(
-    name = "mosaic",
-    srcs = ["mosaic.c"],
-    hdrs = ["mosaic.h"],
-    linkopts = ["-lGL"],
-    deps = [
-        "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
     ],
 )
@@ -149,7 +138,6 @@ cc_library(
         ":bg_scrolling",
         ":blend",
         ":control",
-        ":mosaic",
         ":obj_attributes",
         ":palette",
         ":shader_fragment",
