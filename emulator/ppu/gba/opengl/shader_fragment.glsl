@@ -217,9 +217,12 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 }
 
 // Window
-struct WindowContents {
-  bool bg[4];
+struct Window {
   bool obj;
+  bool bg0;
+  bool bg1;
+  bool bg2;
+  bool bg3;
   bool bld;
 };
 
@@ -227,10 +230,10 @@ uniform bool win0_enabled;
 uniform bool win1_enabled;
 uniform bool winobj_enabled;
 
-uniform WindowContents win0;
-uniform WindowContents win1;
-uniform WindowContents winobj;
-uniform WindowContents winout;
+uniform Window win0;
+uniform Window win1;
+uniform Window winobj;
+uniform Window winout;
 
 uniform highp vec2 win0_start;
 uniform highp vec2 win0_end;
@@ -248,40 +251,30 @@ bool IsInsideWindow2D(highp vec2 start, highp vec2 end, highp vec2 location) {
          IsInsideWindow1D(start.y, end.y, location.y);
 }
 
-WindowContents CheckWindow(bool on_object) {
-  bool use_win0 =
-      win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord);
-  bool done = use_win0;
+Window CheckWindow(bool on_object) {
+  if (win0_enabled && IsInsideWindow2D(win0_start, win0_end, screencoord)) {
+    return win0;
+  }
 
-  bool use_win1 = !done && win1_enabled &&
-                  IsInsideWindow2D(win1_start, win1_end, screencoord);
-  done = done || use_win1;
+  if (win1_enabled && IsInsideWindow2D(win1_start, win1_end, screencoord)) {
+    return win1;
+  }
 
-  bool use_winobj = !done && winobj_enabled && on_object;
-  done = done || use_winobj;
+  if (winobj_enabled && on_object) {
+    return winobj;
+  }
 
-  bool use_winout = !done && (win0_enabled || win1_enabled || winobj_enabled);
-  done = done || use_winout;
+  if (win0_enabled || win1_enabled || winobj_enabled) {
+    return winout;
+  }
 
-  WindowContents result;
-  result.bg[0] = (use_win0 && win0.bg[0]) || (use_win1 && win1.bg[0]) ||
-                 (use_winobj && winobj.bg[0]) || (use_winout && winout.bg[0]) ||
-                 (!done && true);
-  result.bg[1] = (use_win0 && win0.bg[1]) || (use_win1 && win1.bg[1]) ||
-                 (use_winobj && winobj.bg[1]) || (use_winout && winout.bg[1]) ||
-                 (!done && true);
-  result.bg[2] = (use_win0 && win0.bg[2]) || (use_win1 && win1.bg[2]) ||
-                 (use_winobj && winobj.bg[2]) || (use_winout && winout.bg[2]) ||
-                 (!done && true);
-  result.bg[3] = (use_win0 && win0.bg[3]) || (use_win1 && win1.bg[3]) ||
-                 (use_winobj && winobj.bg[3]) || (use_winout && winout.bg[3]) ||
-                 (!done && true);
-  result.obj = (use_win0 && win0.obj) || (use_win1 && win1.obj) ||
-               (use_winobj && winobj.obj) || (use_winout && winout.obj) ||
-               (!done && true);
-  result.bld = (use_win0 && win0.bld) || (use_win1 && win1.bld) ||
-               (use_winobj && winobj.bld) || (use_winout && winout.bld) ||
-               (!done && true);
+  Window result;
+  result.bg0 = true;
+  result.bg1 = true;
+  result.bg2 = true;
+  result.bg3 = true;
+  result.obj = true;
+  result.bld = true;
 
   return result;
 }
@@ -483,7 +476,7 @@ void main() {
   bool on_object_window = false;
 #endif  // OBJECTS != 0
 
-  WindowContents window = CheckWindow(on_object_window);
+  Window window = CheckWindow(on_object_window);
 
 #if OBJECTS != 0
   if (window.obj) {
@@ -493,7 +486,7 @@ void main() {
 #endif  // OBJECTS != 0
 
 #if SCROLLING_BACKGROUND_0 != 0
-  if (window.bg[0]) {
+  if (window.bg0) {
     lowp vec4 color = ScrollingBackground(0u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 0u, color, backgrounds[0].priority);
@@ -501,7 +494,7 @@ void main() {
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
-  if (window.bg[1]) {
+  if (window.bg1) {
     lowp vec4 color = ScrollingBackground(1u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 1u, color, backgrounds[1].priority);
@@ -509,7 +502,7 @@ void main() {
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
-  if (window.bg[2]) {
+  if (window.bg2) {
     lowp vec4 color = ScrollingBackground(2u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
@@ -517,7 +510,7 @@ void main() {
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
-  if (window.bg[3]) {
+  if (window.bg3) {
     lowp vec4 color = ScrollingBackground(3u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 3u, color, backgrounds[3].priority);
@@ -525,7 +518,7 @@ void main() {
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
-  if (window.bg[2]) {
+  if (window.bg2) {
     lowp vec4 color = AffineBackground(2u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
@@ -533,7 +526,7 @@ void main() {
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
-  if (window.bg[3]) {
+  if (window.bg3) {
     lowp vec4 color = AffineBackground(3u);
     blend_unit =
         BlendUnitAddBackground(blend_unit, 3u, color, backgrounds[3].priority);
@@ -541,7 +534,7 @@ void main() {
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if BITMAP_BACKGROUND != 0
-  if (window.bg[2]) {
+  if (window.bg2) {
     lowp vec4 color = BitmapBackground();
     blend_unit =
         BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
@@ -549,7 +542,7 @@ void main() {
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
-  if (window.bg[2]) {
+  if (window.bg2) {
     lowp vec4 color = PaletteBitmapBackground();
     blend_unit =
         BlendUnitAddBackground(blend_unit, 2u, color, backgrounds[2].priority);
