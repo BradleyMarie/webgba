@@ -7,12 +7,17 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLint size[4u][2u];
-  GLint tilemap_base[4u];
-  GLint tile_base[4u];
-  GLuint priority[4u];
-  GLint large_palette[4u];
-  GLint wraparound[4u];
+  struct {
+    GLint size[2];
+    GLint mosaic[2];
+    GLint tilemap_base;
+    GLint tile_base;
+    GLuint priority;
+    GLuint large_palette;
+    GLuint wraparound;
+    GLint padding[3];
+  } staging[4];
+  GLuint buffer;
 } OpenGlBgControl;
 
 void OpenGlBgControlReload(OpenGlBgControl* context,
@@ -20,5 +25,9 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
                            GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program);
+
+void OpenGlBgControlReloadContext(OpenGlBgControl* context);
+
+void OpenGlBgControlDestroy(OpenGlBgControl* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_CONTROL_
