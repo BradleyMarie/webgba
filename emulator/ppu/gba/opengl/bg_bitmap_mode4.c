@@ -9,7 +9,7 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits) {
-  if (!registers->dispcnt.bg2_enable) {
+  if (!registers->dispcnt.bg2_enable || registers->dispcnt.mode != 4) {
     context->enabled = false;
     return;
   }
@@ -42,10 +42,10 @@ void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
 
 void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
                              GLuint program) {
-  GLint bg_mode4 = glGetUniformLocation(program, "mode4_bitmap");
-  glUniform1i(bg_mode4, BG2_MODE4_TEXTURE);
+  GLint bg_mode4 = glGetUniformLocation(program, "palette_bitmap");
+  glUniform1i(bg_mode4, PALETTE_BITMAP_TEXTURE);
 
-  glActiveTexture(GL_TEXTURE0 + BG2_MODE4_TEXTURE);
+  glActiveTexture(GL_TEXTURE0 + PALETTE_BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
 }
 

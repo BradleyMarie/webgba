@@ -21,9 +21,8 @@ uniform mediump isampler2D affine_tilemap;
 uniform mediump isampler2D scrolling_tilemap;
 
 // Background Bitmaps
-uniform lowp sampler2D mode3_bitmap;
-uniform lowp usampler2D mode4_bitmap;
-uniform lowp sampler2D mode5_bitmap;
+uniform lowp sampler2D bitmap;
+uniform lowp usampler2D palette_bitmap;
 
 // Objects
 struct Object {
@@ -388,35 +387,25 @@ lowp vec4 AffineBackground(lowp uint bg) {
   return vec4(color.rgb, float(color_index != 0u));
 }
 
-lowp vec4 BitmapBackgroundMode3() {
-  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
-      any(greaterThan(affine_screencoord[0], vec2(240.0, 160.0)))) {
+lowp vec4 BitmapBackground() {
+  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  if (any(lessThan(lookup, ivec2(0, 0))) ||
+      any(greaterThan(lookup, backgrounds[2].size))) {
     return vec4(0.0, 0.0, 0.0, 0.0);
   }
-  highp ivec2 lookup = ivec2(affine_screencoord[0]);
   lookup -= lookup % backgrounds[2].mosaic;
-  return texelFetch(mode3_bitmap, lookup, 0);
+  return texelFetch(bitmap, lookup, 0);
 }
 
-lowp vec4 BitmapBackgroundMode4() {
-  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
-      any(greaterThan(affine_screencoord[0], vec2(240.0, 160.0)))) {
+lowp vec4 PaletteBitmapBackground() {
+  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  if (any(lessThan(lookup, ivec2(0, 0))) ||
+      any(greaterThan(lookup, backgrounds[2].size))) {
     return vec4(0.0, 0.0, 0.0, 0.0);
   }
-  highp ivec2 lookup = ivec2(affine_screencoord[0]);
   lookup -= lookup % backgrounds[2].mosaic;
-  lowp uint index = texelFetch(mode4_bitmap, lookup, 0).r;
+  lowp uint index = texelFetch(palette_bitmap, lookup, 0).r;
   return background_palette[index];
-}
-
-lowp vec4 BitmapBackgroundMode5() {
-  if (any(lessThan(affine_screencoord[0], vec2(0.0, 0.0))) ||
-      any(greaterThan(affine_screencoord[0], vec2(160.0, 120.0)))) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
-  }
-  highp ivec2 lookup = ivec2(affine_screencoord[0]);
-  lookup -= lookup % backgrounds[2].mosaic;
-  return texelFetch(mode5_bitmap, lookup, 0);
 }
 
 // Backdrop
@@ -561,13 +550,13 @@ void main() {
 
   // Bitmap Backgrounds
   if (bitmap_backgrounds_mode3 && window.bg[2]) {
-    lowp vec4 color = BitmapBackgroundMode3();
+    lowp vec4 color = BitmapBackground();
     BlendUnitAddBackground(2u, color, backgrounds[2].priority);
   } else if (bitmap_backgrounds_mode4 && window.bg[2]) {
-    lowp vec4 color = BitmapBackgroundMode4();
+    lowp vec4 color = PaletteBitmapBackground();
     BlendUnitAddBackground(2u, color, backgrounds[2].priority);
   } else if (bitmap_backgrounds_mode5 && window.bg[2]) {
-    lowp vec4 color = BitmapBackgroundMode5();
+    lowp vec4 color = BitmapBackground();
     BlendUnitAddBackground(2u, color, backgrounds[2].priority);
   }
 
