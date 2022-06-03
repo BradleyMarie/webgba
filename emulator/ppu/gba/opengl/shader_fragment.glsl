@@ -55,6 +55,8 @@ layout(std140) uniform Objects {
   Object objects[128];
 };
 
+uniform bool obj_mode;
+
 // Backgrounds
 struct Background {
   mediump ivec2 size;
@@ -67,13 +69,6 @@ struct Background {
 };
 
 layout(std140) uniform Backgrounds { Background backgrounds[4]; };
-
-// Display Controls
-uniform bool obj_mode;
-uniform bool obj_enabled;
-uniform bool win0_enabled;
-uniform bool win1_enabled;
-uniform bool winobj_enabled;
 
 // Blend Unit
 uniform int blend_mode;
@@ -227,6 +222,10 @@ struct WindowContents {
   bool obj;
   bool bld;
 };
+
+uniform bool win0_enabled;
+uniform bool win1_enabled;
+uniform bool winobj_enabled;
 
 uniform WindowContents win0;
 uniform WindowContents win1;
@@ -453,33 +452,31 @@ void main() {
   bool obj_blended = false;
   bool on_object_window = false;
 
-  if (obj_enabled) {
-    highp uvec4 visible_objects =
-        object_columns[uint(screencoord.x)] & object_rows[uint(screencoord.y)];
+  highp uvec4 visible_objects =
+      object_columns[uint(screencoord.x)] & object_rows[uint(screencoord.y)];
 
-    while (NotEmpty(visible_objects)) {
-      lowp uint obj = CountTrailingZeroes(visible_objects);
-      visible_objects = FlipBit(visible_objects, obj);
+  while (NotEmpty(visible_objects)) {
+    lowp uint obj = CountTrailingZeroes(visible_objects);
+    visible_objects = FlipBit(visible_objects, obj);
 
-      lowp uint color_index = ObjectColorIndex(obj);
-      if (color_index == 0u) {
-        continue;
-      }
+    lowp uint color_index = ObjectColorIndex(obj);
+    if (color_index == 0u) {
+      continue;
+    }
 
-      if (objects[obj].window) {
-        on_object_window = true;
-        continue;
-      }
+    if (objects[obj].window) {
+      on_object_window = true;
+      continue;
+    }
 
-      lowp uint palette =
-          objects[obj].large_palette ? 0u : objects[obj].palette;
-      lowp vec4 color = object_palette[palette + color_index];
+    lowp uint palette =
+        objects[obj].large_palette ? 0u : objects[obj].palette;
+    lowp vec4 color = object_palette[palette + color_index];
 
-      if (objects[obj].priority < obj_priority) {
-        obj_color = color;
-        obj_priority = objects[obj].priority;
-        obj_blended = objects[obj].semi_transparent;
-      }
+    if (objects[obj].priority < obj_priority) {
+      obj_color = color;
+      obj_priority = objects[obj].priority;
+      obj_blended = objects[obj].semi_transparent;
     }
   }
 #else
