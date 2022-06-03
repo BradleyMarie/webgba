@@ -15,8 +15,7 @@
 #include "emulator/ppu/gba/opengl/control.h"
 #include "emulator/ppu/gba/opengl/obj_attributes.h"
 #include "emulator/ppu/gba/opengl/palette.h"
-#include "emulator/ppu/gba/opengl/shader_fragment.h"
-#include "emulator/ppu/gba/opengl/shader_vertex.h"
+#include "emulator/ppu/gba/opengl/programs.h"
 #include "emulator/ppu/gba/opengl/tilemap.h"
 #include "emulator/ppu/gba/opengl/tiles.h"
 #include "emulator/ppu/gba/opengl/window.h"
@@ -25,6 +24,7 @@
 
 struct _GbaPpuOpenGlRenderer {
   GbaPpuDrawManager draw_manager;
+  OpenGlPrograms programs;
   OpenGlBgAffine affine;
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
   OpenGlBgBitmapMode4 bg_bitmap_mode4;
@@ -45,7 +45,6 @@ struct _GbaPpuOpenGlRenderer {
   uint8_t last_frame_contents;
   GLuint staging_texture;
   GLuint staging_fbo;
-  GLuint render_program;
   GLuint upscale_program;
   bool initialized;
 };
@@ -117,49 +116,35 @@ static void CreateUpscaleProgram(GLuint* program) {
   glLinkProgram(*program);
 }
 
-static void CreateRenderProgram(GLuint* program) {
-  *program = glCreateProgram();
-
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
-  glAttachShader(*program, vertex_shader);
-  glDeleteShader(vertex_shader);
-
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
-  glAttachShader(*program, fragment_shader);
-  glDeleteShader(fragment_shader);
-
-  glLinkProgram(*program);
-}
-
 static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
                                      GLuint fbo) {
-  if (renderer->control.blank) {
+  if (renderer->control.blank || renderer->control.mode > 5) {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     return;
   }
 
-  glUseProgram(renderer->render_program);
+  GLuint program = OpenGlProgramsGet(
+      &renderer->programs, renderer->control.mode,
+      renderer->control.obj_enabled, renderer->control.bg_enabled[0u],
+      renderer->control.bg_enabled[1u], renderer->control.bg_enabled[2u],
+      renderer->control.bg_enabled[3u]);
+  glUseProgram(program);
 
-  OpenGlControlBind(&renderer->control, renderer->render_program);
-  OpenGlBgPaletteBind(&renderer->bg_palette, renderer->render_program);
-  OpenGlWindowBind(&renderer->window, renderer->render_program);
-  OpenGlBgAffineBind(&renderer->affine, renderer->render_program);
-  OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, renderer->render_program);
-  OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, renderer->render_program);
-  OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, renderer->render_program);
-  OpenGlBgControlBind(&renderer->bg_control, renderer->render_program);
-  OpenGlBgScrollingBind(&renderer->bg_scrolling, renderer->render_program);
-  OpenGlBgTilemapBind(&renderer->bg_tilemap, renderer->render_program);
-  OpenGlBgObjectAttributesBind(&renderer->obj_attributes,
-                               renderer->render_program);
-  OpenGlTilesBind(&renderer->tiles, renderer->render_program);
-  OpenGlBlendBind(&renderer->blend, renderer->render_program);
+  OpenGlControlBind(&renderer->control, program);
+  OpenGlBgPaletteBind(&renderer->bg_palette, program);
+  OpenGlWindowBind(&renderer->window, program);
+  OpenGlBgAffineBind(&renderer->affine, program);
+  OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
+  OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
+  OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
+  OpenGlBgControlBind(&renderer->bg_control, program);
+  OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
+  OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
+  OpenGlBgObjectAttributesBind(&renderer->obj_attributes, program);
+  OpenGlTilesBind(&renderer->tiles, program);
+  OpenGlBlendBind(&renderer->blend, program);
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glDrawArrays(GL_TRIANGLES, 0, 3u);
@@ -318,6 +303,7 @@ void GbaPpuOpenGlRendererPresent(GbaPpuOpenGlRenderer* renderer, GLuint fbo,
 }
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
+  OpenGlProgramsReloadContext(&renderer->programs);
   OpenGlBgAffineReloadContext(&renderer->affine);
   OpenGlBgControlReloadContext(&renderer->bg_control);
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
@@ -331,7 +317,6 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
-  CreateRenderProgram(&renderer->render_program);
   CreateUpscaleProgram(&renderer->upscale_program);
 
   renderer->initialized = true;
@@ -344,6 +329,7 @@ void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
 
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
   if (renderer->initialized) {
+    OpenGlProgramsDestroy(&renderer->programs);
     OpenGlBgAffineDestroy(&renderer->affine);
     OpenGlBgControlDestroy(&renderer->bg_control);
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
@@ -356,7 +342,6 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlObjectAttributesDestroy(&renderer->obj_attributes);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);
-    glDeleteProgram(renderer->render_program);
     glDeleteProgram(renderer->upscale_program);
   }
 

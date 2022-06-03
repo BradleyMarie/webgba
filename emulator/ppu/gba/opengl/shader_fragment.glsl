@@ -1,5 +1,15 @@
 #version 300 es
 
+#define OBJECTS 0
+#define SCROLLING_BACKGROUND_0 0
+#define SCROLLING_BACKGROUND_1 0
+#define SCROLLING_BACKGROUND_2 0
+#define SCROLLING_BACKGROUND_3 0
+#define AFFINE_BACKGROUND_2 0
+#define AFFINE_BACKGROUND_3 0
+#define BITMAP_BACKGROUND 0
+#define PALETTE_BITMAP_BACKGROUND 0
+
 // Inputs
 in mediump vec2 scrolling_screencoord[4];
 in mediump vec2 affine_screencoord[2];
@@ -59,14 +69,6 @@ struct Background {
 layout(std140) uniform Backgrounds { Background backgrounds[4]; };
 
 // Display Controls
-uniform lowp uint scrolling_backgrounds[4];
-uniform lowp uint num_scrolling_backgrounds;
-uniform lowp uint affine_backgrounds[2];
-uniform lowp uint num_affine_backgrounds;
-uniform bool bitmap_backgrounds_mode3;
-uniform bool bitmap_backgrounds_mode4;
-uniform bool bitmap_backgrounds_mode5;
-
 uniform bool obj_mode;
 uniform bool obj_enabled;
 uniform bool win0_enabled;
@@ -408,9 +410,6 @@ lowp vec4 PaletteBitmapBackground() {
   return background_palette[index];
 }
 
-// Backdrop
-lowp vec4 Backdrop() { return background_palette[0]; }
-
 // Count Trailing Zeroes
 const lowp uint clz_lut[32] = uint[32](
     0u, 1u, 28u, 2u, 29u, 14u, 24u, 3u, 30u, 22u, 20u, 15u, 25u, 17u, 4u, 8u,
@@ -452,11 +451,11 @@ bool NotEmpty(highp uvec4 value) {
   return any(notEqual(value, zero));
 }
 
-// Main
+// Entry Point
 void main() {
   BlendUnitInitialize();
 
-  // Sort Objects and Check Object Window
+#if OBJECTS != 0
   lowp vec4 obj_color = vec4(0.0, 0.0, 0.0, 0.0);
   lowp uint obj_priority = 5u;
   bool obj_blended = false;
@@ -491,67 +490,75 @@ void main() {
       }
     }
   }
+#else
+  bool on_object_window = false;
+#endif  // OBJECTS != 0
 
-  // Window
   WindowContents window = CheckWindow(on_object_window);
 
-  // Objects
+#if OBJECTS != 0
   if (window.obj) {
     BlendUnitAddObject(obj_color, obj_priority, obj_blended);
   }
+#endif  // OBJECTS != 0
 
-  // Scrolling Backgrounds
-  lowp uint enabled_scrolling_backgrounds[4];
-  lowp uint num_enabled_scrolling_backgrounds = 0u;
-  for (lowp uint i = 0u; i < num_scrolling_backgrounds; i++) {
-    lowp uint bg = scrolling_backgrounds[i];
-    enabled_scrolling_backgrounds[num_enabled_scrolling_backgrounds] = bg;
-    num_enabled_scrolling_backgrounds += uint(window.bg[bg]);
+#if SCROLLING_BACKGROUND_0 != 0
+  if (window.bg[0]) {
+    lowp vec4 color = ScrollingBackground(0u);
+    BlendUnitAddBackground(0u, color, backgrounds[0].priority);
   }
+#endif  // SCROLLING_BACKGROUND_0 != 0
 
-  for (lowp uint i = 0u; i < num_enabled_scrolling_backgrounds; i++) {
-    lowp uint bg = enabled_scrolling_backgrounds[i];
-    lowp vec4 color = ScrollingBackground(bg);
-    BlendUnitAddBackground(bg, color, backgrounds[bg].priority);
+#if SCROLLING_BACKGROUND_1 != 0
+  if (window.bg[1]) {
+    lowp vec4 color = ScrollingBackground(1u);
+    BlendUnitAddBackground(1u, color, backgrounds[1].priority);
   }
+#endif  // SCROLLING_BACKGROUND_1 != 0
 
-  // Affine Backgrounds
-  lowp uint enabled_affine_backgrounds[2];
-  lowp uint num_enabled_affine_backgrounds = 0u;
-  for (lowp uint i = 0u; i < num_affine_backgrounds; i++) {
-    lowp uint bg = affine_backgrounds[i];
-    enabled_affine_backgrounds[num_enabled_affine_backgrounds] = bg;
-    bool above_min =
-        all(greaterThan(affine_screencoord[bg - 2u], vec2(0.0, 0.0)));
-    bool below_max =
-        all(lessThan(affine_screencoord[bg - 2u], vec2(backgrounds[bg].size)));
-    num_enabled_affine_backgrounds +=
-        uint(window.bg[bg] &&
-             (backgrounds[bg].wraparound || (above_min && below_max)));
+#if SCROLLING_BACKGROUND_2 != 0
+  if (window.bg[2]) {
+    lowp vec4 color = ScrollingBackground(2u);
+    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
   }
+#endif  // SCROLLING_BACKGROUND_2 != 0
 
-  for (lowp uint i = 0u; i < num_enabled_affine_backgrounds; i++) {
-    lowp uint bg = enabled_affine_backgrounds[i];
-    lowp vec4 color = AffineBackground(bg);
-    BlendUnitAddBackground(bg, color, backgrounds[bg].priority);
+#if SCROLLING_BACKGROUND_3 != 0
+  if (window.bg[3]) {
+    lowp vec4 color = ScrollingBackground(3u);
+    BlendUnitAddBackground(3u, color, backgrounds[3].priority);
   }
+#endif  // SCROLLING_BACKGROUND_3 != 0
 
-  // Bitmap Backgrounds
-  if (bitmap_backgrounds_mode3 && window.bg[2]) {
+#if AFFINE_BACKGROUND_2 != 0
+  if (window.bg[2]) {
+    lowp vec4 color = AffineBackground(2u);
+    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
+  }
+#endif  // AFFINE_BACKGROUND_2 != 0
+
+#if AFFINE_BACKGROUND_3 != 0
+  if (window.bg[3]) {
+    lowp vec4 color = AffineBackground(3u);
+    BlendUnitAddBackground(3u, color, backgrounds[3].priority);
+  }
+#endif  // AFFINE_BACKGROUND_2 != 0
+
+#if BITMAP_BACKGROUND != 0
+  if (window.bg[2]) {
     lowp vec4 color = BitmapBackground();
     BlendUnitAddBackground(2u, color, backgrounds[2].priority);
-  } else if (bitmap_backgrounds_mode4 && window.bg[2]) {
+  }
+#endif  // BITMAP_BACKGROUND != 0
+
+#if PALETTE_BITMAP_BACKGROUND != 0
+  if (window.bg[2]) {
     lowp vec4 color = PaletteBitmapBackground();
     BlendUnitAddBackground(2u, color, backgrounds[2].priority);
-  } else if (bitmap_backgrounds_mode5 && window.bg[2]) {
-    lowp vec4 color = BitmapBackground();
-    BlendUnitAddBackground(2u, color, backgrounds[2].priority);
   }
+#endif  // PALETTE_BITMAP_BACKGROUND != 0
 
-  // Backdrop
-  lowp vec4 backdrop = Backdrop();
-  BlendUnitAddBackdrop(backdrop);
+  BlendUnitAddBackdrop(background_palette[0]);
 
-  // Blend
   frag_color = BlendUnitBlend(window.bld);
 }
