@@ -25,9 +25,6 @@ void OpenGlControlBind(const OpenGlControl* context, GLuint program) {
   GLint obj_mode = glGetUniformLocation(program, "obj_mode");
   glUniform1i(obj_mode, context->obj_mode);
 
-  GLint obj_enabled = glGetUniformLocation(program, "obj_enabled");
-  glUniform1i(obj_enabled, context->obj_enabled);
-
   GLint win0_enabled = glGetUniformLocation(program, "win0_enabled");
   glUniform1i(win0_enabled, context->win0_enabled);
 
