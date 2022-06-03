@@ -125,6 +125,17 @@ cc_library(
 )
 
 cc_library(
+    name = "programs",
+    srcs = ["programs.c"],
+    hdrs = ["programs.h"],
+    linkopts = ["-lGL"],
+    deps = [
+        ":shader_fragment",
+        ":shader_vertex",
+    ],
+)
+
+cc_library(
     name = "render",
     srcs = ["render.c"],
     hdrs = ["render.h"],
@@ -140,8 +151,7 @@ cc_library(
         ":control",
         ":obj_attributes",
         ":palette",
-        ":shader_fragment",
-        ":shader_vertex",
+        ":programs",
         ":tilemap",
         ":tiles",
         ":window",
