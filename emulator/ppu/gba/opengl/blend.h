@@ -7,27 +7,28 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLint blend_mode;
-  GLfloat blend_eva;
-  GLfloat blend_evb;
-  GLfloat blend_evy;
-  GLint obj_top;
-  GLint obj_bottom;
-  GLint bg0_top;
-  GLint bg0_bottom;
-  GLint bg1_top;
-  GLint bg1_bottom;
-  GLint bg2_top;
-  GLint bg2_bottom;
-  GLint bg3_top;
-  GLint bg3_bottom;
-  GLint bd_top;
-  GLint bd_bottom;
+  struct {
+    GLuint blend_mode;
+    GLfloat blend_eva;
+    GLfloat blend_evb;
+    GLfloat blend_evy;
+    GLuint bg_top[4u][4u];
+    GLuint bg_bottom[4u][4u];
+    GLuint bd_top;
+    GLuint bd_bottom;
+    GLuint obj_top;
+    GLuint obj_bottom;
+  } staging;
+  GLuint buffer;
 } OpenGlBlend;
 
 void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
                        GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBlendBind(const OpenGlBlend* context, GLuint program);
+
+void OpenGlBlendReloadContext(OpenGlBlend* context);
+
+void OpenGlBlendDestroy(OpenGlBlend* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BLEND_

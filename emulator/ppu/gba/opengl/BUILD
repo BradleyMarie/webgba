@@ -82,6 +82,7 @@ cc_library(
     hdrs = ["blend.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],
