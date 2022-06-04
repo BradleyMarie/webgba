@@ -19,8 +19,8 @@ in mediump vec2 screencoord;
 out lowp vec4 frag_color;
 
 // Palettes
-layout(std140) uniform BackgroundPalette { lowp vec4 background_palette[256]; };
-layout(std140) uniform ObjectPalette { lowp vec4 object_palette[256]; };
+layout(std140) uniform BackgroundPalette { lowp vec3 background_palette[256]; };
+layout(std140) uniform ObjectPalette { lowp vec3 object_palette[256]; };
 
 // Tiles
 uniform lowp usampler2D background_tiles;
@@ -173,15 +173,15 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
   return blend_unit;
 }
 
-BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec4 color) {
+BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec3 color) {
   if (5u < blend_unit.priority[1]) {
     if (5u < blend_unit.priority[0]) {
-      blend_unit.color[0] = color.rgb;
+      blend_unit.color[0] = color;
       blend_unit.top[0] = blend_bd_top;
       blend_unit.bottom[0] = blend_bd_bottom;
       blend_unit.semi_transparent[0] = false;
     } else {
-      blend_unit.color[1] = color.rgb;
+      blend_unit.color[1] = color;
       blend_unit.top[1] = blend_bd_top;
       blend_unit.bottom[1] = blend_bd_bottom;
       blend_unit.semi_transparent[1] = false;
@@ -340,8 +340,8 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
       backgrounds[bg].large_palette ? color_indices.r : color_indices.g;
 
   lowp uint palette_base = backgrounds[bg].large_palette ? 0u : palette;
-  lowp vec4 color = background_palette[palette_base + color_index];
-  return vec4(color.rgb, float(color_index != 0u));
+  lowp vec3 color = background_palette[palette_base + color_index];
+  return vec4(color, float(color_index != 0u));
 }
 
 lowp vec4 AffineBackground(lowp uint bg) {
@@ -365,8 +365,8 @@ lowp vec4 AffineBackground(lowp uint bg) {
                        backgrounds[bg].tile_base + index * 8 + tile_pixel.y),
                  0)
           .r;
-  lowp vec4 color = background_palette[color_index];
-  return vec4(color.rgb, float(color_index != 0u));
+  lowp vec3 color = background_palette[color_index];
+  return vec4(color, float(color_index != 0u));
 }
 
 lowp vec4 BitmapBackground() {
@@ -387,7 +387,7 @@ lowp vec4 PaletteBitmapBackground() {
   }
   lookup -= lookup % backgrounds[2].mosaic;
   lowp uint index = texelFetch(palette_bitmap, lookup, 0).r;
-  return background_palette[index];
+  return vec4(background_palette[index], 1.0);
 }
 
 // Bit Set
@@ -460,10 +460,10 @@ void main() {
 
     lowp uint palette =
         objects[obj].large_palette ? 0u : objects[obj].palette;
-    lowp vec4 color = object_palette[palette + color_index];
+    lowp vec3 color = object_palette[palette + color_index];
 
     if (objects[obj].priority < obj_priority) {
-      obj_color = color;
+      obj_color = vec4(color, 1.0);
       obj_priority = objects[obj].priority;
       obj_blended = objects[obj].semi_transparent;
     }
