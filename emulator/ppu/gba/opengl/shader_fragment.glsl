@@ -346,7 +346,16 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
 
 lowp vec4 AffineBackground(lowp uint bg) {
   highp ivec2 tilemap_pixel = ivec2(affine_screencoord[bg - 2u]);
-  tilemap_pixel &= backgrounds[bg].size - 1;
+
+  if (!backgrounds[bg].wraparound) {
+    if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
+        any(greaterThanEqual(tilemap_pixel, backgrounds[bg].size))) {
+      return vec4(0.0, 0.0, 0.0, 0.0);
+    }
+  } else {
+    tilemap_pixel &= backgrounds[bg].size - 1;
+  }
+
   tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
 
   lowp ivec2 tile = tilemap_pixel / 8;
