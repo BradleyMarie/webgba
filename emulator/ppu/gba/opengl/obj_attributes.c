@@ -37,13 +37,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
   while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
     uint8_t i = GbaPpuSetPop(&dirty_bits->oam.objects);
 
-    for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-      GbaPpuSetRemove(context->columns + x, i);
+    for (uint8_t pri = 0u; pri < 4u; pri++) {
+      GbaPpuSetRemove(context->layers + pri, i);
     }
 
-    for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-      GbaPpuSetRemove(context->rows + y, i);
-    }
+    GbaPpuSetRemove(&context->window, i);
 
     if (!memory->oam.object_attributes[i].affine &&
         memory->oam.object_attributes[i].flex_param_0) {
@@ -102,19 +100,25 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     max[0u] = (max[0u] < GBA_SCREEN_WIDTH) ? max[0u] : GBA_SCREEN_WIDTH;
     max[1u] = (max[1u] < GBA_SCREEN_HEIGHT) ? max[1u] : GBA_SCREEN_HEIGHT;
 
-    for (int_fast16_t x = origin[0u]; x < max[0u]; x++) {
-      GbaPpuSetAdd(context->columns + x, i);
+    if (origin[0u] == max[0u] || origin[1u] == max[1u]) {
+      continue;
     }
 
-    for (int_fast16_t y = origin[1u]; y < max[1u]; y++) {
-      GbaPpuSetAdd(context->rows + y, i);
+    context->begin[i][0u] = origin[0u];
+    context->begin[i][1u] = origin[1u];
+    context->end[i][0u] = max[0u];
+    context->end[i][1u] = max[1u];
+
+    if (memory->oam.object_attributes[i].obj_mode == 2u) {
+      GbaPpuSetAdd(&context->window, i);
+    } else {
+      GbaPpuSetAdd(context->layers + memory->oam.object_attributes[i].priority,
+                   i);
     }
 
     context->staging.objects[i].tile_base = character_name * 8u;
     context->staging.objects[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
-    context->staging.objects[i].window =
-        (memory->oam.object_attributes[i].obj_mode == 2u);
     context->staging.objects[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->staging.objects[i].palette =
@@ -158,6 +162,63 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     } else {
       context->staging.objects[i].mosaic[0u] = 1;
       context->staging.objects[i].mosaic[1u] = 1;
+    }
+  }
+
+  uint8_t insert_index = 0u;
+
+  GbaPpuSet window;
+  GbaPpuSetClear(&window);
+
+  GbaPpuSet window_copy = context->window;
+  while (!GbaPpuSetEmpty(&window_copy)) {
+    uint8_t obj = GbaPpuSetPop(&window_copy);
+
+    GbaPpuSetAdd(&window, insert_index);
+    context->staging.object_indices[insert_index++][0u] = obj;
+  }
+
+  context->staging.object_window[0u] = window.objects[0u];
+  context->staging.object_window[1u] = window.objects[0u] >> 32u;
+  context->staging.object_window[2u] = window.objects[1u];
+  context->staging.object_window[3u] = window.objects[1u] >> 32u;
+
+  GbaPpuSet drawn;
+  GbaPpuSetClear(&drawn);
+
+  for (uint8_t pri = 0u; pri < 4; pri++) {
+    GbaPpuSet layer_copy = context->layers[pri];
+    while (!GbaPpuSetEmpty(&layer_copy)) {
+      uint8_t obj = GbaPpuSetPop(&layer_copy);
+
+      GbaPpuSetAdd(&drawn, insert_index);
+      context->staging.object_indices[insert_index++][0u] = obj;
+    }
+  }
+
+  context->staging.object_drawn[0u] = drawn.objects[0u];
+  context->staging.object_drawn[1u] = drawn.objects[0u] >> 32u;
+  context->staging.object_drawn[2u] = drawn.objects[1u];
+  context->staging.object_drawn[3u] = drawn.objects[1u] >> 32u;
+
+  for (uint8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
+    GbaPpuSetClear(context->columns + x);
+  }
+
+  for (uint8_t y = 0u; y < GBA_SCREEN_HEIGHT; y++) {
+    GbaPpuSetClear(context->rows + y);
+  }
+
+  for (uint8_t i = 0; i < insert_index; i++) {
+    uint8_t obj = context->staging.object_indices[i][0u];
+    for (int_fast16_t x = context->begin[obj][0u]; x < context->end[obj][0u];
+         x++) {
+      GbaPpuSetAdd(context->columns + x, i);
+    }
+
+    for (int_fast16_t y = context->begin[obj][1u]; y < context->end[obj][1u];
+         y++) {
+      GbaPpuSetAdd(context->rows + y, i);
     }
   }
 
