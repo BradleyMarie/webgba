@@ -177,6 +177,8 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     context->staging.object_rows[y][3u] = context->rows[y].objects[1u] >> 32u;
   }
 
+  context->staging.linear_tiles = registers->dispcnt.object_mode;
+
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
                   /*size=*/sizeof(context->staging),

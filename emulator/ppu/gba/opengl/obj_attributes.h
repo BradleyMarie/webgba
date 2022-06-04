@@ -27,6 +27,7 @@ typedef struct {
       GLuint window;
       GLuint padding[2];
     } objects[OAM_NUM_OBJECTS];
+    GLuint linear_tiles;
   } staging;
   GLuint buffer;
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
