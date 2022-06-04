@@ -24,15 +24,21 @@ typedef struct {
       GLuint priority;
       GLuint semi_transparent;
       GLuint large_palette;
-      GLuint window;
-      GLuint padding[2];
+      GLuint padding[3];
     } objects[OAM_NUM_OBJECTS];
+    GLuint object_indices[OAM_NUM_OBJECTS][4];
+    GLuint object_window[4u];
+    GLuint object_drawn[4u];
     GLuint linear_tiles;
   } staging;
   GLuint buffer;
+  uint8_t begin[OAM_NUM_OBJECTS][2u];
+  uint8_t end[OAM_NUM_OBJECTS][2u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
+  GbaPpuSet layers[4u];
+  GbaPpuSet window;
 } OpenGlObjectAttributes;
 
 void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,

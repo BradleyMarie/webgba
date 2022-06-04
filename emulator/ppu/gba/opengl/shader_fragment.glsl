@@ -46,13 +46,15 @@ struct Object {
   lowp uint priority;
   bool semi_transparent;
   bool large_palette;
-  bool window;
 };
 
 layout(std140) uniform Objects {
   highp uvec4 object_columns[240];
   highp uvec4 object_rows[160];
   Object objects[128];
+  lowp uint object_indices[128];
+  highp uvec4 object_window;
+  highp uvec4 object_drawn;
   bool object_linear_tiles;
 };
 
@@ -125,15 +127,13 @@ BlendUnit CreateBlendUnit() {
   return result;
 }
 
-BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec4 color,
+BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
                              lowp uint priority, bool blended) {
-  if (color.a != 0.0) {
-    blend_unit.color[0] = color.rgb;
-    blend_unit.priority[0] = priority;
-    blend_unit.top[0] = blended || blend_obj_top;
-    blend_unit.bottom[0] = blend_obj_bottom;
-    blend_unit.semi_transparent[0] = blended;
-  }
+  blend_unit.color[0] = color;
+  blend_unit.priority[0] = priority;
+  blend_unit.top[0] = blended || blend_obj_top;
+  blend_unit.bottom[0] = blend_obj_bottom;
+  blend_unit.semi_transparent[0] = blended;
   return blend_unit;
 }
 
@@ -435,49 +435,49 @@ bool NotEmpty(highp uvec4 value) {
 void main() {
   BlendUnit blend_unit = CreateBlendUnit();
 
-#if OBJECTS != 0
-  lowp vec4 obj_color = vec4(0.0, 0.0, 0.0, 0.0);
-  lowp uint obj_priority = 5u;
-  bool obj_blended = false;
   bool on_object_window = false;
 
+#if OBJECTS != 0
   highp uvec4 visible_objects =
       object_columns[uint(screencoord.x)] & object_rows[uint(screencoord.y)];
 
-  while (NotEmpty(visible_objects)) {
-    lowp uint obj = CountTrailingZeroes(visible_objects);
-    visible_objects = FlipBit(visible_objects, obj);
+  highp uvec4 window_objects = visible_objects & object_window;
+  while (NotEmpty(window_objects)) {
+    lowp uint bit = CountTrailingZeroes(window_objects);
+    window_objects = FlipBit(window_objects, bit);
+
+    lowp uint obj = object_indices[bit];
 
     lowp uint color_index = ObjectColorIndex(obj);
-    if (color_index == 0u) {
-      continue;
-    }
-
-    if (objects[obj].window) {
+    if (color_index != 0u) {
       on_object_window = true;
-      continue;
-    }
-
-    lowp uint palette =
-        objects[obj].large_palette ? 0u : objects[obj].palette;
-    lowp vec3 color = object_palette[palette + color_index];
-
-    if (objects[obj].priority < obj_priority) {
-      obj_color = vec4(color, 1.0);
-      obj_priority = objects[obj].priority;
-      obj_blended = objects[obj].semi_transparent;
+      break;
     }
   }
-#else
-  bool on_object_window = false;
 #endif  // OBJECTS != 0
 
   Window window = CheckWindow(on_object_window);
 
 #if OBJECTS != 0
   if (window.obj) {
-    blend_unit =
-        BlendUnitAddObject(blend_unit, obj_color, obj_priority, obj_blended);
+    highp uvec4 drawn_objects = visible_objects & object_drawn;
+    while (NotEmpty(drawn_objects)) {
+      lowp uint bit = CountTrailingZeroes(drawn_objects);
+      drawn_objects = FlipBit(drawn_objects, bit);
+
+      lowp uint obj = object_indices[bit];
+
+      lowp uint color_index = ObjectColorIndex(obj);
+      if (color_index != 0u) {
+        lowp uint palette =
+            objects[obj].large_palette ? 0u : objects[obj].palette;
+        lowp vec3 color = object_palette[palette + color_index];
+        blend_unit =
+            BlendUnitAddObject(blend_unit, color, objects[obj].priority,
+                               objects[obj].semi_transparent);
+        break;
+      }
+    }
   }
 #endif  // OBJECTS != 0
 
