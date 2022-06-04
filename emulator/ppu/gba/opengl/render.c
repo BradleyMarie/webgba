@@ -132,7 +132,6 @@ static void GbaPpuOpenGlRendererDraw(const GbaPpuOpenGlRenderer* renderer,
       renderer->control.bg_enabled[3u]);
   glUseProgram(program);
 
-  OpenGlControlBind(&renderer->control, program);
   OpenGlBgPaletteBind(&renderer->bg_palette, program);
   OpenGlWindowBind(&renderer->window, program);
   OpenGlBgAffineBind(&renderer->affine, program);

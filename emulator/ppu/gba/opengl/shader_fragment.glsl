@@ -53,9 +53,8 @@ layout(std140) uniform Objects {
   highp uvec4 object_columns[240];
   highp uvec4 object_rows[160];
   Object objects[128];
+  bool object_linear_tiles;
 };
-
-uniform bool obj_mode;
 
 // Backgrounds
 struct Background {
@@ -290,7 +289,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
   mediump int tile_index;
   lowp ivec2 tile = lookup / 8;
-  if (obj_mode) {
+  if (object_linear_tiles) {
     tile_index = tile.x + tile.y * objects[obj].half_size.x / 4;
   } else {
     lowp int row_width = objects[obj].large_palette ? 16 : 32;
