@@ -315,6 +315,7 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlTilesReloadContext(&renderer->tiles);
   OpenGlBgPaletteReloadContext(&renderer->bg_palette);
   OpenGlObjectAttributesReloadContext(&renderer->obj_attributes);
+  OpenGlBlendReloadContext(&renderer->blend);
 
   CreateStagingTexture(&renderer->staging_texture, renderer->render_scale);
   CreateStagingFbo(&renderer->staging_fbo, renderer->staging_texture);
@@ -342,6 +343,7 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlTilesDestroy(&renderer->tiles);
     OpenGlBgPaletteDestroy(&renderer->bg_palette);
     OpenGlObjectAttributesDestroy(&renderer->obj_attributes);
+    OpenGlBlendDestroy(&renderer->blend);
     glDeleteFramebuffers(1u, &renderer->staging_fbo);
     glDeleteTextures(1u, &renderer->staging_texture);
     glDeleteProgram(renderer->upscale_program);

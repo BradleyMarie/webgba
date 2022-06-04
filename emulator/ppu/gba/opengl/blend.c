@@ -1,6 +1,9 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 
 #include <math.h>
+#include <string.h>
+
+#include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 static GLfloat FixedToFloat(uint8_t fixed) {
   return fmin((double)fixed / 16.0, 1.0);
@@ -12,72 +15,47 @@ void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
     return;
   }
 
-  context->blend_mode = registers->bldcnt.mode;
-  context->blend_eva = FixedToFloat(registers->bldalpha.eva);
-  context->blend_evb = FixedToFloat(registers->bldalpha.evb);
-  context->blend_evy = FixedToFloat(registers->bldy.evy);
-  context->obj_top = registers->bldcnt.a_obj;
-  context->obj_bottom = registers->bldcnt.b_obj;
-  context->bg0_top = registers->bldcnt.a_bg0;
-  context->bg0_bottom = registers->bldcnt.b_bg0;
-  context->bg1_top = registers->bldcnt.a_bg1;
-  context->bg1_bottom = registers->bldcnt.b_bg1;
-  context->bg2_top = registers->bldcnt.a_bg2;
-  context->bg2_bottom = registers->bldcnt.b_bg2;
-  context->bg3_top = registers->bldcnt.a_bg3;
-  context->bg3_bottom = registers->bldcnt.b_bg3;
-  context->bd_top = registers->bldcnt.a_bd;
-  context->bd_bottom = registers->bldcnt.b_bd;
+  context->staging.blend_mode = registers->bldcnt.mode;
+  context->staging.blend_eva = FixedToFloat(registers->bldalpha.eva);
+  context->staging.blend_evb = FixedToFloat(registers->bldalpha.evb);
+  context->staging.blend_evy = FixedToFloat(registers->bldy.evy);
+  context->staging.obj_top = registers->bldcnt.a_obj;
+  context->staging.obj_bottom = registers->bldcnt.b_obj;
+  context->staging.bg_top[0u][0u] = registers->bldcnt.a_bg0;
+  context->staging.bg_bottom[0u][0u] = registers->bldcnt.b_bg0;
+  context->staging.bg_top[1u][0u] = registers->bldcnt.a_bg1;
+  context->staging.bg_bottom[1u][0u] = registers->bldcnt.b_bg1;
+  context->staging.bg_top[2u][0u] = registers->bldcnt.a_bg2;
+  context->staging.bg_bottom[2u][0u] = registers->bldcnt.b_bg2;
+  context->staging.bg_top[3u][0u] = registers->bldcnt.a_bg3;
+  context->staging.bg_bottom[3u][0u] = registers->bldcnt.b_bg3;
+  context->staging.bd_top = registers->bldcnt.a_bd;
+  context->staging.bd_bottom = registers->bldcnt.b_bd;
+
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                  /*size=*/sizeof(context->staging),
+                  /*data=*/&context->staging);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   dirty_bits->io.blend = false;
 }
 
 void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {
-  GLint blend_mode = glGetUniformLocation(program, "blend_mode");
-  glUniform1i(blend_mode, context->blend_mode);
+  GLint blend = glGetUniformBlockIndex(program, "Blend");
+  glUniformBlockBinding(program, blend, BLEND_BUFFER);
 
-  GLint blend_eva = glGetUniformLocation(program, "blend_eva");
-  glUniform1f(blend_eva, context->blend_eva);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBindBufferBase(GL_UNIFORM_BUFFER, BLEND_BUFFER, context->buffer);
+}
 
-  GLint blend_evb = glGetUniformLocation(program, "blend_evb");
-  glUniform1f(blend_evb, context->blend_evb);
+void OpenGlBlendReloadContext(OpenGlBlend* context) {
+  glGenBuffers(1, &context->buffer);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+               GL_DYNAMIC_DRAW);
+}
 
-  GLint blend_evy = glGetUniformLocation(program, "blend_evy");
-  glUniform1f(blend_evy, context->blend_evy);
-
-  GLint obj_top = glGetUniformLocation(program, "obj_top");
-  glUniform1i(obj_top, context->obj_top);
-
-  GLint obj_bottom = glGetUniformLocation(program, "obj_bottom");
-  glUniform1i(obj_bottom, context->obj_bottom);
-
-  GLint bg0_top = glGetUniformLocation(program, "bg_top[0]");
-  glUniform1i(bg0_top, context->bg0_top);
-
-  GLint bg0_bottom = glGetUniformLocation(program, "bg_bottom[0]");
-  glUniform1i(bg0_bottom, context->bg0_bottom);
-
-  GLint bg1_top = glGetUniformLocation(program, "bg_top[1]");
-  glUniform1i(bg1_top, context->bg1_top);
-
-  GLint bg1_bottom = glGetUniformLocation(program, "bg_bottom[1]");
-  glUniform1i(bg1_bottom, context->bg1_bottom);
-
-  GLint bg2_top = glGetUniformLocation(program, "bg_top[2]");
-  glUniform1i(bg2_top, context->bg2_top);
-
-  GLint bg2_bottom = glGetUniformLocation(program, "bg_bottom[2]");
-  glUniform1i(bg2_bottom, context->bg2_bottom);
-
-  GLint bg3_top = glGetUniformLocation(program, "bg_top[3]");
-  glUniform1i(bg3_top, context->bg3_top);
-
-  GLint bg3_bottom = glGetUniformLocation(program, "bg_bottom[3]");
-  glUniform1i(bg3_bottom, context->bg3_bottom);
-
-  GLint bd_top = glGetUniformLocation(program, "bg_top[4]");
-  glUniform1i(bd_top, context->bd_top);
-
-  GLint bd_bottom = glGetUniformLocation(program, "bg_bottom[4]");
-  glUniform1i(bd_bottom, context->bd_bottom);
+void OpenGlBlendDestroy(OpenGlBlend* context) {
+  glDeleteTextures(1u, &context->buffer);
 }
