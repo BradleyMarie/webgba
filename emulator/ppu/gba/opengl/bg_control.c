@@ -28,9 +28,7 @@ void OpenGlBgControlReload(OpenGlBgControl* context,
     context->staging[i].tilemap_base =
         registers->bgcnt[i].tile_map_base_block * GBA_TILE_MAP_BLOCK_1D_SIZE *
         GBA_TILE_MAP_BLOCK_1D_SIZE * sizeof(TileMapEntry);
-    context->staging[i].tile_base = registers->bgcnt[i].tile_base_block *
-                                    GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES *
-                                    GBA_TILE_1D_SIZE;
+    context->staging[i].tile_base = registers->bgcnt[i].tile_base_block;
     context->staging[i].large_palette = registers->bgcnt[i].large_palette;
     context->staging[i].wraparound = registers->bgcnt[i].wraparound;
 
