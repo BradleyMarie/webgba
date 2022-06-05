@@ -27,8 +27,8 @@ uniform lowp usampler2DArray background_tiles;
 uniform lowp usampler2D object_tiles;
 
 // Tilemaps
-uniform mediump isampler2D affine_tilemap;
-uniform mediump isampler2D scrolling_tilemap;
+uniform lowp usampler2D affine_tilemap;
+uniform lowp usampler2D scrolling_tilemap;
 
 // Background Bitmaps
 uniform lowp sampler2D bitmap;
@@ -325,11 +325,11 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
                                       32 * tilemap_block_index +
                                       tilemap_block_tile.y);
 
-  mediump ivec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
-  mediump int tileblock_offset = tilemap_entry.x
+  mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
+  mediump int tileblock_offset = int(tilemap_entry.x)
                                  << (backgrounds[bg].large_palette ? 1 : 0);
-  lowp ivec2 flip = tilemap_entry.yz;
-  lowp uint palette = uint(tilemap_entry.w);
+  lowp ivec2 flip = ivec2(tilemap_entry.yz);
+  lowp uint palette = tilemap_entry.w;
 
   lowp ivec2 tile_pixel = abs(flip - (tilemap_pixel % 8));
   mediump int block_offset = tileblock_offset * 8 + tile_pixel.y;
@@ -371,12 +371,12 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
   mediump int tile_offset = tile.x + tile.y * (backgrounds[bg].size.x / 8);
   mediump int tile_index = backgrounds[bg].tilemap_base + tile_offset;
 
-  mediump int index =
+  mediump uint index =
       texelFetch(affine_tilemap, ivec2(tile_index % 256, tile_index / 256), 0)
           .r;
   index <<= 1;
 
-  mediump int block_offset = index * 8 + tile_pixel.y;
+  mediump int block_offset = int(index) * 8 + tile_pixel.y;
 
   lowp uint color =
       texelFetch(background_tiles,
