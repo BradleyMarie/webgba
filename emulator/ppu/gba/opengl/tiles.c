@@ -1,6 +1,7 @@
 #include "emulator/ppu/gba/opengl/tiles.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
@@ -132,6 +133,12 @@ void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
 }
 
 void OpenGlTilesReloadContext(OpenGlTiles* context) {
+  // It is OK if this allocation fails
+  void* zeroes = calloc(GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE *
+                            GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES *
+                            GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS * 2u,
+                        sizeof(char));
+
   glGenTextures(1u, &context->bg_tiles);
   glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -145,7 +152,7 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
       /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
       /*depth=*/GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS,
       /*border=*/0, /*format=*/GL_RG_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-      /*pixels=*/NULL);
+      /*pixels=*/zeroes);
 
   glGenTextures(1u, &context->obj_tiles);
   glBindTexture(GL_TEXTURE_2D, context->obj_tiles);
@@ -158,9 +165,11 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
                /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_NUM_OBJECT_S_TILES,
                /*border=*/0, /*format=*/GL_RG_INTEGER,
                /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
+               /*pixels=*/zeroes);
 
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  free(zeroes);
 }
 
 void OpenGlTilesDestroy(OpenGlTiles* context) {

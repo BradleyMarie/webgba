@@ -1,5 +1,6 @@
 #include "emulator/ppu/gba/opengl/tilemap.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
@@ -82,6 +83,12 @@ void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program) {
 }
 
 void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
+  // It is OK if this allocation fails
+  void* zeroes =
+      calloc(GBA_TILE_MAP_BLOCK_1D_SIZE * GBA_TILE_MAP_BLOCK_1D_SIZE *
+                 GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS * 4u,
+             sizeof(uint16_t));
+
   glGenTextures(1u, &context->affine);
   glBindTexture(GL_TEXTURE_2D, context->affine);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -91,7 +98,7 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
   glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_R8UI,
                /*width=*/256, /*height=*/256, /*border=*/0,
                /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
+               /*pixels=*/zeroes);
 
   glGenTextures(1u, &context->scrolling);
   glBindTexture(GL_TEXTURE_2D, context->scrolling);
@@ -105,9 +112,11 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
                /*height=*/GBA_TILE_MAP_BLOCK_1D_SIZE *
                    GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS,
                /*border=*/0, /*format=*/GL_RGBA_INTEGER,
-               /*type=*/GL_UNSIGNED_SHORT, /*pixels=*/NULL);
+               /*type=*/GL_UNSIGNED_SHORT, /*pixels=*/zeroes);
 
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  free(zeroes);
 }
 
 void OpenGlBgTilemapDestroy(OpenGlBgTilemap* context) {

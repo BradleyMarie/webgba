@@ -76,7 +76,7 @@ void GbaPpuScreenReloadContext(GbaPpuScreen* screen) {
                /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                /*border=*/0, /*format=*/GL_RGBA,
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-               /*pixels=*/NULL);
+               /*pixels=*/screen->pixels);
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
