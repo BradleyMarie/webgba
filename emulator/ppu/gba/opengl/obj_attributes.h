@@ -11,8 +11,6 @@
 
 typedef struct {
   struct {
-    GLuint object_columns[GBA_SCREEN_WIDTH][4u];
-    GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
     struct {
       GLfloat transformation[2u][4u];
       GLfloat center[2u];
@@ -26,12 +24,16 @@ typedef struct {
       GLuint large_palette;
       GLuint padding[3];
     } objects[OAM_NUM_OBJECTS];
+    GLuint linear_tiles;
+  } object_staging;
+  struct {
+    GLuint object_columns[GBA_SCREEN_WIDTH][4u];
+    GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
     GLuint object_indices[OAM_NUM_OBJECTS][4];
     GLuint object_window[4u];
     GLuint object_drawn[4u];
-    GLuint linear_tiles;
-  } staging;
-  GLuint buffer;
+  } visibility_staging;
+  GLuint buffers[2u];
   uint8_t begin[OAM_NUM_OBJECTS][2u];
   uint8_t end[OAM_NUM_OBJECTS][2u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
