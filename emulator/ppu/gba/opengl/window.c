@@ -138,7 +138,7 @@ void OpenGlWindowBind(const OpenGlWindow* context, GLuint program) {
 void OpenGlWindowReloadContext(OpenGlWindow* context) {
   glGenBuffers(1, &context->buffer);
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
                GL_DYNAMIC_DRAW);
 }
 

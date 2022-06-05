@@ -85,8 +85,14 @@ void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program) {
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
   glGenBuffers(GBA_PPU_NUM_AFFINE_BACKGROUNDS, context->buffers);
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
+    GLfloat array[6u] = {0.0,
+                         (GLfloat)GBA_SCREEN_HEIGHT,
+                         2.0 * (GLfloat)GBA_SCREEN_WIDTH,
+                         (GLfloat)GBA_SCREEN_HEIGHT,
+                         0.0,
+                         -(GLfloat)GBA_SCREEN_HEIGHT};
     glBindBuffer(GL_ARRAY_BUFFER, context->buffers[i]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6, array, GL_STATIC_DRAW);
   }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

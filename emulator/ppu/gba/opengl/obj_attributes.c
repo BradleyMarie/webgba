@@ -288,12 +288,12 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
   glGenBuffers(2, context->buffers);
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_staging), NULL,
-               GL_DYNAMIC_DRAW);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_staging),
+               &context->object_staging, GL_DYNAMIC_DRAW);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->visibility_staging), NULL,
-               GL_DYNAMIC_DRAW);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->visibility_staging),
+               &context->visibility_staging, GL_DYNAMIC_DRAW);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

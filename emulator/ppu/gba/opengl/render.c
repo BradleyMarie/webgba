@@ -50,6 +50,11 @@ struct _GbaPpuOpenGlRenderer {
 };
 
 static void CreateStagingTexture(GLuint* texture, uint8_t render_scale) {
+  // It is OK if this allocation fails
+  void* zeroes = calloc(
+      GBA_SCREEN_WIDTH * render_scale * GBA_SCREEN_HEIGHT * render_scale * 4u,
+      sizeof(char));
+
   glGenTextures(1u, texture);
   glBindTexture(GL_TEXTURE_2D, *texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -61,8 +66,10 @@ static void CreateStagingTexture(GLuint* texture, uint8_t render_scale) {
                /*height=*/GBA_SCREEN_HEIGHT * render_scale,
                /*border=*/0,
                /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
+               /*pixels=*/zeroes);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  free(zeroes);
 }
 
 static void UpdateStagingFbo(GLuint fbo, GLuint staging_texture) {

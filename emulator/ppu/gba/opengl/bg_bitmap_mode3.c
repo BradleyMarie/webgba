@@ -61,7 +61,7 @@ void OpenGlBgBitmapMode3ReloadContext(OpenGlBgBitmapMode3* context) {
                /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                /*border=*/0, /*format=*/GL_RGBA,
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-               /*pixels=*/NULL);
+               /*pixels=*/context->staging);
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 

@@ -65,12 +65,12 @@ void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
 void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context) {
   glGenBuffers(1, &context->bg_palette);
   glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), context->staging,
                GL_DYNAMIC_DRAW);
 
   glGenBuffers(1, &context->obj_palette);
   glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), context->staging,
                GL_DYNAMIC_DRAW);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
