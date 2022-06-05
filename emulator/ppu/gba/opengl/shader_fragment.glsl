@@ -49,13 +49,17 @@ struct Object {
 };
 
 layout(std140) uniform Objects {
+  Object objects[128];
+  bool object_linear_tiles;
+};
+
+// Object Visibility
+layout(std140) uniform ObjectVisibility {
   highp uvec4 object_columns[240];
   highp uvec4 object_rows[160];
-  Object objects[128];
   lowp uint object_indices[128];
   highp uvec4 object_window;
   highp uvec4 object_drawn;
-  bool object_linear_tiles;
 };
 
 // Backgrounds

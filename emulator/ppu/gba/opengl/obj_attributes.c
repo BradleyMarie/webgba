@@ -27,10 +27,10 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     GbaPpuSet objects = context->rotations[i];
     while (!GbaPpuSetEmpty(&objects)) {
       uint_fast8_t object = GbaPpuSetPop(&objects);
-      context->staging.objects[object].transformation[0u][0u] = pa;
-      context->staging.objects[object].transformation[0u][1u] = pc;
-      context->staging.objects[object].transformation[1u][0u] = pb;
-      context->staging.objects[object].transformation[1u][1u] = pd;
+      context->object_staging.objects[object].transformation[0u][0u] = pa;
+      context->object_staging.objects[object].transformation[0u][1u] = pc;
+      context->object_staging.objects[object].transformation[1u][0u] = pb;
+      context->object_staging.objects[object].transformation[1u][1u] = pd;
     }
   }
 
@@ -85,10 +85,12 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       origin[1u] = memory->oam.object_attributes[i].y_coordinate_u;
     }
 
-    context->staging.objects[i].center[0u] = origin[0u] + render_size[0u] / 2u;
-    context->staging.objects[i].center[1u] = origin[1u] + render_size[1u] / 2u;
-    context->staging.objects[i].half_size[0u] = sprite_size[0u] / 2;
-    context->staging.objects[i].half_size[1u] = sprite_size[1u] / 2;
+    context->object_staging.objects[i].center[0u] =
+        origin[0u] + render_size[0u] / 2u;
+    context->object_staging.objects[i].center[1u] =
+        origin[1u] + render_size[1u] / 2u;
+    context->object_staging.objects[i].half_size[0u] = sprite_size[0u] / 2;
+    context->object_staging.objects[i].half_size[1u] = sprite_size[1u] / 2;
 
     origin[0u] = (origin[0u] < 0u) ? 0u : origin[0u];
     origin[1u] = (origin[1u] < 0u) ? 0u : origin[1u];
@@ -116,14 +118,14 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
                    i);
     }
 
-    context->staging.objects[i].tile_base = character_name * 8u;
-    context->staging.objects[i].large_palette =
+    context->object_staging.objects[i].tile_base = character_name * 8u;
+    context->object_staging.objects[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
-    context->staging.objects[i].semi_transparent =
+    context->object_staging.objects[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
-    context->staging.objects[i].palette =
+    context->object_staging.objects[i].palette =
         memory->oam.object_attributes[i].palette * 16u;
-    context->staging.objects[i].priority =
+    context->object_staging.objects[i].priority =
         memory->oam.object_attributes[i].priority;
 
     for (uint8_t rot = 0; rot < OAM_NUM_ROTATE_SCALE_GROUPS; rot++) {
@@ -132,42 +134,51 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
 
     if (memory->oam.object_attributes[i].affine) {
       uint8_t rot = memory->oam.object_attributes[i].flex_param_1;
-      context->staging.objects[i].transformation[0u][0u] =
+      context->object_staging.objects[i].transformation[0u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pa);
-      context->staging.objects[i].transformation[0u][1u] =
+      context->object_staging.objects[i].transformation[0u][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pb);
-      context->staging.objects[i].transformation[1u][0u] =
+      context->object_staging.objects[i].transformation[1u][0u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pc);
-      context->staging.objects[i].transformation[1u][1u] =
+      context->object_staging.objects[i].transformation[1u][1u] =
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
-      context->staging.objects[i].flip[0] = 0;
-      context->staging.objects[i].flip[1] = 0;
+      context->object_staging.objects[i].flip[0] = 0;
+      context->object_staging.objects[i].flip[1] = 0;
     } else {
-      context->staging.objects[i].transformation[0u][0u] = 1.0;
-      context->staging.objects[i].transformation[0u][1u] = 0.0;
-      context->staging.objects[i].transformation[1u][0u] = 0.0;
-      context->staging.objects[i].transformation[1u][1u] = 1.0;
+      context->object_staging.objects[i].transformation[0u][0u] = 1.0;
+      context->object_staging.objects[i].transformation[0u][1u] = 0.0;
+      context->object_staging.objects[i].transformation[1u][0u] = 0.0;
+      context->object_staging.objects[i].transformation[1u][1u] = 1.0;
 
-      context->staging.objects[i].flip[0] =
+      context->object_staging.objects[i].flip[0] =
           (memory->oam.object_attributes[i].flex_param_1 & 0x08u)
               ? sprite_size[0u] - 1
               : 0;
-      context->staging.objects[i].flip[1] =
+      context->object_staging.objects[i].flip[1] =
           (memory->oam.object_attributes[i].flex_param_1 & 0x10u)
               ? sprite_size[1u] - 1
               : 0;
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {
-      context->staging.objects[i].mosaic[0u] = 1 + registers->mosaic.obj_horiz;
-      context->staging.objects[i].mosaic[1u] = 1 + registers->mosaic.obj_vert;
+      context->object_staging.objects[i].mosaic[0u] =
+          1 + registers->mosaic.obj_horiz;
+      context->object_staging.objects[i].mosaic[1u] =
+          1 + registers->mosaic.obj_vert;
     } else {
-      context->staging.objects[i].mosaic[0u] = 1;
-      context->staging.objects[i].mosaic[1u] = 1;
+      context->object_staging.objects[i].mosaic[0u] = 1;
+      context->object_staging.objects[i].mosaic[1u] = 1;
     }
   }
+
+  context->object_staging.linear_tiles = registers->dispcnt.object_mode;
+
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                  /*size=*/sizeof(context->object_staging),
+                  /*data=*/&context->object_staging);
 
   uint8_t insert_index = 0u;
 
@@ -179,13 +190,13 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     uint8_t obj = GbaPpuSetPop(&window_copy);
 
     GbaPpuSetAdd(&window, insert_index);
-    context->staging.object_indices[insert_index++][0u] = obj;
+    context->visibility_staging.object_indices[insert_index++][0u] = obj;
   }
 
-  context->staging.object_window[0u] = window.objects[0u];
-  context->staging.object_window[1u] = window.objects[0u] >> 32u;
-  context->staging.object_window[2u] = window.objects[1u];
-  context->staging.object_window[3u] = window.objects[1u] >> 32u;
+  context->visibility_staging.object_window[0u] = window.objects[0u];
+  context->visibility_staging.object_window[1u] = window.objects[0u] >> 32u;
+  context->visibility_staging.object_window[2u] = window.objects[1u];
+  context->visibility_staging.object_window[3u] = window.objects[1u] >> 32u;
 
   GbaPpuSet drawn;
   GbaPpuSetClear(&drawn);
@@ -196,14 +207,14 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       uint8_t obj = GbaPpuSetPop(&layer_copy);
 
       GbaPpuSetAdd(&drawn, insert_index);
-      context->staging.object_indices[insert_index++][0u] = obj;
+      context->visibility_staging.object_indices[insert_index++][0u] = obj;
     }
   }
 
-  context->staging.object_drawn[0u] = drawn.objects[0u];
-  context->staging.object_drawn[1u] = drawn.objects[0u] >> 32u;
-  context->staging.object_drawn[2u] = drawn.objects[1u];
-  context->staging.object_drawn[3u] = drawn.objects[1u] >> 32u;
+  context->visibility_staging.object_drawn[0u] = drawn.objects[0u];
+  context->visibility_staging.object_drawn[1u] = drawn.objects[0u] >> 32u;
+  context->visibility_staging.object_drawn[2u] = drawn.objects[1u];
+  context->visibility_staging.object_drawn[3u] = drawn.objects[1u] >> 32u;
 
   for (uint8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
     GbaPpuSetClear(context->columns + x);
@@ -214,7 +225,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
   }
 
   for (uint8_t i = 0; i < insert_index; i++) {
-    uint8_t obj = context->staging.object_indices[i][0u];
+    uint8_t obj = context->visibility_staging.object_indices[i][0u];
     for (int_fast16_t x = context->begin[obj][0u]; x < context->end[obj][0u];
          x++) {
       GbaPpuSetAdd(context->columns + x, i);
@@ -227,27 +238,31 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
   }
 
   for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-    context->staging.object_columns[x][0u] = context->columns[x].objects[0u];
-    context->staging.object_columns[x][1u] =
+    context->visibility_staging.object_columns[x][0u] =
+        context->columns[x].objects[0u];
+    context->visibility_staging.object_columns[x][1u] =
         context->columns[x].objects[0u] >> 32u;
-    context->staging.object_columns[x][2u] = context->columns[x].objects[1u];
-    context->staging.object_columns[x][3u] =
+    context->visibility_staging.object_columns[x][2u] =
+        context->columns[x].objects[1u];
+    context->visibility_staging.object_columns[x][3u] =
         context->columns[x].objects[1u] >> 32u;
   }
 
   for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    context->staging.object_rows[y][0u] = context->rows[y].objects[0u];
-    context->staging.object_rows[y][1u] = context->rows[y].objects[0u] >> 32u;
-    context->staging.object_rows[y][2u] = context->rows[y].objects[1u];
-    context->staging.object_rows[y][3u] = context->rows[y].objects[1u] >> 32u;
+    context->visibility_staging.object_rows[y][0u] =
+        context->rows[y].objects[0u];
+    context->visibility_staging.object_rows[y][1u] =
+        context->rows[y].objects[0u] >> 32u;
+    context->visibility_staging.object_rows[y][2u] =
+        context->rows[y].objects[1u];
+    context->visibility_staging.object_rows[y][3u] =
+        context->rows[y].objects[1u] >> 32u;
   }
 
-  context->staging.linear_tiles = registers->dispcnt.object_mode;
-
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
   glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                  /*size=*/sizeof(context->staging),
-                  /*data=*/&context->staging);
+                  /*size=*/sizeof(context->visibility_staging),
+                  /*data=*/&context->visibility_staging);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -257,17 +272,32 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
   GLint objects = glGetUniformBlockIndex(program, "Objects");
   glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffer);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffers[0u]);
+
+  GLint visibility = glGetUniformBlockIndex(program, "ObjectVisibility");
+  glUniformBlockBinding(program, visibility, OBJECT_VISIBILITY_BUFFER);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECT_VISIBILITY_BUFFER,
+                   context->buffers[1u]);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
-  glGenBuffers(1, &context->buffer);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), NULL,
+  glGenBuffers(2, context->buffers);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_staging), NULL,
                GL_DYNAMIC_DRAW);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->visibility_staging), NULL,
+               GL_DYNAMIC_DRAW);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
-  glDeleteBuffers(1u, &context->buffer);
+  glDeleteBuffers(2, context->buffers);
 }
