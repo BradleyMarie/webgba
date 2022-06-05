@@ -7,21 +7,24 @@
 void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
                        const GbaPpuRegisters* registers,
                        GbaPpuDirtyBits* dirty_bits) {
+  // Backgrounds
   for (uint32_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS; i++) {
     if (!dirty_bits->vram.tile_mode.tiles[i] || registers->dispcnt.mode >= 3) {
       continue;
     }
 
+    // D-Tiles
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
         for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
           uint8_t value =
               memory->vram.mode_012.bg.tiles.blocks[i].d_tiles[t].pixels[y][x];
-          context->staging[t][y][x][0u] = value;
+          context->staging[2u * t][y][x][0u] = value;
         }
       }
     }
 
+    // S-Tiles
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
         for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE / 2u; x++) {
@@ -45,6 +48,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
     dirty_bits->vram.tile_mode.tiles[i] = false;
   }
 
+  // Objects
   uint8_t starting_tile = (registers->dispcnt.mode < 3) ? 0u : 1u;
   for (uint32_t i = starting_tile; i < 2; i++) {
     if (!dirty_bits->vram.obj_tiles[i]) {

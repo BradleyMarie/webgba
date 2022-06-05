@@ -324,7 +324,7 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
 
   mediump ivec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
   mediump int tileblock_offset =
-      tilemap_entry.x >> int(backgrounds[bg].large_palette);
+      tilemap_entry.x << (backgrounds[bg].large_palette ? 1 : 0);
   lowp ivec2 flip = tilemap_entry.yz;
   lowp uint palette = uint(tilemap_entry.w);
 
@@ -367,6 +367,7 @@ lowp vec4 AffineBackground(lowp uint bg) {
   mediump int index =
       texelFetch(affine_tilemap, ivec2(tile_index % 256, tile_index / 256), 0)
           .r;
+  index <<= 1;
 
   lowp uint color_index =
       texelFetch(background_tiles,
