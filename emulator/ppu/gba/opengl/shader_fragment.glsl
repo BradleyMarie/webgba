@@ -254,7 +254,7 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 // Window
 Window CheckWindow(bool on_object) {
   const mediump uvec2 screen_size = uvec2(240u, 160u);
-  mediump uvec2 pixel = uvec2(screencoord);
+  mediump uvec2 pixel = uvec2(floor(screencoord));
 
   mediump uvec2 window0_location = (pixel + window_shift[0]) % screen_size;
   if (all(lessThan(window0_location, window_bounds[0]))) {
@@ -275,8 +275,9 @@ Window CheckWindow(bool on_object) {
 
 // Objects
 lowp uint ObjectColorIndex(lowp uint obj) {
-  mediump ivec2 lookup =
-      ivec2(objects[obj].transformation * (screencoord - objects[obj].center));
+  mediump vec2 lookup_fp =
+    objects[obj].transformation * (screencoord - objects[obj].center);
+  mediump ivec2 lookup = ivec2(floor(lookup_fp));
   if (any(lessThan(lookup, -objects[obj].half_size)) ||
       any(greaterThanEqual(lookup, objects[obj].half_size))) {
     return 0u;
@@ -306,7 +307,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
-  highp ivec2 tilemap_pixel = ivec2(scrolling_screencoord[bg]);
+  mediump ivec2 tilemap_pixel = ivec2(floor(scrolling_screencoord[bg]));
   tilemap_pixel &= backgrounds[bg].size - 1;
   tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
 
@@ -346,7 +347,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
-  highp ivec2 tilemap_pixel = ivec2(affine_screencoord[bg - 2u]);
+  mediump ivec2 tilemap_pixel = ivec2(floor(affine_screencoord[bg - 2u]));
 
   if (!backgrounds[bg].wraparound) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
@@ -384,7 +385,7 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit) {
-  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  mediump ivec2 lookup = ivec2(floor(affine_screencoord[0]));
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;
@@ -395,7 +396,7 @@ BlendUnit BitmapBackground(BlendUnit blend_unit) {
 }
 
 BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
-  highp ivec2 lookup = ivec2(affine_screencoord[0]);
+  mediump ivec2 lookup = ivec2(floor(affine_screencoord[0]));
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;
