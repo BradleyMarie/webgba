@@ -14,17 +14,18 @@ typedef struct {
     struct {
       GLfloat transformation[2u][4u];
       GLfloat center[2u];
-      GLint half_size[2];
-      GLint mosaic[2];
-      GLint flip[2];
+      GLint half_size[2u];
+      GLint mosaic[2u];
+      GLint flip[2u];
       GLint tile_base;
       GLuint palette;
       GLuint priority;
       GLuint semi_transparent;
       GLuint large_palette;
-      GLuint padding[3];
+      GLuint padding[3u];
     } objects[OAM_NUM_OBJECTS];
     GLuint linear_tiles;
+    GLuint padding[3u];
   } object_staging;
   struct {
     GLuint object_columns[GBA_SCREEN_WIDTH][4u];

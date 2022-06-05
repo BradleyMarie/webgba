@@ -20,6 +20,7 @@ typedef struct {
     GLuint shift[2u][4u];
     GLuint bounds[2u][4u];
     GLuint winobj_enabled;
+    GLuint padding[3u];
   } staging;
   GLuint buffer;
 } OpenGlWindow;
