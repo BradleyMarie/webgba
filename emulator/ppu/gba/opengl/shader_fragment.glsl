@@ -23,7 +23,7 @@ layout(std140) uniform BackgroundPalette { lowp vec3 background_palette[256]; };
 layout(std140) uniform ObjectPalette { lowp vec3 object_palette[256]; };
 
 // Tiles
-uniform lowp usampler2D background_tiles;
+uniform lowp usampler2DArray background_tiles;
 uniform lowp usampler2D object_tiles;
 
 // Tilemaps
@@ -67,7 +67,7 @@ struct Background {
   mediump ivec2 size;
   lowp ivec2 mosaic;
   mediump int tilemap_base;
-  mediump int tile_base;
+  lowp int tile_base;
   lowp uint priority;
   bool large_palette;
   bool wraparound;
@@ -280,7 +280,7 @@ Window CheckWindow(bool on_object) {
 // Objects
 lowp uint ObjectColorIndex(lowp uint obj) {
   mediump vec2 lookup_fp =
-    objects[obj].transformation * (screencoord - objects[obj].center);
+      objects[obj].transformation * (screencoord - objects[obj].center);
   mediump ivec2 lookup = ivec2(floor(lookup_fp));
   if (any(lessThan(lookup, -objects[obj].half_size)) ||
       any(greaterThanEqual(lookup, objects[obj].half_size))) {
@@ -326,17 +326,18 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
                                       tilemap_block_tile.y);
 
   mediump ivec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
-  mediump int tileblock_offset =
-      tilemap_entry.x << (backgrounds[bg].large_palette ? 1 : 0);
+  mediump int tileblock_offset = tilemap_entry.x
+                                 << (backgrounds[bg].large_palette ? 1 : 0);
   lowp ivec2 flip = tilemap_entry.yz;
   lowp uint palette = uint(tilemap_entry.w);
 
   lowp ivec2 tile_pixel = abs(flip - (tilemap_pixel % 8));
+  mediump int block_offset = tileblock_offset * 8 + tile_pixel.y;
 
   lowp uvec4 color_indices =
       texelFetch(background_tiles,
-                 ivec2(tile_pixel.x, backgrounds[bg].tile_base +
-                                         tileblock_offset * 8 + tile_pixel.y),
+                 ivec3(tile_pixel.x, block_offset % 4096,
+                       backgrounds[bg].tile_base + block_offset / 4096),
                  0);
 
   lowp uint color_index =
@@ -375,10 +376,12 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
           .r;
   index <<= 1;
 
+  mediump int block_offset = index * 8 + tile_pixel.y;
+
   lowp uint color =
       texelFetch(background_tiles,
-                 ivec2(tile_pixel.x,
-                       backgrounds[bg].tile_base + index * 8 + tile_pixel.y),
+                 ivec3(tile_pixel.x, block_offset % 4096,
+                       backgrounds[bg].tile_base + block_offset / 4096),
                  0)
           .r;
   if (color == 0u) {
