@@ -8,6 +8,22 @@
 #include "emulator/ppu/gba/opengl/shader_fragment.h"
 #include "emulator/ppu/gba/opengl/shader_vertex.h"
 
+static void ValidateProgram(GLuint program) {
+  GLint success = 0;
+  glGetProgramiv(program, GL_LINK_STATUS, &success);
+  if (success == GL_TRUE) {
+    return;
+  }
+
+  printf("ERROR: shader linking failed\n");
+
+  GLchar errorLog[500u];
+  glGetProgramInfoLog(program, 500, NULL, errorLog);
+  printf("%s\n", errorLog);
+
+  exit(-1);
+}
+
 static char* GetFragmentShaderSource(bool objects, bool scrolling_bg0,
                                      bool scrolling_bg1, bool scrolling_bg2,
                                      bool scrolling_bg3, bool affine_bg2,
@@ -312,19 +328,13 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
 
   glDeleteShader(vertex_shader);
 
-  GLint success = 0;
   // Mode 0
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
       for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
         for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
           for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
-            glGetProgramiv(context->mode0[obj][bg0][bg1][bg2][bg3],
-                           GL_LINK_STATUS, &success);
-            if (success != GL_TRUE) {
-              printf("ERROR: shader linking failed\n");
-              exit(-1);
-            }
+            ValidateProgram(context->mode0[obj][bg0][bg1][bg2][bg3]);
           }
         }
       }
@@ -336,12 +346,7 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
     for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
       for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
         for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-          glGetProgramiv(context->mode1[obj][bg0][bg1][bg2], GL_LINK_STATUS,
-                         &success);
-          if (success != GL_TRUE) {
-            printf("ERROR: shader linking failed\n");
-            exit(-1);
-          }
+          ValidateProgram(context->mode1[obj][bg0][bg1][bg2]);
         }
       }
     }
@@ -351,11 +356,7 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
       for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
-        glGetProgramiv(context->mode2[obj][bg2][bg3], GL_LINK_STATUS, &success);
-        if (success != GL_TRUE) {
-          printf("ERROR: shader linking failed\n");
-          exit(-1);
-        }
+        ValidateProgram(context->mode2[obj][bg2][bg3]);
       }
     }
   }
@@ -363,22 +364,14 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
   // Mode 3/5
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-      glGetProgramiv(context->mode35[obj][bg2], GL_LINK_STATUS, &success);
-      if (success != GL_TRUE) {
-        printf("ERROR: shader linking failed\n");
-        exit(-1);
-      }
+      ValidateProgram(context->mode35[obj][bg2]);
     }
   }
 
   // Mode 4
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-      glGetProgramiv(context->mode4[obj][bg2], GL_LINK_STATUS, &success);
-      if (success != GL_TRUE) {
-        printf("ERROR: shader linking failed\n");
-        exit(-1);
-      }
+      ValidateProgram(context->mode4[obj][bg2]);
     }
   }
 }
