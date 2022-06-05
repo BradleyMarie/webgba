@@ -1,6 +1,7 @@
 #include "emulator/ppu/gba/opengl/programs.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -310,6 +311,76 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
   InitializeMode4(context, vertex_shader);
 
   glDeleteShader(vertex_shader);
+
+  GLint success = 0;
+  // Mode 0
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
+      for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
+        for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+          for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
+            glGetProgramiv(context->mode0[obj][bg0][bg1][bg2][bg3],
+                           GL_LINK_STATUS, &success);
+            if (success != GL_TRUE) {
+              printf("ERROR: shader linking failed\n");
+              exit(-1);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Mode 1
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
+      for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
+        for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+          glGetProgramiv(context->mode1[obj][bg0][bg1][bg2], GL_LINK_STATUS,
+                         &success);
+          if (success != GL_TRUE) {
+            printf("ERROR: shader linking failed\n");
+            exit(-1);
+          }
+        }
+      }
+    }
+  }
+
+  // Mode 2
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
+        glGetProgramiv(context->mode2[obj][bg2][bg3], GL_LINK_STATUS, &success);
+        if (success != GL_TRUE) {
+          printf("ERROR: shader linking failed\n");
+          exit(-1);
+        }
+      }
+    }
+  }
+
+  // Mode 3/5
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      glGetProgramiv(context->mode35[obj][bg2], GL_LINK_STATUS, &success);
+      if (success != GL_TRUE) {
+        printf("ERROR: shader linking failed\n");
+        exit(-1);
+      }
+    }
+  }
+
+  // Mode 4
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      glGetProgramiv(context->mode4[obj][bg2], GL_LINK_STATUS, &success);
+      if (success != GL_TRUE) {
+        printf("ERROR: shader linking failed\n");
+        exit(-1);
+      }
+    }
+  }
 }
 
 void OpenGlProgramsDestroy(OpenGlPrograms* context) {
