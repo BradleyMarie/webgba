@@ -16,7 +16,7 @@ in mediump vec2 affine_screencoord[2];
 in mediump vec2 screencoord;
 
 // Outputs
-out lowp vec4 frag_color;
+out lowp vec3 frag_color;
 
 // Palettes
 layout(std140) uniform BackgroundPalette { lowp vec3 background_palette[256]; };
@@ -133,7 +133,7 @@ BlendUnit CreateBlendUnit() {
 
 BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
                              lowp uint priority, bool blended) {
-  blend_unit.color[0] = color;
+  blend_unit.color[0] = color.bgr;
   blend_unit.priority[0] = priority;
   blend_unit.top[0] = blended || blend_obj_top;
   blend_unit.bottom[0] = blend_obj_bottom;
@@ -144,7 +144,7 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
 BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
                                  lowp vec3 color) {
   if (backgrounds[bg].priority < blend_unit.priority[1]) {
-    blend_unit.color[1] = color;
+    blend_unit.color[1] = color.bgr;
     blend_unit.priority[1] = backgrounds[bg].priority;
     blend_unit.top[1] = blend_bg_top[bg];
     blend_unit.bottom[1] = blend_bg_bottom[bg];
@@ -178,12 +178,12 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
 BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec3 color) {
   if (5u < blend_unit.priority[1]) {
     if (5u < blend_unit.priority[0]) {
-      blend_unit.color[0] = color;
+      blend_unit.color[0] = color.bgr;
       blend_unit.top[0] = blend_bd_top;
       blend_unit.bottom[0] = blend_bd_bottom;
       blend_unit.semi_transparent[0] = false;
     } else {
-      blend_unit.color[1] = color;
+      blend_unit.color[1] = color.bgr;
       blend_unit.top[1] = blend_bd_top;
       blend_unit.bottom[1] = blend_bd_bottom;
       blend_unit.semi_transparent[1] = false;
@@ -238,7 +238,7 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
+lowp vec3 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
   lowp vec3 color;
   if (!enable_blend) {
     color = blend_unit.color[0];
@@ -252,7 +252,7 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
     color = BlendUnitDarken(blend_unit);
   }
 
-  return vec4(color.bgr, 1.0);
+  return color;
 }
 
 // Window
