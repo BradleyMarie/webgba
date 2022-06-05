@@ -142,8 +142,8 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
           FixedToFloat(memory->oam.rotate_scale[rot].pd);
       GbaPpuSetAdd(&context->rotations[rot], i);
 
-      context->staging.objects[i].flip[0] = 1;
-      context->staging.objects[i].flip[1] = 1;
+      context->staging.objects[i].flip[0] = 0;
+      context->staging.objects[i].flip[1] = 0;
     } else {
       context->staging.objects[i].transformation[0u][0u] = 1.0;
       context->staging.objects[i].transformation[0u][1u] = 0.0;
@@ -151,9 +151,13 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->staging.objects[i].transformation[1u][1u] = 1.0;
 
       context->staging.objects[i].flip[0] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x08u) ? -1 : 1;
+          (memory->oam.object_attributes[i].flex_param_1 & 0x08u)
+              ? sprite_size[0u] - 1
+              : 0;
       context->staging.objects[i].flip[1] =
-          (memory->oam.object_attributes[i].flex_param_1 & 0x10u) ? -1 : 1;
+          (memory->oam.object_attributes[i].flex_param_1 & 0x10u)
+              ? sprite_size[1u] - 1
+              : 0;
     }
 
     if (memory->oam.object_attributes[i].obj_mosaic) {

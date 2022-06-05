@@ -283,7 +283,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
     return 0u;
   }
 
-  lookup = lookup * objects[obj].flip + objects[obj].half_size;
+  lookup = abs(objects[obj].flip - (lookup + objects[obj].half_size));
   lookup -= lookup % objects[obj].mosaic;
 
   mediump int tile_index;
