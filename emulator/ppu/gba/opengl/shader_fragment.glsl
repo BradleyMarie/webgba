@@ -138,36 +138,34 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
 }
 
 BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
-                                 lowp vec4 color) {
-  if (color.a != 0.0) {
-    if (backgrounds[bg].priority < blend_unit.priority[1]) {
-      blend_unit.color[1] = color.rgb;
-      blend_unit.priority[1] = backgrounds[bg].priority;
-      blend_unit.top[1] = blend_bg_top[bg];
-      blend_unit.bottom[1] = blend_bg_bottom[bg];
-      blend_unit.semi_transparent[1] = false;
+                                 lowp vec3 color) {
+  if (backgrounds[bg].priority < blend_unit.priority[1]) {
+    blend_unit.color[1] = color;
+    blend_unit.priority[1] = backgrounds[bg].priority;
+    blend_unit.top[1] = blend_bg_top[bg];
+    blend_unit.bottom[1] = blend_bg_bottom[bg];
+    blend_unit.semi_transparent[1] = false;
 
-      if (blend_unit.priority[1] < blend_unit.priority[0]) {
-        lowp vec3 temp_color = blend_unit.color[0];
-        blend_unit.color[0] = blend_unit.color[1];
-        blend_unit.color[1] = temp_color;
+    if (blend_unit.priority[1] < blend_unit.priority[0]) {
+      lowp vec3 temp_color = blend_unit.color[0];
+      blend_unit.color[0] = blend_unit.color[1];
+      blend_unit.color[1] = temp_color;
 
-        lowp uint temp_uint = blend_unit.priority[0];
-        blend_unit.priority[0] = blend_unit.priority[1];
-        blend_unit.priority[1] = temp_uint;
+      lowp uint temp_uint = blend_unit.priority[0];
+      blend_unit.priority[0] = blend_unit.priority[1];
+      blend_unit.priority[1] = temp_uint;
 
-        bool temp_bool = blend_unit.top[0];
-        blend_unit.top[0] = blend_unit.top[1];
-        blend_unit.top[1] = temp_bool;
+      bool temp_bool = blend_unit.top[0];
+      blend_unit.top[0] = blend_unit.top[1];
+      blend_unit.top[1] = temp_bool;
 
-        temp_bool = blend_unit.bottom[0];
-        blend_unit.bottom[0] = blend_unit.bottom[1];
-        blend_unit.bottom[1] = temp_bool;
+      temp_bool = blend_unit.bottom[0];
+      blend_unit.bottom[0] = blend_unit.bottom[1];
+      blend_unit.bottom[1] = temp_bool;
 
-        temp_bool = blend_unit.semi_transparent[0];
-        blend_unit.semi_transparent[0] = blend_unit.semi_transparent[1];
-        blend_unit.semi_transparent[1] = temp_bool;
-      }
+      temp_bool = blend_unit.semi_transparent[0];
+      blend_unit.semi_transparent[0] = blend_unit.semi_transparent[1];
+      blend_unit.semi_transparent[1] = temp_bool;
     }
   }
   return blend_unit;
@@ -307,7 +305,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 }
 
 // Backgrounds
-lowp vec4 ScrollingBackground(lowp uint bg) {
+BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   highp ivec2 tilemap_pixel = ivec2(scrolling_screencoord[bg]);
   tilemap_pixel &= backgrounds[bg].size - 1;
   tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
@@ -339,20 +337,21 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
   lowp uint color_index =
       backgrounds[bg].large_palette ? color_indices.r : color_indices.g;
   if (color_index == 0u) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
+    return blend_unit;
   }
 
   lowp uint palette_base = backgrounds[bg].large_palette ? 0u : palette;
-  return vec4(background_palette[palette_base + color_index], 1.0);
+  lowp uint color = palette_base + color_index;
+  return BlendUnitAddBackground(blend_unit, bg, background_palette[color]);
 }
 
-lowp vec4 AffineBackground(lowp uint bg) {
+BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
   highp ivec2 tilemap_pixel = ivec2(affine_screencoord[bg - 2u]);
 
   if (!backgrounds[bg].wraparound) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
         any(greaterThanEqual(tilemap_pixel, backgrounds[bg].size))) {
-      return vec4(0.0, 0.0, 0.0, 0.0);
+      return blend_unit;
     }
   } else {
     tilemap_pixel &= backgrounds[bg].size - 1;
@@ -371,42 +370,43 @@ lowp vec4 AffineBackground(lowp uint bg) {
           .r;
   index <<= 1;
 
-  lowp uint color_index =
+  lowp uint color =
       texelFetch(background_tiles,
                  ivec2(tile_pixel.x,
                        backgrounds[bg].tile_base + index * 8 + tile_pixel.y),
                  0)
           .r;
-  if (color_index == 0u) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
+  if (color == 0u) {
+    return blend_unit;
   }
 
-  return vec4(background_palette[color_index], 1.0);
+  return BlendUnitAddBackground(blend_unit, bg, background_palette[color]);
 }
 
-lowp vec4 BitmapBackground() {
+BlendUnit BitmapBackground(BlendUnit blend_unit) {
   highp ivec2 lookup = ivec2(affine_screencoord[0]);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
+    return blend_unit;
   }
   lookup -= lookup % backgrounds[2].mosaic;
-  return texelFetch(bitmap, lookup, 0);
+  lowp vec4 color = texelFetch(bitmap, lookup, 0);
+  return BlendUnitAddBackground(blend_unit, 2u, color.rgb);
 }
 
-lowp vec4 PaletteBitmapBackground() {
+BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
   highp ivec2 lookup = ivec2(affine_screencoord[0]);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
+    return blend_unit;
   }
   lookup -= lookup % backgrounds[2].mosaic;
   lowp uint index = texelFetch(palette_bitmap, lookup, 0).r;
   if (index == 0u) {
-    return vec4(0.0, 0.0, 0.0, 0.0);
+    return blend_unit;
   }
 
-  return vec4(background_palette[index], 1.0);
+  return BlendUnitAddBackground(blend_unit, 2u, background_palette[index]);
 }
 
 // Bit Set
@@ -502,57 +502,49 @@ void main() {
 
 #if SCROLLING_BACKGROUND_0 != 0
   if (window.bg0) {
-    lowp vec4 color = ScrollingBackground(0u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 0u, color);
+    blend_unit = ScrollingBackground(blend_unit, 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (window.bg1) {
-    lowp vec4 color = ScrollingBackground(1u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 1u, color);
+    blend_unit = ScrollingBackground(blend_unit, 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (window.bg2) {
-    lowp vec4 color = ScrollingBackground(2u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 2u, color);
+    blend_unit = ScrollingBackground(blend_unit, 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (window.bg3) {
-    lowp vec4 color = ScrollingBackground(3u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 3u, color);
+    blend_unit = ScrollingBackground(blend_unit, 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
   if (window.bg2) {
-    lowp vec4 color = AffineBackground(2u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 2u, color);
+    blend_unit = AffineBackground(blend_unit, 2u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
   if (window.bg3) {
-    lowp vec4 color = AffineBackground(3u);
-    blend_unit = BlendUnitAddBackground(blend_unit, 3u, color);
+    blend_unit = AffineBackground(blend_unit, 3u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if BITMAP_BACKGROUND != 0
   if (window.bg2) {
-    lowp vec4 color = BitmapBackground();
-    blend_unit = BlendUnitAddBackground(blend_unit, 2u, color);
+    blend_unit = BitmapBackground(blend_unit);
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
   if (window.bg2) {
-    lowp vec4 color = PaletteBitmapBackground();
-    blend_unit = BlendUnitAddBackground(blend_unit, 2u, color);
+    blend_unit = PaletteBitmapBackground(blend_unit);
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
