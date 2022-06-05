@@ -338,10 +338,12 @@ lowp vec4 ScrollingBackground(lowp uint bg) {
 
   lowp uint color_index =
       backgrounds[bg].large_palette ? color_indices.r : color_indices.g;
+  if (color_index == 0u) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
 
   lowp uint palette_base = backgrounds[bg].large_palette ? 0u : palette;
-  lowp vec3 color = background_palette[palette_base + color_index];
-  return vec4(color, float(color_index != 0u));
+  return vec4(background_palette[palette_base + color_index], 1.0);
 }
 
 lowp vec4 AffineBackground(lowp uint bg) {
@@ -375,8 +377,11 @@ lowp vec4 AffineBackground(lowp uint bg) {
                        backgrounds[bg].tile_base + index * 8 + tile_pixel.y),
                  0)
           .r;
-  lowp vec3 color = background_palette[color_index];
-  return vec4(color, float(color_index != 0u));
+  if (color_index == 0u) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
+
+  return vec4(background_palette[color_index], 1.0);
 }
 
 lowp vec4 BitmapBackground() {
@@ -397,6 +402,10 @@ lowp vec4 PaletteBitmapBackground() {
   }
   lookup -= lookup % backgrounds[2].mosaic;
   lowp uint index = texelFetch(palette_bitmap, lookup, 0).r;
+  if (index == 0u) {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
+
   return vec4(background_palette[index], 1.0);
 }
 
