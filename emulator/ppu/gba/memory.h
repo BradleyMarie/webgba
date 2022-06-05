@@ -95,6 +95,10 @@ typedef union {
 typedef union {
   STile s_tiles[GBA_TILE_MODE_NUM_OBJECT_S_TILES];
   DTile d_tiles[GBA_TILE_MODE_NUM_OBJECT_D_TILES];
+  struct {
+    STile padding;
+    DTile offset_d_tiles[GBA_TILE_MODE_NUM_OBJECT_D_TILES - 1u];
+  };
 } TileModeObjectMemory;
 
 typedef struct {

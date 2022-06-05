@@ -51,6 +51,7 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
       continue;
     }
 
+    // Aligned D-Tiles
     uint32_t d_tile_base = GBA_BITMAP_MODE_NUM_OBJECT_D_TILES * i;
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
@@ -62,6 +63,30 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory,
       }
     }
 
+    // Offset D-Tiles
+    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES - 1u; t++) {
+      for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
+        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
+          uint8_t value =
+              memory->vram.mode_012.obj.offset_d_tiles[d_tile_base + t]
+                  .pixels[y][x];
+          context->staging[2u * t + 1u][y][x][0u] = value;
+        }
+      }
+    }
+
+    // Final Offset Half D-Tile
+    for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE / 2u; y++) {
+      for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
+        // This code is written using manual pointer arithmetic in order to
+        // avoid a compiler warning about what looks like reading past the end
+        // of offset_d_tiles.
+        const DTile* d_tile = memory->vram.mode_012.obj.offset_d_tiles + 511u;
+        context->staging[511u][y][x][0u] = d_tile->pixels[y][x];
+      }
+    }
+
+    // S-Tiles
     uint32_t s_tile_base = GBA_BITMAP_MODE_NUM_OBJECT_S_TILES * i;
     for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
       for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {

@@ -114,8 +114,15 @@ bool GbaPpuObjectPixel(const GbaPpuMemory* memory,
 
     uint16_t obj_color;
     if (memory->oam.object_attributes[object].palette_mode) {
-      uint8_t color_index = memory->vram.mode_012.obj.d_tiles[tile_index]
-                                .pixels[y_tile_pixel][x_tile_pixel];
+      uint8_t color_index;
+      if (memory->oam.object_attributes[object].character_name & 1) {
+        color_index = memory->vram.mode_012.obj.offset_d_tiles[tile_index]
+                          .pixels[y_tile_pixel][x_tile_pixel];
+      } else {
+        color_index = memory->vram.mode_012.obj.d_tiles[tile_index]
+                          .pixels[y_tile_pixel][x_tile_pixel];
+      }
+
       if (color_index == 0u) {
         continue;
       }
