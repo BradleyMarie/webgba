@@ -197,16 +197,29 @@ lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit) {
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
       blend_unit.top[0] && blend_unit.bottom[1];
 
-  lowp float eva = do_blend ? blend_eva : 1.0;
-  lowp float evb = do_blend ? blend_evb : 0.0;
+  lowp float eva, evb;
+  if (do_blend) {
+    eva = blend_eva;
+    evb = blend_evb;
+  } else {
+    eva = 1.0;
+    evb = 0.0;
+  }
 
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
 lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit) {
   bool do_blend = blend_unit.top[0] && blend_unit.bottom[1];
-  lowp float eva = do_blend ? blend_eva : 1.0;
-  lowp float evb = do_blend ? blend_evb : 0.0;
+
+  lowp float eva, evb;
+  if (do_blend) {
+    eva = blend_eva;
+    evb = blend_evb;
+  } else {
+    eva = 1.0;
+    evb = 0.0;
+  }
 
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
@@ -217,10 +230,24 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
       blend_unit.top[0] && blend_unit.bottom[1];
 
-  lowp float eva = do_blend ? blend_eva : 1.0;
-  lowp float evy = do_brighten ? blend_evy : 0.0;
-  lowp float evb = do_blend ? blend_evb : evy;
-  lowp vec3 bottom = do_blend ? blend_unit.color[1] : 1.0 - blend_unit.color[0];
+  lowp float evy;
+  if (do_brighten) {
+    evy = blend_evy;
+  } else {
+    evy = 0.0;
+  }
+
+  lowp vec3 bottom;
+  lowp float eva, evb;
+  if (do_blend) {
+    eva = blend_eva;
+    evb = blend_evb;
+    bottom = blend_unit.color[1];
+  } else {
+    eva = 1.0;
+    evb = evy;
+    bottom = 1.0 - blend_unit.color[0];
+  }
 
   return min((blend_unit.color[0] * eva) + (bottom * evb), 1.0);
 }
@@ -231,9 +258,21 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
       blend_unit.top[0] && blend_unit.bottom[1];
 
-  lowp float evy = do_darken ? (1.0 - blend_evy) : 1.0;
-  lowp float eva = do_blend ? blend_eva : evy;
-  lowp float evb = do_blend ? blend_evb : 0.0;
+  lowp float evy;
+  if (do_darken) {
+    evy = 1.0 - blend_evy;
+  } else {
+    evy = 1.0;
+  }
+
+  lowp float eva, evb;
+  if (do_blend) {
+    eva = blend_eva;
+    evb = blend_evb;
+  } else {
+    eva = evy;
+    evb = 0.0;
+  }
 
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
@@ -295,18 +334,34 @@ lowp uint ObjectColorIndex(lowp uint obj) {
   if (object_linear_tiles) {
     tile_index = tile.x + tile.y * objects[obj].half_size.x / 4;
   } else {
-    lowp int row_width = objects[obj].large_palette ? 16 : 32;
+    lowp int row_width;
+    if (objects[obj].large_palette) {
+      row_width = 16;
+    } else {
+      row_width = 32;
+    }
     tile_index = tile.x + tile.y * row_width;
   }
 
+  lowp int tile_height;
+  if (objects[obj].large_palette) {
+    tile_height = 16;
+  } else {
+    tile_height = 8;
+  }
+
   lowp ivec2 tile_pixel = lookup % 8;
-  lowp int tile_height = objects[obj].large_palette ? 16 : 8;
   lowp uvec4 color_indices = texelFetch(
       object_tiles,
       ivec2(tile_pixel.x,
             objects[obj].tile_base + tile_height * tile_index + tile_pixel.y),
       0);
-  return objects[obj].large_palette ? color_indices.r : color_indices.g;
+
+  if (objects[obj].large_palette) {
+    return color_indices.r;
+  }
+
+  return color_indices.g;
 }
 
 // Backgrounds
@@ -326,8 +381,11 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
                                       tilemap_block_tile.y);
 
   mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
-  mediump int tileblock_offset = int(tilemap_entry.x)
-                                 << (backgrounds[bg].large_palette ? 1 : 0);
+  mediump int tileblock_offset = int(tilemap_entry.x);
+  if (backgrounds[bg].large_palette) {
+    tileblock_offset <<= 1;
+  }
+
   lowp ivec2 flip = ivec2(tilemap_entry.yz);
   lowp uint palette = tilemap_entry.w;
 
@@ -340,13 +398,24 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
                        backgrounds[bg].tile_base + block_offset / 4096),
                  0);
 
-  lowp uint color_index =
-      backgrounds[bg].large_palette ? color_indices.r : color_indices.g;
+  lowp uint color_index;
+  if (backgrounds[bg].large_palette) {
+    color_index = color_indices.r;
+  } else {
+    color_index = color_indices.g;
+  }
+
   if (color_index == 0u) {
     return blend_unit;
   }
 
-  lowp uint palette_base = backgrounds[bg].large_palette ? 0u : palette;
+  lowp uint palette_base;
+  if (backgrounds[bg].large_palette) {
+    palette_base = 0u;
+  } else {
+    palette_base = palette;
+  }
+
   lowp uint color = palette_base + color_index;
   return BlendUnitAddBackground(blend_unit, bg, background_palette[color]);
 }
@@ -496,9 +565,7 @@ void main() {
 
       lowp uint color_index = ObjectColorIndex(obj);
       if (color_index != 0u) {
-        lowp uint palette =
-            objects[obj].large_palette ? 0u : objects[obj].palette;
-        lowp vec3 color = object_palette[palette + color_index];
+        lowp vec3 color = object_palette[objects[obj].palette + color_index];
         blend_unit =
             BlendUnitAddObject(blend_unit, color, objects[obj].priority,
                                objects[obj].semi_transparent);
