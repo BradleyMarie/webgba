@@ -124,7 +124,9 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     context->object_staging.objects[i].semi_transparent =
         (memory->oam.object_attributes[i].obj_mode == 1u);
     context->object_staging.objects[i].palette =
-        memory->oam.object_attributes[i].palette * 16u;
+        memory->oam.object_attributes[i].palette_mode
+            ? 0u
+            : memory->oam.object_attributes[i].palette * 16u;
     context->object_staging.objects[i].priority =
         memory->oam.object_attributes[i].priority;
 
