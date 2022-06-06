@@ -16,11 +16,11 @@ in mediump vec2 affine_screencoord[2];
 in mediump vec2 screencoord;
 
 // Outputs
-out lowp vec3 frag_color;
+out lowp vec4 frag_color;
 
 // Palettes
-layout(std140) uniform BackgroundPalette { lowp vec3 background_palette[256]; };
-layout(std140) uniform ObjectPalette { lowp vec3 object_palette[256]; };
+layout(std140) uniform BackgroundPalette { lowp vec4 background_palette[256]; };
+layout(std140) uniform ObjectPalette { lowp vec4 object_palette[256]; };
 
 // Tiles
 uniform lowp usampler2DArray background_tiles;
@@ -277,7 +277,7 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec3 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
+lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
   lowp vec3 color;
   if (!enable_blend) {
     color = blend_unit.color[0];
@@ -291,7 +291,7 @@ lowp vec3 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
     color = BlendUnitDarken(blend_unit);
   }
 
-  return color;
+  return vec4(color, 1.0);
 }
 
 // Window
@@ -417,7 +417,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   }
 
   lowp uint color = palette_base + color_index;
-  return BlendUnitAddBackground(blend_unit, bg, background_palette[color]);
+  return BlendUnitAddBackground(blend_unit, bg, background_palette[color].rgb);
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
@@ -457,7 +457,7 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
     return blend_unit;
   }
 
-  return BlendUnitAddBackground(blend_unit, bg, background_palette[color]);
+  return BlendUnitAddBackground(blend_unit, bg, background_palette[color].rgb);
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit) {
@@ -483,7 +483,7 @@ BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
     return blend_unit;
   }
 
-  return BlendUnitAddBackground(blend_unit, 2u, background_palette[index]);
+  return BlendUnitAddBackground(blend_unit, 2u, background_palette[index].rgb);
 }
 
 // Bit Set
@@ -565,7 +565,8 @@ void main() {
 
       lowp uint color_index = ObjectColorIndex(obj);
       if (color_index != 0u) {
-        lowp vec3 color = object_palette[objects[obj].palette + color_index];
+        lowp vec3 color =
+            object_palette[objects[obj].palette + color_index].rgb;
         blend_unit =
             BlendUnitAddObject(blend_unit, color, objects[obj].priority,
                                objects[obj].semi_transparent);
@@ -623,7 +624,7 @@ void main() {
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
-  blend_unit = BlendUnitAddBackdrop(blend_unit, background_palette[0]);
+  blend_unit = BlendUnitAddBackdrop(blend_unit, background_palette[0].rgb);
 
   frag_color = BlendUnitBlend(blend_unit, window.bld);
 }
