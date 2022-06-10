@@ -33,3 +33,14 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "screen",
+    srcs = ["screen.c"],
+    hdrs = ["screen.h"],
+    linkopts = ["-lGL"],
+    visibility = [
+        "//front_end:__subpackages__",
+        "//tools/benchmark:__subpackages__",
+    ],
+)
