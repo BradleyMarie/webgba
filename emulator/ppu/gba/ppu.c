@@ -174,7 +174,6 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.affine[1u].pd = 0x100;
   (*ppu)->registers.dispstat.vcount_status = true;
   GbaPpuDirtyBitsAllDirty(&(*ppu)->dirty);
-  GbaPpuDrawManagerInitialize(&(*ppu)->draw_manager);
 
   GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
 
@@ -200,16 +199,24 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
     case GBA_PPU_DRAW_ROW_OPENGL:
       if (ppu->registers.vcount == 0u) {
         GbaPpuOpenGlRendererSetScreen(ppu->opengl_renderer, screen);
+        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
+                                    &ppu->dirty);
       }
 
-      GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
-                                  &ppu->registers, &ppu->dirty);
-      ppu->x += GBA_SCREEN_WIDTH;
+      if (GbaPpuDrawManagerShouldFlush(&ppu->draw_manager, &ppu->registers,
+                                       &ppu->dirty) ||
+          ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
+        GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
+                                    &ppu->registers, &ppu->dirty);
+        ppu->x += GBA_SCREEN_WIDTH;
+      }
       goto draw_epilogue;
     case GBA_PPU_DRAW_ROW_SOFTWARE:
       if (ppu->registers.vcount == 0u) {
         // TODO: Handle allocation failure
         GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
+        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
+                                    &ppu->dirty);
       }
 
       GbaPpuSoftwareRendererDrawRow(ppu->software_renderer, &ppu->memory,
@@ -221,6 +228,8 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
       if (ppu->registers.vcount == 0u && ppu->x == 0u) {
         // TODO: Handle allocation failure
         GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
+        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
+                                    &ppu->dirty);
       }
 
       GbaPpuSoftwareRendererDrawPixel(ppu->software_renderer, &ppu->memory,
