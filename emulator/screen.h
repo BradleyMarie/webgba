@@ -15,6 +15,8 @@ uint16_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height);
 
 GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height);
 
+void ScreenClear(const Screen *screen);
+
 void ScreenRenderToFramebuffer(const Screen *screen);
 
 void ScreenReloadContext(Screen *screen);

@@ -6,10 +6,14 @@
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
+#include "emulator/screen.h"
 
 typedef struct _GbaPpuSoftwareRenderer GbaPpuSoftwareRenderer;
 
 GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate();
+
+bool GbaPpuSoftwareRendererSetScreen(GbaPpuSoftwareRenderer* renderer,
+                                     Screen* screen);
 
 void GbaPpuSoftwareRendererDrawRow(
     GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
@@ -22,12 +26,6 @@ void GbaPpuSoftwareRendererDrawPixel(
     const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuDirtyBits* dirty_bits, uint8_t x);
-
-void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
-                                   GLsizei width, GLsizei height,
-                                   uint8_t* fbo_contents);
-
-void GbaPpuSoftwareRendererReloadContext(GbaPpuSoftwareRenderer* renderer);
 
 void GbaPpuSoftwareRendererFree(GbaPpuSoftwareRenderer* renderer);
 

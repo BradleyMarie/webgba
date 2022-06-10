@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "emulator/peripherals/gamepad.h"
+#include "emulator/screen.h"
 
 typedef struct _GbaEmulator GbaEmulator;
 
@@ -16,10 +17,8 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
 typedef void (*GbaEmulatorRenderAudioSample)(int16_t left, int16_t right);
 
 // Advance emulation by one frame
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
-                     GLsizei height,
-                     GbaEmulatorRenderAudioSample audio_sample_callback,
-                     uint8_t *fbo_contents);
+void GbaEmulatorStep(GbaEmulator *emulator, Screen *screen,
+                     GbaEmulatorRenderAudioSample audio_sample_callback);
 
 // Context Loss Recovery
 void GbaEmulatorReloadContext(GbaEmulator *emulator);

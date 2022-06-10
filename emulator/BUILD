@@ -12,6 +12,7 @@ cc_library(
         "//tools/benchmark:__subpackages__",
     ],
     deps = [
+        ":screen",
         "//emulator/cpu/arm7tdmi",
         "//emulator/dma/gba:dma",
         "//emulator/game/gba:game",
@@ -30,6 +31,7 @@ cc_test(
     srcs = ["gba_test.cc"],
     deps = [
         ":gba",
+        ":screen",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -40,6 +42,7 @@ cc_library(
     hdrs = ["screen.h"],
     linkopts = ["-lGL"],
     visibility = [
+        "//emulator:__subpackages__",
         "//front_end:__subpackages__",
         "//tools/benchmark:__subpackages__",
     ],

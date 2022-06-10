@@ -9,11 +9,14 @@ class GbaEmulatorTest : public testing::Test {
   void SetUp() override {
     static const unsigned char rom[100] = {};
     ASSERT_TRUE(GbaEmulatorAllocate(rom, 100u, &gba_, &gamepad_));
+    screen_ = ScreenAllocate();
+    ASSERT_TRUE(screen_);
   }
 
   void TearDown() override {
     GbaEmulatorFree(gba_);
     GamePadFree(gamepad_);
+    ScreenFree(screen_);
   }
 
   static void AudioCallback(int16_t left, int16_t right) {}
@@ -21,10 +24,9 @@ class GbaEmulatorTest : public testing::Test {
  protected:
   GbaEmulator *gba_;
   GamePad *gamepad_;
-  uint8_t fbo_contents_;
+  Screen *screen_;
 };
 
 TEST_F(GbaEmulatorTest, EmptyTest) {
-  GbaEmulatorStep(gba_, /*fbo=*/0, /*width=*/1, /*height=*/1, AudioCallback,
-                  &fbo_contents_);
+  GbaEmulatorStep(gba_, screen_, AudioCallback);
 }

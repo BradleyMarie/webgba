@@ -59,6 +59,11 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
+  Screen *screen = ScreenAllocate();
+  if (!screen) {
+    return EXIT_FAILURE;
+  }
+
   std::cout << "Rendering " << frame_count << " frames." << std::endl;
 
   auto begin = std::chrono::steady_clock::now();
@@ -68,9 +73,7 @@ int main(int argc, char **argv) {
 #endif  // __EMSCRIPTEN__
 
   for (int i = 0; i < frame_count; i++) {
-    uint8_t fbo_contents = UINT8_MAX;
-    GbaEmulatorStep(emulator, /*framebuffer=*/0, /*width=*/240, /*height=*/160,
-                    NoOpAudioCallback, &fbo_contents);
+    GbaEmulatorStep(emulator, screen, NoOpAudioCallback);
   }
 
 #ifndef __EMSCRIPTEN__
@@ -88,6 +91,7 @@ int main(int argc, char **argv) {
 
   GamePadFree(gamepad);
   GbaEmulatorFree(emulator);
+  ScreenFree(screen);
 
   return EXIT_SUCCESS;
 }

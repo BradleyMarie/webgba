@@ -160,6 +160,7 @@ cc_library(
         "//emulator/ppu/gba:draw_manager",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
+        "//emulator:screen",
     ],
 )
 

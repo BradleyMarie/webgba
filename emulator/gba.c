@@ -254,14 +254,8 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
   return true;
 }
 
-void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
-                     GLsizei height,
-                     GbaEmulatorRenderAudioSample audio_sample_callback,
-                     uint8_t *fbo_contents) {
-  assert(width != 0u && height != 0u);
-  assert(audio_sample_callback != NULL);
-  assert(fbo_contents != NULL);
-
+void GbaEmulatorStep(GbaEmulator *emulator, Screen *screen,
+                     GbaEmulatorRenderAudioSample audio_sample_callback) {
   for (;;) {
     uint32_t cycles_elapsed = GbaTimersCyclesUntilNextWake(emulator->timers);
 
@@ -283,16 +277,14 @@ void GbaEmulatorStep(GbaEmulator *emulator, GLuint fbo, GLsizei width,
       cycles_elapsed =
           GbaDmaUnitStep(emulator->dma, emulator->memory, cycles_elapsed);
     } else if (emulator->power_state == POWER_STATE_STOP) {
-      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-      glClearColor(0.0, 0.0, 0.0, 1.0);
-      glClear(GL_COLOR_BUFFER_BIT);
+      ScreenClear(screen);
       break;
     }
 
     GbaTimersStep(emulator->timers, cycles_elapsed);
     GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
-    if (GbaPpuStep(emulator->ppu, cycles_elapsed, fbo, width, height,
-                   fbo_contents)) {
+    if (GbaPpuStep(emulator->ppu, screen, cycles_elapsed)) {
+      ScreenRenderToFramebuffer(screen);
       break;
     }
   }

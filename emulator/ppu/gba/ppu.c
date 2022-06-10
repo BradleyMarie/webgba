@@ -188,8 +188,7 @@ uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu) {
   return ppu->next_wake - ppu->cycle_count;
 }
 
-bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
-                GLsizei height, uint8_t *fbo_contents) {
+bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
   ppu->cycle_count += num_cycles;
   assert(ppu->cycle_count <= ppu->next_wake);
 
@@ -199,17 +198,31 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
 
   switch (ppu->next_wake_state) {
     case GBA_PPU_DRAW_ROW_OPENGL:
+      if (ppu->registers.vcount == 0u) {
+        GbaPpuOpenGlRendererSetScreen(ppu->opengl_renderer, screen);
+      }
+
       GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
                                   &ppu->registers, &ppu->dirty);
       ppu->x += GBA_SCREEN_WIDTH;
       goto draw_epilogue;
     case GBA_PPU_DRAW_ROW_SOFTWARE:
+      if (ppu->registers.vcount == 0u) {
+        // TODO: Handle allocation failure
+        GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
+      }
+
       GbaPpuSoftwareRendererDrawRow(ppu->software_renderer, &ppu->memory,
                                     &ppu->registers, &ppu->internal_registers,
                                     &ppu->dirty);
       ppu->x += GBA_SCREEN_WIDTH;
       goto draw_epilogue;
     case GBA_PPU_DRAW_PIXEL_SOFTWARE:
+      if (ppu->registers.vcount == 0u && ppu->x == 0u) {
+        // TODO: Handle allocation failure
+        GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
+      }
+
       GbaPpuSoftwareRendererDrawPixel(ppu->software_renderer, &ppu->memory,
                                       &ppu->registers, &ppu->internal_registers,
                                       &ppu->dirty, ppu->x++);
@@ -251,14 +264,6 @@ bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
         }
 
         GbaDmaUnitSignalVBlank(ppu->dma_unit);
-
-        if (ppu->draw_state != GBA_PPU_DRAW_ROW_OPENGL) {
-          GbaPpuSoftwareRendererPresent(ppu->software_renderer, fbo, width,
-                                        height, fbo_contents);
-        } else {
-          GbaPpuOpenGlRendererPresent(ppu->opengl_renderer, fbo, width, height,
-                                      fbo_contents);
-        }
 
         ppu->next_wake_state = GBA_PPU_PRE_OFFSCREEN_HBLANK;
         ppu->next_wake += GBA_PPU_DRAW_LENGTH_CYCLES;
@@ -340,7 +345,6 @@ void GbaPpuFree(GbaPpu *ppu) {
 }
 
 void GbaPpuReloadContext(GbaPpu *ppu) {
-  GbaPpuSoftwareRendererReloadContext(ppu->software_renderer);
   GbaPpuOpenGlRendererReloadContext(ppu->opengl_renderer);
   GbaPpuDirtyBitsAllDirty(&ppu->dirty);
 }

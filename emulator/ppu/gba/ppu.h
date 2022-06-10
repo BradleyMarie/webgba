@@ -6,6 +6,7 @@
 #include "emulator/dma/gba/dma.h"
 #include "emulator/memory/memory.h"
 #include "emulator/platform/gba/platform.h"
+#include "emulator/screen.h"
 
 typedef enum {
   RENDER_MODE_OPENGL_ROWS = 0u,
@@ -22,8 +23,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
 uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu);
 
-bool GbaPpuStep(GbaPpu *ppu, uint32_t num_cycles, GLuint fbo, GLsizei width,
-                GLsizei height, uint8_t *fbo_contents);
+bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles);
 
 // Rendering mode changes take effect at the beginning of each frame
 void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode);
