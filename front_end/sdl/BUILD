@@ -25,10 +25,12 @@ cc_binary(
     deps = select({
         "//conditions:default": [
             "//emulator:gba",
+            "//emulator:screen",
             "//third_party/libsamplerate:libsamplerate",
         ],
         ":wasm_build": [
             "//emulator:gba",
+            "//emulator:screen",
             "//third_party/libsamplerate:libsamplerate",
         ],
     }),

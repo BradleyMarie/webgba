@@ -91,6 +91,16 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
   return screen->renderbuffer;
 }
 
+void ScreenClear(const Screen *screen) {
+  if (screen->framebuffer_height == 0u || screen->framebuffer_width == 0u) {
+    return;
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, screen->framebuffer);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
 void ScreenRenderToFramebuffer(const Screen *screen) {
   if (screen->render_mode == RENDER_MODE_DIRECT ||
       screen->framebuffer_height == 0u || screen->framebuffer_width == 0u) {
@@ -161,6 +171,10 @@ void ScreenReloadContext(Screen *screen) {
   screen->framebuffer = 0u;
   screen->framebuffer_width = 0u;
   screen->framebuffer_height = 0u;
+
+  if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
+    return;
+  }
 
   GLsizei renderbuffer_width = screen->renderbuffer_width;
   GLsizei renderbuffer_height = screen->renderbuffer_height;

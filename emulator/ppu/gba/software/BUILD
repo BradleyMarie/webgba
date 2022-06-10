@@ -76,9 +76,9 @@ cc_library(
         ":blend",
         ":obj_visibility",
         ":obj",
-        ":screen",
         ":window",
         "//emulator/ppu/gba:dirty",
+        "//emulator:screen",
     ],
 )
 
@@ -100,27 +100,6 @@ cc_library(
         "//emulator/memory",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
-    ],
-)
-
-cc_library(
-    name = "screen",
-    srcs = ["screen.c"],
-    hdrs = ["screen.h"],
-    linkopts = ["-lGL"],
-    deps = [
-        "//emulator/ppu/gba:memory",
-        "//emulator/ppu/gba:registers",
-    ],
-)
-
-cc_test(
-    name = "screen_test",
-    srcs = ["screen_test.cc"],
-    linkopts = ["-lGL"],
-    deps = [
-        ":screen",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 

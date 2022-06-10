@@ -34,11 +34,10 @@
 static SDL_Joystick *g_joystick = NULL;
 static SRC_STATE *g_src_state = NULL;
 static double g_src_ratio = 1.0;
-static SDL_Surface *g_screen = NULL;
+static SDL_Surface *g_surface = NULL;
 static GbaEmulator *g_emulator = NULL;
+static Screen *g_screen = NULL;
 static GamePad *g_gamepad = NULL;
-static uint8_t g_fbo_contents[2u] = {UINT8_MAX, UINT8_MAX};
-static uint8_t g_fbo_contents_index = 0u;
 
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
@@ -144,7 +143,7 @@ static bool SetVideoMode(int width, int height) {
   GbaEmulatorReloadContext(g_emulator);
 #endif  // __EMSCRIPTEN__
 
-  g_screen = new_surface;
+  g_surface = new_surface;
 
   return true;
 }
@@ -363,10 +362,10 @@ static ReturnType RenderNextFrame() {
   // Run emulation
   //
 
-  GbaEmulatorStep(g_emulator, /*fbo=*/0u, /*width=*/g_screen->w,
-                  /*height=*/g_screen->h, RenderAudioSample,
-                  &g_fbo_contents[g_fbo_contents_index]);
-  g_fbo_contents_index = (g_fbo_contents_index == 0u) ? 1u : 0u;
+  ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_surface->w,
+                          /*height=*/g_surface->h);
+
+  GbaEmulatorStep(g_emulator, g_screen, RenderAudioSample);
 
   //
   // Flip framebuffer
@@ -469,6 +468,19 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "ERROR: Out of memory\n");
     SDL_Quit();
     return EXIT_FAILURE;
+  }
+
+  //
+  // Create Screen
+  //
+
+  g_screen = ScreenAllocate();
+  if (!g_screen) {
+    GbaEmulatorFree(g_emulator);
+    GamePadFree(g_gamepad);
+    fprintf(stderr, "ERROR: Out of memory\n");
+    SDL_Quit();
+    return false;
   }
 
   //
@@ -576,6 +588,7 @@ int main(int argc, char *argv[]) {
   //
 
   GbaEmulatorReloadContext(g_emulator);
+  ScreenReloadContext(g_screen);
 
   //
   // Run
@@ -604,6 +617,7 @@ int main(int argc, char *argv[]) {
 
   GbaEmulatorFree(g_emulator);
   GamePadFree(g_gamepad);
+  ScreenFree(g_screen);
 
   SDL_Quit();
 

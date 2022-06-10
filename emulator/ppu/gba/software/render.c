@@ -9,17 +9,23 @@
 #include "emulator/ppu/gba/software/blend.h"
 #include "emulator/ppu/gba/software/obj.h"
 #include "emulator/ppu/gba/software/obj_visibility.h"
-#include "emulator/ppu/gba/software/screen.h"
 #include "emulator/ppu/gba/software/window.h"
+#include "emulator/screen.h"
 
 struct _GbaPpuSoftwareRenderer {
   GbaPpuObjectVisibility object_visibility;
-  GbaPpuScreen screen;
-  bool initialized;
+  uint16_t* pixels;
 };
 
 GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate() {
   return calloc(1u, sizeof(GbaPpuSoftwareRenderer));
+}
+
+bool GbaPpuSoftwareRendererSetScreen(GbaPpuSoftwareRenderer* renderer,
+                                     Screen* screen) {
+  renderer->pixels =
+      ScreenGetPixelBuffer(screen, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
+  return renderer->pixels != NULL;
 }
 
 void GbaPpuSoftwareRendererDrawRow(
@@ -38,6 +44,10 @@ void GbaPpuSoftwareRendererDrawPixel(
     const GbaPpuRegisters* registers,
     const GbaPpuInternalRegisters* internal_registers,
     GbaPpuDirtyBits* dirty_bits, uint8_t x) {
+  if (renderer->pixels == NULL) {
+    return;
+  }
+
   while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
     uint_fast8_t index = GbaPpuSetPop(&dirty_bits->oam.objects);
     GbaPpuObjectVisibilityHidden(&renderer->object_visibility, &memory->oam,
@@ -200,28 +210,9 @@ void GbaPpuSoftwareRendererDrawPixel(
     }
   }
 
-  GbaPpuScreenSet(&renderer->screen, x, registers->vcount, color);
-}
-
-void GbaPpuSoftwareRendererPresent(GbaPpuSoftwareRenderer* renderer, GLuint fbo,
-                                   GLsizei width, GLsizei height,
-                                   uint8_t* fbo_contents) {
-  if (!renderer->initialized) {
-    return;
-  }
-
-  GbaPpuScreenRenderToFbo(&renderer->screen, fbo, width, height);
-}
-
-void GbaPpuSoftwareRendererReloadContext(GbaPpuSoftwareRenderer* renderer) {
-  GbaPpuScreenReloadContext(&renderer->screen);
-  renderer->initialized = true;
+  renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + x] = color << 1u;
 }
 
 void GbaPpuSoftwareRendererFree(GbaPpuSoftwareRenderer* renderer) {
-  if (renderer->initialized) {
-    GbaPpuScreenDestroy(&renderer->screen);
-  }
-
   free(renderer);
 }

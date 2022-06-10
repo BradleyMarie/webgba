@@ -28,6 +28,7 @@ cc_binary(
     }),
     deps = [
         "//emulator:gba",
+        "//emulator:screen",
     ],
 )
 

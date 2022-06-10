@@ -9,9 +9,8 @@ static SDL_Window *g_window = NULL;
 static SDL_GLContext *g_glcontext = NULL;
 static SDL_AudioDeviceID g_audiodevice = 0;
 static GbaEmulator *g_emulator = NULL;
+static Screen *g_screen = NULL;
 static GamePad *g_gamepad = NULL;
-static uint8_t g_fbo_contents[2u] = {UINT8_MAX, UINT8_MAX};
-static uint8_t g_fbo_contents_index = 0u;
 
 static void RenderAudioSample(int16_t left, int16_t right) {
   int16_t buffer[2] = {left, right};
@@ -163,10 +162,10 @@ static bool RenderNextFrame() {
   // Run emulation
   //
 
-  GbaEmulatorStep(g_emulator, /*fbo=*/0, /*width=*/width,
-                  /*height=*/height, RenderAudioSample,
-                  &g_fbo_contents[g_fbo_contents_index]);
-  g_fbo_contents_index = (g_fbo_contents_index == 0u) ? 1u : 0u;
+  ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/width,
+                          /*height=*/height);
+
+  GbaEmulatorStep(g_emulator, g_screen, RenderAudioSample);
 
   //
   // Flip framebuffer
@@ -248,6 +247,19 @@ int main(int argc, char *argv[]) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Out of memory\n");
     SDL_Quit();
     return EXIT_FAILURE;
+  }
+
+  //
+  // Create Screen
+  //
+
+  g_screen = ScreenAllocate();
+  if (!g_screen) {
+    GbaEmulatorFree(g_emulator);
+    GamePadFree(g_gamepad);
+    fprintf(stderr, "ERROR: Out of memory\n");
+    SDL_Quit();
+    return false;
   }
 
   //
@@ -337,6 +349,7 @@ int main(int argc, char *argv[]) {
   //
 
   GbaEmulatorReloadContext(g_emulator);
+  ScreenReloadContext(g_screen);
 
   //
   // Run
@@ -361,6 +374,7 @@ int main(int argc, char *argv[]) {
 
   GbaEmulatorFree(g_emulator);
   GamePadFree(g_gamepad);
+  ScreenFree(g_screen);
 
   SDL_Quit();
 

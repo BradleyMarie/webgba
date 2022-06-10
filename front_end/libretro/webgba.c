@@ -21,8 +21,9 @@ static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
-static GbaEmulator *emulator;
-static GamePad *gamepad;
+static GbaEmulator *emulator = NULL;
+static Screen *screen = NULL;
+static GamePad *gamepad = NULL;
 static uint8_t render_scale = 1u;
 
 static void UpdateVariables() {
@@ -42,7 +43,10 @@ static void UpdateVariables() {
   }
 }
 
-static void ContextReset() { GbaEmulatorReloadContext(emulator); }
+static void ContextReset() {
+  GbaEmulatorReloadContext(emulator);
+  ScreenReloadContext(screen);
+}
 
 static void PollInput() {
   input_poll_cb();
@@ -147,12 +151,11 @@ void retro_run() {
     UpdateVariables();
   }
 
-  uint8_t fbo_contents = UINT8_MAX;
-  GbaEmulatorStep(emulator,
-                  /*fbo=*/hw_render.get_current_framebuffer(),
-                  /*width=*/BASE_WIDTH * render_scale,
-                  /*height=*/BASE_HEIGHT * render_scale, audio_cb,
-                  &fbo_contents);
+  ScreenAttachFramebuffer(screen, hw_render.get_current_framebuffer(),
+                          /*width=*/BASE_WIDTH * render_scale,
+                          /*height=*/BASE_HEIGHT * render_scale);
+
+  GbaEmulatorStep(emulator, screen, audio_cb);
   video_cb(RETRO_HW_FRAME_BUFFER_VALID, BASE_WIDTH * render_scale,
            BASE_HEIGHT * render_scale, 0);
 }
@@ -183,6 +186,11 @@ bool retro_load_game(const struct retro_game_info *info) {
     return false;
   }
 
+  screen = ScreenAllocate();
+  if (!screen) {
+    return false;
+  }
+
   UpdateVariables();
 
   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
@@ -200,6 +208,7 @@ bool retro_load_game(const struct retro_game_info *info) {
 void retro_unload_game() {
   GamePadFree(gamepad);
   GbaEmulatorFree(emulator);
+  ScreenFree(screen);
 }
 
 unsigned retro_get_region() { return RETRO_REGION_NTSC; }
