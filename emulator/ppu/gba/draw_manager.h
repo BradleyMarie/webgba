@@ -48,6 +48,7 @@ typedef struct {
       bool page;
     } mode_5;
   };
+  bool frame_dirtied;
 } GbaPpuDrawManager;
 
 void GbaPpuDrawManagerStartFrame(GbaPpuDrawManager* draw_manager,
@@ -57,5 +58,7 @@ void GbaPpuDrawManagerStartFrame(GbaPpuDrawManager* draw_manager,
 bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
                                   const GbaPpuRegisters* registers,
                                   const GbaPpuDirtyBits* dirty_bits);
+
+bool GbaPpuDrawManagerEndFrame(const GbaPpuDrawManager* draw_manager);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_
