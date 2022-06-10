@@ -48,25 +48,14 @@ typedef struct {
       bool page;
     } mode_5;
   };
-  bool previous_frame_copyable;
-  bool flush_triggered;
 } GbaPpuDrawManager;
 
-void GbaPpuDrawManagerInitialize(GbaPpuDrawManager* draw_manager);
-
-// This should be called after the first drawable event on a frame
 void GbaPpuDrawManagerStartFrame(GbaPpuDrawManager* draw_manager,
                                  const GbaPpuRegisters* registers,
                                  const GbaPpuDirtyBits* dirty_bits);
 
-// This should be called after each subsequent drawable event
 bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
                                   const GbaPpuRegisters* registers,
                                   const GbaPpuDirtyBits* dirty_bits);
-
-// This should be called before presenting a frame
-bool GbaPpuDrawManagerEndFrame(GbaPpuDrawManager* draw_manager);
-
-void GbaPpuDrawManagerInvalidatePreviousFrame(GbaPpuDrawManager* draw_manager);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_

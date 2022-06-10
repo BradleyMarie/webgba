@@ -15,14 +15,20 @@ GbaPpuOpenGlRenderer* GbaPpuOpenGlRendererAllocate();
 void GbaPpuOpenGlRendererSetScreen(GbaPpuOpenGlRenderer* renderer,
                                    Screen* screen);
 
+void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
+                                  uint8_t render_scale);
+
+void GbaPpuOpenGlRendererStartFrame(GbaPpuOpenGlRenderer* renderer,
+                                    const GbaPpuMemory* memory,
+                                    const GbaPpuRegisters* registers,
+                                    GbaPpuDirtyBits* dirty_bits);
+
 void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  const GbaPpuMemory* memory,
                                  const GbaPpuRegisters* registers,
                                  GbaPpuDirtyBits* dirty_bits);
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer);
-void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
-                                  uint8_t render_scale);
 
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer);
 
