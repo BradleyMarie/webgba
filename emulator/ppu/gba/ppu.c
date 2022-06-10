@@ -205,7 +205,8 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
 
       if (GbaPpuDrawManagerShouldFlush(&ppu->draw_manager, &ppu->registers,
                                        &ppu->dirty) ||
-          ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
+          (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1 &&
+           GbaPpuDrawManagerEndFrame(&ppu->draw_manager))) {
         GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
                                     &ppu->registers, &ppu->dirty);
         ppu->x += GBA_SCREEN_WIDTH;

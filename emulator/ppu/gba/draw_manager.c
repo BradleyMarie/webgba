@@ -291,6 +291,8 @@ static bool GbaPpuDrawManagerIsDirty(const GbaPpuDrawManager* draw_manager,
 void GbaPpuDrawManagerStartFrame(GbaPpuDrawManager* draw_manager,
                                  const GbaPpuRegisters* registers,
                                  const GbaPpuDirtyBits* dirty_bits) {
+  draw_manager->frame_dirtied =
+      GbaPpuDrawManagerIsDirty(draw_manager, registers, dirty_bits);
   GbaPpuDrawManagerUpdate(draw_manager, registers, dirty_bits);
 }
 
@@ -298,6 +300,11 @@ bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
                                   const GbaPpuRegisters* registers,
                                   const GbaPpuDirtyBits* dirty_bits) {
   bool dirty = GbaPpuDrawManagerIsDirty(draw_manager, registers, dirty_bits);
+  draw_manager->frame_dirtied |= dirty;
   GbaPpuDrawManagerUpdate(draw_manager, registers, dirty_bits);
   return dirty;
+}
+
+bool GbaPpuDrawManagerEndFrame(const GbaPpuDrawManager* draw_manager) {
+  return draw_manager->frame_dirtied;
 }
