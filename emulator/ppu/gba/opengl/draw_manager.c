@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/draw_manager.h"
+#include "emulator/ppu/gba/opengl/draw_manager.h"
 
 static void GbaPpuDrawManagerUpdate(GbaPpuDrawManager* draw_manager,
                                     const GbaPpuRegisters* registers,
