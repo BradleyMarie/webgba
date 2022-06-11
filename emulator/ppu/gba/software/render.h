@@ -15,17 +15,15 @@ GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate();
 bool GbaPpuSoftwareRendererSetScreen(GbaPpuSoftwareRenderer* renderer,
                                      Screen* screen);
 
-void GbaPpuSoftwareRendererDrawRow(
-    GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits);
+void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
+                                   const GbaPpuMemory* memory,
+                                   const GbaPpuRegisters* registers,
+                                   GbaPpuDirtyBits* dirty_bits);
 
-void GbaPpuSoftwareRendererDrawPixel(
-    GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
-    const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuDirtyBits* dirty_bits, uint8_t x);
+void GbaPpuSoftwareRendererDrawPixel(GbaPpuSoftwareRenderer* renderer,
+                                     const GbaPpuMemory* memory,
+                                     const GbaPpuRegisters* registers,
+                                     GbaPpuDirtyBits* dirty_bits, uint8_t x);
 
 void GbaPpuSoftwareRendererFree(GbaPpuSoftwareRenderer* renderer);
 

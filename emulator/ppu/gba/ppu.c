@@ -40,7 +40,6 @@ struct _GbaPpu {
   GbaPpuOpenGlRenderer *opengl_renderer;
   GbaPpuMemory memory;
   GbaPpuRegisters registers;
-  GbaPpuInternalRegisters internal_registers;
   GbaPpuRenderMode next_render_mode;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
@@ -119,8 +118,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *oam = OamAllocate(&(*ppu)->memory.oam, &(*ppu)->internal_registers,
-                     &(*ppu)->dirty.oam, GbaPpuRelease, *ppu);
+  *oam =
+      OamAllocate(&(*ppu)->memory.oam, &(*ppu)->dirty.oam, GbaPpuRelease, *ppu);
   if (*oam == NULL) {
     MemoryFree(*vram);
     MemoryFree(*palette);
@@ -130,8 +129,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *registers = GbaPpuIoAllocate(&(*ppu)->registers, &(*ppu)->internal_registers,
-                                GbaPpuRelease, *ppu);
+  *registers = GbaPpuIoAllocate(&(*ppu)->registers, GbaPpuRelease, *ppu);
   if (*registers == NULL) {
     MemoryFree(*oam);
     MemoryFree(*vram);
@@ -210,8 +208,7 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
       }
 
       GbaPpuSoftwareRendererDrawRow(ppu->software_renderer, &ppu->memory,
-                                    &ppu->registers, &ppu->internal_registers,
-                                    &ppu->dirty);
+                                    &ppu->registers, &ppu->dirty);
       ppu->x += GBA_SCREEN_WIDTH;
       goto draw_epilogue;
     case GBA_PPU_DRAW_PIXEL_SOFTWARE:
@@ -221,8 +218,7 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
       }
 
       GbaPpuSoftwareRendererDrawPixel(ppu->software_renderer, &ppu->memory,
-                                      &ppu->registers, &ppu->internal_registers,
-                                      &ppu->dirty, ppu->x++);
+                                      &ppu->registers, &ppu->dirty, ppu->x++);
 
     draw_epilogue:
       if (ppu->x == GBA_SCREEN_WIDTH) {
@@ -231,22 +227,48 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
         GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
 
         if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
-          ppu->internal_registers.affine[0u].x = ppu->registers.affine[0u].x;
-          ppu->internal_registers.affine[0u].y = ppu->registers.affine[0u].y;
-          ppu->internal_registers.affine[1u].x = ppu->registers.affine[1u].x;
-          ppu->internal_registers.affine[1u].y = ppu->registers.affine[1u].y;
+          ppu->registers.internal.affine[0u].row_start[0u] =
+              ppu->registers.affine[0u].x;
+          ppu->registers.internal.affine[0u].row_start[1u] =
+              ppu->registers.affine[0u].y;
+          ppu->registers.internal.affine[1u].row_start[0u] =
+              ppu->registers.affine[1u].x;
+          ppu->registers.internal.affine[1u].row_start[1u] =
+              ppu->registers.affine[1u].y;
         } else {
-          ppu->internal_registers.affine[0u].x += ppu->registers.affine[0u].pb;
-          ppu->internal_registers.affine[0u].y += ppu->registers.affine[0u].pd;
-          ppu->internal_registers.affine[1u].x += ppu->registers.affine[1u].pb;
-          ppu->internal_registers.affine[1u].y += ppu->registers.affine[1u].pd;
+          ppu->registers.internal.affine[0u].row_start[0u] +=
+              ppu->registers.affine[0u].pb;
+          ppu->registers.internal.affine[0u].row_start[1u] +=
+              ppu->registers.affine[0u].pd;
+          ppu->registers.internal.affine[1u].row_start[0u] +=
+              ppu->registers.affine[1u].pb;
+          ppu->registers.internal.affine[1u].row_start[1u] +=
+              ppu->registers.affine[1u].pd;
         }
+
+        ppu->registers.internal.affine[0u].current[0u] =
+            ppu->registers.internal.affine[0u].row_start[0u];
+        ppu->registers.internal.affine[0u].current[1u] =
+            ppu->registers.internal.affine[0u].row_start[1u];
+        ppu->registers.internal.affine[1u].current[0u] =
+            ppu->registers.internal.affine[1u].row_start[0u];
+        ppu->registers.internal.affine[1u].current[1u] =
+            ppu->registers.internal.affine[1u].row_start[1u];
 
         ppu->next_wake_state = GBA_PPU_POST_DRAWN_HBLANK;
         ppu->next_wake += GBA_PPU_HBLANK_LENGTH_CYCLES;
         ppu->x = 0u;
       } else {
         assert(ppu->next_wake_state == GBA_PPU_DRAW_PIXEL_SOFTWARE);
+        ppu->registers.internal.affine[0u].current[0u] +=
+            ppu->registers.affine[0u].pa;
+        ppu->registers.internal.affine[0u].current[1u] +=
+            ppu->registers.affine[0u].pc;
+        ppu->registers.internal.affine[1u].current[0u] +=
+            ppu->registers.affine[1u].pa;
+        ppu->registers.internal.affine[1u].current[1u] +=
+            ppu->registers.affine[1u].pc;
+
         ppu->next_wake_state = GBA_PPU_DRAW_PIXEL_SOFTWARE;
         ppu->next_wake += GBA_PPU_CYCLES_PER_PIXEL;
       }

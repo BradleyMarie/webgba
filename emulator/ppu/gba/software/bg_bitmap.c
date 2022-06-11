@@ -8,13 +8,11 @@ typedef enum {
 
 static inline bool GbaPpuBackground2BitmapPixel(
     const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuBackground2BitmapMode mode, bool back_page, uint_fast8_t x,
-    uint_fast8_t y, uint16_t* color) {
-  int32_t lookup_x =
-      (internal_registers->affine[0u].x + registers->affine[0u].pa * x) >> 8u;
-  int32_t lookup_y =
-      (internal_registers->affine[0u].y + registers->affine[0u].pc * x) >> 8u;
+    GbaPpuBackground2BitmapMode mode, bool back_page, int32_t x, int32_t y,
+    uint16_t* color) {
+  int32_t lookup_x = x >> 8u;
+  int32_t lookup_y = y >> 8u;
+
   if (lookup_x < 0 || lookup_y < 0) {
     return false;
   }
@@ -61,28 +59,24 @@ static inline bool GbaPpuBackground2BitmapPixel(
 }
 
 bool GbaPpuBitmapMode3Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            const GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y, uint16_t* color) {
-  return GbaPpuBackground2BitmapPixel(memory, registers, internal_registers,
-                                      GBA_PPU_BG2_MODE_3,
+                            const GbaPpuRegisters* registers, int32_t x,
+                            int32_t y, uint16_t* color) {
+  return GbaPpuBackground2BitmapPixel(memory, registers, GBA_PPU_BG2_MODE_3,
                                       /*back_page=*/false, x, y, color);
 }
 
 bool GbaPpuBitmapMode4Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            const GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y, uint16_t* color) {
+                            const GbaPpuRegisters* registers, int32_t x,
+                            int32_t y, uint16_t* color) {
   return GbaPpuBackground2BitmapPixel(
-      memory, registers, internal_registers, GBA_PPU_BG2_MODE_4,
+      memory, registers, GBA_PPU_BG2_MODE_4,
       /*back_page=*/registers->dispcnt.page_select, x, y, color);
 }
 
 bool GbaPpuBitmapMode5Pixel(const GbaPpuMemory* memory,
-                            const GbaPpuRegisters* registers,
-                            const GbaPpuInternalRegisters* internal_registers,
-                            uint_fast8_t x, uint_fast8_t y, uint16_t* color) {
+                            const GbaPpuRegisters* registers, int32_t x,
+                            int32_t y, uint16_t* color) {
   return GbaPpuBackground2BitmapPixel(
-      memory, registers, internal_registers, GBA_PPU_BG2_MODE_5,
+      memory, registers, GBA_PPU_BG2_MODE_5,
       /*back_page=*/registers->dispcnt.page_select, x, y, color);
 }

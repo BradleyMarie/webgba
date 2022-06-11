@@ -155,42 +155,41 @@ typedef union {
 #define GBA_PPU_NUM_BACKGROUNDS 4u
 #define GBA_PPU_REGISTERS_SIZE 88u
 
-typedef union {
-  struct {
-    DispCntRegister dispcnt;
-    uint16_t greenswp;  // Unimplemented
-    DispStatRegister dispstat;
-    uint16_t vcount;
-    BgCntRegister bgcnt[GBA_PPU_NUM_BACKGROUNDS];
-    BackgroundOffsetRegister bg_offsets[GBA_PPU_NUM_BACKGROUNDS];
-    BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-    WindowBoundsRegister win0h;
-    WindowBoundsRegister win1h;
-    WindowBoundsRegister win0v;
-    WindowBoundsRegister win1v;
-    WindowInRegister winin;
-    WindowOutRegister winout;
-    MosaicRegister mosaic;
-    uint16_t unused0;
-    BldCntRegister bldcnt;
-    BldAlphaRegister bldalpha;
-    BldYRegister bldy;
-    uint16_t unused2;
+typedef struct {
+  union {
+    struct {
+      DispCntRegister dispcnt;
+      uint16_t greenswp;  // Unimplemented
+      DispStatRegister dispstat;
+      uint16_t vcount;
+      BgCntRegister bgcnt[GBA_PPU_NUM_BACKGROUNDS];
+      BackgroundOffsetRegister bg_offsets[GBA_PPU_NUM_BACKGROUNDS];
+      BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+      WindowBoundsRegister win0h;
+      WindowBoundsRegister win1h;
+      WindowBoundsRegister win0v;
+      WindowBoundsRegister win1v;
+      WindowInRegister winin;
+      WindowOutRegister winout;
+      MosaicRegister mosaic;
+      uint16_t unused0;
+      BldCntRegister bldcnt;
+      BldAlphaRegister bldalpha;
+      BldYRegister bldy;
+      uint16_t unused2;
+    };
+    uint16_t half_words[GBA_PPU_REGISTERS_SIZE >> 1u];
   };
-  uint16_t half_words[GBA_PPU_REGISTERS_SIZE >> 1u];
+  struct {
+    struct {
+      int32_t row_start[2];
+      int32_t current[2];
+    } affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  } internal;
 } GbaPpuRegisters;
 
-static_assert(sizeof(GbaPpuRegisters) == GBA_PPU_REGISTERS_SIZE,
-              "sizeof(GbaPpuRegisters) != GBA_PPU_REGISTERS_SIZE");
-
-typedef struct {
-  int32_t x;
-  int32_t y;
-} GbaPpuInternalAffineRegisters;
-
-typedef struct {
-  // TODO: Fix these magic number
-  GbaPpuInternalAffineRegisters affine[2];
-} GbaPpuInternalRegisters;
+static_assert(
+    sizeof(GbaPpuRegisters) == GBA_PPU_REGISTERS_SIZE + sizeof(int32_t) * 8u,
+    "sizeof(GbaPpuRegisters) != GBA_PPU_REGISTERS_SIZE + sizeof(int32_t) * 8u");
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_REGISTERS_
