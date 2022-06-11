@@ -7,7 +7,6 @@
 
 typedef struct {
   GbaPpuObjectAttributeMemory *memory;
-  GbaPpuInternalRegisters *internal_registers;
   GbaPpuOamDirtyBits *dirty;
   MemoryContextFree free_routine;
   void *free_address;
@@ -84,7 +83,6 @@ static void OamFree(void *context) {
 }
 
 Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
-                    GbaPpuInternalRegisters *internal_registers,
                     GbaPpuOamDirtyBits *dirty, MemoryContextFree free_routine,
                     void *free_address) {
   GbaPpuOam *oam = (GbaPpuOam *)malloc(sizeof(GbaPpuOam));
@@ -93,7 +91,6 @@ Memory *OamAllocate(GbaPpuObjectAttributeMemory *oam_memory,
   }
 
   oam->memory = oam_memory;
-  oam->internal_registers = internal_registers;
   oam->dirty = dirty;
   oam->free_routine = free_routine;
   oam->free_address = free_address;

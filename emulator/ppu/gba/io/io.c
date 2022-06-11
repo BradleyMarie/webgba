@@ -48,7 +48,6 @@
 
 typedef struct {
   GbaPpuRegisters *registers;
-  GbaPpuInternalRegisters *internal_registers;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuIo;
@@ -159,19 +158,31 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
   switch (address) {
     case BG2X_OFFSET:
     case BG2X_OFFSET_HI:
-      io->internal_registers->affine[0u].x = io->registers->affine[0u].x;
+      io->registers->internal.affine[0u].row_start[0u] =
+          io->registers->affine[0u].x;
+      io->registers->internal.affine[0u].current[0u] =
+          io->registers->affine[0u].x;
       break;
     case BG2Y_OFFSET:
     case BG2Y_OFFSET_HI:
-      io->internal_registers->affine[0u].y = io->registers->affine[0u].y;
+      io->registers->internal.affine[0u].row_start[1u] =
+          io->registers->affine[0u].y;
+      io->registers->internal.affine[0u].current[1u] =
+          io->registers->affine[0u].y;
       break;
     case BG3X_OFFSET:
     case BG3X_OFFSET_HI:
-      io->internal_registers->affine[1u].x = io->registers->affine[1u].x;
+      io->registers->internal.affine[1u].row_start[0u] =
+          io->registers->affine[1u].x;
+      io->registers->internal.affine[1u].current[0u] =
+          io->registers->affine[1u].x;
       break;
     case BG3Y_OFFSET:
     case BG3Y_OFFSET_HI:
-      io->internal_registers->affine[1u].y = io->registers->affine[1u].y;
+      io->registers->internal.affine[1u].row_start[1u] =
+          io->registers->affine[1u].y;
+      io->registers->internal.affine[1u].current[1u] =
+          io->registers->affine[1u].y;
       break;
   }
 
@@ -209,7 +220,6 @@ void GbaPpuIoFree(void *context) {
 }
 
 Memory *GbaPpuIoAllocate(GbaPpuRegisters *registers,
-                         GbaPpuInternalRegisters *internal_registers,
                          MemoryContextFree free_routine, void *free_address) {
   GbaPpuIo *io = (GbaPpuIo *)malloc(sizeof(GbaPpuIo));
   if (io == NULL) {
@@ -217,7 +227,6 @@ Memory *GbaPpuIoAllocate(GbaPpuRegisters *registers,
   }
 
   io->registers = registers;
-  io->internal_registers = internal_registers;
   io->free_routine = free_routine;
   io->free_address = free_address;
 

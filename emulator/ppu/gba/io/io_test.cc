@@ -53,9 +53,7 @@ class IoTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&registers_, 0, sizeof(GbaPpuRegisters));
-    memset(&internal_registers_, 0, sizeof(GbaPpuInternalRegisters));
-    memory_ = GbaPpuIoAllocate(&registers_, &internal_registers_, FreeRoutine,
-                               nullptr);
+    memory_ = GbaPpuIoAllocate(&registers_, FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -65,7 +63,6 @@ class IoTest : public testing::Test {
 
  protected:
   GbaPpuRegisters registers_;
-  GbaPpuInternalRegisters internal_registers_;
   Memory* memory_;
 };
 

@@ -8,17 +8,12 @@ static inline BgCntRegister GetBgCnt(const GbaPpuRegisters* registers,
   return registers->bgcnt[2u + background];
 }
 
-bool GbaPpuAffineBackgroundPixel(
-    const GbaPpuMemory* memory, const GbaPpuRegisters* registers,
-    const GbaPpuInternalRegisters* internal_registers,
-    GbaPpuAffineBackground background, uint_fast8_t x, uint_fast8_t y,
-    uint16_t* color) {
-  int32_t lookup_x = (internal_registers->affine[background].x +
-                      registers->affine[background].pa * x) >>
-                     8u;
-  int32_t lookup_y = (internal_registers->affine[background].y +
-                      registers->affine[background].pc * x) >>
-                     8u;
+bool GbaPpuAffineBackgroundPixel(const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuAffineBackground background, int32_t x,
+                                 int32_t y, uint16_t* color) {
+  int32_t lookup_x = x >> 8u;
+  int32_t lookup_y = y >> 8u;
 
   if (registers->bgcnt[background].mosaic) {
     lookup_x -= lookup_x % (registers->mosaic.bg_horiz + 1u);

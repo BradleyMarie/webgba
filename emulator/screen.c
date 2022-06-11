@@ -17,11 +17,42 @@ struct _Screen {
   GLuint renderbuffer;
   GLsizei renderbuffer_width;
   GLsizei renderbuffer_height;
+  GLuint staging;
+  GLsizei staging_width;
+  GLsizei staging_height;
   uint16_t *pixels;
   GLsizei pixels_width;
   GLsizei pixels_height;
   GLuint program;
 };
+
+static void ScreenAllocateRenderbuffer(Screen *screen) {
+  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
+               /*width=*/screen->renderbuffer_width,
+               /*height=*/screen->renderbuffer_height,
+               /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_BYTE,
+               /*pixels=*/NULL);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+static void ScreenAllocateStaging(Screen *screen) {
+  glBindTexture(GL_TEXTURE_2D, screen->staging);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
+               /*width=*/screen->staging_width,
+               /*height=*/screen->staging_height, /*border=*/0,
+               /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+               /*pixels=*/screen->pixels);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
 
 Screen *ScreenAllocate() { return calloc(1u, sizeof(Screen)); }
 
@@ -35,8 +66,6 @@ void ScreenAttachFramebuffer(Screen *screen, GLuint framebuffer, GLsizei width,
 uint16_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
   assert(width != 0 && height != 0);
 
-  ScreenGetRenderBuffer(screen, width, height);
-
   screen->render_mode = RENDER_MODE_SOFTWARE;
 
   if (screen->pixels_width == width && screen->pixels_height == height) {
@@ -49,6 +78,11 @@ uint16_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
     screen->pixels_width = width;
     screen->pixels_height = height;
   }
+
+  screen->staging_width = width;
+  screen->staging_height = height;
+
+  ScreenAllocateStaging(screen);
 
   return screen->pixels;
 }
@@ -76,17 +110,7 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
   screen->renderbuffer_width = width;
   screen->renderbuffer_height = height;
 
-  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
-               /*width=*/width, /*height=*/height,
-               /*border=*/0, /*format=*/GL_RGBA,
-               /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-               /*pixels=*/screen->pixels);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  ScreenAllocateRenderbuffer(screen);
 
   return screen->renderbuffer;
 }
@@ -172,21 +196,19 @@ void ScreenReloadContext(Screen *screen) {
   screen->framebuffer_width = 0u;
   screen->framebuffer_height = 0u;
 
-  if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
-    return;
+  if (screen->renderbuffer_width != 0u && screen->renderbuffer_height != 0u) {
+    ScreenAllocateRenderbuffer(screen);
   }
 
-  GLsizei renderbuffer_width = screen->renderbuffer_width;
-  GLsizei renderbuffer_height = screen->renderbuffer_height;
-  screen->renderbuffer_width = 0u;
-  screen->renderbuffer_height = 0u;
-
-  ScreenGetRenderBuffer(screen, renderbuffer_width, renderbuffer_height);
+  if (screen->staging_width != 0u && screen->renderbuffer_width != 0u) {
+    ScreenAllocateStaging(screen);
+  }
 }
 
 void ScreenFree(Screen *screen) {
   glDeleteProgram(screen->program);
   glDeleteTextures(1u, &screen->renderbuffer);
+  glDeleteTextures(1u, &screen->staging);
   free(screen->pixels);
   free(screen);
 }

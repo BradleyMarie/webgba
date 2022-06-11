@@ -5,7 +5,6 @@
 #include "emulator/ppu/gba/registers.h"
 
 Memory* GbaPpuIoAllocate(GbaPpuRegisters* registers,
-                         GbaPpuInternalRegisters* internal_registers,
                          MemoryContextFree free_routine, void* free_address);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_IO_IO_

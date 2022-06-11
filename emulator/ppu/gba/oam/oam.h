@@ -7,7 +7,6 @@
 #include "emulator/ppu/gba/registers.h"
 
 Memory* OamAllocate(GbaPpuObjectAttributeMemory* oam_memory,
-                    GbaPpuInternalRegisters* internal_registers,
                     GbaPpuOamDirtyBits* dirty, MemoryContextFree free_routine,
                     void* free_address);
 
