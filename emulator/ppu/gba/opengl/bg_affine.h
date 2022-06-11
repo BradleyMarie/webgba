@@ -9,10 +9,7 @@
 typedef struct {
   GLuint buffers[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-  uint16_t reload_scanlines[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
 } OpenGlBgAffine;
-
-void OpenGlBgAffineInitialize(OpenGlBgAffine* context);
 
 void OpenGlBgAffineReload(OpenGlBgAffine* context,
                           const GbaPpuRegisters* registers,

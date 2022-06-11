@@ -31,12 +31,8 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
 
   bits->io.dispcnt = true;
   bits->io.blend = true;
-  bits->io.bg_affine_x[0u] = true;
-  bits->io.bg_affine_x[1u] = true;
-  bits->io.bg_affine_y[0u] = true;
-  bits->io.bg_affine_y[1u] = true;
-  bits->io.bg_affine_params[0u] = true;
-  bits->io.bg_affine_params[1u] = true;
+  bits->io.bg_affine[0u] = true;
+  bits->io.bg_affine[1u] = true;
   bits->io.bg_offset[0u] = true;
   bits->io.bg_offset[1u] = true;
   bits->io.bg_offset[2u] = true;

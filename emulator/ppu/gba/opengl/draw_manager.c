@@ -169,8 +169,7 @@ static bool GbaPpuDrawManagerCheckMode3(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  if (dirty_bits->io.bg_affine_x[0u] || dirty_bits->io.bg_affine_y[0u] ||
-      dirty_bits->io.bg_affine_params[0u]) {
+  if (dirty_bits->io.bg_affine[0u]) {
     return true;
   }
 
@@ -198,8 +197,7 @@ static bool GbaPpuDrawManagerCheckMode4(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  if (dirty_bits->io.bg_affine_x[0u] || dirty_bits->io.bg_affine_y[0u] ||
-      dirty_bits->io.bg_affine_params[0u]) {
+  if (dirty_bits->io.bg_affine[0u]) {
     return true;
   }
 
@@ -228,8 +226,7 @@ static bool GbaPpuDrawManagerCheckMode5(const GbaPpuDrawManager* draw_manager,
     return true;
   }
 
-  if (dirty_bits->io.bg_affine_x[0u] || dirty_bits->io.bg_affine_y[0u] ||
-      dirty_bits->io.bg_affine_params[0u]) {
+  if (dirty_bits->io.bg_affine[0u]) {
     return true;
   }
 
