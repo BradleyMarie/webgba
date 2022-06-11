@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "emulator/ppu/gba/dirty.h"
-#include "emulator/ppu/gba/draw_manager.h"
 #include "emulator/ppu/gba/io/io.h"
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/oam/oam.h"
@@ -45,7 +44,6 @@ struct _GbaPpu {
   GbaPpuRenderMode next_render_mode;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
-  GbaPpuDrawManager draw_manager;
   GbaPpuDirtyBits dirty;
   bool render_mode_changed;
   uint32_t cycles_from_hblank_to_draw;
@@ -199,25 +197,16 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
     case GBA_PPU_DRAW_ROW_OPENGL:
       if (ppu->registers.vcount == 0u) {
         GbaPpuOpenGlRendererSetScreen(ppu->opengl_renderer, screen);
-        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
-                                    &ppu->dirty);
       }
 
-      if (GbaPpuDrawManagerShouldFlush(&ppu->draw_manager, &ppu->registers,
-                                       &ppu->dirty) ||
-          (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1 &&
-           GbaPpuDrawManagerEndFrame(&ppu->draw_manager))) {
-        GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
-                                    &ppu->registers, &ppu->dirty);
-        ppu->x += GBA_SCREEN_WIDTH;
-      }
+      GbaPpuOpenGlRendererDrawRow(ppu->opengl_renderer, &ppu->memory,
+                                  &ppu->registers, &ppu->dirty);
+      ppu->x += GBA_SCREEN_WIDTH;
       goto draw_epilogue;
     case GBA_PPU_DRAW_ROW_SOFTWARE:
       if (ppu->registers.vcount == 0u) {
         // TODO: Handle allocation failure
         GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
-        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
-                                    &ppu->dirty);
       }
 
       GbaPpuSoftwareRendererDrawRow(ppu->software_renderer, &ppu->memory,
@@ -229,8 +218,6 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
       if (ppu->registers.vcount == 0u && ppu->x == 0u) {
         // TODO: Handle allocation failure
         GbaPpuSoftwareRendererSetScreen(ppu->software_renderer, screen);
-        GbaPpuDrawManagerStartFrame(&ppu->draw_manager, &ppu->registers,
-                                    &ppu->dirty);
       }
 
       GbaPpuSoftwareRendererDrawPixel(ppu->software_renderer, &ppu->memory,

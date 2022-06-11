@@ -100,6 +100,18 @@ cc_library(
 )
 
 cc_library(
+    name = "draw_manager",
+    hdrs = ["draw_manager.h"],
+    srcs = ["draw_manager.c"],
+    visibility = ["//emulator/ppu:__subpackages__"],
+    deps = [
+        "//emulator/ppu/gba:dirty",
+        "//emulator/ppu/gba:registers",
+        "//emulator/ppu/gba:set",
+    ],
+)
+
+cc_library(
     name = "obj_attributes",
     srcs = ["obj_attributes.c"],
     hdrs = ["obj_attributes.h"],
@@ -150,6 +162,7 @@ cc_library(
         ":bg_scrolling",
         ":blend",
         ":control",
+        ":draw_manager",
         ":obj_attributes",
         ":palette",
         ":programs",
@@ -157,7 +170,6 @@ cc_library(
         ":tiles",
         ":window",
         "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:draw_manager",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
         "//emulator:screen",

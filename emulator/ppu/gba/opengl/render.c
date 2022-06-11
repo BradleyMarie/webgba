@@ -12,6 +12,7 @@
 #include "emulator/ppu/gba/opengl/bg_scrolling.h"
 #include "emulator/ppu/gba/opengl/blend.h"
 #include "emulator/ppu/gba/opengl/control.h"
+#include "emulator/ppu/gba/opengl/draw_manager.h"
 #include "emulator/ppu/gba/opengl/obj_attributes.h"
 #include "emulator/ppu/gba/opengl/palette.h"
 #include "emulator/ppu/gba/opengl/programs.h"
@@ -22,6 +23,7 @@
 #define NUM_LAYERS (GBA_PPU_NUM_BACKGROUNDS + 1u)
 
 struct _GbaPpuOpenGlRenderer {
+  GbaPpuDrawManager draw_manager;
   OpenGlPrograms programs;
   OpenGlBgAffine affine;
   OpenGlBgBitmapMode3 bg_bitmap_mode3;
@@ -131,7 +133,22 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  const GbaPpuMemory* memory,
                                  const GbaPpuRegisters* registers,
                                  GbaPpuDirtyBits* dirty_bits) {
-  if (!renderer->initialized || registers->vcount == 0u) {
+  if (!renderer->initialized) {
+    return;
+  }
+
+  if (registers->vcount == 0u) {
+    GbaPpuDrawManagerStartFrame(&renderer->draw_manager, registers, dirty_bits);
+    return;
+  }
+
+  if (registers->vcount != GBA_SCREEN_HEIGHT - 1) {
+    if (!GbaPpuDrawManagerShouldFlush(&renderer->draw_manager, registers,
+                                      dirty_bits)) {
+      return;
+    }
+  } else if (registers->vcount == GBA_SCREEN_HEIGHT - 1 &&
+             !GbaPpuDrawManagerEndFrame(&renderer->draw_manager)) {
     return;
   }
 

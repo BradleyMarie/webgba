@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_
-#define _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_DRAW_MANAGER_
+#define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_DRAW_MANAGER_
 
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/registers.h"
@@ -61,4 +61,4 @@ bool GbaPpuDrawManagerShouldFlush(GbaPpuDrawManager* draw_manager,
 
 bool GbaPpuDrawManagerEndFrame(const GbaPpuDrawManager* draw_manager);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_DRAW_MANAGER_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_DRAW_MANAGER_
