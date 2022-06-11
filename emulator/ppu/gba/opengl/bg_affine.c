@@ -4,34 +4,13 @@
 
 static GLfloat FixedToFloat(int32_t value) { return (double)value / 256.0; }
 
-void OpenGlBgAffineInitialize(OpenGlBgAffine* context) {
-  context->reload_scanlines[0u] = UINT16_MAX;
-  context->reload_scanlines[1u] = UINT16_MAX;
-}
-
 void OpenGlBgAffineReload(OpenGlBgAffine* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits) {
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
-    if (!dirty_bits->io.bg_affine_x[i] && !dirty_bits->io.bg_affine_y[i] &&
-        !dirty_bits->io.bg_affine_params[i] &&
-        context->reload_scanlines[i] <= registers->vcount) {
+    if (!dirty_bits->io.bg_affine[i]) {
       continue;
     }
-
-    if (dirty_bits->io.bg_affine_x[i] ||
-        registers->vcount < context->reload_scanlines[i]) {
-      context->affine[i].x = registers->affine[i].x;
-      dirty_bits->io.bg_affine_x[i] = false;
-    }
-
-    if (dirty_bits->io.bg_affine_y[i] ||
-        registers->vcount < context->reload_scanlines[i]) {
-      context->affine[i].y = registers->affine[i].y;
-      dirty_bits->io.bg_affine_y[i] = false;
-    }
-
-    context->reload_scanlines[i] = registers->vcount;
 
     int32_t top_left_x =
         registers->affine[i].x - registers->vcount * registers->affine[i].pb;
@@ -64,7 +43,7 @@ void OpenGlBgAffineReload(OpenGlBgAffine* context,
     glBufferSubData(GL_ARRAY_BUFFER, /*offset=*/0, sizeof(GLfloat) * 6, array);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    dirty_bits->io.bg_affine_params[i] = false;
+    dirty_bits->io.bg_affine[i] = false;
   }
 }
 
