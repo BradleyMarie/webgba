@@ -122,6 +122,8 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
       return;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
     glEnable(GL_SCISSOR_TEST);
 
     glScissor(0u, renderer->flush_start * renderer->render_scale,
