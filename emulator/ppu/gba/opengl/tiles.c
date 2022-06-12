@@ -130,7 +130,7 @@ void OpenGlTilesReload(OpenGlTiles* context) {
           /*yoffset=*/0, /*zoffset=*/i, /*width=*/GBA_TILE_1D_SIZE,
           /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
           /*depth=*/1, /*format=*/GL_RG_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-          /*pixels=*/context->bg_staging);
+          /*pixels=*/context->bg_staging[i]);
       glBindTexture(GL_TEXTURE_2D, 0);
       context->bg_dirty[i] = false;
     }
@@ -148,7 +148,7 @@ void OpenGlTilesReload(OpenGlTiles* context) {
           /*width=*/GBA_TILE_1D_SIZE,
           /*height=*/GBA_TILE_1D_SIZE * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
           /*format=*/GL_RG_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-          /*pixels=*/context->obj_staging);
+          /*pixels=*/context->obj_staging[i]);
       glBindTexture(GL_TEXTURE_2D, 0);
       context->obj_dirty[i] = false;
     }
