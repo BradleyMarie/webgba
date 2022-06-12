@@ -11,13 +11,16 @@ typedef struct {
     GLfloat origins[GBA_PPU_NUM_BACKGROUNDS][4u];
   } staging;
   GLuint buffer;
+  bool dirty;
 } OpenGlBgScrolling;
 
-void OpenGlBgScrollingReload(OpenGlBgScrolling* context,
-                             const GbaPpuRegisters* registers,
-                             GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
+                            const GbaPpuRegisters* registers,
+                            GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgScrollingBind(const OpenGlBgScrolling* context, GLuint program);
+
+void OpenGlBgScrollingReload(OpenGlBgScrolling* context);
 
 void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context);
 

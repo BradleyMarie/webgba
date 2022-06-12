@@ -23,12 +23,15 @@ typedef struct {
     GLuint padding[3u];
   } staging;
   GLuint buffer;
+  bool dirty;
 } OpenGlWindow;
 
-void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
-                        GbaPpuDirtyBits* dirty_bits);
+bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
+                       GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlWindowBind(const OpenGlWindow* context, GLuint program);
+
+void OpenGlWindowReload(OpenGlWindow* context);
 
 void OpenGlWindowReloadContext(OpenGlWindow* context);
 

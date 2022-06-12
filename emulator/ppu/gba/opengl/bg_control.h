@@ -18,13 +18,16 @@ typedef struct {
     GLint padding[3];
   } staging[4];
   GLuint buffer;
+  bool dirty;
 } OpenGlBgControl;
 
-void OpenGlBgControlReload(OpenGlBgControl* context,
+bool OpenGlBgControlStage(OpenGlBgControl* context,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program);
+
+void OpenGlBgControlReload(OpenGlBgControl* context);
 
 void OpenGlBgControlReloadContext(OpenGlBgControl* context);
 

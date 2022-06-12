@@ -309,10 +309,28 @@ static void InitializeMode4(OpenGlPrograms* context, GLuint vertex_shader) {
   }
 }
 
-GLuint OpenGlProgramsGet(const OpenGlPrograms* context, uint8_t mode,
-                         bool objects, bool bg0, bool bg1, bool bg2, bool bg3) {
-  assert(mode < 6);
-  return context->programs[mode][objects][bg0][bg1][bg2][bg3];
+bool OpenGlProgramsStage(OpenGlPrograms* context,
+                         const GbaPpuRegisters* registers,
+                         GbaPpuDirtyBits* dirty_bits) {
+  context->staging_blank =
+      registers->dispcnt.forced_blank || registers->dispcnt.mode > 5;
+  context->staging =
+      context->programs
+          [registers->dispcnt.mode][registers->dispcnt.object_enable]
+          [registers->dispcnt.bg0_enable][registers->dispcnt.bg1_enable]
+          [registers->dispcnt.bg2_enable][registers->dispcnt.bg3_enable];
+  dirty_bits->io.dispcnt = false;
+  return (context->staging_blank != context->blank) ||
+         (context->staging != context->program);
+}
+
+GLuint OpenGlProgramsGet(const OpenGlPrograms* context) {
+  return context->program;
+}
+
+void OpenGlProgramsReload(OpenGlPrograms* context) {
+  context->blank = context->staging_blank;
+  context->program = context->staging;
 }
 
 void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
@@ -423,4 +441,7 @@ void OpenGlProgramsDestroy(OpenGlPrograms* context) {
       glDeleteProgram(context->mode4[obj][bg2]);
     }
   }
+
+  context->program = context->mode0[1u][1u][1u][1u][1u];
+  context->staging = context->mode0[1u][1u][1u][1u][1u];
 }

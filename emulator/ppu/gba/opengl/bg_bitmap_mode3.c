@@ -5,19 +5,19 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
-                               const GbaPpuMemory* memory,
-                               const GbaPpuRegisters* registers,
-                               GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
+                              const GbaPpuMemory* memory,
+                              const GbaPpuRegisters* registers,
+                              GbaPpuDirtyBits* dirty_bits) {
   if (!registers->dispcnt.bg2_enable || registers->dispcnt.mode != 3) {
     context->enabled = false;
-    return;
+    return false;
   }
 
   context->enabled = true;
 
   if (!dirty_bits->vram.mode_3.overall) {
-    return;
+    return false;
   }
 
   for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
@@ -27,14 +27,10 @@ void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
     }
   }
 
-  glBindTexture(GL_TEXTURE_2D, context->texture);
-  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                  /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
-                  /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-                  /*pixels=*/context->staging);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
   dirty_bits->vram.mode_3.overall = false;
+  context->dirty = true;
+
+  return true;
 }
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
@@ -48,6 +44,18 @@ void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
 
   glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->texture);
+}
+
+void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context) {
+  if (context->dirty) {
+    glBindTexture(GL_TEXTURE_2D, context->texture);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
+                    /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
+                    /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+                    /*pixels=*/context->staging);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    context->dirty = false;
+  }
 }
 
 void OpenGlBgBitmapMode3ReloadContext(OpenGlBgBitmapMode3* context) {

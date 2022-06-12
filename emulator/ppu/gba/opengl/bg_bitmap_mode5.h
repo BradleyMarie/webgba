@@ -7,19 +7,21 @@
 #include "emulator/ppu/gba/memory.h"
 
 typedef struct {
-  bool enabled;
-  bool page;
-  GLuint textures[2u];
   uint16_t staging[GBA_REDUCED_FRAME_HEIGHT * GBA_REDUCED_FRAME_WIDTH];
+  GLuint textures[2u];
+  bool page;
+  bool enabled;
+  bool dirty;
 } OpenGlBgBitmapMode5;
 
-void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
+bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
                                const GbaPpuMemory* memory,
                                const GbaPpuRegisters* registers,
                                GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
-                             GLuint program);
+void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context, GLuint program);
+
+void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context);
 
 void OpenGlBgBitmapMode5ReloadContext(OpenGlBgBitmapMode5* context);
 

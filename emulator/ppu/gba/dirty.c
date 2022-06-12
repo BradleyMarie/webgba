@@ -41,7 +41,8 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->io.bg_control[1u] = true;
   bits->io.bg_control[2u] = true;
   bits->io.bg_control[3u] = true;
+  bits->io.bg_mosaic = true;
+  bits->io.obj_mosaic = true;
 
-  bits->composite.bg_mosaic = true;
   bits->composite.window = true;
 }

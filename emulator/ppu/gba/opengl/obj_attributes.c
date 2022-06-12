@@ -6,10 +6,14 @@
 
 static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)256.0; }
 
-void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
-                                  const GbaPpuMemory* memory,
-                                  const GbaPpuRegisters* registers,
-                                  GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
+                                 const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuDirtyBits* dirty_bits) {
+  if (!registers->dispcnt.object_enable) {
+    return false;
+  }
+
   static const int_fast16_t shape_size_to_x_size_pixels[3][4] = {
       {8u, 16u, 32u, 64u}, {16u, 32u, 32u, 64u}, {8u, 8u, 16u, 32u}};
 
@@ -31,10 +35,14 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
       context->object_staging.objects[object].transformation[0u][1u] = pc;
       context->object_staging.objects[object].transformation[1u][0u] = pb;
       context->object_staging.objects[object].transformation[1u][1u] = pd;
+      context->objects_dirty = true;
     }
   }
 
   while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
+    context->visibility_dirty = true;
+    context->objects_dirty = true;
+
     uint8_t i = GbaPpuSetPop(&dirty_bits->oam.objects);
 
     for (uint8_t pri = 0u; pri < 4u; pri++) {
@@ -175,12 +183,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
     }
   }
 
-  context->object_staging.linear_tiles = registers->dispcnt.object_mode;
+  if (!context->visibility_dirty) {
+    return context->objects_dirty;
+  }
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
-  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                  /*size=*/sizeof(context->object_staging),
-                  /*data=*/&context->object_staging);
+  context->object_staging.linear_tiles = registers->dispcnt.object_mode;
 
   uint8_t insert_index = 0u;
 
@@ -261,16 +268,11 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
         context->rows[y].objects[1u] >> 32u;
   }
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
-  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                  /*size=*/sizeof(context->visibility_staging),
-                  /*data=*/&context->visibility_staging);
-
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  return true;
 }
 
-void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
-                                  GLuint program) {
+void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
+                                GLuint program) {
   GLint objects = glGetUniformBlockIndex(program, "Objects");
   glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
 
@@ -285,6 +287,26 @@ void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
                    context->buffers[1u]);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context) {
+  if (context->objects_dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->object_staging),
+                    /*data=*/&context->object_staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->objects_dirty = false;
+  }
+
+  if (context->visibility_dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->visibility_staging),
+                    /*data=*/&context->visibility_staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->visibility_dirty = false;
+  }
 }
 
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {

@@ -47,10 +47,15 @@ typedef struct {
   bool bg_affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
   bool bg_offset[GBA_PPU_NUM_BACKGROUNDS];
   bool bg_control[GBA_PPU_NUM_BACKGROUNDS];
+  bool bg_mosaic;
+  bool obj_mosaic;
+  bool win0;
+  bool win1;
+  bool winobj;
+  bool winout;
 } GbaPpuIoDirtyBits;
 
 typedef struct {
-  bool bg_mosaic;
   bool window;
 } GbaPpuCompositeDirtyBits;
 
