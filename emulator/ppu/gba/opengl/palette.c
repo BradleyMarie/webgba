@@ -15,37 +15,32 @@ static void ExtractComponents(uint16_t value, GLfloat output[4u]) {
   output[3u] = 1.0;
 }
 
-void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,
-                           GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
+                          GbaPpuDirtyBits* dirty_bits) {
+  bool result = false;
   if (dirty_bits->palette.bg_palette) {
     for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
       ExtractComponents(memory->palette.bg.large_palette[i],
-                        &context->staging[i][0]);
+                        &context->bg_staging[i][0]);
     }
 
-    glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->staging),
-                    /*data=*/context->staging);
-
     dirty_bits->palette.bg_palette = false;
+    context->bg_dirty = true;
+    result = true;
   }
 
   if (dirty_bits->palette.obj_palette) {
     for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
       ExtractComponents(memory->palette.obj.large_palette[i],
-                        &context->staging[i][0]);
+                        &context->obj_staging[i][0]);
     }
 
-    glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->staging),
-                    /*data=*/context->staging);
-
     dirty_bits->palette.obj_palette = false;
+    context->obj_dirty = true;
+    result = true;
   }
 
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  return result;
 }
 
 void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
@@ -62,16 +57,36 @@ void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
   glBindBufferBase(GL_UNIFORM_BUFFER, OBJ_PALETTE_BUFFER, context->obj_palette);
 }
 
+void OpenGlBgPaletteReload(OpenGlBgPalette* context) {
+  if (context->bg_dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->bg_staging),
+                    /*data=*/context->bg_staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->bg_dirty = false;
+  }
+
+  if (context->obj_dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->obj_staging),
+                    /*data=*/context->obj_staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->obj_dirty = false;
+  }
+}
+
 void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context) {
   glGenBuffers(1, &context->bg_palette);
   glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), context->staging,
-               GL_DYNAMIC_DRAW);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->bg_staging),
+               context->bg_staging, GL_DYNAMIC_DRAW);
 
   glGenBuffers(1, &context->obj_palette);
   glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), context->staging,
-               GL_DYNAMIC_DRAW);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->obj_staging),
+               context->obj_staging, GL_DYNAMIC_DRAW);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

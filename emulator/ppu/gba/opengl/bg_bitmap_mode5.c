@@ -5,20 +5,20 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
-                               const GbaPpuMemory* memory,
-                               const GbaPpuRegisters* registers,
-                               GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
+                              const GbaPpuMemory* memory,
+                              const GbaPpuRegisters* registers,
+                              GbaPpuDirtyBits* dirty_bits) {
   if (!registers->dispcnt.bg2_enable || registers->dispcnt.mode != 5) {
     context->enabled = false;
-    return;
+    return false;
   }
 
   context->enabled = true;
   context->page = registers->dispcnt.page_select;
 
   if (!dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select]) {
-    return;
+    return false;
   }
 
   for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
@@ -30,16 +30,10 @@ void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context,
     }
   }
 
-  glBindTexture(GL_TEXTURE_2D,
-                context->textures[registers->dispcnt.page_select]);
-  glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                  /*width=*/GBA_REDUCED_FRAME_WIDTH,
-                  /*height=*/GBA_REDUCED_FRAME_HEIGHT,
-                  /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
-                  /*pixels=*/context->staging);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
   dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select] = false;
+  context->dirty = true;
+
+  return true;
 }
 
 void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
@@ -53,6 +47,19 @@ void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
 
   glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
+}
+
+void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context) {
+  if (context->dirty) {
+    glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
+                    /*width=*/GBA_REDUCED_FRAME_WIDTH,
+                    /*height=*/GBA_REDUCED_FRAME_HEIGHT,
+                    /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+                    /*pixels=*/context->staging);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    context->dirty = false;
+  }
 }
 
 void OpenGlBgBitmapMode5ReloadContext(OpenGlBgBitmapMode5* context) {

@@ -42,15 +42,19 @@ typedef struct {
   GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
   GbaPpuSet layers[4u];
   GbaPpuSet window;
+  bool objects_dirty;
+  bool visibility_dirty;
 } OpenGlObjectAttributes;
 
-void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context,
-                                  const GbaPpuMemory* memory,
-                                  const GbaPpuRegisters* registers,
-                                  GbaPpuDirtyBits* dirty_bits);
+bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
+                                 const GbaPpuMemory* memory,
+                                 const GbaPpuRegisters* registers,
+                                 GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgObjectAttributesBind(const OpenGlObjectAttributes* context,
-                                  GLuint program);
+void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
+                                GLuint program);
+
+void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context);
 
 void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context);
 

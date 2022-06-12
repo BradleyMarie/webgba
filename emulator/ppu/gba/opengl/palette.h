@@ -9,13 +9,18 @@
 typedef struct {
   GLuint bg_palette;
   GLuint obj_palette;
-  GLfloat staging[GBA_LARGE_PALETTE_SIZE][4u];
+  GLfloat bg_staging[GBA_LARGE_PALETTE_SIZE][4u];
+  GLfloat obj_staging[GBA_LARGE_PALETTE_SIZE][4u];
+  bool bg_dirty;
+  bool obj_dirty;
 } OpenGlBgPalette;
 
-void OpenGlBgPaletteReload(OpenGlBgPalette* context, const GbaPpuMemory* memory,
-                           GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
+                          GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program);
+
+void OpenGlBgPaletteReload(OpenGlBgPalette* context);
 
 void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context);
 

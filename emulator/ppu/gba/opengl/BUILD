@@ -90,29 +90,6 @@ cc_library(
 )
 
 cc_library(
-    name = "control",
-    srcs = ["control.c"],
-    hdrs = ["control.h"],
-    linkopts = ["-lGL"],
-    deps = [
-        "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:registers",
-    ],
-)
-
-cc_library(
-    name = "draw_manager",
-    hdrs = ["draw_manager.h"],
-    srcs = ["draw_manager.c"],
-    visibility = ["//emulator/ppu:__subpackages__"],
-    deps = [
-        "//emulator/ppu/gba:dirty",
-        "//emulator/ppu/gba:registers",
-        "//emulator/ppu/gba:set",
-    ],
-)
-
-cc_library(
     name = "obj_attributes",
     srcs = ["obj_attributes.c"],
     hdrs = ["obj_attributes.h"],
@@ -146,6 +123,7 @@ cc_library(
     deps = [
         ":shader_fragment",
         ":shader_vertex",
+        "//emulator/ppu/gba:dirty",
     ],
 )
 
@@ -162,8 +140,6 @@ cc_library(
         ":bg_control",
         ":bg_scrolling",
         ":blend",
-        ":control",
-        ":draw_manager",
         ":obj_attributes",
         ":palette",
         ":programs",

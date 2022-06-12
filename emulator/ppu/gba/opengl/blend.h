@@ -20,12 +20,15 @@ typedef struct {
     GLuint obj_bottom;
   } staging;
   GLuint buffer;
+  bool dirty;
 } OpenGlBlend;
 
-void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
+bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
                        GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBlendBind(const OpenGlBlend* context, GLuint program);
+
+void OpenGlBlendReload(OpenGlBlend* context);
 
 void OpenGlBlendReloadContext(OpenGlBlend* context);
 

@@ -9,10 +9,19 @@ static GLfloat FixedToFloat(uint8_t fixed) {
   return fmin((double)fixed / 16.0, 1.0);
 }
 
-void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
-                       GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
+                      GbaPpuDirtyBits* dirty_bits) {
+  if ((!registers->dispcnt.win0_enable || !registers->winin.win0.bld) &&
+      (!registers->dispcnt.win1_enable || !registers->winin.win1.bld) &&
+      (!registers->dispcnt.winobj_enable || !registers->winout.winobj.bld) &&
+      ((registers->dispcnt.win0_enable || registers->dispcnt.win1_enable ||
+        registers->dispcnt.winobj_enable) &&
+       !registers->winout.winout.bld)) {
+    return false;
+  }
+
   if (!dirty_bits->io.blend) {
-    return;
+    return false;
   }
 
   context->staging.blend_mode = registers->bldcnt.mode;
@@ -32,13 +41,10 @@ void OpenGlBlendReload(OpenGlBlend* context, const GbaPpuRegisters* registers,
   context->staging.bd_top = registers->bldcnt.a_bd;
   context->staging.bd_bottom = registers->bldcnt.b_bd;
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                  /*size=*/sizeof(context->staging),
-                  /*data=*/&context->staging);
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
   dirty_bits->io.blend = false;
+  context->dirty = true;
+
+  return true;
 }
 
 void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {
@@ -47,6 +53,17 @@ void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBindBufferBase(GL_UNIFORM_BUFFER, BLEND_BUFFER, context->buffer);
+}
+
+void OpenGlBlendReload(OpenGlBlend* context) {
+  if (context->dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->staging),
+                    /*data=*/&context->staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->dirty = false;
+  }
 }
 
 void OpenGlBlendReloadContext(OpenGlBlend* context) {

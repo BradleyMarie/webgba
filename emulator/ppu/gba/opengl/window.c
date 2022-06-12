@@ -4,8 +4,12 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
-                        GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
+                       GbaPpuDirtyBits* dirty_bits) {
+  if (!dirty_bits->composite.window) {
+    return false;
+  }
+
   context->staging.windows[0u].obj = registers->winin.win0.obj;
   context->staging.windows[0u].bg0 = registers->winin.win0.bg0;
   context->staging.windows[0u].bg1 = registers->winin.win0.bg1;
@@ -118,13 +122,10 @@ void OpenGlWindowReload(OpenGlWindow* context, const GbaPpuRegisters* registers,
 
   context->staging.winobj_enabled = registers->dispcnt.winobj_enable;
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                  /*size=*/sizeof(context->staging),
-                  /*data=*/&context->staging);
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
   dirty_bits->composite.window = false;
+  context->dirty = true;
+
+  return true;
 }
 
 void OpenGlWindowBind(const OpenGlWindow* context, GLuint program) {
@@ -140,6 +141,17 @@ void OpenGlWindowReloadContext(OpenGlWindow* context) {
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
                GL_DYNAMIC_DRAW);
+}
+
+void OpenGlWindowReload(OpenGlWindow* context) {
+  if (context->dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->staging),
+                    /*data=*/&context->staging);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    context->dirty = false;
+  }
 }
 
 void OpenGlWindowDestroy(OpenGlWindow* context) {

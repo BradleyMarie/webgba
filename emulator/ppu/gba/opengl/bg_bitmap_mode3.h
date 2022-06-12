@@ -7,18 +7,21 @@
 #include "emulator/ppu/gba/memory.h"
 
 typedef struct {
-  bool enabled;
-  GLuint texture;
   uint16_t staging[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
+  GLuint texture;
+  bool enabled;
+  bool dirty;
 } OpenGlBgBitmapMode3;
 
-void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context,
-                               const GbaPpuMemory* memory,
-                               const GbaPpuRegisters* registers,
-                               GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
+                              const GbaPpuMemory* memory,
+                              const GbaPpuRegisters* registers,
+                              GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
                              GLuint program);
+
+void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context);
 
 void OpenGlBgBitmapMode3ReloadContext(OpenGlBgBitmapMode3* context);
 

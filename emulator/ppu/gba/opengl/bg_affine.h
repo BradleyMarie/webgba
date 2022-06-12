@@ -7,15 +7,18 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
+  GLfloat staging[GBA_PPU_NUM_AFFINE_BACKGROUNDS][6u];
   GLuint buffers[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-  BackgroundAffineRegister affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  bool dirty[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
 } OpenGlBgAffine;
 
-void OpenGlBgAffineReload(OpenGlBgAffine* context,
+bool OpenGlBgAffineStage(OpenGlBgAffine* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program);
+
+void OpenGlBgAffineReload(OpenGlBgAffine* context);
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 

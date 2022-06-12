@@ -2,7 +2,9 @@
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PROGRAMS_
 
 #include <GLES3/gl3.h>
-#include <stdbool.h>
+
+#include "emulator/ppu/gba/dirty.h"
+#include "emulator/ppu/gba/registers.h"
 
 typedef struct {
   GLuint programs[6u][2u][2u][2u][2u][2u];
@@ -11,10 +13,19 @@ typedef struct {
   GLuint mode2[2u][2u][2u];
   GLuint mode35[2u][2u];
   GLuint mode4[2u][2u];
+  GLuint program;
+  bool blank;
+  GLuint staging;
+  bool staging_blank;
 } OpenGlPrograms;
 
-GLuint OpenGlProgramsGet(const OpenGlPrograms* context, uint8_t mode,
-                         bool objects, bool bg0, bool bg1, bool bg2, bool bg3);
+bool OpenGlProgramsStage(OpenGlPrograms* context,
+                         const GbaPpuRegisters* registers,
+                         GbaPpuDirtyBits* dirty_bits);
+
+GLuint OpenGlProgramsGet(const OpenGlPrograms* context);
+
+void OpenGlProgramsReload(OpenGlPrograms* context);
 
 void OpenGlProgramsReloadContext(OpenGlPrograms* context);
 
