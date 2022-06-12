@@ -158,7 +158,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count = 1u;
 
-  *palette = PaletteAllocate(&(*ppu)->memory.palette, GbaPpuRelease, *ppu);
+  *palette = PaletteAllocate(&(*ppu)->memory.palette, &(*ppu)->dirty.palette,
+                             GbaPpuRelease, *ppu);
   if (*palette == NULL) {
     free(*ppu);
     return false;
@@ -166,7 +167,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *vram = VRamAllocate(&(*ppu)->memory.vram, GbaPpuRelease, *ppu);
+  *vram = VRamAllocate(&(*ppu)->memory.vram, &(*ppu)->dirty.vram, GbaPpuRelease,
+                       *ppu);
   if (*vram == NULL) {
     MemoryFree(*palette);
     free(*ppu);
@@ -186,7 +188,8 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
 
   (*ppu)->reference_count += 1u;
 
-  *registers = GbaPpuIoAllocate(&(*ppu)->registers, GbaPpuRelease, *ppu);
+  *registers = GbaPpuIoAllocate(&(*ppu)->registers, &(*ppu)->dirty.io,
+                                GbaPpuRelease, *ppu);
   if (*registers == NULL) {
     MemoryFree(*oam);
     MemoryFree(*vram);

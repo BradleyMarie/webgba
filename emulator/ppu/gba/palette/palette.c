@@ -5,9 +5,11 @@
 
 #define PALETTE_ADDRESS_MASK 0x3FFu
 #define PALETTE_BYTE_ADDRESS_MASK 0x3FEu
+#define PALETTE_DIRTY_SHIFT 9u
 
 typedef struct {
   GbaPpuPaletteMemory *memory;
+  GbaPpuPaletteDirtyBits *dirty;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuPalette;
@@ -53,6 +55,7 @@ static bool PaletteStore32LE(void *context, uint32_t address, uint32_t value) {
 
   address &= PALETTE_ADDRESS_MASK;
   palette->memory->words[address >> 2u] = value;
+  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
 
   return true;
 }
@@ -64,6 +67,7 @@ static bool PaletteStore16LE(void *context, uint32_t address, uint16_t value) {
 
   address &= PALETTE_ADDRESS_MASK;
   palette->memory->half_words[address >> 1u] = value;
+  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
 
   return true;
 }
@@ -74,6 +78,7 @@ static bool PaletteStore8(void *context, uint32_t address, uint8_t value) {
   address &= PALETTE_BYTE_ADDRESS_MASK;
   uint16_t value16 = ((uint16_t)value << 8u) | value;
   palette->memory->half_words[address >> 1u] = value16;
+  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
 
   return true;
 }
@@ -85,6 +90,7 @@ static void PaletteFree(void *context) {
 }
 
 Memory *PaletteAllocate(GbaPpuPaletteMemory *palette_memory,
+                        GbaPpuPaletteDirtyBits *dirty,
                         MemoryContextFree free_routine, void *free_address) {
   GbaPpuPalette *palette = (GbaPpuPalette *)malloc(sizeof(GbaPpuPalette));
   if (palette == NULL) {
@@ -92,6 +98,7 @@ Memory *PaletteAllocate(GbaPpuPaletteMemory *palette_memory,
   }
 
   palette->memory = palette_memory;
+  palette->dirty = dirty;
   palette->free_routine = free_routine;
   palette->free_address = free_address;
 

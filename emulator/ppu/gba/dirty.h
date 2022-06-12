@@ -6,34 +6,16 @@
 #include "emulator/ppu/gba/set.h"
 
 typedef struct {
-  bool bg_palette;
-  bool obj_palette;
+  bool palette[2u];
 } GbaPpuPaletteDirtyBits;
 
 typedef struct {
+  bool bitmap_mode_3;
+  bool bitmap_mode_4[2u];
+  bool bitmap_mode_5[2u];
   bool affine_tilemap[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
   bool scrolling_tilemap[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
-  bool tiles[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS];
-} GbaPpuTileModeDirtyBits;
-
-typedef struct {
-  bool overall;
-} GbaPpuMode3DirtyBits;
-
-typedef struct {
-  bool pages[2u];
-} GbaPpuMode4DirtyBits;
-
-typedef struct {
-  bool pages[2u];
-} GbaPpuMode5DirtyBits;
-
-typedef struct {
-  GbaPpuTileModeDirtyBits tile_mode;
-  GbaPpuMode3DirtyBits mode_3;
-  GbaPpuMode4DirtyBits mode_4;
-  GbaPpuMode5DirtyBits mode_5;
-  bool obj_tiles[2u];
+  bool tiles[6u];
 } GbaPpuVramDirtyBits;
 
 typedef struct {
@@ -49,22 +31,14 @@ typedef struct {
   bool bg_control[GBA_PPU_NUM_BACKGROUNDS];
   bool bg_mosaic;
   bool obj_mosaic;
-  bool win0;
-  bool win1;
-  bool winobj;
-  bool winout;
-} GbaPpuIoDirtyBits;
-
-typedef struct {
   bool window;
-} GbaPpuCompositeDirtyBits;
+} GbaPpuIoDirtyBits;
 
 typedef struct {
   GbaPpuPaletteDirtyBits palette;
   GbaPpuVramDirtyBits vram;
   GbaPpuOamDirtyBits oam;
   GbaPpuIoDirtyBits io;
-  GbaPpuCompositeDirtyBits composite;
 } GbaPpuDirtyBits;
 
 void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits);

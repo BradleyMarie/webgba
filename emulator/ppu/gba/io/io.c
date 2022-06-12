@@ -48,6 +48,7 @@
 
 typedef struct {
   GbaPpuRegisters *registers;
+  GbaPpuIoDirtyBits *dirty;
   MemoryContextFree free_routine;
   void *free_address;
 } GbaPpuIo;
@@ -156,12 +157,51 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
   io->registers->half_words[address >> 1u] = value;
 
   switch (address) {
+    case DISPCNT_OFFSET:
+      io->dirty->dispcnt = true;
+      io->dirty->window = true;
+      break;
+    case BG0CNT_OFFSET:
+      io->dirty->bg_control[0u] = true;
+      break;
+    case BG1CNT_OFFSET:
+      io->dirty->bg_control[1u] = true;
+      break;
+    case BG2CNT_OFFSET:
+      io->dirty->bg_control[2u] = true;
+      break;
+    case BG3CNT_OFFSET:
+      io->dirty->bg_control[3u] = true;
+      break;
+    case BG0HOFS_OFFSET:
+    case BG0VOFS_OFFSET:
+      io->dirty->bg_offset[0u] = true;
+      break;
+    case BG1HOFS_OFFSET:
+    case BG1VOFS_OFFSET:
+      io->dirty->bg_offset[1u] = true;
+      break;
+    case BG2HOFS_OFFSET:
+    case BG2VOFS_OFFSET:
+      io->dirty->bg_offset[2u] = true;
+      break;
+    case BG3HOFS_OFFSET:
+    case BG3VOFS_OFFSET:
+      io->dirty->bg_offset[3u] = true;
+      break;
+    case BG2PA_OFFSET:
+    case BG2PB_OFFSET:
+    case BG2PC_OFFSET:
+    case BG2PD_OFFSET:
+      io->dirty->bg_affine[0u] = true;
+      break;
     case BG2X_OFFSET:
     case BG2X_OFFSET_HI:
       io->registers->internal.affine[0u].row_start[0u] =
           io->registers->affine[0u].x;
       io->registers->internal.affine[0u].current[0u] =
           io->registers->affine[0u].x;
+      io->dirty->bg_affine[0u] = true;
       break;
     case BG2Y_OFFSET:
     case BG2Y_OFFSET_HI:
@@ -169,6 +209,13 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
           io->registers->affine[0u].y;
       io->registers->internal.affine[0u].current[1u] =
           io->registers->affine[0u].y;
+      io->dirty->bg_affine[0u] = true;
+      break;
+    case BG3PA_OFFSET:
+    case BG3PB_OFFSET:
+    case BG3PC_OFFSET:
+    case BG3PD_OFFSET:
+      io->dirty->bg_affine[1u] = true;
       break;
     case BG3X_OFFSET:
     case BG3X_OFFSET_HI:
@@ -176,6 +223,7 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
           io->registers->affine[1u].x;
       io->registers->internal.affine[1u].current[0u] =
           io->registers->affine[1u].x;
+      io->dirty->bg_affine[1u] = true;
       break;
     case BG3Y_OFFSET:
     case BG3Y_OFFSET_HI:
@@ -183,6 +231,24 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
           io->registers->affine[1u].y;
       io->registers->internal.affine[1u].current[1u] =
           io->registers->affine[1u].y;
+      io->dirty->bg_affine[1u] = true;
+      break;
+    case WIN0H_OFFSET:
+    case WIN1H_OFFSET:
+    case WIN0V_OFFSET:
+    case WIN1V_OFFSET:
+    case WININ_OFFSET:
+    case WINOUT_OFFSET:
+      io->dirty->window = true;
+      break;
+    case MOSAIC_OFFSET:
+      io->dirty->bg_mosaic = true;
+      io->dirty->obj_mosaic = true;
+      break;
+    case BLDCNT_OFFSET:
+    case BLDALPHA_OFFSET:
+    case BLDY_OFFSET:
+      io->dirty->blend = true;
       break;
   }
 
@@ -219,7 +285,7 @@ void GbaPpuIoFree(void *context) {
   free(io);
 }
 
-Memory *GbaPpuIoAllocate(GbaPpuRegisters *registers,
+Memory *GbaPpuIoAllocate(GbaPpuRegisters *registers, GbaPpuIoDirtyBits *dirty,
                          MemoryContextFree free_routine, void *free_address) {
   GbaPpuIo *io = (GbaPpuIo *)malloc(sizeof(GbaPpuIo));
   if (io == NULL) {
@@ -227,6 +293,7 @@ Memory *GbaPpuIoAllocate(GbaPpuRegisters *registers,
   }
 
   io->registers = registers;
+  io->dirty = dirty;
   io->free_routine = free_routine;
   io->free_address = free_address;
 

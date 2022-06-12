@@ -18,24 +18,24 @@ static void ExtractComponents(uint16_t value, GLfloat output[4u]) {
 bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
                           GbaPpuDirtyBits* dirty_bits) {
   bool result = false;
-  if (dirty_bits->palette.bg_palette) {
+  if (dirty_bits->palette.palette[0u]) {
     for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
       ExtractComponents(memory->palette.bg.large_palette[i],
                         &context->bg_staging[i][0]);
     }
 
-    dirty_bits->palette.bg_palette = false;
+    dirty_bits->palette.palette[0u] = false;
     context->bg_dirty = true;
     result = true;
   }
 
-  if (dirty_bits->palette.obj_palette) {
+  if (dirty_bits->palette.palette[1u]) {
     for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
       ExtractComponents(memory->palette.obj.large_palette[i],
                         &context->obj_staging[i][0]);
     }
 
-    dirty_bits->palette.obj_palette = false;
+    dirty_bits->palette.palette[1u] = false;
     context->obj_dirty = true;
     result = true;
   }

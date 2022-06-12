@@ -6,7 +6,7 @@
 
 bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
                        GbaPpuDirtyBits* dirty_bits) {
-  if (!dirty_bits->composite.window) {
+  if (!dirty_bits->io.window) {
     return false;
   }
 
@@ -122,7 +122,7 @@ bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
 
   context->staging.winobj_enabled = registers->dispcnt.winobj_enable;
 
-  dirty_bits->composite.window = false;
+  dirty_bits->io.window = false;
   context->dirty = true;
 
   return true;
