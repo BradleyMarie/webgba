@@ -7,7 +7,10 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint buffers[GBA_PPU_NUM_BACKGROUNDS];
+  struct {
+    GLfloat origins[GBA_PPU_NUM_BACKGROUNDS][4u];
+  } staging;
+  GLuint buffer;
 } OpenGlBgScrolling;
 
 void OpenGlBgScrollingReload(OpenGlBgScrolling* context,

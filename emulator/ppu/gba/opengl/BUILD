@@ -71,6 +71,7 @@ cc_library(
     hdrs = ["bg_scrolling.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],

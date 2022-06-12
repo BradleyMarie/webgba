@@ -15,19 +15,101 @@ struct _Screen {
   GLsizei framebuffer_width;
   GLsizei framebuffer_height;
   GLuint renderbuffer;
+  GLuint renderbuffer_texture;
   GLsizei renderbuffer_width;
   GLsizei renderbuffer_height;
-  GLuint staging;
-  GLsizei staging_width;
-  GLsizei staging_height;
   uint16_t *pixels;
   GLsizei pixels_width;
   GLsizei pixels_height;
-  GLuint program;
+  GLuint pixels_staging;
+  GLuint upscale_fbo;
+  GLuint upscale_pixels;
 };
 
+static GLuint ScreenCreateUpscaleFbo() {
+  GLuint program = glCreateProgram();
+
+  static const char *vertex_shader_source =
+      "#version 300 es\n"
+      "out vec2 texcoord;\n"
+      "void main() {\n"
+      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  texcoord.x = (x + 1.0) * 0.5;\n"
+      "  texcoord.y = (y + 1.0) * 0.5;\n"
+      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
+      "}\n";
+
+  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
+  glCompileShader(vertex_shader);
+  glAttachShader(program, vertex_shader);
+  glDeleteShader(vertex_shader);
+
+  static const char *fragment_shader_source =
+      "#version 300 es\n"
+      "uniform lowp sampler2D image;\n"
+      "in mediump vec2 texcoord;\n"
+      "out lowp vec4 color;"
+      "void main() {\n"
+      "  lowp vec4 texcolor = texture(image, texcoord);\n"
+      "  color = vec4(texcolor.rgb, 1.0);\n"
+      "}\n";
+
+  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
+  glCompileShader(fragment_shader);
+  glAttachShader(program, fragment_shader);
+  glDeleteShader(fragment_shader);
+
+  glLinkProgram(program);
+
+  return program;
+}
+
+static GLuint ScreenCreateUpscalePixels() {
+  GLuint program = glCreateProgram();
+
+  static const char *vertex_shader_source =
+      "#version 300 es\n"
+      "out vec2 texcoord;\n"
+      "void main() {\n"
+      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  texcoord.x = (x + 1.0) * 0.5;\n"
+      "  texcoord.y = (y - 1.0) * -0.5;\n"
+      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
+      "}\n";
+
+  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
+  glCompileShader(vertex_shader);
+  glAttachShader(program, vertex_shader);
+  glDeleteShader(vertex_shader);
+
+  static const char *fragment_shader_source =
+      "#version 300 es\n"
+      "uniform lowp sampler2D image;\n"
+      "in mediump vec2 texcoord;\n"
+      "out lowp vec4 color;"
+      "void main() {\n"
+      "  lowp vec4 texcolor = texture(image, texcoord);\n"
+      "  color = vec4(texcolor.bgr, 1.0);\n"
+      "}\n";
+
+  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
+  glCompileShader(fragment_shader);
+  glAttachShader(program, fragment_shader);
+  glDeleteShader(fragment_shader);
+
+  glLinkProgram(program);
+
+  return program;
+}
+
 static void ScreenAllocateRenderbuffer(Screen *screen) {
-  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer);
+  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer_texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -35,20 +117,25 @@ static void ScreenAllocateRenderbuffer(Screen *screen) {
   glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
                /*width=*/screen->renderbuffer_width,
                /*height=*/screen->renderbuffer_height,
-               /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_BYTE,
+               /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
                /*pixels=*/NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, screen->renderbuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         screen->renderbuffer_texture, /*level=*/0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 static void ScreenAllocateStaging(Screen *screen) {
-  glBindTexture(GL_TEXTURE_2D, screen->staging);
+  glBindTexture(GL_TEXTURE_2D, screen->pixels_staging);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
-               /*width=*/screen->staging_width,
-               /*height=*/screen->staging_height, /*border=*/0,
+               /*width=*/screen->pixels_width,
+               /*height=*/screen->pixels_height, /*border=*/0,
                /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/screen->pixels);
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -72,15 +159,20 @@ uint16_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
     return screen->pixels;
   }
 
-  screen->pixels = realloc(screen->pixels, sizeof(uint16_t) * width * height);
+  void *new_buffer = realloc(screen->pixels, sizeof(uint16_t) * width * height);
 
-  if (screen->pixels != NULL) {
-    screen->pixels_width = width;
-    screen->pixels_height = height;
+  if (new_buffer == NULL) {
+    return NULL;
   }
 
-  screen->staging_width = width;
-  screen->staging_height = height;
+  screen->pixels = new_buffer;
+
+  if (screen->pixels_width == 0u && screen->pixels_height == 0u) {
+    glGenTextures(1u, &screen->pixels_staging);
+  }
+
+  screen->pixels_width = width;
+  screen->pixels_height = height;
 
   ScreenAllocateStaging(screen);
 
@@ -104,7 +196,8 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
   }
 
   if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
-    glGenTextures(1u, &screen->renderbuffer);
+    glGenFramebuffers(1u, &screen->renderbuffer);
+    glGenTextures(1u, &screen->renderbuffer_texture);
   }
 
   screen->renderbuffer_width = width;
@@ -131,20 +224,25 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
     return;
   }
 
-  glUseProgram(screen->program);
+  GLuint program = (screen->render_mode == RENDER_MODE_SOFTWARE)
+                       ? screen->upscale_pixels
+                       : screen->upscale_fbo;
+  glUseProgram(program);
 
-  GLint texture_location = glGetUniformLocation(screen->program, "image");
+  GLint texture_location = glGetUniformLocation(program, "image");
   glUniform1i(texture_location, 0);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer);
 
   if (screen->render_mode == RENDER_MODE_SOFTWARE) {
+    glBindTexture(GL_TEXTURE_2D, screen->pixels_staging);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/screen->pixels_width,
                     /*height=*/screen->pixels_height,
                     /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                     /*pixels=*/screen->pixels);
+  } else {
+    glBindTexture(GL_TEXTURE_2D, screen->renderbuffer_texture);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, screen->framebuffer);
@@ -153,43 +251,8 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
 }
 
 void ScreenReloadContext(Screen *screen) {
-  screen->program = glCreateProgram();
-
-  static const char *vertex_shader_source =
-      "#version 300 es\n"
-      "out vec2 texcoord;\n"
-      "void main() {\n"
-      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
-      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
-      "  texcoord.x = (x + 1.0) * 0.5;\n"
-      "  texcoord.y = (y - 1.0) * -0.5;\n"
-      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
-      "}\n";
-
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
-  glAttachShader(screen->program, vertex_shader);
-  glDeleteShader(vertex_shader);
-
-  static const char *fragment_shader_source =
-      "#version 300 es\n"
-      "uniform lowp sampler2D image;\n"
-      "in mediump vec2 texcoord;\n"
-      "out lowp vec4 color;"
-      "void main() {\n"
-      "  lowp vec4 texcolor = texture(image, texcoord);\n"
-      "  color = vec4(texcolor.bgr, 1.0);\n"
-      "}\n";
-
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
-  glAttachShader(screen->program, fragment_shader);
-  glDeleteShader(fragment_shader);
-
-  glLinkProgram(screen->program);
-
+  screen->upscale_fbo = ScreenCreateUpscaleFbo();
+  screen->upscale_pixels = ScreenCreateUpscalePixels();
   screen->render_mode = RENDER_MODE_DIRECT;
 
   screen->framebuffer = 0u;
@@ -197,18 +260,23 @@ void ScreenReloadContext(Screen *screen) {
   screen->framebuffer_height = 0u;
 
   if (screen->renderbuffer_width != 0u && screen->renderbuffer_height != 0u) {
+    glGenFramebuffers(1u, &screen->renderbuffer);
+    glGenTextures(1u, &screen->renderbuffer_texture);
     ScreenAllocateRenderbuffer(screen);
   }
 
-  if (screen->staging_width != 0u && screen->renderbuffer_width != 0u) {
+  if (screen->pixels_width != 0u && screen->pixels_width != 0u) {
+    glGenTextures(1u, &screen->pixels_staging);
     ScreenAllocateStaging(screen);
   }
 }
 
 void ScreenFree(Screen *screen) {
-  glDeleteProgram(screen->program);
-  glDeleteTextures(1u, &screen->renderbuffer);
-  glDeleteTextures(1u, &screen->staging);
+  glDeleteProgram(screen->upscale_fbo);
+  glDeleteProgram(screen->upscale_pixels);
+  glDeleteFramebuffers(1, &screen->renderbuffer);
+  glDeleteTextures(1u, &screen->renderbuffer_texture);
+  glDeleteTextures(1u, &screen->pixels_staging);
   free(screen->pixels);
   free(screen);
 }

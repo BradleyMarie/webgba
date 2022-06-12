@@ -18,11 +18,6 @@ void GbaPpuOpenGlRendererSetScreen(GbaPpuOpenGlRenderer* renderer,
 void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
                                   uint8_t render_scale);
 
-void GbaPpuOpenGlRendererStartFrame(GbaPpuOpenGlRenderer* renderer,
-                                    const GbaPpuMemory* memory,
-                                    const GbaPpuRegisters* registers,
-                                    GbaPpuDirtyBits* dirty_bits);
-
 void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  const GbaPpuMemory* memory,
                                  const GbaPpuRegisters* registers,

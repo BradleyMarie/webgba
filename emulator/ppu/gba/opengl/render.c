@@ -114,21 +114,6 @@ void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
   renderer->next_render_scale = render_scale;
 }
 
-void GbaPpuOpenGlRendererStartFrame(GbaPpuOpenGlRenderer* renderer,
-                                    const GbaPpuMemory* memory,
-                                    const GbaPpuRegisters* registers,
-                                    GbaPpuDirtyBits* dirty_bits) {
-  if (!renderer->initialized) {
-    return;
-  }
-
-  // Hack to workaround missing dirty bits
-  GbaPpuDirtyBitsAllDirty(dirty_bits);
-
-  GbaPpuOpenGlRendererReload(renderer, memory, registers, dirty_bits);
-  renderer->flush_start = 0u;
-}
-
 void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  const GbaPpuMemory* memory,
                                  const GbaPpuRegisters* registers,
@@ -138,7 +123,11 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   }
 
   if (registers->vcount == 0u) {
+    // Hack to workaround missing dirty bits
+    GbaPpuDirtyBitsAllDirty(dirty_bits);
     GbaPpuDrawManagerStartFrame(&renderer->draw_manager, registers, dirty_bits);
+    GbaPpuOpenGlRendererReload(renderer, memory, registers, dirty_bits);
+    renderer->flush_start = 0u;
     return;
   }
 
@@ -154,10 +143,10 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
 
   glEnable(GL_SCISSOR_TEST);
 
-  glScissor(
-      0u, renderer->flush_start * renderer->render_scale,
-      GBA_SCREEN_WIDTH * renderer->render_scale,
-      (registers->vcount - renderer->flush_start) * renderer->render_scale);
+  glScissor(0u, renderer->flush_start * renderer->render_scale,
+            GBA_SCREEN_WIDTH * renderer->render_scale,
+            (registers->vcount - renderer->flush_start + 1u) *
+                renderer->render_scale);
 
   glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
              GBA_SCREEN_HEIGHT * renderer->render_scale);
