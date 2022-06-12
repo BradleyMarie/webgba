@@ -1,25 +1,16 @@
 #version 300 es
 
 // Inputs
-in highp vec2 bg0_scrolling; // In GBA screen space
-in highp vec2 bg1_scrolling; // In GBA screen space
-in highp vec2 bg2_scrolling; // In GBA screen space
-in highp vec2 bg3_scrolling; // In GBA screen space
 in highp vec2 bg2_affine; // In GBA screen space
 in highp vec2 bg3_affine; // In GBA screen space
 
 // Outputs
-out mediump vec2 scrolling_screencoord[4];
 out mediump vec2 affine_screencoord[2];
 out mediump vec2 screencoord;
 
 void main() {
   highp float x = -1.0 + float((gl_VertexID & 1) << 2);
   highp float y = -1.0 + float((gl_VertexID & 2) << 1);
-  scrolling_screencoord[0] = bg0_scrolling;
-  scrolling_screencoord[1] = bg1_scrolling;
-  scrolling_screencoord[2] = bg2_scrolling;
-  scrolling_screencoord[3] = bg3_scrolling;
   affine_screencoord[0] = bg2_affine;
   affine_screencoord[1] = bg3_affine;
   screencoord.x = (x + 1.0) * 120.0;

@@ -11,7 +11,6 @@
 #define PALETTE_BITMAP_BACKGROUND 0
 
 // Inputs
-in mediump vec2 scrolling_screencoord[4];
 in mediump vec2 affine_screencoord[2];
 in mediump vec2 screencoord;
 
@@ -74,6 +73,11 @@ struct Background {
 };
 
 layout(std140) uniform Backgrounds { Background backgrounds[4]; };
+
+// Background Coordinates
+layout(std140) uniform ScrollingBackgrounds { 
+  mediump vec2 scrolling_origins[4];
+};
 
 // Window
 struct Window {
@@ -366,7 +370,8 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
-  mediump ivec2 tilemap_pixel = ivec2(floor(scrolling_screencoord[bg]));
+  mediump ivec2 tilemap_pixel =
+    ivec2(floor(screencoord + scrolling_origins[bg]));
   tilemap_pixel &= backgrounds[bg].size - 1;
   tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
 
