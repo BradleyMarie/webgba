@@ -15,7 +15,7 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
 
   context->page = registers->dispcnt.page_select;
 
-  if (!dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select]) {
+  if (!dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select]) {
     return false;
   }
 
@@ -27,7 +27,7 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
     }
   }
 
-  dirty_bits->vram.mode_4.pages[registers->dispcnt.page_select] = false;
+  dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select] = false;
   context->dirty = true;
 
   return true;

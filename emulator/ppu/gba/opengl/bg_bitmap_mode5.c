@@ -17,7 +17,7 @@ bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
   context->enabled = true;
   context->page = registers->dispcnt.page_select;
 
-  if (!dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select]) {
+  if (!dirty_bits->vram.bitmap_mode_5[registers->dispcnt.page_select]) {
     return false;
   }
 
@@ -30,7 +30,7 @@ bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
     }
   }
 
-  dirty_bits->vram.mode_5.pages[registers->dispcnt.page_select] = false;
+  dirty_bits->vram.bitmap_mode_5[registers->dispcnt.page_select] = false;
   context->dirty = true;
 
   return true;

@@ -8,6 +8,7 @@ cc_library(
     hdrs = ["palette.h"],
     deps = [
         "//emulator/memory",
+        "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
     ],
 )

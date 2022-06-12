@@ -16,7 +16,7 @@ bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
 
   context->enabled = true;
 
-  if (!dirty_bits->vram.mode_3.overall) {
+  if (!dirty_bits->vram.bitmap_mode_3) {
     return false;
   }
 
@@ -27,7 +27,7 @@ bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
     }
   }
 
-  dirty_bits->vram.mode_3.overall = false;
+  dirty_bits->vram.bitmap_mode_3 = false;
   context->dirty = true;
 
   return true;

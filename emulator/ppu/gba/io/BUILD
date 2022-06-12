@@ -7,6 +7,7 @@ cc_library(
     srcs = ["io.c"],
     hdrs = ["io.h"],
     deps = [
+        "//emulator/ppu/gba:dirty",
         "//emulator/memory",
         "//emulator/ppu/gba:registers",
     ],

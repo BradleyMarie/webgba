@@ -10,19 +10,19 @@ bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
                           GbaPpuDirtyBits* dirty_bits) {
   bool result = false;
   for (uint32_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
-    if (dirty_bits->vram.tile_mode.affine_tilemap[i] &&
+    if (dirty_bits->vram.affine_tilemap[i] &&
         (registers->dispcnt.mode == 1u || registers->dispcnt.mode == 2u)) {
       for (uint16_t j = 0u; j < GBA_AFFINE_TILE_MAP_INDICES_PER_BLOCK; j++) {
         context->staging_affine[i][j] =
             memory->vram.mode_012.bg.tile_map.blocks[i].indices[j];
       }
 
-      dirty_bits->vram.tile_mode.affine_tilemap[i] = false;
+      dirty_bits->vram.affine_tilemap[i] = false;
       context->affine_dirty[i] = true;
       result = true;
     }
 
-    if (dirty_bits->vram.tile_mode.scrolling_tilemap[i] &&
+    if (dirty_bits->vram.scrolling_tilemap[i] &&
         registers->dispcnt.mode <= 1u) {
       for (uint8_t y = 0u; y < GBA_TILE_MAP_BLOCK_1D_SIZE; y++) {
         for (uint8_t x = 0u; x < GBA_TILE_MAP_BLOCK_1D_SIZE; x++) {
@@ -55,7 +55,7 @@ bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
         }
       }
 
-      dirty_bits->vram.tile_mode.scrolling_tilemap[i] = false;
+      dirty_bits->vram.scrolling_tilemap[i] = false;
       context->scrolling_dirty[i] = true;
       result = true;
     }

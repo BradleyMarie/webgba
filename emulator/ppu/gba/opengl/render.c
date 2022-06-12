@@ -103,11 +103,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     return;
   }
 
-  // Hack to workaround missing dirty bits
-  if (registers->vcount == 0u) {
-    GbaPpuDirtyBitsAllDirty(dirty_bits);
-  }
-
   bool staged_data =
       GbaPpuOpenGlRendererStage(renderer, memory, registers, dirty_bits);
   renderer->flush_required |= staged_data;

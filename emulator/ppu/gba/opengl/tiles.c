@@ -12,7 +12,7 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
   // Backgrounds
   bool result = false;
   for (uint32_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS; i++) {
-    if (!dirty_bits->vram.tile_mode.tiles[i] || registers->dispcnt.mode >= 3) {
+    if (!dirty_bits->vram.tiles[i] || registers->dispcnt.mode >= 3) {
       continue;
     }
 
@@ -39,7 +39,7 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
       }
     }
 
-    dirty_bits->vram.tile_mode.tiles[i] = false;
+    dirty_bits->vram.tiles[i] = false;
     context->bg_dirty[i] = true;
     result = true;
   }
@@ -47,7 +47,7 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
   // Objects
   uint8_t starting_tile = (registers->dispcnt.mode < 3) ? 0u : 1u;
   for (uint32_t i = starting_tile; i < 2; i++) {
-    if (!dirty_bits->vram.obj_tiles[i]) {
+    if (!dirty_bits->vram.tiles[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS + i]) {
       continue;
     }
 
@@ -99,7 +99,8 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
       }
     }
 
-    dirty_bits->vram.obj_tiles[i] = false;
+    dirty_bits->vram.tiles[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS + i] =
+        false;
     context->obj_dirty[i] = true;
     result = true;
   }

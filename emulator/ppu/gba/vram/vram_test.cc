@@ -12,7 +12,7 @@ class VRamTest : public testing::Test {
  public:
   void SetUp() override {
     memset(&vram_memory_, 0, sizeof(GbaPpuVideoMemory));
-    memory_ = VRamAllocate(&vram_memory_, FreeRoutine, nullptr);
+    memory_ = VRamAllocate(&vram_memory_, &dirty_, FreeRoutine, nullptr);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -22,6 +22,7 @@ class VRamTest : public testing::Test {
 
  protected:
   GbaPpuVideoMemory vram_memory_;
+  GbaPpuVramDirtyBits dirty_;
   Memory* memory_;
 };
 
