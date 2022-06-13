@@ -129,6 +129,8 @@ struct BlendUnit {
 
 BlendUnit CreateBlendUnit() {
   BlendUnit result;
+  result.color[0] = vec3(0.0, 0.0, 0.0);
+  result.color[1] = vec3(0.0, 0.0, 0.0);
   result.priority[0] = 6u;
   result.priority[1] = 6u;
   result.top[0] = false;
