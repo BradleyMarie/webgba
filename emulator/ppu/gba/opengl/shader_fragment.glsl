@@ -11,7 +11,6 @@
 #define PALETTE_BITMAP_BACKGROUND 0
 
 // Inputs
-in mediump vec2 affine_screencoord[2];
 in mediump vec2 screencoord;
 
 // Outputs
@@ -77,6 +76,12 @@ layout(std140) uniform Backgrounds { Background backgrounds[4]; };
 // Background Coordinates
 layout(std140) uniform ScrollingBackgrounds { 
   mediump vec2 scrolling_origins[4];
+};
+
+layout(std140) uniform AffineBackgrounds {
+  mediump vec2 affine_origins[2];
+  mediump vec2 affine_values[2];
+  mediump mat2 affine_transformations[2];
 };
 
 // Window
@@ -426,7 +431,9 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
-  mediump ivec2 tilemap_pixel = ivec2(floor(affine_screencoord[bg - 2u]));
+  mediump vec2 shift_amount = screencoord - affine_origins[bg - 2u];
+  mediump ivec2 tilemap_pixel = ivec2(floor(
+      affine_values[bg - 2u] + affine_transformations[bg - 2u] * shift_amount));
 
   if (!backgrounds[bg].wraparound) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
@@ -466,7 +473,9 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit) {
-  mediump ivec2 lookup = ivec2(floor(affine_screencoord[0]));
+  mediump vec2 shift_amount = screencoord - affine_origins[0];
+  mediump ivec2 lookup = ivec2(floor(
+      affine_values[0] + affine_transformations[0] * shift_amount));
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;
@@ -477,7 +486,9 @@ BlendUnit BitmapBackground(BlendUnit blend_unit) {
 }
 
 BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
-  mediump ivec2 lookup = ivec2(floor(affine_screencoord[0]));
+  mediump vec2 shift_amount = screencoord - affine_origins[0];
+  mediump ivec2 lookup = ivec2(floor(
+      affine_values[0] + affine_transformations[0] * shift_amount));
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;

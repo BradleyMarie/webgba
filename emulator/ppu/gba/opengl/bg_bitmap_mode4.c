@@ -1,8 +1,5 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 
-#include <assert.h>
-#include <string.h>
-
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,

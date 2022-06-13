@@ -8,6 +8,7 @@ cc_library(
     hdrs = ["bg_affine.h"],
     linkopts = ["-lGL"],
     deps = [
+        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
