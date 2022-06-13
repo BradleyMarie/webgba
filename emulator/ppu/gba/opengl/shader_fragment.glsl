@@ -84,6 +84,8 @@ layout(std140) uniform AffineBackgrounds {
   mediump mat2 affine_transformations[2];
 };
 
+uniform mediump float affine_offset;
+
 // Window
 struct Window {
   bool obj;
@@ -433,7 +435,8 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
-  mediump vec2 shift_amount = screencoord - affine_origins[bg - 2u];
+  mediump vec2 shift_amount =
+      screencoord - affine_origins[bg - 2u] - affine_offset;
   mediump ivec2 tilemap_pixel = ivec2(floor(
       affine_values[bg - 2u] + affine_transformations[bg - 2u] * shift_amount));
 

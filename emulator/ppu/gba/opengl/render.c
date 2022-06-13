@@ -99,7 +99,7 @@ static void GbaPpuOpenGlRendererRender(const GbaPpuOpenGlRenderer* renderer,
     GLuint program = OpenGlProgramsGet(&renderer->programs);
     glUseProgram(program);
 
-    OpenGlBgAffineBind(&renderer->affine, program);
+    OpenGlBgAffineBind(&renderer->affine, renderer->render_scale, program);
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);

@@ -20,7 +20,8 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
                          const GbaPpuRegisters* registers,
                          GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program);
+void OpenGlBgAffineBind(const OpenGlBgAffine* context, uint8_t render_scale,
+                        GLuint program);
 
 void OpenGlBgAffineReload(OpenGlBgAffine* context);
 
