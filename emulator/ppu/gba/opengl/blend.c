@@ -1,7 +1,6 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 
 #include <math.h>
-#include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 

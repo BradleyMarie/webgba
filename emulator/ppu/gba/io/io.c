@@ -160,6 +160,7 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
     case DISPCNT_OFFSET:
       io->dirty->dispcnt = true;
       io->dirty->window = true;
+      io->dirty->blend = true;
       break;
     case BG0CNT_OFFSET:
       io->dirty->bg_control[0u] = true;
@@ -240,6 +241,7 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
     case WININ_OFFSET:
     case WINOUT_OFFSET:
       io->dirty->window = true;
+      io->dirty->blend = true;
       break;
     case MOSAIC_OFFSET:
       io->dirty->bg_mosaic = true;

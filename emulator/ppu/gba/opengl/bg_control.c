@@ -1,7 +1,5 @@
 #include "emulator/ppu/gba/opengl/bg_control.h"
 
-#include <string.h>
-
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlBgControlStage(OpenGlBgControl* context,

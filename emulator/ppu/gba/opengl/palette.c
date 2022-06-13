@@ -1,7 +1,5 @@
 #include "emulator/ppu/gba/opengl/palette.h"
 
-#include <string.h>
-
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 static void ExtractComponents(uint16_t value, GLfloat output[4u]) {

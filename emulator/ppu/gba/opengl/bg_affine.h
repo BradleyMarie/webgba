@@ -7,14 +7,18 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat staging[GBA_PPU_NUM_AFFINE_BACKGROUNDS][6u];
-  GLuint buffers[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-  bool dirty[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
+  struct {
+    GLfloat origins[2u][4u];
+    GLfloat values[2u][4u];
+    GLfloat transformations[2u][2u][4u];
+  } staging;
+  GLuint buffer;
+  bool dirty;
 } OpenGlBgAffine;
 
 bool OpenGlBgAffineStage(OpenGlBgAffine* context,
-                          const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits);
+                         const GbaPpuRegisters* registers,
+                         GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program);
 

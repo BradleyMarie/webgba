@@ -1,7 +1,5 @@
 #include "emulator/ppu/gba/opengl/window.h"
 
-#include <string.h>
-
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,

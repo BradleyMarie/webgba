@@ -72,7 +72,6 @@ void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context) {
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
                GL_DYNAMIC_DRAW);
-
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
