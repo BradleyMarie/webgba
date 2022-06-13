@@ -49,13 +49,17 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
   return result;
 }
 
-void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program) {
+void OpenGlBgAffineBind(const OpenGlBgAffine* context, uint8_t render_scale,
+                        GLuint program) {
   GLint affine_backgrounds =
       glGetUniformBlockIndex(program, "AffineBackgrounds");
   glUniformBlockBinding(program, affine_backgrounds, AFFINE_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_BUFFER, context->buffer);
+
+  GLint affine_offset = glGetUniformLocation(program, "affine_offset");
+  glUniform1f(affine_offset, 1.0 / (1.0 + (GLfloat)render_scale));
 }
 
 void OpenGlBgAffineReload(OpenGlBgAffine* context) {
