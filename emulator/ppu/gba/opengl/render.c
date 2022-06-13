@@ -36,6 +36,7 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlWindow window;
   uint8_t flush_start;
   bool flush_required;
+  bool next_frame_flush_required;
   uint8_t next_render_scale;
   uint8_t render_scale;
   Screen* screen;
@@ -88,11 +89,15 @@ GbaPpuOpenGlRenderer* GbaPpuOpenGlRendererAllocate() {
 void GbaPpuOpenGlRendererSetScreen(GbaPpuOpenGlRenderer* renderer,
                                    Screen* screen) {
   renderer->screen = screen;
+  renderer->flush_required = true;
+  renderer->next_frame_flush_required = true;
 }
 
 void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
                                   uint8_t render_scale) {
   renderer->next_render_scale = render_scale;
+  renderer->flush_required = true;
+  renderer->next_frame_flush_required = true;
 }
 
 void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
@@ -106,6 +111,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   bool staged_data =
       GbaPpuOpenGlRendererStage(renderer, memory, registers, dirty_bits);
   renderer->flush_required |= staged_data;
+  renderer->next_frame_flush_required |= staged_data;
 
   if (registers->vcount != 0u) {
     GLuint framebuffer = ScreenGetRenderBuffer(
@@ -121,10 +127,11 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
 
     glEnable(GL_SCISSOR_TEST);
 
-    glScissor(0u, renderer->flush_start * renderer->render_scale,
+    GLint start_row = GBA_SCREEN_HEIGHT - registers->vcount - 1;
+    GLint num_rows = registers->vcount - renderer->flush_start + 1;
+    glScissor(0u, start_row * renderer->render_scale,
               GBA_SCREEN_WIDTH * renderer->render_scale,
-              (registers->vcount - renderer->flush_start + 1u) *
-                  renderer->render_scale);
+              num_rows * renderer->render_scale);
 
     glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
                GBA_SCREEN_HEIGHT * renderer->render_scale);
@@ -155,7 +162,8 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     glDisable(GL_SCISSOR_TEST);
 
     if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
-      renderer->flush_required = false;
+      renderer->flush_required = renderer->next_frame_flush_required;
+      renderer->next_frame_flush_required = false;
     }
   }
 
@@ -192,6 +200,8 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBlendReloadContext(&renderer->blend);
 
   renderer->initialized = true;
+  renderer->flush_required = true;
+  renderer->next_frame_flush_required = true;
 }
 
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
