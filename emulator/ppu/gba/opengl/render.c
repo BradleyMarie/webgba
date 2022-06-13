@@ -74,6 +74,50 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   return result;
 }
 
+static void GbaPpuOpenGlRendererRender(const GbaPpuOpenGlRenderer* renderer,
+                                       GLuint framebuffer, GLint start,
+                                       GLint end) {
+  assert(start != end);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+  glEnable(GL_SCISSOR_TEST);
+
+  GLint gl_start_row = GBA_SCREEN_HEIGHT - end;
+  GLint num_rows = end - start;
+  glScissor(0u, gl_start_row * renderer->render_scale,
+            GBA_SCREEN_WIDTH * renderer->render_scale,
+            num_rows * renderer->render_scale);
+
+  glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
+             GBA_SCREEN_HEIGHT * renderer->render_scale);
+
+  if (renderer->programs.blank) {
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+  } else {
+    GLuint program = OpenGlProgramsGet(&renderer->programs);
+    glUseProgram(program);
+
+    OpenGlBgAffineBind(&renderer->affine, program);
+    OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
+    OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
+    OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
+    OpenGlBgControlBind(&renderer->bg_control, program);
+    OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
+    OpenGlBlendBind(&renderer->blend, program);
+    OpenGlBgPaletteBind(&renderer->bg_palette, program);
+    OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
+    OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
+    OpenGlTilesBind(&renderer->tiles, program);
+    OpenGlWindowBind(&renderer->window, program);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3u);
+  }
+
+  glDisable(GL_SCISSOR_TEST);
+}
+
 GbaPpuOpenGlRenderer* GbaPpuOpenGlRendererAllocate() {
   GbaPpuOpenGlRenderer* renderer = calloc(1u, sizeof(GbaPpuOpenGlRenderer));
 
@@ -113,75 +157,47 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   renderer->flush_required |= staged_data;
   renderer->next_frame_flush_required |= staged_data;
 
-  if (registers->vcount != 0u) {
+  if (registers->vcount != 0u && staged_data) {
     GLuint framebuffer = ScreenGetRenderBuffer(
         renderer->screen, GBA_SCREEN_WIDTH * renderer->render_scale,
         GBA_SCREEN_HEIGHT * renderer->render_scale);
 
-    if (!staged_data && (registers->vcount != GBA_SCREEN_HEIGHT - 1 ||
-                         (!renderer->flush_required && framebuffer != 0))) {
-      return;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-    glEnable(GL_SCISSOR_TEST);
-
-    GLint start_row = GBA_SCREEN_HEIGHT - registers->vcount - 1;
-    GLint num_rows = registers->vcount - renderer->flush_start + 1;
-    glScissor(0u, start_row * renderer->render_scale,
-              GBA_SCREEN_WIDTH * renderer->render_scale,
-              num_rows * renderer->render_scale);
-
-    glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
-               GBA_SCREEN_HEIGHT * renderer->render_scale);
-
-    if (renderer->programs.blank) {
-      glClearColor(0.0, 0.0, 0.0, 1.0);
-      glClear(GL_COLOR_BUFFER_BIT);
-    } else {
-      GLuint program = OpenGlProgramsGet(&renderer->programs);
-      glUseProgram(program);
-
-      OpenGlBgAffineBind(&renderer->affine, program);
-      OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
-      OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
-      OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
-      OpenGlBgControlBind(&renderer->bg_control, program);
-      OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
-      OpenGlBlendBind(&renderer->blend, program);
-      OpenGlBgPaletteBind(&renderer->bg_palette, program);
-      OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
-      OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
-      OpenGlTilesBind(&renderer->tiles, program);
-      OpenGlWindowBind(&renderer->window, program);
-
-      glDrawArrays(GL_TRIANGLES, 0, 3u);
-    }
-
-    glDisable(GL_SCISSOR_TEST);
-
-    if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
-      renderer->flush_required = renderer->next_frame_flush_required;
-      renderer->next_frame_flush_required = false;
-    }
+    GbaPpuOpenGlRendererRender(renderer, framebuffer, renderer->flush_start,
+                               registers->vcount);
+    renderer->flush_start = registers->vcount;
+  } else if (registers->vcount == 0u) {
+    renderer->flush_start = 0u;
   }
 
-  OpenGlProgramsReload(&renderer->programs);
-  OpenGlBgAffineReload(&renderer->affine);
-  OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
-  OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
-  OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
-  OpenGlBgControlReload(&renderer->bg_control);
-  OpenGlBgScrollingReload(&renderer->bg_scrolling);
-  OpenGlBlendReload(&renderer->blend);
-  OpenGlBgPaletteReload(&renderer->bg_palette);
-  OpenGlBgTilemapReload(&renderer->bg_tilemap);
-  OpenGlObjectAttributesReload(&renderer->obj_attributes);
-  OpenGlTilesReload(&renderer->tiles);
-  OpenGlWindowReload(&renderer->window);
+  if (staged_data) {
+    OpenGlProgramsReload(&renderer->programs);
+    OpenGlBgAffineReload(&renderer->affine);
+    OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
+    OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
+    OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
+    OpenGlBgControlReload(&renderer->bg_control);
+    OpenGlBgScrollingReload(&renderer->bg_scrolling);
+    OpenGlBlendReload(&renderer->blend);
+    OpenGlBgPaletteReload(&renderer->bg_palette);
+    OpenGlBgTilemapReload(&renderer->bg_tilemap);
+    OpenGlObjectAttributesReload(&renderer->obj_attributes);
+    OpenGlTilesReload(&renderer->tiles);
+    OpenGlWindowReload(&renderer->window);
+  }
 
-  renderer->flush_start = registers->vcount;
+  if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
+    GLuint framebuffer = ScreenGetRenderBuffer(
+        renderer->screen, GBA_SCREEN_WIDTH * renderer->render_scale,
+        GBA_SCREEN_HEIGHT * renderer->render_scale);
+
+    if (renderer->flush_required || framebuffer == 0u) {
+      GbaPpuOpenGlRendererRender(renderer, framebuffer, renderer->flush_start,
+                                 GBA_SCREEN_HEIGHT);
+    }
+
+    renderer->flush_required = renderer->next_frame_flush_required;
+    renderer->next_frame_flush_required = false;
+  }
 }
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
