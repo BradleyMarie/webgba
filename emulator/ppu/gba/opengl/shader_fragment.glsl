@@ -11,10 +11,14 @@
 #define PALETTE_BITMAP_BACKGROUND 0
 
 // Inputs
+in mediump vec2 samplecoord;
 in mediump vec2 screencoord;
 
 // Outputs
 out lowp vec4 frag_color;
+
+// Uniforms
+uniform highp float render_scale;
 
 // Palettes
 layout(std140) uniform BackgroundPalette { lowp vec4 background_palette[256]; };
@@ -78,13 +82,14 @@ layout(std140) uniform ScrollingBackgrounds {
   mediump vec2 scrolling_origins[4];
 };
 
-layout(std140) uniform AffineBackgrounds {
-  mediump vec2 affine_origins[2];
-  mediump vec2 affine_values[2];
-  mediump mat2 affine_transformations[2];
+struct AffineRow {
+  mediump vec2 bases[2];
+  mediump vec2 scale[2];
 };
 
-uniform mediump float affine_offset;
+layout(std140) uniform AffineBackgrounds {
+  AffineRow affine_rows[161];
+};
 
 // Window
 struct Window {
@@ -434,12 +439,20 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   return BlendUnitAddBackground(blend_unit, bg, background_palette[color].rgb);
 }
 
-BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
-  mediump vec2 shift_amount =
-      screencoord - affine_origins[bg - 2u] - affine_offset;
-  mediump ivec2 tilemap_pixel = ivec2(floor(
-      affine_values[bg - 2u] + affine_transformations[bg - 2u] * shift_amount));
+mediump ivec2 AffinePixel(lowp uint bg) {
+  mediump vec2 pixel = floor(samplecoord) / render_scale;
+  mediump float interp = mod(pixel.y, 1.0);
+  lowp uint row = uint(pixel.y);
+  mediump vec2 base = mix(affine_rows[row].bases[bg - 2u],
+                          affine_rows[row + 1u].bases[bg - 2u], interp);
+  mediump vec2 scale =
+      mix(affine_rows[row].scale[bg - 2u],
+          affine_rows[row + 1u].scale[bg - 2u], interp);
+  return ivec2(floor(base + scale * pixel.x));
+}
 
+BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
+  mediump ivec2 tilemap_pixel = AffinePixel(bg);
   if (!backgrounds[bg].wraparound) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
         any(greaterThanEqual(tilemap_pixel, backgrounds[bg].size))) {
@@ -478,9 +491,7 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit) {
-  mediump vec2 shift_amount = screencoord - affine_origins[0];
-  mediump ivec2 lookup = ivec2(floor(
-      affine_values[0] + affine_transformations[0] * shift_amount));
+  mediump ivec2 lookup = AffinePixel(2u);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;
@@ -491,9 +502,7 @@ BlendUnit BitmapBackground(BlendUnit blend_unit) {
 }
 
 BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
-  mediump vec2 shift_amount = screencoord - affine_origins[0];
-  mediump ivec2 lookup = ivec2(floor(
-      affine_values[0] + affine_transformations[0] * shift_amount));
+  mediump ivec2 lookup = AffinePixel(2u);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, backgrounds[2].size))) {
     return blend_unit;

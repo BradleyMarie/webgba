@@ -74,7 +74,7 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   return result;
 }
 
-static void GbaPpuOpenGlRendererRender(const GbaPpuOpenGlRenderer* renderer,
+static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
                                        GLuint framebuffer, GLint start,
                                        GLint end) {
   assert(start != end);
@@ -99,7 +99,7 @@ static void GbaPpuOpenGlRendererRender(const GbaPpuOpenGlRenderer* renderer,
     GLuint program = OpenGlProgramsGet(&renderer->programs);
     glUseProgram(program);
 
-    OpenGlBgAffineBind(&renderer->affine, renderer->render_scale, program);
+    OpenGlBgAffineBind(&renderer->affine, start, end, program);
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
@@ -111,6 +111,9 @@ static void GbaPpuOpenGlRendererRender(const GbaPpuOpenGlRenderer* renderer,
     OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
     OpenGlTilesBind(&renderer->tiles, program);
     OpenGlWindowBind(&renderer->window, program);
+
+    GLint render_scale = glGetUniformLocation(program, "render_scale");
+    glUniform1f(render_scale, renderer->render_scale);
 
     glDrawArrays(GL_TRIANGLES, 0, 3u);
   }
@@ -171,7 +174,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
 
   if (staged_data) {
     OpenGlProgramsReload(&renderer->programs);
-    OpenGlBgAffineReload(&renderer->affine);
     OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);

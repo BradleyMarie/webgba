@@ -8,9 +8,10 @@
 
 typedef struct {
   struct {
-    GLfloat origins[2u][4u];
-    GLfloat values[2u][4u];
-    GLfloat transformations[2u][2u][4u];
+    struct {
+      GLfloat bases[2u][4u];
+      GLfloat scale[2u][4u];
+    } rows[161u];
   } staging;
   GLuint buffer;
   bool dirty;
@@ -20,10 +21,8 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
                          const GbaPpuRegisters* registers,
                          GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgAffineBind(const OpenGlBgAffine* context, uint8_t render_scale,
+void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
                         GLuint program);
-
-void OpenGlBgAffineReload(OpenGlBgAffine* context);
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 
