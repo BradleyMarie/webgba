@@ -115,10 +115,6 @@ static void InitializeMode0(OpenGlPrograms* context, GLuint vertex_shader) {
             glCompileShader(fragment_shader);
             glAttachShader(context->mode0[obj][bg0][bg1][bg2][bg3],
                            fragment_shader);
-
-            GLchar errorLog[500u];
-            glGetShaderInfoLog(fragment_shader, 500, NULL, errorLog);
-            printf("%s\n", errorLog);
             glDeleteShader(fragment_shader);
 
             glLinkProgram(context->mode0[obj][bg0][bg1][bg2][bg3]);

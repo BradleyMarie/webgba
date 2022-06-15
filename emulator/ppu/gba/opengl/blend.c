@@ -4,8 +4,21 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-static GLfloat FixedToFloat(uint8_t fixed) {
-  return fmin((double)fixed / 16.0, 1.0);
+static void OpenGlBlendSetGLfloat(OpenGlBlend* context, unsigned char fixed,
+                                  GLfloat* result) {
+  GLfloat value = fmin((double)fixed / 16.0, 1.0);
+  if (*result != value) {
+    context->dirty = true;
+  }
+  *result = value;
+}
+
+static void OpenGlBlendSetGLuint(OpenGlBlend* context, unsigned char value,
+                                 GLuint* result) {
+  if (*result != value) {
+    context->dirty = true;
+  }
+  *result = value;
 }
 
 bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
@@ -23,27 +36,42 @@ bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
     return false;
   }
 
-  context->staging.blend_mode = registers->bldcnt.mode;
-  context->staging.blend_eva = FixedToFloat(registers->bldalpha.eva);
-  context->staging.blend_evb = FixedToFloat(registers->bldalpha.evb);
-  context->staging.blend_evy = FixedToFloat(registers->bldy.evy);
-  context->staging.obj_top = registers->bldcnt.a_obj;
-  context->staging.obj_bottom = registers->bldcnt.b_obj;
-  context->staging.bg_top[0u][0u] = registers->bldcnt.a_bg0;
-  context->staging.bg_bottom[0u][0u] = registers->bldcnt.b_bg0;
-  context->staging.bg_top[1u][0u] = registers->bldcnt.a_bg1;
-  context->staging.bg_bottom[1u][0u] = registers->bldcnt.b_bg1;
-  context->staging.bg_top[2u][0u] = registers->bldcnt.a_bg2;
-  context->staging.bg_bottom[2u][0u] = registers->bldcnt.b_bg2;
-  context->staging.bg_top[3u][0u] = registers->bldcnt.a_bg3;
-  context->staging.bg_bottom[3u][0u] = registers->bldcnt.b_bg3;
-  context->staging.bd_top = registers->bldcnt.a_bd;
-  context->staging.bd_bottom = registers->bldcnt.b_bd;
+  OpenGlBlendSetGLuint(context, registers->bldcnt.mode,
+                       &context->staging.blend_mode);
+  OpenGlBlendSetGLfloat(context, registers->bldalpha.eva,
+                        &context->staging.blend_eva);
+  OpenGlBlendSetGLfloat(context, registers->bldalpha.evb,
+                        &context->staging.blend_evb);
+  OpenGlBlendSetGLfloat(context, registers->bldy.evy,
+                        &context->staging.blend_evy);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_obj,
+                       &context->staging.obj_top);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_obj,
+                       &context->staging.obj_bottom);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_bg0,
+                       &context->staging.bg_top[0u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_bg0,
+                       &context->staging.bg_bottom[0u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_bg1,
+                       &context->staging.bg_top[1u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_bg1,
+                       &context->staging.bg_bottom[1u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_bg2,
+                       &context->staging.bg_top[2u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_bg2,
+                       &context->staging.bg_bottom[2u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_bg3,
+                       &context->staging.bg_top[3u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_bg3,
+                       &context->staging.bg_bottom[3u][0u]);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.a_bd,
+                       &context->staging.bd_top);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.b_bd,
+                       &context->staging.bd_bottom);
 
   dirty_bits->io.blend = false;
-  context->dirty = true;
 
-  return true;
+  return context->dirty;
 }
 
 void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {

@@ -15,23 +15,14 @@ static void OpenGlBgAffineLoadFixed(OpenGlBgAffine* context, int32_t value,
   OpenGlBgAffineLoadFloat(context, (double)value / 256.0, output);
 }
 
-bool OpenGlBgAffineStage(OpenGlBgAffine* context,
-                         const GbaPpuRegisters* registers,
-                         GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits) {
   if (registers->dispcnt.mode == 0u) {
     return false;
   }
 
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
-    if (i == 0 && !registers->dispcnt.bg2_enable) {
-      continue;
-    }
-
-    if (i == 1 &&
-        (!registers->dispcnt.bg3_enable || registers->dispcnt.mode != 2u)) {
-      continue;
-    }
-
     OpenGlBgAffineLoadFixed(
         context, registers->internal.affine[i].current[0u],
         &context->staging.rows[registers->vcount].bases[i][0u]);
@@ -79,7 +70,7 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
     }
   }
 
-  return false;
+  return context->dirty;
 }
 
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
@@ -93,10 +84,10 @@ void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
 
   if (context->dirty) {
     glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-    glBufferSubData(
-        GL_UNIFORM_BUFFER, /*offset=*/0,
-        /*size=*/(sizeof(context->staging) / 161u) * (end - start + 1u),
-        /*data=*/&context->staging.rows[start]);
+    glBufferSubData(GL_UNIFORM_BUFFER,
+                    /*offset=*/sizeof(OpenGlBgAffineRow) * start,
+                    /*size=*/sizeof(OpenGlBgAffineRow) * (end - start + 1u),
+                    /*data=*/&context->staging.rows[start]);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     context->dirty = false;
   }

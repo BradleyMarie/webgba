@@ -49,9 +49,7 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
         tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
                      [registers->bgcnt[i].size][1u];
     context->staging[i].priority = registers->bgcnt[i].priority;
-    context->staging[i].tilemap_base =
-        registers->bgcnt[i].tile_map_base_block * GBA_TILE_MAP_BLOCK_1D_SIZE *
-        GBA_TILE_MAP_BLOCK_1D_SIZE * sizeof(TileMapEntry);
+    context->staging[i].tilemap_base = registers->bgcnt[i].tile_map_base_block;
     context->staging[i].tile_base = registers->bgcnt[i].tile_base_block;
     context->staging[i].large_palette = registers->bgcnt[i].large_palette;
     context->staging[i].wraparound = registers->bgcnt[i].wraparound;
