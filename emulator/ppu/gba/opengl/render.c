@@ -43,6 +43,17 @@ struct _GbaPpuOpenGlRenderer {
   bool initialized;
 };
 
+static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
+                                     const GbaPpuMemory* memory,
+                                     const GbaPpuRegisters* registers,
+                                     GbaPpuDirtyBits* dirty_bits) {
+  if (registers->dispcnt.forced_blank || registers->dispcnt.mode > 5u) {
+    return false;
+  }
+
+  return OpenGlBgAffineLoad(&renderer->affine, registers, dirty_bits);
+}
+
 static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
                                       const GbaPpuMemory* memory,
                                       const GbaPpuRegisters* registers,
@@ -52,7 +63,6 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   }
 
   bool result = OpenGlProgramsStage(&renderer->programs, registers, dirty_bits);
-  result |= OpenGlBgAffineStage(&renderer->affine, registers, dirty_bits);
   result |= OpenGlBgBitmapMode3Stage(&renderer->bg_bitmap_mode3, memory,
                                      registers, dirty_bits);
   result |= OpenGlBgBitmapMode4Stage(&renderer->bg_bitmap_mode4, memory,
@@ -154,6 +164,11 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   if (!renderer->initialized) {
     return;
   }
+
+  bool loaded_data =
+      GbaPpuOpenGlRendererLoad(renderer, memory, registers, dirty_bits);
+  renderer->flush_required |= loaded_data;
+  renderer->next_frame_flush_required |= loaded_data;
 
   bool staged_data =
       GbaPpuOpenGlRendererStage(renderer, memory, registers, dirty_bits);

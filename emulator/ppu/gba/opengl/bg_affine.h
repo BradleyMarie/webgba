@@ -7,19 +7,21 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
+  GLfloat bases[2u][4u];
+  GLfloat scale[2u][4u];
+} OpenGlBgAffineRow;
+
+typedef struct {
   struct {
-    struct {
-      GLfloat bases[2u][4u];
-      GLfloat scale[2u][4u];
-    } rows[161u];
+    OpenGlBgAffineRow rows[161u];
   } staging;
   GLuint buffer;
   bool dirty;
 } OpenGlBgAffine;
 
-bool OpenGlBgAffineStage(OpenGlBgAffine* context,
-                         const GbaPpuRegisters* registers,
-                         GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
                         GLuint program);

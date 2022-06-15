@@ -124,7 +124,7 @@ bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
                    i);
     }
 
-    context->object_staging.objects[i].tile_base = character_name * 8u;
+    context->object_staging.objects[i].tile_base = character_name;
     context->object_staging.objects[i].large_palette =
         memory->oam.object_attributes[i].palette_mode;
     context->object_staging.objects[i].semi_transparent =
