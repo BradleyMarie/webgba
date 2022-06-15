@@ -2,13 +2,17 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-static void OpenGlBgAffineLoad(OpenGlBgAffine* context, int32_t value,
-                               GLfloat* output) {
-  GLfloat new_value = (double)value / 256.0;
+static void OpenGlBgAffineLoadFloat(OpenGlBgAffine* context, GLfloat new_value,
+                                    GLfloat* output) {
   if (new_value != *output) {
     context->dirty = true;
   }
   *output = new_value;
+}
+
+static void OpenGlBgAffineLoadFixed(OpenGlBgAffine* context, int32_t value,
+                                    GLfloat* output) {
+  OpenGlBgAffineLoadFloat(context, (double)value / 256.0, output);
 }
 
 bool OpenGlBgAffineStage(OpenGlBgAffine* context,
@@ -28,44 +32,48 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
       continue;
     }
 
-    OpenGlBgAffineLoad(context, registers->internal.affine[i].current[0u],
-                       &context->staging.rows[registers->vcount].bases[i][0u]);
+    OpenGlBgAffineLoadFixed(
+        context, registers->internal.affine[i].current[0u],
+        &context->staging.rows[registers->vcount].bases[i][0u]);
 
-    OpenGlBgAffineLoad(context, registers->internal.affine[i].current[1u],
-                       &context->staging.rows[registers->vcount].bases[i][1u]);
+    OpenGlBgAffineLoadFixed(
+        context, registers->internal.affine[i].current[1u],
+        &context->staging.rows[registers->vcount].bases[i][1u]);
 
-    OpenGlBgAffineLoad(context, registers->affine[i].pa,
-                       &context->staging.rows[registers->vcount].scale[i][0u]);
+    OpenGlBgAffineLoadFixed(
+        context, registers->affine[i].pa,
+        &context->staging.rows[registers->vcount].scale[i][0u]);
 
-    OpenGlBgAffineLoad(context, registers->affine[i].pc,
-                       &context->staging.rows[registers->vcount].scale[i][1u]);
+    OpenGlBgAffineLoadFixed(
+        context, registers->affine[i].pc,
+        &context->staging.rows[registers->vcount].scale[i][1u]);
 
     if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
-      OpenGlBgAffineLoad(
+      OpenGlBgAffineLoadFloat(
           context,
-          registers->internal.affine[i].current[0u] +
-              (registers->internal.affine[i].current[0u] -
+          context->staging.rows[registers->vcount].bases[i][0u] +
+              (context->staging.rows[registers->vcount].bases[i][0u] -
                context->staging.rows[registers->vcount - 1u].bases[i][0u]),
           &context->staging.rows[registers->vcount + 1u].bases[i][0u]);
 
-      OpenGlBgAffineLoad(
+      OpenGlBgAffineLoadFloat(
           context,
-          registers->internal.affine[i].current[1u] +
-              (registers->internal.affine[i].current[1u] -
+          context->staging.rows[registers->vcount].bases[i][1u] +
+              (context->staging.rows[registers->vcount].bases[i][1u] -
                context->staging.rows[registers->vcount - 1u].bases[i][1u]),
           &context->staging.rows[registers->vcount + 1u].bases[i][1u]);
 
-      OpenGlBgAffineLoad(
+      OpenGlBgAffineLoadFloat(
           context,
-          registers->affine[i].pa +
-              (registers->affine[i].pa -
+          context->staging.rows[registers->vcount].scale[i][0u] +
+              (context->staging.rows[registers->vcount].scale[i][0u] -
                context->staging.rows[registers->vcount - 1u].scale[i][0u]),
           &context->staging.rows[registers->vcount + 1u].scale[i][0u]);
 
-      OpenGlBgAffineLoad(
+      OpenGlBgAffineLoadFloat(
           context,
-          registers->affine[i].pc +
-              (registers->affine[i].pc -
+          context->staging.rows[registers->vcount].scale[i][1u] +
+              (context->staging.rows[registers->vcount].scale[i][1u] -
                context->staging.rows[registers->vcount - 1u].scale[i][1u]),
           &context->staging.rows[registers->vcount + 1u].scale[i][1u]);
     }
