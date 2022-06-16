@@ -21,8 +21,8 @@ out lowp vec4 frag_color;
 uniform highp float render_scale;
 
 // Palettes
-layout(std140) uniform BackgroundPalette { lowp vec4 background_palette[256]; };
-layout(std140) uniform ObjectPalette { lowp vec4 object_palette[256]; };
+uniform lowp sampler2D background_palette;
+uniform lowp sampler2D object_palette;
 
 // Tiles
 uniform lowp usampler2DArray background_tiles;
@@ -95,13 +95,11 @@ layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
 
 // Window
 struct WindowRow {
-  lowp uvec4 windows; // Enable WinObj is bit 6 of window 'z'
+  lowp uvec4 windows;  // Enable WinObj is bit 6 of window 'z'
   mediump uvec4 shift_bounds;
 };
 
-layout(std140) uniform Windows {
-  WindowRow window_rows[160];
-};
+layout(std140) uniform Windows { WindowRow window_rows[160]; };
 
 // Blend
 struct BlendRow {
@@ -422,8 +420,9 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
     palette_base = palette;
   }
 
-  lowp uint color = palette_base + color_index;
-  return BlendUnitAddBackground(blend_unit, bg, background_palette[color].rgb);
+  lowp uint index = palette_base + color_index;
+  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  return BlendUnitAddBackground(blend_unit, bg, color.rgb);
 }
 
 mediump ivec2 AffinePixel(lowp uint bg) {
@@ -454,24 +453,25 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
   lowp ivec2 tile_pixel = tilemap_pixel % 8;
   mediump int tile_offset = tile.x + tile.y * (backgrounds[bg].size.x / 8);
 
-  mediump uint index =
+  mediump uint t_index =
       texelFetch(affine_tilemap,
                  ivec3(tile_offset % 64, (tile_offset % 2048) / 64,
                        backgrounds[bg].tilemap_base + tile_offset / 2048),
                  0)
           .r;
-  index <<= 1;
+  t_index <<= 1;
 
-  lowp uint color = texelFetch(background_tiles,
-                               ivec3(tile_pixel.x + 8 * tile_pixel.y, index,
+  lowp uint index = texelFetch(background_tiles,
+                               ivec3(tile_pixel.x + 8 * tile_pixel.y, t_index,
                                      backgrounds[bg].tile_base),
                                0)
                         .r;
-  if (color == 0u) {
+  if (index == 0u) {
     return blend_unit;
   }
 
-  return BlendUnitAddBackground(blend_unit, bg, background_palette[color].rgb);
+  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  return BlendUnitAddBackground(blend_unit, bg, color.rgb);
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit) {
@@ -497,7 +497,8 @@ BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
     return blend_unit;
   }
 
-  return BlendUnitAddBackground(blend_unit, 2u, background_palette[index].rgb);
+  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  return BlendUnitAddBackground(blend_unit, 2u, color.rgb);
 }
 
 // Bit Set
@@ -579,10 +580,11 @@ void main() {
 
       lowp uint color_index = ObjectColorIndex(obj);
       if (color_index != 0u) {
-        lowp vec3 color =
-            object_palette[objects[obj].palette + color_index].rgb;
+        lowp vec4 color =
+            texelFetch(object_palette,
+                       ivec2(objects[obj].palette + color_index, 0), 0);
         blend_unit =
-            BlendUnitAddObject(blend_unit, color, objects[obj].priority,
+            BlendUnitAddObject(blend_unit, color.rgb, objects[obj].priority,
                                objects[obj].semi_transparent);
         break;
       }
@@ -638,7 +640,8 @@ void main() {
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
-  blend_unit = BlendUnitAddBackdrop(blend_unit, background_palette[0].rgb);
+  lowp vec4 backdrop = texelFetch(background_palette, ivec2(0, 0), 0);
+  blend_unit = BlendUnitAddBackdrop(blend_unit, backdrop.rgb);
 
   frag_color = BlendUnitBlend(blend_unit, bool(window & 0x20u));
 }

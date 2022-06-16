@@ -2,33 +2,14 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-static void ExtractComponents(uint16_t value, GLfloat output[4u]) {
-  output[0u] = (GLfloat)((value & 0xF800u) >> 11u) / 31.0;
-  output[1u] = (GLfloat)((value & 0x07C0u) >> 6u) / 31.0;
-  output[2u] = (GLfloat)((value & 0x003Eu) >> 1u) / 31.0;
-  output[3u] = 1.0;
-}
-
-bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
-                          GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlPaletteStage(OpenGlPalette* context, GbaPpuDirtyBits* dirty_bits) {
   bool result = false;
   if (dirty_bits->palette.palette[0u]) {
-    for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
-      ExtractComponents(memory->palette.bg.large_palette[i],
-                        &context->bg_staging[i][0]);
-    }
-
     dirty_bits->palette.palette[0u] = false;
     context->bg_dirty = true;
-    result = true;
   }
 
   if (dirty_bits->palette.palette[1u]) {
-    for (uint16_t i = 0; i < GBA_LARGE_PALETTE_SIZE; i++) {
-      ExtractComponents(memory->palette.obj.large_palette[i],
-                        &context->obj_staging[i][0]);
-    }
-
     dirty_bits->palette.palette[1u] = false;
     context->obj_dirty = true;
     result = true;
@@ -37,55 +18,72 @@ bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
   return result;
 }
 
-void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program) {
-  GLint bg_palette = glGetUniformBlockIndex(program, "BackgroundPalette");
-  glUniformBlockBinding(program, bg_palette, BG_PALETTE_BUFFER);
+void OpenGlPaletteBind(const OpenGlPalette* context, GLuint program) {
+  GLint background_palette =
+      glGetUniformLocation(program, "background_palette");
+  glUniform1i(background_palette, BG_PALETTE_TEXTURE);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-  glBindBufferBase(GL_UNIFORM_BUFFER, BG_PALETTE_BUFFER, context->bg_palette);
+  glActiveTexture(GL_TEXTURE0 + BG_PALETTE_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->bg_palette);
 
-  GLint obj_palette = glGetUniformBlockIndex(program, "ObjectPalette");
-  glUniformBlockBinding(program, obj_palette, OBJ_PALETTE_BUFFER);
+  GLint object_palette = glGetUniformLocation(program, "object_palette");
+  glUniform1i(object_palette, OBJ_PALETTE_TEXTURE);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-  glBindBufferBase(GL_UNIFORM_BUFFER, OBJ_PALETTE_BUFFER, context->obj_palette);
+  glActiveTexture(GL_TEXTURE0 + OBJ_PALETTE_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->obj_palette);
 }
 
-void OpenGlBgPaletteReload(OpenGlBgPalette* context) {
+void OpenGlPaletteReload(OpenGlPalette* context, const GbaPpuMemory* memory) {
   if (context->bg_dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->bg_staging),
-                    /*data=*/context->bg_staging);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, context->bg_palette);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
+                    /*width=*/GBA_LARGE_PALETTE_SIZE, /*height=*/1,
+                    /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+                    /*pixels=*/memory->palette.bg.large_palette);
+    glBindTexture(GL_TEXTURE_2D, 0);
     context->bg_dirty = false;
   }
 
   if (context->obj_dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->obj_staging),
-                    /*data=*/context->obj_staging);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, context->obj_palette);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
+                    /*width=*/GBA_LARGE_PALETTE_SIZE, /*height=*/1,
+                    /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+                    /*pixels=*/memory->palette.obj.large_palette);
+    glBindTexture(GL_TEXTURE_2D, 0);
     context->obj_dirty = false;
   }
 }
 
-void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context) {
-  glGenBuffers(1, &context->bg_palette);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->bg_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->bg_staging),
-               context->bg_staging, GL_DYNAMIC_DRAW);
+void OpenGlPaletteReloadContext(OpenGlPalette* context) {
+  glGenTextures(1u, &context->bg_palette);
+  glBindTexture(GL_TEXTURE_2D, context->bg_palette);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
+               /*width=*/GBA_LARGE_PALETTE_SIZE,
+               /*height=*/1, /*border=*/0, /*format=*/GL_RGBA,
+               /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+               /*pixels=*/context->zeroes);
 
-  glGenBuffers(1, &context->obj_palette);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->obj_palette);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->obj_staging),
-               context->obj_staging, GL_DYNAMIC_DRAW);
+  glGenTextures(1u, &context->obj_palette);
+  glBindTexture(GL_TEXTURE_2D, context->obj_palette);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
+               /*width=*/GBA_LARGE_PALETTE_SIZE,
+               /*height=*/1, /*border=*/0, /*format=*/GL_RGBA,
+               /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
+               /*pixels=*/context->zeroes);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  glBindBuffer(GL_TEXTURE_2D, 0);
 }
 
-void OpenGlBgPaletteDestroy(OpenGlBgPalette* context) {
-  glDeleteBuffers(1u, &context->bg_palette);
-  glDeleteBuffers(1u, &context->obj_palette);
+void OpenGlPaletteDestroy(OpenGlPalette* context) {
+  glDeleteTextures(1u, &context->bg_palette);
+  glDeleteTextures(1u, &context->obj_palette);
 }
