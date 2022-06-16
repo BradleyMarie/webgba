@@ -14,16 +14,12 @@ typedef struct {
   void *free_address;
 } GbaPpuPalette;
 
-static bool PaletteLoad32LE(const void *context, uint32_t address,
-                            uint32_t *value) {
-  assert((address & 0x3u) == 0u);
+static inline uint16_t RotateLeft(uint16_t value, uint_fast8_t amount) {
+  return (value << amount) | (value >> (16u - amount));
+}
 
-  const GbaPpuPalette *palette = (const GbaPpuPalette *)context;
-
-  address &= PALETTE_ADDRESS_MASK;
-  *value = palette->memory->words[address >> 2u];
-
-  return true;
+static inline uint16_t RotateRight(uint16_t value, uint_fast8_t amount) {
+  return (value >> amount) | (value << (16u - amount));
 }
 
 static bool PaletteLoad16LE(const void *context, uint32_t address,
@@ -33,29 +29,31 @@ static bool PaletteLoad16LE(const void *context, uint32_t address,
   const GbaPpuPalette *palette = (const GbaPpuPalette *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  *value = palette->memory->half_words[address >> 1u];
+  *value = RotateRight(palette->memory->half_words[address >> 1u], 1u);
+
+  return true;
+}
+
+static bool PaletteLoad32LE(const void *context, uint32_t address,
+                            uint32_t *value) {
+  assert((address & 0x3u) == 0u);
+
+  uint16_t low;
+  PaletteLoad16LE(context, address, &low);
+
+  uint16_t high;
+  PaletteLoad16LE(context, address + 2u, &high);
+
+  *value = low | (((uint32_t)high) << 16u);
 
   return true;
 }
 
 static bool PaletteLoad8(const void *context, uint32_t address,
                          uint8_t *value) {
-  const GbaPpuPalette *palette = (const GbaPpuPalette *)context;
-
-  address &= PALETTE_ADDRESS_MASK;
-  *value = palette->memory->bytes[address];
-
-  return true;
-}
-
-static bool PaletteStore32LE(void *context, uint32_t address, uint32_t value) {
-  assert((address & 0x3u) == 0u);
-
-  GbaPpuPalette *palette = (GbaPpuPalette *)context;
-
-  address &= PALETTE_ADDRESS_MASK;
-  palette->memory->words[address >> 2u] = value;
-  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
+  uint16_t temp;
+  PaletteLoad16LE(context, address & PALETTE_BYTE_ADDRESS_MASK, &temp);
+  *value = temp >> (8u * (address & 1u));
 
   return true;
 }
@@ -66,19 +64,25 @@ static bool PaletteStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuPalette *palette = (GbaPpuPalette *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  palette->memory->half_words[address >> 1u] = value;
+  palette->memory->half_words[address >> 1u] = RotateLeft(value, 1u);
   palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
 
   return true;
 }
 
-static bool PaletteStore8(void *context, uint32_t address, uint8_t value) {
-  GbaPpuPalette *palette = (GbaPpuPalette *)context;
+static bool PaletteStore32LE(void *context, uint32_t address, uint32_t value) {
+  assert((address & 0x3u) == 0u);
 
+  PaletteStore16LE(context, address, value);
+  PaletteStore16LE(context, address + 2u, value >> 16u);
+
+  return true;
+}
+
+static bool PaletteStore8(void *context, uint32_t address, uint8_t value) {
   address &= PALETTE_BYTE_ADDRESS_MASK;
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  palette->memory->half_words[address >> 1u] = value16;
-  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
+  PaletteStore16LE(context, address, value16);
 
   return true;
 }

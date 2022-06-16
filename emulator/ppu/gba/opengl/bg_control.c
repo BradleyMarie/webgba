@@ -15,7 +15,6 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
       {false, false, false, false}, {false, false, false, false},
   };
 
-  bool result = false;
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u &&
         (!registers->dispcnt.bg0_enable || registers->dispcnt.mode > 1u)) {
@@ -63,35 +62,32 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
     }
 
     dirty_bits->io.bg_control[i] = false;
-    result = true;
+    context->dirty = true;
   }
 
   dirty_bits->io.bg_mosaic = false;
-
-  if (!result) {
-    return false;
-  }
 
   if (registers->dispcnt.mode == 3u &&
       (context->staging[2u].size[0] != GBA_SCREEN_WIDTH ||
        context->staging[2u].size[1] != GBA_SCREEN_HEIGHT)) {
     context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
     context->staging[2u].size[1] = GBA_SCREEN_HEIGHT;
+    context->dirty = true;
   } else if (registers->dispcnt.mode == 4u &&
              (context->staging[2u].size[0] != GBA_SCREEN_WIDTH ||
               context->staging[2u].size[1] != GBA_SCREEN_HEIGHT)) {
     context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
     context->staging[2u].size[1] = GBA_SCREEN_HEIGHT;
+    context->dirty = true;
   } else if (registers->dispcnt.mode == 5u &&
              (context->staging[2u].size[0] != GBA_REDUCED_FRAME_WIDTH ||
               context->staging[2u].size[1] != GBA_REDUCED_FRAME_HEIGHT)) {
     context->staging[2u].size[0] = GBA_REDUCED_FRAME_WIDTH;
     context->staging[2u].size[1] = GBA_REDUCED_FRAME_HEIGHT;
+    context->dirty = true;
   }
 
-  context->dirty = true;
-
-  return true;
+  return context->dirty;
 }
 
 void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {

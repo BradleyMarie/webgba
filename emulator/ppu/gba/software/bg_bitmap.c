@@ -28,7 +28,7 @@ static inline bool GbaPpuBackground2BitmapPixel(
       if (lookup_x >= GBA_SCREEN_WIDTH || lookup_y >= GBA_SCREEN_HEIGHT) {
         return false;
       } else {
-        *color = memory->vram.mode_3.bg.pixels[lookup_y][lookup_x];
+        *color = memory->vram.mode_3.bg.pixels[lookup_y][lookup_x] << 1u;
       }
       break;
     case GBA_PPU_BG2_MODE_4:
@@ -50,7 +50,8 @@ static inline bool GbaPpuBackground2BitmapPixel(
         return false;
       } else {
         *color =
-            memory->vram.mode_5.bg.pages[back_page].pixels[lookup_y][lookup_x];
+            memory->vram.mode_5.bg.pages[back_page].pixels[lookup_y][lookup_x]
+            << 1u;
       }
       break;
   };

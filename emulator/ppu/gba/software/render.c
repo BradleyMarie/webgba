@@ -173,7 +173,7 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
     color = GbaPpuBlendUnitNoBlend(&blend_unit);
   }
 
-  return color << 1u;
+  return color | 1u;
 }
 
 GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate() {
@@ -220,7 +220,7 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
     }
   } else {
     for (uint8_t i = 0; i < GBA_SCREEN_WIDTH; i++) {
-      renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + i] = 0u;
+      renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + i] = 1u;
     }
   }
 }
@@ -251,7 +251,7 @@ void GbaPpuSoftwareRendererDrawPixel(GbaPpuSoftwareRenderer* renderer,
     color = 0u;
   }
 
-  renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + x] = color << 1u;
+  renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + x] = color;
 }
 
 void GbaPpuSoftwareRendererFree(GbaPpuSoftwareRenderer* renderer) {

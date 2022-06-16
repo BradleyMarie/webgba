@@ -49,14 +49,14 @@ static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
   uint_fast8_t evb = clipped_weights[registers->bldalpha.evb];
 
   uint_fast32_t top = blend_unit->layers[0u];
-  uint_fast32_t t0 = (((top & 0x001Fu) * eva) >> 0u);
-  uint_fast32_t t1 = (((top & 0x03E0u) * eva) >> 5u);
-  uint_fast32_t t2 = (((top & 0x7C00u) * eva) >> 10u);
+  uint_fast32_t t0 = (((top & 0x003Eu) * eva) >> 1u);
+  uint_fast32_t t1 = (((top & 0x07C0u) * eva) >> 6u);
+  uint_fast32_t t2 = (((top & 0xF800u) * eva) >> 11u);
 
   uint_fast32_t bottom = blend_unit->layers[1u];
-  uint_fast32_t b0 = (((bottom & 0x001Fu) * evb) >> 0u);
-  uint_fast32_t b1 = (((bottom & 0x03E0u) * evb) >> 5u);
-  uint_fast32_t b2 = (((bottom & 0x7C00u) * evb) >> 10u);
+  uint_fast32_t b0 = (((bottom & 0x003Eu) * evb) >> 1u);
+  uint_fast32_t b1 = (((bottom & 0x07C0u) * evb) >> 6u);
+  uint_fast32_t b2 = (((bottom & 0xF800u) * evb) >> 11u);
 
   static const uint8_t clipped_values[64u] = {
       0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u, 11u, 12u,
@@ -66,13 +66,13 @@ static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
       31u, 31u, 31u, 31u, 56u, 31u, 31u, 31u, 31u, 31u, 31u, 31u};
 
   assert((t0 + b0) >> 4u < 64u);
-  uint_fast32_t s0 = clipped_values[(t0 + b0) >> 4u];
+  uint_fast32_t s0 = clipped_values[(t0 + b0) >> 4u] << 1u;
 
   assert((t1 + b1) >> 4u < 64u);
-  uint_fast32_t s1 = clipped_values[(t1 + b1) >> 4u] << 5u;
+  uint_fast32_t s1 = clipped_values[(t1 + b1) >> 4u] << 6u;
 
   assert((t2 + b2) >> 4u < 64u);
-  uint_fast32_t s2 = clipped_values[(t2 + b2) >> 4u] << 10u;
+  uint_fast32_t s2 = clipped_values[(t2 + b2) >> 4u] << 11u;
 
   return s0 | s1 | s2;
 }
@@ -115,9 +115,9 @@ static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
   uint_fast8_t evy = clipped_weights[registers->bldy.evy];
 
   uint_fast32_t color = blend_unit->layers[0u];
-  uint_fast32_t c0 = (((color & 0x001Fu) * evy) >> 4u);
-  uint_fast32_t c1 = (((color & 0x03E0u) * evy) >> 4u) & 0x03E0u;
-  uint_fast32_t c2 = (((color & 0x7C00u) * evy) >> 4u) & 0x7C00u;
+  uint_fast32_t c0 = (((color & 0x003Eu) * evy) >> 4u);
+  uint_fast32_t c1 = (((color & 0x07C0u) * evy) >> 4u) & 0x07C0u;
+  uint_fast32_t c2 = (((color & 0xF800u) * evy) >> 4u) & 0xF800u;
 
   return c0 | c1 | c2;
 }
@@ -141,9 +141,9 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
   uint_fast8_t evy = clipped_weights[registers->bldy.evy];
 
   uint_fast32_t color = blend_unit->layers[0u];
-  uint_fast32_t c0 = (((color & 0x001Fu) * evy) >> 0u);
-  uint_fast32_t c1 = (((color & 0x03E0u) * evy) >> 5u);
-  uint_fast32_t c2 = (((color & 0x7C00u) * evy) >> 10u);
+  uint_fast32_t c0 = (((color & 0x003Eu) * evy) >> 1u);
+  uint_fast32_t c1 = (((color & 0x07C0u) * evy) >> 6u);
+  uint_fast32_t c2 = (((color & 0xF800u) * evy) >> 11u);
 
   uint_fast8_t inverse_weight = 16u - evy;
   uint_fast32_t w0 = 31u * inverse_weight;
@@ -158,13 +158,13 @@ static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
       52u, 53u, 54u, 55u, 56u, 57u, 58u, 59u, 60u, 61u, 62u, 63u};
 
   assert((c0 + w0) >> 4u < 64u);
-  uint_fast32_t s0 = clipped_values[(c0 + w0) >> 4u];
+  uint_fast32_t s0 = clipped_values[(c0 + w0) >> 4u] << 1u;
 
   assert((c1 + w1) >> 4u < 64u);
-  uint_fast32_t s1 = clipped_values[(c1 + w1) >> 4u] << 5u;
+  uint_fast32_t s1 = clipped_values[(c1 + w1) >> 4u] << 6u;
 
   assert((c2 + w2) >> 4u < 64u);
-  uint_fast32_t s2 = clipped_values[(c2 + w2) >> 4u] << 10u;
+  uint_fast32_t s2 = clipped_values[(c2 + w2) >> 4u] << 11u;
 
   return s0 | s1 | s2;
 }
