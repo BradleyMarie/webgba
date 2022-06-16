@@ -1,5 +1,5 @@
-#ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_LARGE_
-#define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_LARGE_
+#ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_
+#define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_
 
 #include <GLES3/gl3.h>
 
@@ -7,23 +7,21 @@
 #include "emulator/ppu/gba/memory.h"
 
 typedef struct {
+  uint16_t zeroes[GBA_LARGE_PALETTE_SIZE];
   GLuint bg_palette;
   GLuint obj_palette;
-  GLfloat bg_staging[GBA_LARGE_PALETTE_SIZE][4u];
-  GLfloat obj_staging[GBA_LARGE_PALETTE_SIZE][4u];
   bool bg_dirty;
   bool obj_dirty;
-} OpenGlBgPalette;
+} OpenGlPalette;
 
-bool OpenGlBgPaletteStage(OpenGlBgPalette* context, const GbaPpuMemory* memory,
-                          GbaPpuDirtyBits* dirty_bits);
+bool OpenGlPaletteStage(OpenGlPalette* context, GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgPaletteBind(const OpenGlBgPalette* context, GLuint program);
+void OpenGlPaletteBind(const OpenGlPalette* context, GLuint program);
 
-void OpenGlBgPaletteReload(OpenGlBgPalette* context);
+void OpenGlPaletteReload(OpenGlPalette* context, const GbaPpuMemory* memory);
 
-void OpenGlBgPaletteReloadContext(OpenGlBgPalette* context);
+void OpenGlPaletteReloadContext(OpenGlPalette* context);
 
-void OpenGlBgPaletteDestroy(OpenGlBgPalette* context);
+void OpenGlPaletteDestroy(OpenGlPalette* context);
 
-#endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_LARGE_
+#endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_PALETTE_
