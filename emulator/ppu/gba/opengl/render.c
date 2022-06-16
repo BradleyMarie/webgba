@@ -51,7 +51,10 @@ static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
     return false;
   }
 
-  return OpenGlBgAffineLoad(&renderer->affine, registers, dirty_bits);
+  bool result = OpenGlBgAffineLoad(&renderer->affine, registers, dirty_bits);
+  result |=
+      OpenGlBgScrollingLoad(&renderer->bg_scrolling, registers, dirty_bits);
+  return result;
 }
 
 static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
@@ -70,8 +73,6 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlBgBitmapMode5Stage(&renderer->bg_bitmap_mode5, memory,
                                      registers, dirty_bits);
   result |= OpenGlBgControlStage(&renderer->bg_control, registers, dirty_bits);
-  result |=
-      OpenGlBgScrollingStage(&renderer->bg_scrolling, registers, dirty_bits);
   result |= OpenGlBlendStage(&renderer->blend, registers, dirty_bits);
   result |= OpenGlBgPaletteStage(&renderer->bg_palette, memory, dirty_bits);
   result |= OpenGlBgTilemapStage(&renderer->bg_tilemap, memory, registers,
@@ -110,11 +111,12 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     glUseProgram(program);
 
     OpenGlBgAffineBind(&renderer->affine, start, end, program);
+    OpenGlBgScrollingBind(&renderer->bg_scrolling, start, end, program);
+
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
     OpenGlBgControlBind(&renderer->bg_control, program);
-    OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
     OpenGlBlendBind(&renderer->blend, program);
     OpenGlBgPaletteBind(&renderer->bg_palette, program);
     OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
@@ -193,7 +195,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
     OpenGlBgControlReload(&renderer->bg_control);
-    OpenGlBgScrollingReload(&renderer->bg_scrolling);
     OpenGlBlendReload(&renderer->blend);
     OpenGlBgPaletteReload(&renderer->bg_palette);
     OpenGlBgTilemapReload(&renderer->bg_tilemap);

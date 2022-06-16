@@ -83,14 +83,14 @@ void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
   glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_BUFFER, context->buffer);
 
   if (context->dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
     glBufferSubData(GL_UNIFORM_BUFFER,
                     /*offset=*/sizeof(OpenGlBgAffineRow) * start,
                     /*size=*/sizeof(OpenGlBgAffineRow) * (end - start + 1u),
                     /*data=*/&context->staging.rows[start]);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     context->dirty = false;
   }
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
