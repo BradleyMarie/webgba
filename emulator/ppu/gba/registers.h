@@ -125,14 +125,17 @@ typedef union {
   uint16_t value;
 } WindowBoundsRegister;
 
-typedef struct {
-  bool bg0 : 1;
-  bool bg1 : 1;
-  bool bg2 : 1;
-  bool bg3 : 1;
-  bool obj : 1;
-  bool bld : 1;
-  unsigned char unused : 2;
+typedef union {
+  struct {
+    bool bg0 : 1;
+    bool bg1 : 1;
+    bool bg2 : 1;
+    bool bg3 : 1;
+    bool obj : 1;
+    bool bld : 1;
+    unsigned char unused : 2;
+  };
+  uint8_t value;
 } WindowLayerBits;
 
 typedef union {

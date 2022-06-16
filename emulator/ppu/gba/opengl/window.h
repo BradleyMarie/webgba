@@ -7,31 +7,21 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  struct {
-    struct {
-      GLuint obj;
-      GLuint bg0;
-      GLuint bg1;
-      GLuint bg2;
-      GLuint bg3;
-      GLuint bld;
-      GLuint padding[2u];
-    } windows[4u];
-    GLuint shift[2u][4u];
-    GLuint bounds[2u][4u];
-    GLuint winobj_enabled;
-    GLuint padding[3u];
-  } staging;
+  GLuint windows[4u];
+  GLuint shift_bounds[4u];
+} OpenGlWindowRow;
+
+typedef struct {
+  OpenGlWindowRow staging[GBA_SCREEN_HEIGHT];
   GLuint buffer;
   bool dirty;
 } OpenGlWindow;
 
-bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
-                       GbaPpuDirtyBits* dirty_bits);
+bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
+                      GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlWindowBind(const OpenGlWindow* context, GLuint program);
-
-void OpenGlWindowReload(OpenGlWindow* context);
+void OpenGlWindowBind(OpenGlWindow* context, GLint start, GLint end,
+                      GLuint program);
 
 void OpenGlWindowReloadContext(OpenGlWindow* context);
 
