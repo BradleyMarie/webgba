@@ -78,8 +78,12 @@ struct Background {
 layout(std140) uniform Backgrounds { Background backgrounds[4]; };
 
 // Background Coordinates
+struct ScrollingRow {
+  mediump vec2 origins[4];
+};
+
 layout(std140) uniform ScrollingBackgrounds { 
-  mediump vec2 scrolling_origins[4];
+  ScrollingRow scrolling_rows[160];
 };
 
 struct AffineRow {
@@ -315,7 +319,7 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 // Window
 Window CheckWindow(bool on_object) {
   const mediump uvec2 screen_size = uvec2(240u, 160u);
-  mediump uvec2 pixel = uvec2(floor(screencoord));
+  mediump uvec2 pixel = uvec2(screencoord);
 
   mediump uvec2 window0_location = (pixel + window_shift[0]) % screen_size;
   if (all(lessThan(window0_location, window_bounds[0]))) {
@@ -382,7 +386,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   mediump ivec2 tilemap_pixel =
-      ivec2(floor(screencoord + scrolling_origins[bg]));
+      ivec2(screencoord + scrolling_rows[int(screencoord.y)].origins[bg]);
   tilemap_pixel &= backgrounds[bg].size - 1;
   tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
 

@@ -4,14 +4,13 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
-                            const GbaPpuRegisters* registers,
-                            GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
+                           const GbaPpuRegisters* registers,
+                           GbaPpuDirtyBits* dirty_bits) {
   if (registers->dispcnt.mode > 1u) {
     return false;
   }
 
-  bool result = false;
   for (uint8_t i = 0; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u && !registers->dispcnt.bg0_enable) {
       continue;
@@ -31,40 +30,42 @@ bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
       continue;
     }
 
-    if (!dirty_bits->io.bg_offset[i]) {
-      continue;
+    if (context->staging[registers->vcount].origins[i][0u] !=
+        registers->bg_offsets[i].x) {
+      context->staging[registers->vcount].origins[i][0u] =
+          registers->bg_offsets[i].x;
+      context->dirty = true;
     }
 
-    context->staging.origins[i][0u] = registers->bg_offsets[i].x;
-    context->staging.origins[i][1u] = registers->bg_offsets[i].y;
-
-    dirty_bits->io.bg_offset[i] = false;
-    result = true;
+    if (context->staging[registers->vcount].origins[i][1u] !=
+        registers->bg_offsets[i].y) {
+      context->staging[registers->vcount].origins[i][1u] =
+          registers->bg_offsets[i].y;
+      context->dirty = true;
+    }
   }
 
-  context->dirty = result;
-
-  return result;
+  return context->dirty;
 }
 
-void OpenGlBgScrollingBind(const OpenGlBgScrolling* context, GLuint program) {
+void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLint start, GLint end,
+                           GLuint program) {
   GLint scrolling_backgrounds =
       glGetUniformBlockIndex(program, "ScrollingBackgrounds");
   glUniformBlockBinding(program, scrolling_backgrounds, SCROLLING_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBindBufferBase(GL_UNIFORM_BUFFER, SCROLLING_BUFFER, context->buffer);
-}
 
-void OpenGlBgScrollingReload(OpenGlBgScrolling* context) {
   if (context->dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->staging),
-                    /*data=*/&context->staging);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBufferSubData(GL_UNIFORM_BUFFER,
+                    /*offset=*/sizeof(OpenGlScrollingRow) * start,
+                    /*size=*/sizeof(OpenGlScrollingRow) * (end - start),
+                    /*data=*/&context->staging[start]);
     context->dirty = false;
   }
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context) {
