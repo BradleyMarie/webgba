@@ -7,28 +7,21 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  struct {
-    GLuint blend_mode;
-    GLfloat blend_eva;
-    GLfloat blend_evb;
-    GLfloat blend_evy;
-    GLuint bg_top[4u][4u];
-    GLuint bg_bottom[4u][4u];
-    GLuint bd_top;
-    GLuint bd_bottom;
-    GLuint obj_top;
-    GLuint obj_bottom;
-  } staging;
+  GLuint bldcnt[4u];
+  GLfloat ev[4u];
+} OpenGlBlendRow;
+
+typedef struct {
+  OpenGlBlendRow staging[GBA_SCREEN_HEIGHT];
   GLuint buffer;
   bool dirty;
 } OpenGlBlend;
 
-bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
-                       GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
+                     GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBlendBind(const OpenGlBlend* context, GLuint program);
-
-void OpenGlBlendReload(OpenGlBlend* context);
+void OpenGlBlendBind(OpenGlBlend* context, GLint start, GLint end,
+                     GLuint program);
 
 void OpenGlBlendReloadContext(OpenGlBlend* context);
 
