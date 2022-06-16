@@ -55,6 +55,7 @@ static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
   result |=
       OpenGlBgScrollingLoad(&renderer->bg_scrolling, registers, dirty_bits);
   result |= OpenGlBlendLoad(&renderer->blend, registers, dirty_bits);
+  result |= OpenGlWindowLoad(&renderer->window, registers, dirty_bits);
   return result;
 }
 
@@ -80,7 +81,6 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlObjectAttributesStage(&renderer->obj_attributes, memory,
                                         registers, dirty_bits);
   result |= OpenGlTilesStage(&renderer->tiles, memory, registers, dirty_bits);
-  result |= OpenGlWindowStage(&renderer->window, registers, dirty_bits);
 
   return result;
 }
@@ -113,6 +113,7 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgAffineBind(&renderer->affine, start, end, program);
     OpenGlBgScrollingBind(&renderer->bg_scrolling, start, end, program);
     OpenGlBlendBind(&renderer->blend, start, end, program);
+    OpenGlWindowBind(&renderer->window, start, end, program);
 
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
@@ -122,7 +123,6 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
     OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
     OpenGlTilesBind(&renderer->tiles, program);
-    OpenGlWindowBind(&renderer->window, program);
 
     GLint render_scale = glGetUniformLocation(program, "render_scale");
     glUniform1f(render_scale, renderer->render_scale);
@@ -199,7 +199,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgTilemapReload(&renderer->bg_tilemap);
     OpenGlObjectAttributesReload(&renderer->obj_attributes);
     OpenGlTilesReload(&renderer->tiles);
-    OpenGlWindowReload(&renderer->window);
   }
 
   if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {

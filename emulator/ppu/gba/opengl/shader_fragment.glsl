@@ -94,23 +94,13 @@ struct AffineRow {
 layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
 
 // Window
-struct Window {
-  bool obj;
-  bool bg0;
-  bool bg1;
-  bool bg2;
-  bool bg3;
-  bool bld;
+struct WindowRow {
+  lowp uvec4 windows; // Enable WinObj is bit 6 of window 'z'
+  mediump uvec4 shift_bounds;
 };
 
 layout(std140) uniform Windows {
-  Window window0;
-  Window window1;
-  Window window_object;
-  Window window_outside;
-  mediump uvec2 window_shift[2];
-  mediump uvec2 window_bounds[2];
-  bool window_object_enabled;
+  WindowRow window_rows[160];
 };
 
 // Blend
@@ -314,25 +304,26 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 }
 
 // Window
-Window CheckWindow(bool on_object) {
-  const mediump uvec2 screen_size = uvec2(240u, 160u);
-  mediump uvec2 pixel = uvec2(screencoord);
+lowp uint CheckWindow(bool on_object) {
+  mediump uint pixel = uint(screencoord.x);
 
-  mediump uvec2 window0_location = (pixel + window_shift[0]) % screen_size;
-  if (all(lessThan(window0_location, window_bounds[0]))) {
-    return window0;
+  mediump uint window0_location =
+      (pixel + window_rows[int(screencoord.y)].shift_bounds.x) % 240u;
+  if (window0_location < window_rows[int(screencoord.y)].shift_bounds.y) {
+    return window_rows[int(screencoord.y)].windows.x;
   }
 
-  mediump uvec2 window1_location = (pixel + window_shift[1]) % screen_size;
-  if (all(lessThan(window1_location, window_bounds[1]))) {
-    return window1;
+  mediump uint window1_location =
+      (pixel + window_rows[int(screencoord.y)].shift_bounds.z) % 240u;
+  if (window1_location < window_rows[int(screencoord.y)].shift_bounds.w) {
+    return window_rows[int(screencoord.y)].windows.y;
   }
 
-  if (on_object && window_object_enabled) {
-    return window_object;
+  if (on_object && bool(window_rows[int(screencoord.y)].windows.z & 0x20u)) {
+    return window_rows[int(screencoord.y)].windows.z;
   }
 
-  return window_outside;
+  return window_rows[int(screencoord.y)].windows.w;
 }
 
 // Objects
@@ -575,10 +566,10 @@ void main() {
   }
 #endif  // OBJECTS != 0
 
-  Window window = CheckWindow(on_object_window);
+  lowp uint window = CheckWindow(on_object_window);
 
 #if OBJECTS != 0
-  if (window.obj) {
+  if (bool(window & 0x10u)) {
     highp uvec4 drawn_objects = visible_objects & object_drawn;
     while (NotEmpty(drawn_objects)) {
       lowp uint bit = CountTrailingZeroes(drawn_objects);
@@ -600,54 +591,54 @@ void main() {
 #endif  // OBJECTS != 0
 
 #if SCROLLING_BACKGROUND_0 != 0
-  if (window.bg0) {
+  if (bool(window & 0x1u)) {
     blend_unit = ScrollingBackground(blend_unit, 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
-  if (window.bg1) {
+  if (bool(window & 0x2u)) {
     blend_unit = ScrollingBackground(blend_unit, 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
-  if (window.bg2) {
+  if (bool(window & 0x4u)) {
     blend_unit = ScrollingBackground(blend_unit, 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
-  if (window.bg3) {
+  if (bool(window & 0x8u)) {
     blend_unit = ScrollingBackground(blend_unit, 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
-  if (window.bg2) {
+  if (bool(window & 0x4u)) {
     blend_unit = AffineBackground(blend_unit, 2u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
-  if (window.bg3) {
+  if (bool(window & 0x8u)) {
     blend_unit = AffineBackground(blend_unit, 3u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if BITMAP_BACKGROUND != 0
-  if (window.bg2) {
+  if (bool(window & 0x4u)) {
     blend_unit = BitmapBackground(blend_unit);
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
-  if (window.bg2) {
+  if (bool(window & 0x4u)) {
     blend_unit = PaletteBitmapBackground(blend_unit);
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
   blend_unit = BlendUnitAddBackdrop(blend_unit, background_palette[0].rgb);
 
-  frag_color = BlendUnitBlend(blend_unit, window.bld);
+  frag_color = BlendUnitBlend(blend_unit, bool(window & 0x20u));
 }
