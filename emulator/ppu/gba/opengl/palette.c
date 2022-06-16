@@ -3,13 +3,9 @@
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 static void ExtractComponents(uint16_t value, GLfloat output[4u]) {
-  uint_fast32_t r = (value & 0x001Fu) >> 0u;
-  uint_fast32_t g = (value & 0x03E0u) >> 5u;
-  uint_fast32_t b = (value & 0x7C00u) >> 10u;
-
-  output[0u] = (GLfloat)b / 32.0;
-  output[1u] = (GLfloat)g / 32.0;
-  output[2u] = (GLfloat)r / 32.0;
+  output[0u] = (GLfloat)((value & 0xF800u) >> 11u) / 31.0;
+  output[1u] = (GLfloat)((value & 0x07C0u) >> 6u) / 31.0;
+  output[2u] = (GLfloat)((value & 0x003Eu) >> 1u) / 31.0;
   output[3u] = 1.0;
 }
 
