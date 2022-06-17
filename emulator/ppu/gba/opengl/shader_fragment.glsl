@@ -328,7 +328,7 @@ lowp uint CheckWindow(bool on_object) {
 lowp uint ObjectColorIndex(lowp uint obj) {
   mediump vec2 lookup_fp =
       objects[obj].transformation * (screencoord - objects[obj].center);
-  mediump ivec2 lookup = ivec2(floor(lookup_fp));
+  mediump ivec2 lookup = ivec2(floor(lookup_fp + vec2(0.5, 0.5)));
   if (any(lessThan(lookup, -objects[obj].half_size)) ||
       any(greaterThanEqual(lookup, objects[obj].half_size))) {
     return 0u;
