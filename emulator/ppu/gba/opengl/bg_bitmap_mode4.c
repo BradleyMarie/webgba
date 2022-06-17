@@ -12,13 +12,13 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
     return false;
   }
 
-  context->page = registers->dispcnt.page_select;
+  context->page = registers->dispcnt.page_select ? 1u : 0u;
 
-  if (!dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select]) {
+  if (!dirty_bits->vram.bitmap_mode_4[context->page]) {
     return false;
   }
 
-  dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select] = false;
+  dirty_bits->vram.bitmap_mode_4[context->page] = false;
   context->dirty = true;
 
   return true;

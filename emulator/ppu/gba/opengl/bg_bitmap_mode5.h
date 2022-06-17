@@ -9,7 +9,7 @@
 typedef struct {
   uint16_t staging[GBA_REDUCED_FRAME_HEIGHT * GBA_REDUCED_FRAME_WIDTH];
   GLuint textures[2u];
-  bool page;
+  uint8_t page;
   bool enabled;
   bool dirty;
 } OpenGlBgBitmapMode5;
