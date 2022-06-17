@@ -10,10 +10,6 @@
 typedef struct {
   GLuint bg_tiles;
   GLuint obj_tiles;
-  uint8_t obj_staging[GBA_TILE_MODE_NUM_OBJECT_S_TILES /
-                      GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES]
-                     [GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES]
-                     [GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE][2u];
   bool bg_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS];
   bool obj_dirty[GBA_TILE_MODE_NUM_OBJECT_S_TILES /
                  GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES];

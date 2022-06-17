@@ -351,22 +351,28 @@ lowp uint ObjectColorIndex(lowp uint obj) {
     tile_index = tile.x + tile.y * row_width;
   }
 
-  if (objects[obj].large_palette) {
-    tile_index <<= 1;
-  }
-
   lowp ivec2 tile_pixel = lookup % 8;
-  lowp uvec4 color_indices =
-      texelFetch(object_tiles,
-                 ivec2(tile_pixel.x + 8 * tile_pixel.y,
-                       objects[obj].tile_base + tile_index),
-                 0);
 
+  lowp uint color_index;
   if (objects[obj].large_palette) {
-    return color_indices.r;
+    tile_index <<= 1u;
+    color_index = texelFetch(object_tiles,
+                             ivec2(tile_pixel.x + 8 * (tile_pixel.y % 4),
+                                   objects[obj].tile_base + tile_index +
+                                       (tile_pixel.y / 4)),
+                             0)
+                      .r;
+  } else {
+    color_index = texelFetch(object_tiles,
+                             ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
+                                   objects[obj].tile_base + tile_index),
+                             0)
+                      .r;
+    color_index >>= 4u * (uint(tile_pixel.x) & 1u);
+    color_index &= 0xFu;
   }
 
-  return color_indices.g;
+  return color_index;
 }
 
 // Backgrounds
