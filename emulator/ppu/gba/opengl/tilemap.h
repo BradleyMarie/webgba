@@ -11,26 +11,22 @@
 #define AFFINE_TILEMAP_TEXTURE_X_SIZE 64u
 
 typedef struct {
-  uint16_t staging_scrolling[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS]
-                            [GBA_TILE_MAP_BLOCK_1D_SIZE]
-                            [GBA_TILE_MAP_BLOCK_1D_SIZE][4u];
   GLuint affine;
   GLuint scrolling;
   bool affine_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
   bool scrolling_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
-} OpenGlBgTilemap;
+} OpenGlTilemap;
 
-bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
-                          const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits);
+bool OpenGlTilemapStage(OpenGlTilemap* context, const GbaPpuMemory* memory,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program);
+void OpenGlTilemapBind(const OpenGlTilemap* context, GLuint program);
 
-void OpenGlBgTilemapReload(OpenGlBgTilemap* context,
-                           const GbaPpuMemory* memory);
+void OpenGlTilemapReload(OpenGlTilemap* context, const GbaPpuMemory* memory);
 
-void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context);
+void OpenGlTilemapReloadContext(OpenGlTilemap* context);
 
-void OpenGlBgTilemapDestroy(OpenGlBgTilemap* context);
+void OpenGlTilemapDestroy(OpenGlTilemap* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILEMAP_

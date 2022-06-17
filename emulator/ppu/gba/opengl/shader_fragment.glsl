@@ -386,15 +386,19 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
             backgrounds[bg].tilemap_base + tilemap_block_index);
 
   mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
-  mediump int tileblock_offset = int(tilemap_entry.x);
+  mediump int tileblock_offset = int(tilemap_entry.x & 0x3FFu);
   if (backgrounds[bg].large_palette) {
     tileblock_offset <<= 1;
   }
 
-  lowp ivec2 flip = ivec2(tilemap_entry.yz);
-  lowp uint palette = tilemap_entry.w;
+  lowp ivec2 tile_pixel = tilemap_pixel % 8;
+  if (bool(tilemap_entry.x & 0x400u)) {
+    tilemap_pixel.x = 7 - tilemap_pixel.x;
+  }
 
-  lowp ivec2 tile_pixel = abs(flip - (tilemap_pixel % 8));
+  if (bool(tilemap_entry.x & 0x800u)) {
+    tilemap_pixel.y = 7 - tilemap_pixel.y;
+  }
 
   lowp uvec4 color_indices =
       texelFetch(background_tiles,
@@ -417,7 +421,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   if (backgrounds[bg].large_palette) {
     palette_base = 0u;
   } else {
-    palette_base = palette;
+    palette_base = 16u * (tilemap_entry.x >> 12u);
   }
 
   lowp uint index = palette_base + color_index;
