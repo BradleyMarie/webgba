@@ -396,11 +396,11 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 
   lowp ivec2 tile_pixel = tilemap_pixel % 8;
   if (bool(tilemap_entry.x & 0x400u)) {
-    tilemap_pixel.x = 7 - tilemap_pixel.x;
+    tile_pixel.x = 7 - tile_pixel.x;
   }
 
   if (bool(tilemap_entry.x & 0x800u)) {
-    tilemap_pixel.y = 7 - tilemap_pixel.y;
+    tile_pixel.y = 7 - tile_pixel.y;
   }
 
   lowp uint color_index;
