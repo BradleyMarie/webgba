@@ -7,6 +7,7 @@ bool OpenGlPaletteStage(OpenGlPalette* context, GbaPpuDirtyBits* dirty_bits) {
   if (dirty_bits->palette.palette[0u]) {
     dirty_bits->palette.palette[0u] = false;
     context->bg_dirty = true;
+    result = true;
   }
 
   if (dirty_bits->palette.palette[1u]) {
