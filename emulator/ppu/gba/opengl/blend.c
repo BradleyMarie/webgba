@@ -13,7 +13,7 @@ void OpenGlBlendSetGLuint(OpenGlBlend* context, GLuint value, GLuint* result) {
 
 void OpenGlBlendSetGLfloat(OpenGlBlend* context, int16_t value,
                            GLfloat* result) {
-  GLfloat as_float = fmax((double)value / 16.0, 0.0);
+  GLfloat as_float = fmin(fmax((double)value / 16.0, 0.0), 1.0);
   if (*result != as_float) {
     context->dirty = true;
   }
