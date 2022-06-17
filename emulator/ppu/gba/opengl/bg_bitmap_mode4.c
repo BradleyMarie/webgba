@@ -1,5 +1,7 @@
 #include "emulator/ppu/gba/opengl/bg_bitmap_mode4.h"
 
+#include <stdlib.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
@@ -14,14 +16,6 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
 
   if (!dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select]) {
     return false;
-  }
-
-  for (uint_fast8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    for (uint_fast8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-      context->staging[y * GBA_SCREEN_WIDTH + x] =
-          memory->vram.mode_4.bg.pages[registers->dispcnt.page_select]
-              .pixels[y][x];
-    }
   }
 
   dirty_bits->vram.bitmap_mode_4[registers->dispcnt.page_select] = false;
@@ -39,19 +33,23 @@ void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
   glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
 }
 
-void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context) {
+void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
+                               const GbaPpuMemory* memory) {
   if (context->dirty) {
     glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                    /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
-                    /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-                    /*pixels=*/context->staging);
+    glTexSubImage2D(
+        GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
+        /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
+        /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
+        /*pixels=*/memory->vram.mode_4.bg.pages[context->page].pixels);
     glBindTexture(GL_TEXTURE_2D, 0);
     context->dirty = false;
   }
 }
 
 void OpenGlBgBitmapMode4ReloadContext(OpenGlBgBitmapMode4* context) {
+  void* zeroes = calloc(1u, GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH);
+
   glGenTextures(2u, context->textures);
   for (uint8_t i = 0u; i < 2u; i++) {
     glBindTexture(GL_TEXTURE_2D, context->textures[i]);
@@ -63,9 +61,12 @@ void OpenGlBgBitmapMode4ReloadContext(OpenGlBgBitmapMode4* context) {
                  /*width=*/GBA_SCREEN_WIDTH, /*height=*/GBA_SCREEN_HEIGHT,
                  /*border=*/0, /*format=*/GL_RED_INTEGER,
                  /*type=*/GL_UNSIGNED_BYTE,
-                 /*pixels=*/context->staging);
+                 /*pixels=*/zeroes);
   }
+
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  free(zeroes);
 }
 
 void OpenGlBgBitmapMode4Destroy(OpenGlBgBitmapMode4* context) {

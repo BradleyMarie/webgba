@@ -192,7 +192,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   if (staged_data) {
     OpenGlProgramsReload(&renderer->programs);
     OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
-    OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
+    OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
     OpenGlBgControlReload(&renderer->bg_control);
     OpenGlPaletteReload(&renderer->palette, memory);
