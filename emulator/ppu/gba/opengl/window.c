@@ -1,9 +1,13 @@
 #include "emulator/ppu/gba/opengl/window.h"
 
+#include <assert.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                       GbaPpuDirtyBits* dirty_bits) {
+  assert(registers->vcount < GBA_SCREEN_HEIGHT);
+
   if (context->staging[registers->vcount].windows[0u] !=
       registers->winin.win0.value) {
     context->dirty = true;
@@ -119,6 +123,10 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
 
 void OpenGlWindowBind(OpenGlWindow* context, GLint start, GLint end,
                       GLuint program) {
+  assert(0 <= start);
+  assert(start != end);
+  assert(end <= GBA_SCREEN_HEIGHT);
+
   GLint window = glGetUniformBlockIndex(program, "Windows");
   glUniformBlockBinding(program, window, WINDOW_BUFFER);
 
