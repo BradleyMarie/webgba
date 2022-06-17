@@ -1,5 +1,7 @@
 #include "emulator/ppu/gba/opengl/bg_affine.h"
 
+#include <assert.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 static void OpenGlBgAffineLoadFloat(OpenGlBgAffine* context, GLfloat new_value,
@@ -18,6 +20,8 @@ static void OpenGlBgAffineLoadFixed(OpenGlBgAffine* context, int32_t value,
 bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
                         const GbaPpuRegisters* registers,
                         GbaPpuDirtyBits* dirty_bits) {
+  assert(registers->vcount < GBA_SCREEN_HEIGHT);
+
   if (registers->dispcnt.mode == 0u) {
     return false;
   }
@@ -75,6 +79,10 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
 
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
                         GLuint program) {
+  assert(0 <= start);
+  assert(start != end);
+  assert(end <= GBA_SCREEN_HEIGHT);
+
   GLint affine_backgrounds =
       glGetUniformBlockIndex(program, "AffineBackgrounds");
   glUniformBlockBinding(program, affine_backgrounds, AFFINE_BUFFER);

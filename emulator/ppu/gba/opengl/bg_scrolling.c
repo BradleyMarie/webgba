@@ -1,5 +1,6 @@
 #include "emulator/ppu/gba/opengl/bg_scrolling.h"
 
+#include <assert.h>
 #include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
@@ -7,6 +8,8 @@
 bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits) {
+  assert(registers->vcount < GBA_SCREEN_HEIGHT);
+
   if (registers->dispcnt.mode > 1u) {
     return false;
   }
@@ -50,6 +53,10 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
 
 void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLint start, GLint end,
                            GLuint program) {
+  assert(0 <= start);
+  assert(start != end);
+  assert(end <= GBA_SCREEN_HEIGHT);
+
   GLint scrolling_backgrounds =
       glGetUniformBlockIndex(program, "ScrollingBackgrounds");
   glUniformBlockBinding(program, scrolling_backgrounds, SCROLLING_BUFFER);

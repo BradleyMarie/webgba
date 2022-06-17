@@ -1,5 +1,6 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 
+#include <assert.h>
 #include <math.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
@@ -22,6 +23,8 @@ void OpenGlBlendSetGLfloat(OpenGlBlend* context, unsigned char value,
 
 bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
                      GbaPpuDirtyBits* dirty_bits) {
+  assert(registers->vcount < GBA_SCREEN_HEIGHT);
+
   if ((!registers->dispcnt.win0_enable || !registers->winin.win0.bld) &&
       (!registers->dispcnt.win1_enable || !registers->winin.win1.bld) &&
       (!registers->dispcnt.winobj_enable || !registers->winout.winobj.bld) &&
@@ -49,6 +52,10 @@ bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
 
 void OpenGlBlendBind(OpenGlBlend* context, GLint start, GLint end,
                      GLuint program) {
+  assert(0 <= start);
+  assert(start != end);
+  assert(end <= GBA_SCREEN_HEIGHT);
+
   GLint blend = glGetUniformBlockIndex(program, "Blend");
   glUniformBlockBinding(program, blend, BLEND_BUFFER);
 
