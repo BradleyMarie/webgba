@@ -1,5 +1,7 @@
 #include "emulator/ppu/gba/opengl/obj_attributes.h"
 
+#include <assert.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)256.0; }
@@ -20,6 +22,7 @@ bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
 
   while (!GbaPpuSetEmpty(&dirty_bits->oam.rotations)) {
     uint8_t i = GbaPpuSetPop(&dirty_bits->oam.rotations);
+    assert(i < 32u);
 
     GLfloat pa = FixedToFloat(memory->oam.rotate_scale[i].pa);
     GLfloat pb = FixedToFloat(memory->oam.rotate_scale[i].pc);

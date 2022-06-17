@@ -12,22 +12,20 @@ bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
   }
 
   context->enabled = true;
-  context->page = registers->dispcnt.page_select;
+  context->page = registers->dispcnt.page_select ? 1u : 0u;
 
-  if (!dirty_bits->vram.bitmap_mode_5[registers->dispcnt.page_select]) {
+  if (!dirty_bits->vram.bitmap_mode_5[context->page]) {
     return false;
   }
 
   for (uint_fast8_t y = 0; y < GBA_REDUCED_FRAME_HEIGHT; y++) {
     for (uint_fast8_t x = 0; x < GBA_REDUCED_FRAME_WIDTH; x++) {
-      uint16_t color =
-          memory->vram.mode_5.bg.pages[registers->dispcnt.page_select]
-              .pixels[y][x];
+      uint16_t color = memory->vram.mode_5.bg.pages[context->page].pixels[y][x];
       context->staging[y * GBA_REDUCED_FRAME_WIDTH + x] = (color << 1u) | 1u;
     }
   }
 
-  dirty_bits->vram.bitmap_mode_5[registers->dispcnt.page_select] = false;
+  dirty_bits->vram.bitmap_mode_5[context->page] = false;
   context->dirty = true;
 
   return true;

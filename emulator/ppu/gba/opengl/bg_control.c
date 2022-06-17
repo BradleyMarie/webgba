@@ -1,20 +1,64 @@
 #include "emulator/ppu/gba/opengl/bg_control.h"
 
+#include <assert.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
+
+static void UpdateBackgroundSize(OpenGlBgControl* context,
+                                 const GbaPpuRegisters* registers,
+                                 uint8_t layer) {
+  assert(layer < GBA_PPU_NUM_BACKGROUNDS);
+
+  static const GLint scrolling_sizes[4u][2u] = {
+      {256, 256}, {512, 256}, {256, 512}, {512, 512}};
+  static const GLint affine_sizes[4u][2u] = {
+      {128, 128}, {256, 256}, {512, 512}, {1024, 1024}};
+
+  GLint new_size[2u];
+  if (registers->dispcnt.mode == 0u) {
+    new_size[0u] = scrolling_sizes[registers->bgcnt[layer].size][0u];
+    new_size[1u] = scrolling_sizes[registers->bgcnt[layer].size][1u];
+  } else if (registers->dispcnt.mode == 1u) {
+    assert(layer != 3u);
+    if (layer == 2u) {
+      new_size[0u] = affine_sizes[registers->bgcnt[layer].size][0u];
+      new_size[1u] = affine_sizes[registers->bgcnt[layer].size][1u];
+    } else {
+      new_size[0u] = scrolling_sizes[registers->bgcnt[layer].size][0u];
+      new_size[1u] = scrolling_sizes[registers->bgcnt[layer].size][1u];
+    }
+  } else if (registers->dispcnt.mode == 2u) {
+    assert(layer == 2u || layer == 3u);
+    new_size[0u] = affine_sizes[registers->bgcnt[layer].size][0u];
+    new_size[1u] = affine_sizes[registers->bgcnt[layer].size][1u];
+  } else if (registers->dispcnt.mode == 3u) {
+    new_size[0] = GBA_SCREEN_WIDTH;
+    new_size[1] = GBA_SCREEN_HEIGHT;
+  } else if (registers->dispcnt.mode == 4u) {
+    new_size[0] = GBA_SCREEN_WIDTH;
+    new_size[1] = GBA_SCREEN_HEIGHT;
+  } else {
+    assert(registers->dispcnt.mode == 5u);
+    new_size[0] = GBA_REDUCED_FRAME_WIDTH;
+    new_size[1] = GBA_REDUCED_FRAME_HEIGHT;
+  }
+
+  if (new_size[0u] != context->staging[layer].size[0u]) {
+    context->dirty = true;
+  }
+
+  context->staging[layer].size[0u] = new_size[0u];
+
+  if (new_size[1u] != context->staging[layer].size[1u]) {
+    context->dirty = true;
+  }
+
+  context->staging[layer].size[1u] = new_size[1u];
+}
 
 bool OpenGlBgControlStage(OpenGlBgControl* context,
                           const GbaPpuRegisters* registers,
                           GbaPpuDirtyBits* dirty_bits) {
-  static const GLint tilemap_sizes[2u][4u][2u] = {
-      {{256, 256}, {512, 256}, {256, 512}, {512, 512}},
-      {{128, 128}, {256, 256}, {512, 512}, {1024, 1024}}};
-
-  static const bool tilemap_index[6u][4u] = {
-      {false, false, false, false}, {false, false, true, true},
-      {true, true, true, true},     {false, false, false, false},
-      {false, false, false, false}, {false, false, false, false},
-  };
-
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u &&
         (!registers->dispcnt.bg0_enable || registers->dispcnt.mode > 1u)) {
@@ -36,17 +80,13 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
       continue;
     }
 
+    UpdateBackgroundSize(context, registers, i);
+
     if (!dirty_bits->io.bg_control[i] &&
         (!registers->bgcnt[i].mosaic || !dirty_bits->io.bg_mosaic)) {
       continue;
     }
 
-    context->staging[i].size[0u] =
-        tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
-                     [registers->bgcnt[i].size][0u];
-    context->staging[i].size[1u] =
-        tilemap_sizes[tilemap_index[registers->dispcnt.mode][i]]
-                     [registers->bgcnt[i].size][1u];
     context->staging[i].priority = registers->bgcnt[i].priority;
     context->staging[i].tilemap_base = registers->bgcnt[i].tile_map_base_block;
     context->staging[i].tile_base = registers->bgcnt[i].tile_base_block;
@@ -66,26 +106,6 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
   }
 
   dirty_bits->io.bg_mosaic = false;
-
-  if (registers->dispcnt.mode == 3u &&
-      (context->staging[2u].size[0] != GBA_SCREEN_WIDTH ||
-       context->staging[2u].size[1] != GBA_SCREEN_HEIGHT)) {
-    context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
-    context->staging[2u].size[1] = GBA_SCREEN_HEIGHT;
-    context->dirty = true;
-  } else if (registers->dispcnt.mode == 4u &&
-             (context->staging[2u].size[0] != GBA_SCREEN_WIDTH ||
-              context->staging[2u].size[1] != GBA_SCREEN_HEIGHT)) {
-    context->staging[2u].size[0] = GBA_SCREEN_WIDTH;
-    context->staging[2u].size[1] = GBA_SCREEN_HEIGHT;
-    context->dirty = true;
-  } else if (registers->dispcnt.mode == 5u &&
-             (context->staging[2u].size[0] != GBA_REDUCED_FRAME_WIDTH ||
-              context->staging[2u].size[1] != GBA_REDUCED_FRAME_HEIGHT)) {
-    context->staging[2u].size[0] = GBA_REDUCED_FRAME_WIDTH;
-    context->staging[2u].size[1] = GBA_REDUCED_FRAME_HEIGHT;
-    context->dirty = true;
-  }
 
   return context->dirty;
 }
