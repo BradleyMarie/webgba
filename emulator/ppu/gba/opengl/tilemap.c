@@ -1,5 +1,7 @@
 #include "emulator/ppu/gba/opengl/tilemap.h"
 
+#include <stdlib.h>
+
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
@@ -9,12 +11,6 @@ bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
   for (uint32_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
     if (dirty_bits->vram.affine_tilemap[i] &&
         (registers->dispcnt.mode == 1u || registers->dispcnt.mode == 2u)) {
-      for (uint16_t j = 0u; j < GBA_AFFINE_TILE_MAP_INDICES_PER_BLOCK; j++) {
-        context->staging_affine[i][j / AFFINE_TILEMAP_TEXTURE_X_SIZE]
-                               [j % AFFINE_TILEMAP_TEXTURE_X_SIZE] =
-            memory->vram.mode_012.bg.tile_map.blocks[i].indices[j];
-      }
-
       dirty_bits->vram.affine_tilemap[i] = false;
       context->affine_dirty[i] = true;
       result = true;
@@ -77,17 +73,19 @@ void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program) {
   glBindTexture(GL_TEXTURE_2D_ARRAY, context->scrolling);
 }
 
-void OpenGlBgTilemapReload(OpenGlBgTilemap* context) {
+void OpenGlBgTilemapReload(OpenGlBgTilemap* context,
+                           const GbaPpuMemory* memory) {
   for (uint8_t i = 0; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS; i++) {
     if (context->affine_dirty[i]) {
       glBindTexture(GL_TEXTURE_2D_ARRAY, context->affine);
-      glTexSubImage3D(GL_TEXTURE_2D_ARRAY, /*level=*/0, /*xoffset=*/0,
-                      /*yoffset=*/0, /*zoffset=*/i,
-                      /*width=*/AFFINE_TILEMAP_TEXTURE_X_SIZE,
-                      /*height=*/AFFINE_TILEMAP_TEXTURE_Y_SIZE,
-                      /*depth=*/1, /*format=*/GL_RED_INTEGER,
-                      /*type=*/GL_UNSIGNED_BYTE,
-                      /*pixels=*/context->staging_affine[i]);
+      glTexSubImage3D(
+          GL_TEXTURE_2D_ARRAY, /*level=*/0, /*xoffset=*/0,
+          /*yoffset=*/0, /*zoffset=*/i,
+          /*width=*/AFFINE_TILEMAP_TEXTURE_X_SIZE,
+          /*height=*/AFFINE_TILEMAP_TEXTURE_Y_SIZE,
+          /*depth=*/1, /*format=*/GL_RED_INTEGER,
+          /*type=*/GL_UNSIGNED_BYTE,
+          /*pixels=*/memory->vram.mode_012.bg.tile_map.blocks[i].indices);
       glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
       context->affine_dirty[i] = false;
     }
@@ -108,6 +106,9 @@ void OpenGlBgTilemapReload(OpenGlBgTilemap* context) {
 }
 
 void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
+  void* zeroes = calloc(1u, GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS *
+                                GBA_AFFINE_TILE_MAP_INDICES_PER_BLOCK);
+
   glGenTextures(1u, &context->affine);
   glBindTexture(GL_TEXTURE_2D_ARRAY, context->affine);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -121,7 +122,7 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
                /*depth=*/GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS,
                /*border=*/0, /*format=*/GL_RED_INTEGER,
                /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/context->staging_affine);
+               /*pixels=*/zeroes);
 
   glGenTextures(1u, &context->scrolling);
   glBindTexture(GL_TEXTURE_2D_ARRAY, context->scrolling);
@@ -140,6 +141,8 @@ void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context) {
                /*pixels=*/context->staging_scrolling);
 
   glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+  free(zeroes);
 }
 
 void OpenGlBgTilemapDestroy(OpenGlBgTilemap* context) {
