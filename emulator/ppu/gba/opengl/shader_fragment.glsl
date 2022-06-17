@@ -25,7 +25,8 @@ uniform lowp sampler2D background_palette;
 uniform lowp sampler2D object_palette;
 
 // Tiles
-uniform lowp usampler2DArray background_tiles;
+uniform lowp usampler2DArray background_d_tiles;
+uniform lowp usampler2DArray background_s_tiles;
 uniform lowp usampler2D object_tiles;
 
 // Tilemaps
@@ -387,9 +388,6 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 
   mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
   mediump int tileblock_offset = int(tilemap_entry.x & 0x3FFu);
-  if (backgrounds[bg].large_palette) {
-    tileblock_offset <<= 1;
-  }
 
   lowp ivec2 tile_pixel = tilemap_pixel % 8;
   if (bool(tilemap_entry.x & 0x400u)) {
@@ -400,32 +398,34 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
     tilemap_pixel.y = 7 - tilemap_pixel.y;
   }
 
-  lowp uvec4 color_indices =
-      texelFetch(background_tiles,
-                 ivec3(tile_pixel.x + 8 * tile_pixel.y, tileblock_offset % 512,
-                       backgrounds[bg].tile_base + tileblock_offset / 512),
-                 0);
-
   lowp uint color_index;
   if (backgrounds[bg].large_palette) {
-    color_index = color_indices.r;
+    color_index =
+        texelFetch(
+            background_d_tiles,
+            ivec3(tile_pixel.x + 8 * tile_pixel.y, tileblock_offset % 256,
+                  backgrounds[bg].tile_base + tileblock_offset / 256),
+            0)
+            .r;
+    if (color_index == 0u) {
+      return blend_unit;
+    }
   } else {
-    color_index = color_indices.g;
+    color_index = texelFetch(
+        background_s_tiles,
+        ivec3(tile_pixel.x / 2 + 4 * tile_pixel.y, tileblock_offset % 512,
+              backgrounds[bg].tile_base + tileblock_offset / 512),
+        0)
+        .r;
+    color_index >>= 4u * (uint(tile_pixel.x) & 1u);
+    color_index &= 0xFu;
+    if (color_index == 0u) {
+      return blend_unit;
+    }
+    color_index += 16u * (tilemap_entry.x >> 12u);
   }
 
-  if (color_index == 0u) {
-    return blend_unit;
-  }
-
-  lowp uint palette_base;
-  if (backgrounds[bg].large_palette) {
-    palette_base = 0u;
-  } else {
-    palette_base = 16u * (tilemap_entry.x >> 12u);
-  }
-
-  lowp uint index = palette_base + color_index;
-  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  lowp vec4 color = texelFetch(background_palette, ivec2(color_index, 0), 0);
   return BlendUnitAddBackground(blend_unit, bg, color.rgb);
 }
 
@@ -463,9 +463,8 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
                        backgrounds[bg].tilemap_base + tile_offset / 2048),
                  0)
           .r;
-  t_index <<= 1;
 
-  lowp uint index = texelFetch(background_tiles,
+  lowp uint index = texelFetch(background_d_tiles,
                                ivec3(tile_pixel.x + 8 * tile_pixel.y, t_index,
                                      backgrounds[bg].tile_base),
                                0)
