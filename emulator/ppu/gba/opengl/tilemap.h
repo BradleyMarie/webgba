@@ -11,9 +11,6 @@
 #define AFFINE_TILEMAP_TEXTURE_X_SIZE 64u
 
 typedef struct {
-  uint8_t staging_affine[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS]
-                        [AFFINE_TILEMAP_TEXTURE_Y_SIZE]
-                        [AFFINE_TILEMAP_TEXTURE_X_SIZE];
   uint16_t staging_scrolling[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS]
                             [GBA_TILE_MAP_BLOCK_1D_SIZE]
                             [GBA_TILE_MAP_BLOCK_1D_SIZE][4u];
@@ -29,7 +26,8 @@ bool OpenGlBgTilemapStage(OpenGlBgTilemap* context, const GbaPpuMemory* memory,
 
 void OpenGlBgTilemapBind(const OpenGlBgTilemap* context, GLuint program);
 
-void OpenGlBgTilemapReload(OpenGlBgTilemap* context);
+void OpenGlBgTilemapReload(OpenGlBgTilemap* context,
+                           const GbaPpuMemory* memory);
 
 void OpenGlBgTilemapReloadContext(OpenGlBgTilemap* context);
 

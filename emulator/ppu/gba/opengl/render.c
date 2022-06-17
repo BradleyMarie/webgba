@@ -29,8 +29,8 @@ struct _GbaPpuOpenGlRenderer {
   OpenGlBgControl bg_control;
   OpenGlBgScrolling bg_scrolling;
   OpenGlBlend blend;
-  OpenGlPalette bg_palette;
-  OpenGlBgTilemap bg_tilemap;
+  OpenGlPalette palette;
+  OpenGlBgTilemap tilemap;
   OpenGlObjectAttributes obj_attributes;
   OpenGlTiles tiles;
   OpenGlWindow window;
@@ -75,9 +75,9 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlBgBitmapMode5Stage(&renderer->bg_bitmap_mode5, memory,
                                      registers, dirty_bits);
   result |= OpenGlBgControlStage(&renderer->bg_control, registers, dirty_bits);
-  result |= OpenGlPaletteStage(&renderer->bg_palette, dirty_bits);
-  result |= OpenGlBgTilemapStage(&renderer->bg_tilemap, memory, registers,
-                                 dirty_bits);
+  result |= OpenGlPaletteStage(&renderer->palette, dirty_bits);
+  result |=
+      OpenGlBgTilemapStage(&renderer->tilemap, memory, registers, dirty_bits);
   result |= OpenGlObjectAttributesStage(&renderer->obj_attributes, memory,
                                         registers, dirty_bits);
   result |= OpenGlTilesStage(&renderer->tiles, memory, registers, dirty_bits);
@@ -119,8 +119,8 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
     OpenGlBgControlBind(&renderer->bg_control, program);
-    OpenGlPaletteBind(&renderer->bg_palette, program);
-    OpenGlBgTilemapBind(&renderer->bg_tilemap, program);
+    OpenGlPaletteBind(&renderer->palette, program);
+    OpenGlBgTilemapBind(&renderer->tilemap, program);
     OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
     OpenGlTilesBind(&renderer->tiles, program);
 
@@ -195,8 +195,8 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
     OpenGlBgControlReload(&renderer->bg_control);
-    OpenGlPaletteReload(&renderer->bg_palette, memory);
-    OpenGlBgTilemapReload(&renderer->bg_tilemap);
+    OpenGlPaletteReload(&renderer->palette, memory);
+    OpenGlBgTilemapReload(&renderer->tilemap, memory);
     OpenGlObjectAttributesReload(&renderer->obj_attributes);
     OpenGlTilesReload(&renderer->tiles);
   }
@@ -225,9 +225,9 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
   OpenGlBgScrollingReloadContext(&renderer->bg_scrolling);
-  OpenGlBgTilemapReloadContext(&renderer->bg_tilemap);
+  OpenGlBgTilemapReloadContext(&renderer->tilemap);
   OpenGlTilesReloadContext(&renderer->tiles);
-  OpenGlPaletteReloadContext(&renderer->bg_palette);
+  OpenGlPaletteReloadContext(&renderer->palette);
   OpenGlObjectAttributesReloadContext(&renderer->obj_attributes);
   OpenGlBlendReloadContext(&renderer->blend);
 
@@ -246,9 +246,9 @@ void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
     OpenGlBgScrollingDestroy(&renderer->bg_scrolling);
-    OpenGlBgTilemapDestroy(&renderer->bg_tilemap);
+    OpenGlBgTilemapDestroy(&renderer->tilemap);
     OpenGlTilesDestroy(&renderer->tiles);
-    OpenGlPaletteDestroy(&renderer->bg_palette);
+    OpenGlPaletteDestroy(&renderer->palette);
     OpenGlObjectAttributesDestroy(&renderer->obj_attributes);
     OpenGlBlendDestroy(&renderer->blend);
   }
