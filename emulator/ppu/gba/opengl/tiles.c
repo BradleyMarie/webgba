@@ -26,58 +26,6 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
       continue;
     }
 
-    // Aligned D-Tiles
-    uint32_t d_tile_base = GBA_BITMAP_MODE_NUM_OBJECT_D_TILES * i;
-    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES; t++) {
-      for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
-        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
-          uint8_t value =
-              memory->vram.mode_012.obj.d_tiles[d_tile_base + t].pixels[y][x];
-          context->obj_staging[i][2u * t][y * GBA_TILE_1D_SIZE + x][0u] = value;
-        }
-      }
-    }
-
-    // Offset D-Tiles
-    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES - 1u; t++) {
-      for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
-        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
-          uint8_t value =
-              memory->vram.mode_012.obj.offset_d_tiles[d_tile_base + t]
-                  .pixels[y][x];
-          context->obj_staging[i][2u * t + 1u][y * GBA_TILE_1D_SIZE + x][0u] =
-              value;
-        }
-      }
-    }
-
-    // Final Offset Half D-Tile
-    for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE / 2u; y++) {
-      for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE; x++) {
-        // This code is written using manual pointer arithmetic in order to
-        // avoid a compiler warning about what looks like reading past the end
-        // of offset_d_tiles.
-        const DTile* d_tile = memory->vram.mode_012.obj.offset_d_tiles + 511u;
-        context->obj_staging[i][511u][y * GBA_TILE_1D_SIZE + x][0u] =
-            d_tile->pixels[y][x];
-      }
-    }
-
-    // S-Tiles
-    uint32_t s_tile_base = GBA_BITMAP_MODE_NUM_OBJECT_S_TILES * i;
-    for (uint16_t t = 0u; t < GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES; t++) {
-      for (uint8_t y = 0u; y < GBA_TILE_1D_SIZE; y++) {
-        for (uint8_t x = 0u; x < GBA_TILE_1D_SIZE / 2u; x++) {
-          STilePixelPair value =
-              memory->vram.mode_012.obj.s_tiles[s_tile_base + t].pixels[y][x];
-          context->obj_staging[i][t][y * GBA_TILE_1D_SIZE + (2u * x)][1u] =
-              value.first;
-          context->obj_staging[i][t][y * GBA_TILE_1D_SIZE + (2u * x + 1u)][1u] =
-              value.second;
-        }
-      }
-    }
-
     dirty_bits->vram.tiles[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS + i] =
         false;
     context->obj_dirty[i] = true;
@@ -88,8 +36,7 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
 }
 
 void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
-  GLint background_tiles =
-      glGetUniformLocation(program, "background_tiles");
+  GLint background_tiles = glGetUniformLocation(program, "background_tiles");
   glUniform1i(background_tiles, BG_TILES_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BG_TILES_TEXTURE);
@@ -125,10 +72,11 @@ void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory) {
       glBindTexture(GL_TEXTURE_2D, context->obj_tiles);
       glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
                       /*yoffset=*/GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES * i,
-                      /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE,
+                      /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE / 2u,
                       /*height=*/GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES,
-                      /*format=*/GL_RG_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-                      /*pixels=*/context->obj_staging[i]);
+                      /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
+                      /*pixels=*/memory->vram.mode_012.obj.s_tiles +
+                          (i * GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES));
       glBindTexture(GL_TEXTURE_2D, 0);
       context->obj_dirty[i] = false;
     }
@@ -162,12 +110,12 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RG8UI,
-               /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE,
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_R8UI,
+               /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE / 2u,
                /*height=*/GBA_TILE_MODE_NUM_OBJECT_S_TILES,
-               /*border=*/0, /*format=*/GL_RG_INTEGER,
+               /*border=*/0, /*format=*/GL_RED_INTEGER,
                /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/context->obj_staging);
+               /*pixels=*/zeroes);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   free(zeroes);
