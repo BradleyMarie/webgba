@@ -92,9 +92,9 @@ bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
     }
 
     context->object_staging.objects[i].center[0u] =
-        origin[0u] + render_size[0u] / 2u;
+        origin[0u] + render_size[0u] / 2u + 0.5;
     context->object_staging.objects[i].center[1u] =
-        origin[1u] + render_size[1u] / 2u;
+        origin[1u] + render_size[1u] / 2u + 0.5;
     context->object_staging.objects[i].half_size[0u] = sprite_size[0u] / 2;
     context->object_staging.objects[i].half_size[1u] = sprite_size[1u] / 2;
 
