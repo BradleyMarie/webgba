@@ -8,11 +8,9 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint bg_tiles;
+  GLuint bg_d_tiles;
+  GLuint bg_s_tiles;
   GLuint obj_tiles;
-  uint8_t bg_staging[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS]
-                    [GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES]
-                    [GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE][2u];
   uint8_t obj_staging[GBA_TILE_MODE_NUM_OBJECT_S_TILES /
                       GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES]
                      [GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES]
@@ -28,7 +26,7 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
 
 void OpenGlTilesBind(const OpenGlTiles* context, GLuint program);
 
-void OpenGlTilesReload(OpenGlTiles* context);
+void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory);
 
 void OpenGlTilesReloadContext(OpenGlTiles* context);
 

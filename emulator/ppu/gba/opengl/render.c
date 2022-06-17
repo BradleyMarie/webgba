@@ -198,7 +198,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlPaletteReload(&renderer->palette, memory);
     OpenGlTilemapReload(&renderer->tilemap, memory);
     OpenGlObjectAttributesReload(&renderer->obj_attributes);
-    OpenGlTilesReload(&renderer->tiles);
+    OpenGlTilesReload(&renderer->tiles, memory);
   }
 
   if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
