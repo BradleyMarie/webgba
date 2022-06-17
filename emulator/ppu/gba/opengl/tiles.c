@@ -88,19 +88,12 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
 }
 
 void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
-  GLint background_d_tiles =
-      glGetUniformLocation(program, "background_d_tiles");
-  glUniform1i(background_d_tiles, BG_D_TILES_TEXTURE);
+  GLint background_tiles =
+      glGetUniformLocation(program, "background_tiles");
+  glUniform1i(background_tiles, BG_TILES_TEXTURE);
 
-  glActiveTexture(GL_TEXTURE0 + BG_D_TILES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_d_tiles);
-
-  GLint background_s_tiles =
-      glGetUniformLocation(program, "background_s_tiles");
-  glUniform1i(background_s_tiles, BG_S_TILES_TEXTURE);
-
-  glActiveTexture(GL_TEXTURE0 + BG_S_TILES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_s_tiles);
+  glActiveTexture(GL_TEXTURE0 + BG_TILES_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
 
   GLint obj_tiles_s = glGetUniformLocation(program, "object_tiles");
   glUniform1i(obj_tiles_s, OBJ_TILES_TEXTURE);
@@ -112,15 +105,7 @@ void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
 void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory) {
   for (uint8_t i = 0u; i < GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS; i++) {
     if (context->bg_dirty[i]) {
-      glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_d_tiles);
-      glTexSubImage3D(
-          GL_TEXTURE_2D_ARRAY, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-          /*zoffset=*/i, /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE,
-          /*height=*/GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES, /*depth=*/1,
-          /*format=*/GL_RED_INTEGER, /*type=*/GL_UNSIGNED_BYTE,
-          /*pixels=*/memory->vram.mode_012.bg.tiles.blocks[i].d_tiles);
-
-      glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_s_tiles);
+      glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
       glTexSubImage3D(
           GL_TEXTURE_2D_ARRAY, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
           /*zoffset=*/i, /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE / 2u,
@@ -155,24 +140,8 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
                                 GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES *
                                 GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE);
 
-  glGenTextures(1u, &context->bg_d_tiles);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_d_tiles);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  glTexImage3D(GL_TEXTURE_2D_ARRAY, /*level=*/0, /*internal_format=*/GL_R8UI,
-               /*width=*/GBA_TILE_1D_SIZE * GBA_TILE_1D_SIZE,
-               /*height=*/GBA_TILE_MODE_TILE_BLOCK_NUM_D_TILES,
-               /*depth=*/GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS,
-               /*border=*/0, /*format=*/GL_RED_INTEGER,
-               /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/zeroes);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-
-  glGenTextures(1u, &context->bg_s_tiles);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_s_tiles);
+  glGenTextures(1u, &context->bg_tiles);
+  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -205,7 +174,6 @@ void OpenGlTilesReloadContext(OpenGlTiles* context) {
 }
 
 void OpenGlTilesDestroy(OpenGlTiles* context) {
-  glDeleteTextures(1u, &context->bg_d_tiles);
-  glDeleteTextures(1u, &context->bg_s_tiles);
+  glDeleteTextures(1u, &context->bg_tiles);
   glDeleteTextures(1u, &context->obj_tiles);
 }

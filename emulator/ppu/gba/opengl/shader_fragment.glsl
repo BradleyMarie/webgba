@@ -25,8 +25,7 @@ uniform lowp sampler2D background_palette;
 uniform lowp sampler2D object_palette;
 
 // Tiles
-uniform lowp usampler2DArray background_d_tiles;
-uniform lowp usampler2DArray background_s_tiles;
+uniform lowp usampler2DArray background_tiles;
 uniform lowp usampler2D object_tiles;
 
 // Tilemaps
@@ -400,11 +399,13 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 
   lowp uint color_index;
   if (backgrounds[bg].large_palette) {
+    tileblock_offset <<= 1u;
     color_index =
         texelFetch(
-            background_d_tiles,
-            ivec3(tile_pixel.x + 8 * tile_pixel.y, tileblock_offset % 256,
-                  backgrounds[bg].tile_base + tileblock_offset / 256),
+            background_tiles,
+            ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
+                  (tile_pixel.y / 4) + tileblock_offset % 512,
+                  backgrounds[bg].tile_base + tileblock_offset / 512),
             0)
             .r;
     if (color_index == 0u) {
@@ -412,7 +413,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
     }
   } else {
     color_index = texelFetch(
-        background_s_tiles,
+        background_tiles,
         ivec3(tile_pixel.x / 2 + 4 * tile_pixel.y, tileblock_offset % 512,
               backgrounds[bg].tile_base + tileblock_offset / 512),
         0)
@@ -464,8 +465,9 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
                  0)
           .r;
 
-  lowp uint index = texelFetch(background_d_tiles,
-                               ivec3(tile_pixel.x + 8 * tile_pixel.y, t_index,
+  lowp uint index = texelFetch(background_tiles,
+                               ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
+                                     int(t_index << 1u) + (tile_pixel.y / 4),
                                      backgrounds[bg].tile_base),
                                0)
                         .r;
