@@ -102,6 +102,10 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLuint program) {
   GLint affine_backgrounds =
       glGetUniformBlockIndex(program, "AffineBackgrounds");
+  if (affine_backgrounds < 0) {
+    return;
+  }
+
   glUniformBlockBinding(program, affine_backgrounds, AFFINE_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);

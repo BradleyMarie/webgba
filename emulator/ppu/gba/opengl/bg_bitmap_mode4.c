@@ -9,8 +9,11 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
                               const GbaPpuRegisters* registers,
                               GbaPpuDirtyBits* dirty_bits) {
   if (!registers->dispcnt.bg2_enable || registers->dispcnt.mode != 4) {
+    context->enabled = false;
     return false;
   }
+
+  context->enabled = true;
 
   context->page = registers->dispcnt.page_select ? 1u : 0u;
 
@@ -26,6 +29,10 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
 
 void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
                              GLuint program) {
+  if (!context->enabled) {
+    return;
+  }
+
   GLint bg_mode4 = glGetUniformLocation(program, "palette_bitmap");
   glUniform1i(bg_mode4, PALETTE_BITMAP_TEXTURE);
 

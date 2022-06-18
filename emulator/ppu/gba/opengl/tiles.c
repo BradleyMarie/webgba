@@ -37,16 +37,20 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
 
 void OpenGlTilesBind(const OpenGlTiles* context, GLuint program) {
   GLint background_tiles = glGetUniformLocation(program, "background_tiles");
-  glUniform1i(background_tiles, BG_TILES_TEXTURE);
+  if (background_tiles >= 0) {
+    glUniform1i(background_tiles, BG_TILES_TEXTURE);
 
-  glActiveTexture(GL_TEXTURE0 + BG_TILES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
+    glActiveTexture(GL_TEXTURE0 + BG_TILES_TEXTURE);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, context->bg_tiles);
+  }
 
-  GLint obj_tiles_s = glGetUniformLocation(program, "object_tiles");
-  glUniform1i(obj_tiles_s, OBJ_TILES_TEXTURE);
+  GLint object_tiles = glGetUniformLocation(program, "object_tiles");
+  if (object_tiles >= 0) {
+    glUniform1i(object_tiles, OBJ_TILES_TEXTURE);
 
-  glActiveTexture(GL_TEXTURE0 + OBJ_TILES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->obj_tiles);
+    glActiveTexture(GL_TEXTURE0 + OBJ_TILES_TEXTURE);
+    glBindTexture(GL_TEXTURE_2D, context->obj_tiles);
+  }
 }
 
 void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory) {

@@ -64,6 +64,10 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
 void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLuint program) {
   GLint scrolling_backgrounds =
       glGetUniformBlockIndex(program, "ScrollingBackgrounds");
+  if (scrolling_backgrounds < 0) {
+    return;
+  }
+
   glUniformBlockBinding(program, scrolling_backgrounds, SCROLLING_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
