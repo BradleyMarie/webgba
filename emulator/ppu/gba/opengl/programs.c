@@ -26,7 +26,8 @@ static void ValidateProgram(GLuint program) {
 static char* GetFragmentShaderSource(bool objects, bool scrolling_bg0,
                                      bool scrolling_bg1, bool scrolling_bg2,
                                      bool scrolling_bg3, bool affine_bg2,
-                                     bool affine_bg3, bool bitmap_bg,
+                                     bool affine_bg3, bool small_bitmap_bg,
+                                     bool large_bitmap_bg,
                                      bool palette_bitmap_bg) {
   size_t source_len = strlen(fragment_shader_source);
   char* program = malloc(source_len + 1);
@@ -74,8 +75,14 @@ static char* GetFragmentShaderSource(bool objects, bool scrolling_bg0,
     *value = '1';
   }
 
-  if (bitmap_bg) {
-    char* location = strstr(program, "BITMAP_BACKGROUND 0");
+  if (small_bitmap_bg) {
+    char* location = strstr(program, "SMALL_BITMAP_BACKGROUND 0");
+    char* value = strchr(location, '0');
+    *value = '1';
+  }
+
+  if (large_bitmap_bg) {
+    char* location = strstr(program, "LARGE_BITMAP_BACKGROUND 0");
     char* value = strchr(location, '0');
     *value = '1';
   }
@@ -104,7 +111,8 @@ static void InitializeMode0(OpenGlPrograms* context, GLuint vertex_shader) {
             char* shader_source = GetFragmentShaderSource(
                 /*objects=*/obj, /*scrolling_bg0=*/bg0, /*scrolling_bg1=*/bg1,
                 /*scrolling_bg2=*/bg2, /*scrolling_bg3=*/bg3,
-                /*affine_bg2=*/false, /*affine_bg3=*/false, /*bitmap_bg=*/false,
+                /*affine_bg2=*/false, /*affine_bg3=*/false,
+                /*small_bitmap_bg=*/false, /*large_bitmap_bg=*/false,
                 /*palette_bitmap_bg=*/false);
 
             const char* sources[1] = {shader_source};
@@ -151,7 +159,8 @@ static void InitializeMode1(OpenGlPrograms* context, GLuint vertex_shader) {
           char* shader_source = GetFragmentShaderSource(
               /*objects=*/obj, /*scrolling_bg0=*/bg0, /*scrolling_bg1=*/bg1,
               /*scrolling_bg2=*/false, /*scrolling_bg3=*/false,
-              /*affine_bg2=*/bg2, /*affine_bg3=*/false, /*bitmap_bg=*/false,
+              /*affine_bg2=*/bg2, /*affine_bg3=*/false,
+              /*small_bitmap_bg=*/false, /*large_bitmap_bg=*/false,
               /*palette_bitmap_bg=*/false);
 
           const char* sources[1] = {shader_source};
@@ -195,8 +204,8 @@ static void InitializeMode2(OpenGlPrograms* context, GLuint vertex_shader) {
         char* shader_source = GetFragmentShaderSource(
             /*objects=*/obj, /*scrolling_bg0=*/false, /*scrolling_bg1=*/false,
             /*scrolling_bg2=*/false, /*scrolling_bg3=*/false,
-            /*affine_bg2=*/bg2, /*affine_bg3=*/bg3, /*bitmap_bg=*/false,
-            /*palette_bitmap_bg=*/false);
+            /*affine_bg2=*/bg2, /*affine_bg3=*/bg3, /*small_bitmap_bg=*/false,
+            /*large_bitmap_bg=*/false, /*palette_bitmap_bg=*/false);
 
         const char* sources[1] = {shader_source};
         glShaderSource(fragment_shader, 1u, sources, NULL);
@@ -226,19 +235,19 @@ static void InitializeMode2(OpenGlPrograms* context, GLuint vertex_shader) {
   }
 }
 
-static void InitializeMode35(OpenGlPrograms* context, GLuint vertex_shader) {
+static void InitializeMode3(OpenGlPrograms* context, GLuint vertex_shader) {
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-      context->mode35[obj][bg2] = glCreateProgram();
-      glAttachShader(context->mode35[obj][bg2], vertex_shader);
+      context->mode3[obj][bg2] = glCreateProgram();
+      glAttachShader(context->mode3[obj][bg2], vertex_shader);
 
       GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
       char* shader_source = GetFragmentShaderSource(
           /*objects=*/obj, /*scrolling_bg0=*/false, /*scrolling_bg1=*/false,
           /*scrolling_bg2=*/false, /*scrolling_bg3=*/false,
-          /*affine_bg2=*/false, /*affine_bg3=*/false, /*bitmap_bg=*/bg2,
-          /*palette_bitmap_bg=*/false);
+          /*affine_bg2=*/false, /*affine_bg3=*/false, /*small_bitmap_bg=*/false,
+          /*large_bitmap_bg=*/bg2, /*palette_bitmap_bg=*/false);
 
       const char* sources[1] = {shader_source};
       glShaderSource(fragment_shader, 1u, sources, NULL);
@@ -246,10 +255,10 @@ static void InitializeMode35(OpenGlPrograms* context, GLuint vertex_shader) {
       free(shader_source);
 
       glCompileShader(fragment_shader);
-      glAttachShader(context->mode35[obj][bg2], fragment_shader);
+      glAttachShader(context->mode3[obj][bg2], fragment_shader);
       glDeleteShader(fragment_shader);
 
-      glLinkProgram(context->mode35[obj][bg2]);
+      glLinkProgram(context->mode3[obj][bg2]);
     }
   }
 
@@ -259,9 +268,7 @@ static void InitializeMode35(OpenGlPrograms* context, GLuint vertex_shader) {
         for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
           for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
             context->programs[3u][obj][bg0][bg1][bg2][bg3] =
-                context->mode35[obj][bg2];
-            context->programs[5u][obj][bg0][bg1][bg2][bg3] =
-                context->mode35[obj][bg2];
+                context->mode3[obj][bg2];
           }
         }
       }
@@ -280,8 +287,8 @@ static void InitializeMode4(OpenGlPrograms* context, GLuint vertex_shader) {
       char* shader_source = GetFragmentShaderSource(
           /*objects=*/obj, /*scrolling_bg0=*/false, /*scrolling_bg1=*/false,
           /*scrolling_bg2=*/false, /*scrolling_bg3=*/false,
-          /*affine_bg2=*/false, /*affine_bg3=*/false, /*bitmap_bg=*/false,
-          /*palette_bitmap_bg=*/bg2);
+          /*affine_bg2=*/false, /*affine_bg3=*/false, /*small_bitmap_bg=*/false,
+          /*large_bitmap_bg=*/false, /*palette_bitmap_bg=*/bg2);
       const char* sources[1] = {shader_source};
       glShaderSource(fragment_shader, 1u, sources, NULL);
       free(shader_source);
@@ -301,6 +308,47 @@ static void InitializeMode4(OpenGlPrograms* context, GLuint vertex_shader) {
           for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
             context->programs[4u][obj][bg0][bg1][bg2][bg3] =
                 context->mode4[obj][bg2];
+          }
+        }
+      }
+    }
+  }
+}
+
+static void InitializeMode5(OpenGlPrograms* context, GLuint vertex_shader) {
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      context->mode5[obj][bg2] = glCreateProgram();
+      glAttachShader(context->mode5[obj][bg2], vertex_shader);
+
+      GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+
+      char* shader_source = GetFragmentShaderSource(
+          /*objects=*/obj, /*scrolling_bg0=*/false, /*scrolling_bg1=*/false,
+          /*scrolling_bg2=*/false, /*scrolling_bg3=*/false,
+          /*affine_bg2=*/false, /*affine_bg3=*/false, /*small_bitmap_bg=*/bg2,
+          /*large_bitmap_bg=*/false, /*palette_bitmap_bg=*/false);
+
+      const char* sources[1] = {shader_source};
+      glShaderSource(fragment_shader, 1u, sources, NULL);
+
+      free(shader_source);
+
+      glCompileShader(fragment_shader);
+      glAttachShader(context->mode5[obj][bg2], fragment_shader);
+      glDeleteShader(fragment_shader);
+
+      glLinkProgram(context->mode5[obj][bg2]);
+    }
+  }
+
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
+      for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
+        for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+          for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
+            context->programs[5u][obj][bg0][bg1][bg2][bg3] =
+                context->mode5[obj][bg2];
           }
         }
       }
@@ -340,8 +388,9 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
   InitializeMode0(context, vertex_shader);
   InitializeMode1(context, vertex_shader);
   InitializeMode2(context, vertex_shader);
-  InitializeMode35(context, vertex_shader);
+  InitializeMode3(context, vertex_shader);
   InitializeMode4(context, vertex_shader);
+  InitializeMode5(context, vertex_shader);
 
   glDeleteShader(vertex_shader);
 
@@ -378,10 +427,10 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
     }
   }
 
-  // Mode 3/5
+  // Mode 3
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-      ValidateProgram(context->mode35[obj][bg2]);
+      ValidateProgram(context->mode3[obj][bg2]);
     }
   }
 
@@ -389,6 +438,13 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
       ValidateProgram(context->mode4[obj][bg2]);
+    }
+  }
+
+  // Mode 5
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      ValidateProgram(context->mode5[obj][bg2]);
     }
   }
 }
@@ -427,10 +483,10 @@ void OpenGlProgramsDestroy(OpenGlPrograms* context) {
     }
   }
 
-  // Mode 3/5
+  // Mode 3
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
-      glDeleteProgram(context->mode35[obj][bg2]);
+      glDeleteProgram(context->mode3[obj][bg2]);
     }
   }
 
@@ -438,6 +494,13 @@ void OpenGlProgramsDestroy(OpenGlPrograms* context) {
   for (uint8_t obj = 0u; obj < 2u; obj++) {
     for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
       glDeleteProgram(context->mode4[obj][bg2]);
+    }
+  }
+
+  // Mode 5
+  for (uint8_t obj = 0u; obj < 2u; obj++) {
+    for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+      glDeleteProgram(context->mode5[obj][bg2]);
     }
   }
 

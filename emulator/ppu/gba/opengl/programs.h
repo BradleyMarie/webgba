@@ -11,8 +11,9 @@ typedef struct {
   GLuint mode0[2u][2u][2u][2u][2u];
   GLuint mode1[2u][2u][2u][2u];
   GLuint mode2[2u][2u][2u];
-  GLuint mode35[2u][2u];
+  GLuint mode3[2u][2u];
   GLuint mode4[2u][2u];
+  GLuint mode5[2u][2u];
   GLuint program;
   bool blank;
   GLuint staging;
