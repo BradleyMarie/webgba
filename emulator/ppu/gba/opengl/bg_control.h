@@ -7,27 +7,17 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  struct {
-    GLint size[2];
-    GLint mosaic[2];
-    GLint tilemap_base;
-    GLint tile_base;
-    GLuint priority;
-    GLuint large_palette;
-    GLuint wraparound;
-    GLint padding[3];
-  } staging[4];
+  GLuint staging[GBA_SCREEN_HEIGHT][GBA_PPU_NUM_BACKGROUNDS];
   GLuint buffer;
   bool dirty;
 } OpenGlBgControl;
 
-bool OpenGlBgControlStage(OpenGlBgControl* context,
-                           const GbaPpuRegisters* registers,
-                           GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgControlLoad(OpenGlBgControl* context,
+                         const GbaPpuRegisters* registers,
+                         GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program);
-
-void OpenGlBgControlReload(OpenGlBgControl* context);
+void OpenGlBgControlBind(OpenGlBgControl* context, GLint start, GLint end,
+                         GLuint program);
 
 void OpenGlBgControlReloadContext(OpenGlBgControl* context);
 

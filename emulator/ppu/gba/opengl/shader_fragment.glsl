@@ -8,6 +8,8 @@
 #define AFFINE_BACKGROUND_2 0
 #define AFFINE_BACKGROUND_3 0
 #define BITMAP_BACKGROUND 0
+#define SMALL_BITMAP_BACKGROUND 0
+#define LARGE_BITMAP_BACKGROUND 0
 #define PALETTE_BITMAP_BACKGROUND 0
 
 // Inputs
@@ -65,17 +67,7 @@ layout(std140) uniform ObjectVisibility {
 };
 
 // Backgrounds
-struct Background {
-  mediump ivec2 size;
-  lowp ivec2 mosaic;
-  mediump int tilemap_base;
-  lowp int tile_base;
-  lowp uint priority;
-  bool large_palette;
-  bool wraparound;
-};
-
-layout(std140) uniform Backgrounds { Background backgrounds[4]; };
+layout(std140) uniform Backgrounds { highp uvec4 backgrounds[160]; };
 
 // Background Coordinates
 struct ScrollingRow {
@@ -146,9 +138,10 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
 
 BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
                                  lowp vec3 color) {
-  if (backgrounds[bg].priority < blend_unit.priority[1]) {
+  lowp uint priority = backgrounds[int(screencoord.y)][bg] & 0x3u;
+  if (priority < blend_unit.priority[1]) {
     blend_unit.color[1] = color.bgr;
-    blend_unit.priority[1] = backgrounds[bg].priority;
+    blend_unit.priority[1] = priority;
     blend_unit.top[1] =
         bool(blend_rows[int(screencoord.y)].bldcnt.y & (1u << bg));
     blend_unit.bottom[1] =
@@ -377,19 +370,28 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
+  mediump ivec2 bg_size = ivec2(256, 256);
+  bg_size.x <<= int((backgrounds[int(screencoord.y)][bg] >> 14u) & 0x1u);
+  bg_size.y <<= int((backgrounds[int(screencoord.y)][bg] >> 15u) & 0x1u);
+
   mediump ivec2 tilemap_pixel =
       ivec2(screencoord + scrolling_rows[int(screencoord.y)].origins[bg]);
-  tilemap_pixel &= backgrounds[bg].size - 1;
-  tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
+  tilemap_pixel &= bg_size - 1;
+
+  tilemap_pixel.x -= tilemap_pixel.x %
+                     int((backgrounds[int(screencoord.y)][bg]) >> 16u & 0x1Fu);
+  tilemap_pixel.y -= tilemap_pixel.y %
+                     int((backgrounds[int(screencoord.y)][bg]) >> 24u & 0x1Fu);
 
   lowp ivec2 tilemap_block = tilemap_pixel / 256;
   lowp int tilemap_block_index =
-      tilemap_block.x + tilemap_block.y * (backgrounds[bg].size.x / 256);
+      tilemap_block.x + tilemap_block.y * (bg_size.x / 256);
   mediump ivec2 tilemap_block_tile = (tilemap_pixel / 8) % 32;
 
   mediump ivec3 tilemap_index =
       ivec3(tilemap_block_tile.x, tilemap_block_tile.y,
-            backgrounds[bg].tilemap_base + tilemap_block_index);
+            int((backgrounds[int(screencoord.y)][bg] >> 8u) & 0x1Fu) +
+                tilemap_block_index);
 
   mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
   mediump int tileblock_offset = int(tilemap_entry.x & 0x3FFu);
@@ -404,26 +406,29 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   }
 
   lowp uint color_index;
-  if (backgrounds[bg].large_palette) {
+  if (bool(backgrounds[int(screencoord.y)][bg] & 0x80u)) {
     tileblock_offset <<= 1u;
     color_index =
         texelFetch(
             background_tiles,
             ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
                   (tile_pixel.y / 4) + tileblock_offset % 512,
-                  backgrounds[bg].tile_base + tileblock_offset / 512),
+                  int((backgrounds[int(screencoord.y)][bg] >> 2u) & 0x3u) +
+                      tileblock_offset / 512),
             0)
             .r;
     if (color_index == 0u) {
       return blend_unit;
     }
   } else {
-    color_index = texelFetch(
-        background_tiles,
-        ivec3(tile_pixel.x / 2 + 4 * tile_pixel.y, tileblock_offset % 512,
-              backgrounds[bg].tile_base + tileblock_offset / 512),
-        0)
-        .r;
+    color_index =
+        texelFetch(
+            background_tiles,
+            ivec3(tile_pixel.x / 2 + 4 * tile_pixel.y, tileblock_offset % 512,
+                  int((backgrounds[int(screencoord.y)][bg] >> 2u) & 0x3u) +
+                      tileblock_offset / 512),
+            0)
+            .r;
     color_index >>= 4u * (uint(tile_pixel.x) & 1u);
     color_index &= 0xFu;
     if (color_index == 0u) {
@@ -449,34 +454,44 @@ mediump ivec2 AffinePixel(lowp uint bg) {
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
   mediump ivec2 tilemap_pixel = AffinePixel(bg);
-  if (!backgrounds[bg].wraparound) {
+
+  mediump ivec2 bg_size = ivec2(128, 128)
+                          << int((backgrounds[int(screencoord.y)][bg] >> 14u) &
+                                 0x3u);
+  if (!bool(backgrounds[int(screencoord.y)][bg] & 0x2000u)) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
-        any(greaterThanEqual(tilemap_pixel, backgrounds[bg].size))) {
+        any(greaterThanEqual(tilemap_pixel, bg_size))) {
       return blend_unit;
     }
   } else {
-    tilemap_pixel &= backgrounds[bg].size - 1;
+    tilemap_pixel &= bg_size - 1;
   }
 
-  tilemap_pixel -= tilemap_pixel % backgrounds[bg].mosaic;
+  tilemap_pixel.x -= tilemap_pixel.x %
+                     int((backgrounds[int(screencoord.y)][bg]) >> 16u & 0x1Fu);
+  tilemap_pixel.y -= tilemap_pixel.y %
+                     int((backgrounds[int(screencoord.y)][bg]) >> 24u & 0x1Fu);
 
   lowp ivec2 tile = tilemap_pixel / 8;
   lowp ivec2 tile_pixel = tilemap_pixel % 8;
-  mediump int tile_offset = tile.x + tile.y * (backgrounds[bg].size.x / 8);
+  mediump int tile_offset = tile.x + tile.y * (bg_size.x / 8);
 
   mediump uint t_index =
-      texelFetch(affine_tilemap,
-                 ivec3(tile_offset % 64, (tile_offset % 2048) / 64,
-                       backgrounds[bg].tilemap_base + tile_offset / 2048),
-                 0)
+      texelFetch(
+          affine_tilemap,
+          ivec3(tile_offset % 64, (tile_offset % 2048) / 64,
+                int((backgrounds[int(screencoord.y)][bg] >> 8u) & 0x1Fu) +
+                    tile_offset / 2048),
+          0)
           .r;
 
-  lowp uint index = texelFetch(background_tiles,
-                               ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
-                                     int(t_index << 1u) + (tile_pixel.y / 4),
-                                     backgrounds[bg].tile_base),
-                               0)
-                        .r;
+  lowp uint index =
+      texelFetch(background_tiles,
+                 ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
+                       int(t_index << 1u) + (tile_pixel.y / 4),
+                       int((backgrounds[int(screencoord.y)][bg] >> 2u) & 0x3u)),
+                 0)
+          .r;
   if (index == 0u) {
     return blend_unit;
   }
@@ -485,13 +500,15 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
   return BlendUnitAddBackground(blend_unit, bg, color.rgb);
 }
 
-BlendUnit BitmapBackground(BlendUnit blend_unit) {
+BlendUnit BitmapBackground(BlendUnit blend_unit, ivec2 size) {
   mediump ivec2 lookup = AffinePixel(2u);
-  if (any(lessThan(lookup, ivec2(0, 0))) ||
-      any(greaterThan(lookup, backgrounds[2].size))) {
+  if (any(lessThan(lookup, ivec2(0, 0))) || any(greaterThan(lookup, size))) {
     return blend_unit;
   }
-  lookup -= lookup % backgrounds[2].mosaic;
+  lookup.x -=
+      lookup.x % int((backgrounds[int(screencoord.y)][2]) >> 16u & 0x1Fu);
+  lookup.y -=
+      lookup.y % int((backgrounds[int(screencoord.y)][2]) >> 24u & 0x1Fu);
   lowp vec4 color = texelFetch(bitmap, lookup, 0);
   return BlendUnitAddBackground(blend_unit, 2u, color.rgb);
 }
@@ -499,10 +516,13 @@ BlendUnit BitmapBackground(BlendUnit blend_unit) {
 BlendUnit PaletteBitmapBackground(BlendUnit blend_unit) {
   mediump ivec2 lookup = AffinePixel(2u);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
-      any(greaterThan(lookup, backgrounds[2].size))) {
+      any(greaterThan(lookup, ivec2(240, 160)))) {
     return blend_unit;
   }
-  lookup -= lookup % backgrounds[2].mosaic;
+  lookup.x -=
+      lookup.x % int((backgrounds[int(screencoord.y)][2]) >> 16u & 0x1Fu);
+  lookup.y -=
+      lookup.y % int((backgrounds[int(screencoord.y)][2]) >> 24u & 0x1Fu);
   lowp uint index = texelFetch(palette_bitmap, lookup, 0).r;
   if (index == 0u) {
     return blend_unit;
@@ -591,9 +611,8 @@ void main() {
 
       lowp uint color_index = ObjectColorIndex(obj);
       if (color_index != 0u) {
-        lowp vec4 color =
-            texelFetch(object_palette,
-                       ivec2(objects[obj].palette + color_index, 0), 0);
+        lowp vec4 color = texelFetch(
+            object_palette, ivec2(objects[obj].palette + color_index, 0), 0);
         blend_unit =
             BlendUnitAddObject(blend_unit, color.rgb, objects[obj].priority,
                                objects[obj].semi_transparent);
@@ -637,11 +656,17 @@ void main() {
   if (bool(window & 0x8u)) {
     blend_unit = AffineBackground(blend_unit, 3u);
   }
-#endif  // AFFINE_BACKGROUND_2 != 0
+#endif  // AFFINE_BACKGROUND_3 != 0
 
-#if BITMAP_BACKGROUND != 0
+#if SMALL_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
-    blend_unit = BitmapBackground(blend_unit);
+    blend_unit = BitmapBackground(blend_unit, ivec2(160, 128));
+  }
+#endif  // BITMAP_BACKGROUND != 0
+
+#if LARGE_BITMAP_BACKGROUND != 0
+  if (bool(window & 0x4u)) {
+    blend_unit = BitmapBackground(blend_unit, ivec2(240, 160));
   }
 #endif  // BITMAP_BACKGROUND != 0
 

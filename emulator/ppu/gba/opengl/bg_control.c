@@ -4,61 +4,9 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-static void UpdateBackgroundSize(OpenGlBgControl* context,
-                                 const GbaPpuRegisters* registers,
-                                 uint8_t layer) {
-  assert(layer < GBA_PPU_NUM_BACKGROUNDS);
-
-  static const GLint scrolling_sizes[4u][2u] = {
-      {256, 256}, {512, 256}, {256, 512}, {512, 512}};
-  static const GLint affine_sizes[4u][2u] = {
-      {128, 128}, {256, 256}, {512, 512}, {1024, 1024}};
-
-  GLint new_size[2u];
-  if (registers->dispcnt.mode == 0u) {
-    new_size[0u] = scrolling_sizes[registers->bgcnt[layer].size][0u];
-    new_size[1u] = scrolling_sizes[registers->bgcnt[layer].size][1u];
-  } else if (registers->dispcnt.mode == 1u) {
-    assert(layer != 3u);
-    if (layer == 2u) {
-      new_size[0u] = affine_sizes[registers->bgcnt[layer].size][0u];
-      new_size[1u] = affine_sizes[registers->bgcnt[layer].size][1u];
-    } else {
-      new_size[0u] = scrolling_sizes[registers->bgcnt[layer].size][0u];
-      new_size[1u] = scrolling_sizes[registers->bgcnt[layer].size][1u];
-    }
-  } else if (registers->dispcnt.mode == 2u) {
-    assert(layer == 2u || layer == 3u);
-    new_size[0u] = affine_sizes[registers->bgcnt[layer].size][0u];
-    new_size[1u] = affine_sizes[registers->bgcnt[layer].size][1u];
-  } else if (registers->dispcnt.mode == 3u) {
-    new_size[0] = GBA_SCREEN_WIDTH;
-    new_size[1] = GBA_SCREEN_HEIGHT;
-  } else if (registers->dispcnt.mode == 4u) {
-    new_size[0] = GBA_SCREEN_WIDTH;
-    new_size[1] = GBA_SCREEN_HEIGHT;
-  } else {
-    assert(registers->dispcnt.mode == 5u);
-    new_size[0] = GBA_REDUCED_FRAME_WIDTH;
-    new_size[1] = GBA_REDUCED_FRAME_HEIGHT;
-  }
-
-  if (new_size[0u] != context->staging[layer].size[0u]) {
-    context->dirty = true;
-  }
-
-  context->staging[layer].size[0u] = new_size[0u];
-
-  if (new_size[1u] != context->staging[layer].size[1u]) {
-    context->dirty = true;
-  }
-
-  context->staging[layer].size[1u] = new_size[1u];
-}
-
-bool OpenGlBgControlStage(OpenGlBgControl* context,
-                          const GbaPpuRegisters* registers,
-                          GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlBgControlLoad(OpenGlBgControl* context,
+                         const GbaPpuRegisters* registers,
+                         GbaPpuDirtyBits* dirty_bits) {
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u &&
         (!registers->dispcnt.bg0_enable || registers->dispcnt.mode > 1u)) {
@@ -75,58 +23,47 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
     }
 
     if (i == 3u &&
-        (!registers->dispcnt.bg1_enable ||
+        (!registers->dispcnt.bg3_enable ||
          (registers->dispcnt.mode != 0u && registers->dispcnt.mode != 2u))) {
       continue;
     }
 
-    UpdateBackgroundSize(context, registers, i);
-
-    if (!dirty_bits->io.bg_control[i] &&
-        (!registers->bgcnt[i].mosaic || !dirty_bits->io.bg_mosaic)) {
-      continue;
-    }
-
-    context->staging[i].priority = registers->bgcnt[i].priority;
-    context->staging[i].tilemap_base = registers->bgcnt[i].tile_map_base_block;
-    context->staging[i].tile_base = registers->bgcnt[i].tile_base_block;
-    context->staging[i].large_palette = registers->bgcnt[i].large_palette;
-    context->staging[i].wraparound = registers->bgcnt[i].wraparound;
+    GLuint value = registers->bgcnt[i].value;
 
     if (registers->bgcnt[i].mosaic) {
-      context->staging[i].mosaic[0u] = registers->mosaic.bg_horiz + 1;
-      context->staging[i].mosaic[1u] = registers->mosaic.bg_vert + 1;
+      value |= (registers->mosaic.bg_horiz + 1u) << 16u;
+      value |= (registers->mosaic.bg_vert + 1u) << 24u;
     } else {
-      context->staging[i].mosaic[0u] = 1;
-      context->staging[i].mosaic[1u] = 1;
+      value |= 1u << 16u;
+      value |= 1u << 24u;
     }
 
-    dirty_bits->io.bg_control[i] = false;
-    context->dirty = true;
-  }
+    if (value != context->staging[registers->vcount][i]) {
+      context->dirty = true;
+    }
 
-  dirty_bits->io.bg_mosaic = false;
+    context->staging[registers->vcount][i] = value;
+  }
 
   return context->dirty;
 }
 
-void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {
+void OpenGlBgControlBind(OpenGlBgControl* context, GLint start, GLint end,
+                         GLuint program) {
   GLint backgrounds = glGetUniformBlockIndex(program, "Backgrounds");
   glUniformBlockBinding(program, backgrounds, BACKGROUNDS_BUFFER);
 
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
   glBindBufferBase(GL_UNIFORM_BUFFER, BACKGROUNDS_BUFFER, context->buffer);
-}
 
-void OpenGlBgControlReload(OpenGlBgControl* context) {
   if (context->dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->staging),
-                    /*data=*/&context->staging);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/sizeof(GLuint) * 4u * start,
+                    /*size=*/sizeof(GLuint) * 4u * (end - start),
+                    /*data=*/&context->staging[start]);
     context->dirty = false;
   }
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlBgControlReloadContext(OpenGlBgControl* context) {

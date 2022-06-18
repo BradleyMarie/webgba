@@ -54,6 +54,7 @@ static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
   bool result = OpenGlBgAffineLoad(&renderer->affine, registers, dirty_bits);
   result |=
       OpenGlBgScrollingLoad(&renderer->bg_scrolling, registers, dirty_bits);
+  result |= OpenGlBgControlLoad(&renderer->bg_control, registers, dirty_bits);
   result |= OpenGlBlendLoad(&renderer->blend, registers, dirty_bits);
   result |= OpenGlWindowLoad(&renderer->window, registers, dirty_bits);
   return result;
@@ -74,7 +75,6 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
                                      registers, dirty_bits);
   result |= OpenGlBgBitmapMode5Stage(&renderer->bg_bitmap_mode5, memory,
                                      registers, dirty_bits);
-  result |= OpenGlBgControlStage(&renderer->bg_control, registers, dirty_bits);
   result |= OpenGlPaletteStage(&renderer->palette, dirty_bits);
   result |=
       OpenGlTilemapStage(&renderer->tilemap, memory, registers, dirty_bits);
@@ -112,13 +112,13 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
 
     OpenGlBgAffineBind(&renderer->affine, start, end, program);
     OpenGlBgScrollingBind(&renderer->bg_scrolling, start, end, program);
+    OpenGlBgControlBind(&renderer->bg_control, start, end, program);
     OpenGlBlendBind(&renderer->blend, start, end, program);
     OpenGlWindowBind(&renderer->window, start, end, program);
 
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
-    OpenGlBgControlBind(&renderer->bg_control, program);
     OpenGlPaletteBind(&renderer->palette, program);
     OpenGlTilemapBind(&renderer->tilemap, program);
     OpenGlObjectAttributesBind(&renderer->obj_attributes, program);
@@ -194,7 +194,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
-    OpenGlBgControlReload(&renderer->bg_control);
     OpenGlPaletteReload(&renderer->palette, memory);
     OpenGlTilemapReload(&renderer->tilemap, memory);
     OpenGlObjectAttributesReload(&renderer->obj_attributes);
