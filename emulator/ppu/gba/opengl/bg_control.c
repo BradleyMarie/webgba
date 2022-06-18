@@ -7,6 +7,11 @@
 bool OpenGlBgControlLoad(OpenGlBgControl* context,
                          const GbaPpuRegisters* registers,
                          GbaPpuDirtyBits* dirty_bits) {
+  if (!context->dirty) {
+    context->dirty_start = registers->vcount;
+  }
+
+  bool row_dirty = false;
   for (uint8_t i = 0u; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u &&
         (!registers->dispcnt.bg0_enable || registers->dispcnt.mode > 1u)) {
@@ -28,28 +33,31 @@ bool OpenGlBgControlLoad(OpenGlBgControl* context,
       continue;
     }
 
-    GLuint value = registers->bgcnt[i].value;
+    GLuint new_value = registers->bgcnt[i].value;
 
     if (registers->bgcnt[i].mosaic) {
-      value |= (registers->mosaic.bg_horiz + 1u) << 16u;
-      value |= (registers->mosaic.bg_vert + 1u) << 24u;
+      new_value |= (registers->mosaic.bg_horiz + 1u) << 16u;
+      new_value |= (registers->mosaic.bg_vert + 1u) << 24u;
     } else {
-      value |= 1u << 16u;
-      value |= 1u << 24u;
+      new_value |= 1u << 16u;
+      new_value |= 1u << 24u;
     }
 
-    if (value != context->staging[registers->vcount][i]) {
-      context->dirty = true;
+    if (new_value != context->staging[registers->vcount][i]) {
+      context->staging[registers->vcount][i] = new_value;
+      row_dirty = true;
     }
+  }
 
-    context->staging[registers->vcount][i] = value;
+  if (row_dirty) {
+    context->dirty_end = registers->vcount;
+    context->dirty = true;
   }
 
   return context->dirty;
 }
 
-void OpenGlBgControlBind(OpenGlBgControl* context, GLint start, GLint end,
-                         GLuint program) {
+void OpenGlBgControlBind(OpenGlBgControl* context, GLuint program) {
   GLint backgrounds = glGetUniformBlockIndex(program, "Backgrounds");
   glUniformBlockBinding(program, backgrounds, BACKGROUNDS_BUFFER);
 
@@ -57,9 +65,11 @@ void OpenGlBgControlBind(OpenGlBgControl* context, GLint start, GLint end,
   glBindBufferBase(GL_UNIFORM_BUFFER, BACKGROUNDS_BUFFER, context->buffer);
 
   if (context->dirty) {
-    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/sizeof(GLuint) * 4u * start,
-                    /*size=*/sizeof(GLuint) * 4u * (end - start),
-                    /*data=*/&context->staging[start]);
+    glBufferSubData(GL_UNIFORM_BUFFER,
+                    /*offset=*/sizeof(GLuint) * 4u * context->dirty_start,
+                    /*size=*/sizeof(GLuint) * 4u *
+                        (context->dirty_end - context->dirty_start + 1u),
+                    /*data=*/&context->staging[context->dirty_start]);
     context->dirty = false;
   }
 

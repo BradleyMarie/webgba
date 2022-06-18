@@ -5,20 +5,21 @@
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
-void OpenGlBlendSetGLuint(OpenGlBlend* context, GLuint value, GLuint* result) {
+static void OpenGlBlendSetGLuint(OpenGlBlend* context, GLuint value,
+                                 GLuint* result, bool* dirty) {
   if (*result != value) {
-    context->dirty = true;
+    *result = value;
+    *dirty = true;
   }
-  *result = value;
 }
 
-void OpenGlBlendSetGLfloat(OpenGlBlend* context, unsigned char value,
-                           GLfloat* result) {
+static void OpenGlBlendSetGLfloat(OpenGlBlend* context, unsigned char value,
+                                  GLfloat* result, bool* dirty) {
   GLfloat as_float = fmin((double)value / 16.0, 1.0);
   if (*result != as_float) {
-    context->dirty = true;
+    *result = as_float;
+    *dirty = true;
   }
-  *result = as_float;
 }
 
 bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
@@ -34,28 +35,39 @@ bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
     return false;
   }
 
-  OpenGlBlendSetGLuint(context, registers->bldcnt.mode,
-                       &context->staging[registers->vcount].bldcnt[0u]);
-  OpenGlBlendSetGLuint(context, registers->bldcnt.value & 0x3Fu,
-                       &context->staging[registers->vcount].bldcnt[1u]);
-  OpenGlBlendSetGLuint(context, (registers->bldcnt.value >> 8u) & 0x3F,
-                       &context->staging[registers->vcount].bldcnt[2u]);
-  OpenGlBlendSetGLfloat(context, registers->bldalpha.eva,
-                        &context->staging[registers->vcount].ev[0u]);
-  OpenGlBlendSetGLfloat(context, registers->bldalpha.evb,
-                        &context->staging[registers->vcount].ev[1u]);
-  OpenGlBlendSetGLfloat(context, registers->bldy.evy,
-                        &context->staging[registers->vcount].ev[2u]);
+  if (!context->dirty) {
+    context->dirty_start = registers->vcount;
+  }
 
-  return true;
+  bool row_dirty = false;
+  OpenGlBlendSetGLuint(context, registers->bldcnt.mode,
+                       &context->staging[registers->vcount].bldcnt[0u],
+                       &row_dirty);
+  OpenGlBlendSetGLuint(context, registers->bldcnt.value & 0x3Fu,
+                       &context->staging[registers->vcount].bldcnt[1u],
+                       &row_dirty);
+  OpenGlBlendSetGLuint(context, (registers->bldcnt.value >> 8u) & 0x3F,
+                       &context->staging[registers->vcount].bldcnt[2u],
+                       &row_dirty);
+  OpenGlBlendSetGLfloat(context, registers->bldalpha.eva,
+                        &context->staging[registers->vcount].ev[0u],
+                        &row_dirty);
+  OpenGlBlendSetGLfloat(context, registers->bldalpha.evb,
+                        &context->staging[registers->vcount].ev[1u],
+                        &row_dirty);
+  OpenGlBlendSetGLfloat(context, registers->bldy.evy,
+                        &context->staging[registers->vcount].ev[2u],
+                        &row_dirty);
+
+  if (row_dirty) {
+    context->dirty_end = registers->vcount;
+    context->dirty = true;
+  }
+
+  return context->dirty;
 }
 
-void OpenGlBlendBind(OpenGlBlend* context, GLint start, GLint end,
-                     GLuint program) {
-  assert(0 <= start);
-  assert(start != end);
-  assert(end <= GBA_SCREEN_HEIGHT);
-
+void OpenGlBlendBind(OpenGlBlend* context, GLuint program) {
   GLint blend = glGetUniformBlockIndex(program, "Blend");
   glUniformBlockBinding(program, blend, BLEND_BUFFER);
 
@@ -64,9 +76,10 @@ void OpenGlBlendBind(OpenGlBlend* context, GLint start, GLint end,
 
   if (context->dirty) {
     glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/sizeof(OpenGlBlendRow) * start,
-                    /*size=*/sizeof(OpenGlBlendRow) * (end - start),
-                    /*data=*/&context->staging[start]);
+                    /*offset=*/sizeof(OpenGlBlendRow) * context->dirty_start,
+                    /*size=*/sizeof(OpenGlBlendRow) *
+                        (context->dirty_end - context->dirty_start + 1u),
+                    /*data=*/&context->staging[context->dirty_start]);
     context->dirty = false;
   }
 

@@ -110,11 +110,11 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     GLuint program = OpenGlProgramsGet(&renderer->programs);
     glUseProgram(program);
 
-    OpenGlBgAffineBind(&renderer->affine, start, end, program);
-    OpenGlBgScrollingBind(&renderer->bg_scrolling, start, end, program);
-    OpenGlBgControlBind(&renderer->bg_control, start, end, program);
-    OpenGlBlendBind(&renderer->blend, start, end, program);
-    OpenGlWindowBind(&renderer->window, start, end, program);
+    OpenGlBgAffineBind(&renderer->affine, program);
+    OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
+    OpenGlBgControlBind(&renderer->bg_control, program);
+    OpenGlBlendBind(&renderer->blend, program);
+    OpenGlWindowBind(&renderer->window, program);
 
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);

@@ -13,6 +13,8 @@ typedef struct {
 typedef struct {
   OpenGlScrollingRow staging[GBA_SCREEN_HEIGHT];
   GLuint buffer;
+  uint8_t dirty_start;
+  uint8_t dirty_end;
   bool dirty;
 } OpenGlBgScrolling;
 
@@ -20,8 +22,7 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
                            const GbaPpuRegisters* registers,
                            GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLint start, GLint end,
-                           GLuint program);
+void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLuint program);
 
 void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context);
 

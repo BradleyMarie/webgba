@@ -14,14 +14,15 @@ typedef struct {
 typedef struct {
   OpenGlWindowRow staging[GBA_SCREEN_HEIGHT];
   GLuint buffer;
+  uint8_t dirty_start;
+  uint8_t dirty_end;
   bool dirty;
 } OpenGlWindow;
 
 bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                       GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlWindowBind(OpenGlWindow* context, GLint start, GLint end,
-                      GLuint program);
+void OpenGlWindowBind(OpenGlWindow* context, GLuint program);
 
 void OpenGlWindowReloadContext(OpenGlWindow* context);
 
