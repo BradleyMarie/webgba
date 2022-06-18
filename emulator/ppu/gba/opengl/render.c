@@ -103,11 +103,11 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
   glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
              GBA_SCREEN_HEIGHT * renderer->render_scale);
 
-  if (renderer->programs.blank) {
+  GLuint program = OpenGlProgramsGet(&renderer->programs);
+  if (!program) {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
   } else {
-    GLuint program = OpenGlProgramsGet(&renderer->programs);
     glUseProgram(program);
 
     OpenGlBgAffineBind(&renderer->affine, program);
