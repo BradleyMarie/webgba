@@ -15,9 +15,7 @@ typedef struct {
   GLuint mode4[2u][2u];
   GLuint mode5[2u][2u];
   GLuint program;
-  bool blank;
   GLuint staging;
-  bool staging_blank;
 } OpenGlPrograms;
 
 bool OpenGlProgramsStage(OpenGlPrograms* context,
