@@ -9,6 +9,7 @@
 typedef struct {
   GLuint textures[2u];
   uint8_t page;
+  bool enabled;
   bool dirty;
 } OpenGlBgBitmapMode4;
 

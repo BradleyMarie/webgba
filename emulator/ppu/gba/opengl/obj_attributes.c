@@ -275,17 +275,21 @@ bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
 void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
                                 GLuint program) {
   GLint objects = glGetUniformBlockIndex(program, "Objects");
-  glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
+  if (objects >= 0) {
+    glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
-  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffers[0u]);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+    glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffers[0u]);
+  }
 
   GLint visibility = glGetUniformBlockIndex(program, "ObjectVisibility");
-  glUniformBlockBinding(program, visibility, OBJECT_VISIBILITY_BUFFER);
+  if (visibility >= 0) {
+    glUniformBlockBinding(program, visibility, OBJECT_VISIBILITY_BUFFER);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
-  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECT_VISIBILITY_BUFFER,
-                   context->buffers[1u]);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+    glBindBufferBase(GL_UNIFORM_BUFFER, OBJECT_VISIBILITY_BUFFER,
+                     context->buffers[1u]);
+  }
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
