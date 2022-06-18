@@ -14,6 +14,11 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
     return false;
   }
 
+  if (!context->dirty) {
+    context->dirty_start = registers->vcount;
+  }
+
+  bool row_dirty = false;
   for (uint8_t i = 0; i < GBA_PPU_NUM_BACKGROUNDS; i++) {
     if (i == 0u && !registers->dispcnt.bg0_enable) {
       continue;
@@ -37,26 +42,26 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
         registers->bg_offsets[i].x) {
       context->staging[registers->vcount].origins[i][0u] =
           registers->bg_offsets[i].x;
-      context->dirty = true;
+      row_dirty = true;
     }
 
     if (context->staging[registers->vcount].origins[i][1u] !=
         registers->bg_offsets[i].y) {
       context->staging[registers->vcount].origins[i][1u] =
           registers->bg_offsets[i].y;
-      context->dirty = true;
+      row_dirty = true;
     }
+  }
+
+  if (row_dirty) {
+    context->dirty_end = registers->vcount;
+    context->dirty = true;
   }
 
   return context->dirty;
 }
 
-void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLint start, GLint end,
-                           GLuint program) {
-  assert(0 <= start);
-  assert(start != end);
-  assert(end <= GBA_SCREEN_HEIGHT);
-
+void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLuint program) {
   GLint scrolling_backgrounds =
       glGetUniformBlockIndex(program, "ScrollingBackgrounds");
   glUniformBlockBinding(program, scrolling_backgrounds, SCROLLING_BUFFER);
@@ -65,10 +70,12 @@ void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLint start, GLint end,
   glBindBufferBase(GL_UNIFORM_BUFFER, SCROLLING_BUFFER, context->buffer);
 
   if (context->dirty) {
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/sizeof(OpenGlScrollingRow) * start,
-                    /*size=*/sizeof(OpenGlScrollingRow) * (end - start),
-                    /*data=*/&context->staging[start]);
+    glBufferSubData(
+        GL_UNIFORM_BUFFER,
+        /*offset=*/sizeof(OpenGlScrollingRow) * context->dirty_start,
+        /*size=*/sizeof(OpenGlScrollingRow) *
+            (context->dirty_end - context->dirty_start + 1u),
+        /*data=*/&context->staging[context->dirty_start]);
     context->dirty = false;
   }
 

@@ -16,6 +16,8 @@ typedef struct {
     OpenGlBgAffineRow rows[161u];
   } staging;
   GLuint buffer;
+  uint8_t dirty_start;
+  uint8_t dirty_end;
   bool dirty;
 } OpenGlBgAffine;
 
@@ -23,8 +25,7 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
                         const GbaPpuRegisters* registers,
                         GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgAffineBind(OpenGlBgAffine* context, GLint start, GLint end,
-                        GLuint program);
+void OpenGlBgAffineBind(OpenGlBgAffine* context, GLuint program);
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context);
 

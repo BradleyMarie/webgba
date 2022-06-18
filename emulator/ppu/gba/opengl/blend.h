@@ -14,14 +14,15 @@ typedef struct {
 typedef struct {
   OpenGlBlendRow staging[GBA_SCREEN_HEIGHT];
   GLuint buffer;
+  uint8_t dirty_start;
+  uint8_t dirty_end;
   bool dirty;
 } OpenGlBlend;
 
 bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
                      GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBlendBind(OpenGlBlend* context, GLint start, GLint end,
-                     GLuint program);
+void OpenGlBlendBind(OpenGlBlend* context, GLuint program);
 
 void OpenGlBlendReloadContext(OpenGlBlend* context);
 
