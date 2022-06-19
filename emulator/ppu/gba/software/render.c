@@ -8,12 +8,10 @@
 #include "emulator/ppu/gba/software/bg_scrolling.h"
 #include "emulator/ppu/gba/software/blend.h"
 #include "emulator/ppu/gba/software/obj.h"
-#include "emulator/ppu/gba/software/obj_visibility.h"
 #include "emulator/ppu/gba/software/window.h"
 #include "emulator/screen.h"
 
 struct _GbaPpuSoftwareRenderer {
-  GbaPpuObjectVisibility object_visibility;
   uint16_t* pixels;
 };
 
@@ -22,15 +20,14 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
     const GbaPpuRegisters* registers, GbaPpuDirtyBits* dirty_bits, uint8_t x,
     const int32_t affine_bg2[2], const int32_t affine_bg3[2]) {
   assert(renderer->pixels != NULL);
-  assert(GbaPpuSetEmpty(&dirty_bits->oam.objects));
 
   uint16_t obj_color;
   uint8_t obj_priority;
   bool object_on_pixel, obj_semi_transparent, on_obj_mask;
   if (registers->dispcnt.object_enable) {
-    object_on_pixel = GbaPpuObjectPixel(
-        memory, registers, &renderer->object_visibility, x, registers->vcount,
-        &obj_color, &obj_priority, &obj_semi_transparent, &on_obj_mask);
+    object_on_pixel =
+        GbaPpuObjectPixel(memory, registers, x, registers->vcount, &obj_color,
+                          &obj_priority, &obj_semi_transparent, &on_obj_mask);
   } else {
     object_on_pixel = false;
     on_obj_mask = false;
@@ -195,14 +192,6 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
     return;
   }
 
-  while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
-    uint_fast8_t index = GbaPpuSetPop(&dirty_bits->oam.objects);
-    GbaPpuObjectVisibilityHidden(&renderer->object_visibility, &memory->oam,
-                                 index);
-    GbaPpuObjectVisibilityDrawn(&renderer->object_visibility, &memory->oam,
-                                index);
-  }
-
   int32_t affine_bg2[2] = {registers->internal.affine[0u].current[0u],
                            registers->internal.affine[0u].current[1u]};
   int32_t affine_bg3[2] = {registers->internal.affine[1u].current[0u],
@@ -231,14 +220,6 @@ void GbaPpuSoftwareRendererDrawPixel(GbaPpuSoftwareRenderer* renderer,
                                      GbaPpuDirtyBits* dirty_bits, uint8_t x) {
   if (renderer->pixels == NULL) {
     return;
-  }
-
-  while (!GbaPpuSetEmpty(&dirty_bits->oam.objects)) {
-    uint_fast8_t index = GbaPpuSetPop(&dirty_bits->oam.objects);
-    GbaPpuObjectVisibilityHidden(&renderer->object_visibility, &memory->oam,
-                                 index);
-    GbaPpuObjectVisibilityDrawn(&renderer->object_visibility, &memory->oam,
-                                index);
   }
 
   uint16_t color = 0u;

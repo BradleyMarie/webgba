@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "emulator/ppu/gba/set.h"
+
 #define GBA_LARGE_PALETTE_SIZE 256u
 #define GBA_NUM_SMALL_PALETTES 16u
 #define GBA_SMALL_PALETTE_SIZE 16u
@@ -207,21 +209,63 @@ typedef struct {
 #define OAM_NUM_ROTATE_SCALE_GROUPS 32u
 #define OAM_SIZE 1024u
 
-typedef union {
-  ObjectAttribute object_attributes[OAM_NUM_OBJECTS];
-  ObjectRotateScaleParameter rotate_scale[OAM_NUM_ROTATE_SCALE_GROUPS];
-  uint32_t words[OAM_SIZE >> 2u];
-  uint16_t half_words[OAM_SIZE >> 1u];
-  uint8_t bytes[OAM_SIZE];
+typedef struct {
+  GbaPpuSet x_sets[GBA_SCREEN_WIDTH];
+  GbaPpuSet y_sets[GBA_SCREEN_HEIGHT];
+  struct {
+    uint8_t pixel_x_start;
+    uint8_t pixel_x_end;
+    uint8_t pixel_x_size;
+    uint8_t pixel_y_start;
+    uint8_t pixel_y_end;
+    uint8_t pixel_y_size;
+    int16_t true_x_start;
+    int16_t true_x_center;
+    int16_t true_x_size;
+    int16_t true_y_start;
+    int16_t true_y_center;
+    int16_t true_y_size;
+  } object_coordinates[OAM_NUM_OBJECTS];
+  GbaPpuSet layers[4u];
+  GbaPpuSet window;
+} GbaPpuOamInternalAttributeMemory;
+
+typedef struct {
+  union {
+    ObjectAttribute object_attributes[OAM_NUM_OBJECTS];
+    ObjectRotateScaleParameter rotate_scale[OAM_NUM_ROTATE_SCALE_GROUPS];
+    uint32_t words[OAM_SIZE >> 2u];
+    uint16_t half_words[OAM_SIZE >> 1u];
+    uint8_t bytes[OAM_SIZE];
+  };
+  GbaPpuOamInternalAttributeMemory internal;
 } GbaPpuObjectAttributeMemory;
 
-static_assert(sizeof(GbaPpuObjectAttributeMemory) == OAM_SIZE,
-              "sizeof(GbaPpuObjectAttributeMemory) != OAM_SIZE");
+static_assert(sizeof(GbaPpuObjectAttributeMemory) -
+                      sizeof(GbaPpuOamInternalAttributeMemory) ==
+                  OAM_SIZE,
+              "sizeof(GbaPpuObjectAttributeMemory) - "
+              "sizeof(GbaPpuOamInternalAttributeMemory) "
+              "!= OAM_SIZE");
 
 typedef struct {
   GbaPpuPaletteMemory palette;
   GbaPpuVideoMemory vram;
   GbaPpuObjectAttributeMemory oam;
 } GbaPpuMemory;
+
+void GbaPpuObjectVisibilityHidden(GbaPpuObjectAttributeMemory* oam,
+                                  uint_fast8_t object);
+
+void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
+                                 uint_fast8_t object);
+
+static inline GbaPpuSet GbaPpuObjectVisibilityGet(
+    const GbaPpuObjectAttributeMemory* oam, uint_fast8_t x, uint_fast8_t y) {
+  assert(x < GBA_SCREEN_WIDTH);
+  assert(y < GBA_SCREEN_HEIGHT);
+  return GbaPpuSetIntersection(&oam->internal.x_sets[x],
+                               &oam->internal.y_sets[y]);
+}
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_MEMORY_

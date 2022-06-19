@@ -17,7 +17,20 @@ cc_library(
 cc_library(
     name = "memory",
     hdrs = ["memory.h"],
+    srcs = ["memory.c"],
     visibility = ["//emulator/ppu:__subpackages__"],
+    deps = [
+        ":set",
+    ],
+)
+
+cc_test(
+    name = "memory_test",
+    srcs = ["memory_test.cc"],
+    deps = [
+        ":memory",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(

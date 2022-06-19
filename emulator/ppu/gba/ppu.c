@@ -239,6 +239,11 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
     return false;
   }
 
+  for (uint8_t i = 0; i < OAM_NUM_OBJECTS; i++) {
+    GbaPpuObjectVisibilityHidden(&(*ppu)->memory.oam, i);
+    GbaPpuObjectVisibilityDrawn(&(*ppu)->memory.oam, i);
+  }
+
   (*ppu)->dma_unit = dma_unit;
   (*ppu)->platform = platform;
   (*ppu)->registers.dispcnt.forced_blank = true;

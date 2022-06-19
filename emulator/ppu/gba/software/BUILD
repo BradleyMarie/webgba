@@ -54,17 +54,6 @@ cc_test(
 )
 
 cc_library(
-    name = "obj_visibility",
-    srcs = ["obj_visibility.c"],
-    hdrs = ["obj_visibility.h"],
-    deps = [
-        "//emulator/ppu/gba:memory",
-        "//emulator/ppu/gba:registers",
-        "//emulator/ppu/gba:set",
-    ],
-)
-
-cc_library(
     name = "render",
     srcs = ["render.c"],
     hdrs = ["render.h"],
@@ -74,20 +63,10 @@ cc_library(
         ":bg_bitmap",
         ":bg_scrolling",
         ":blend",
-        ":obj_visibility",
         ":obj",
         ":window",
         "//emulator/ppu/gba:dirty",
         "//emulator:screen",
-    ],
-)
-
-cc_test(
-    name = "obj_visibility_test",
-    srcs = ["obj_visibility_test.cc"],
-    deps = [
-        ":obj_visibility",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -96,7 +75,6 @@ cc_library(
     srcs = ["obj.c"],
     hdrs = ["obj.h"],
     deps = [
-        ":obj_visibility",
         "//emulator/memory",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",

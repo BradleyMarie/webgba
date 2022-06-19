@@ -35,13 +35,8 @@ typedef struct {
     GLuint object_drawn[4u];
   } visibility_staging;
   GLuint buffers[2u];
-  uint8_t begin[OAM_NUM_OBJECTS][2u];
-  uint8_t end[OAM_NUM_OBJECTS][2u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
-  GbaPpuSet rotations[OAM_NUM_ROTATE_SCALE_GROUPS];
-  GbaPpuSet layers[4u];
-  GbaPpuSet window;
   bool objects_dirty;
   bool visibility_dirty;
 } OpenGlObjectAttributes;
