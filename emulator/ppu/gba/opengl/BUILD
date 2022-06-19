@@ -91,9 +91,9 @@ cc_library(
 )
 
 cc_library(
-    name = "obj_attributes",
-    srcs = ["obj_attributes.c"],
-    hdrs = ["obj_attributes.h"],
+    name = "objects",
+    srcs = ["objects.c"],
+    hdrs = ["objects.h"],
     linkopts = ["-lGL"],
     deps = [
         ":texture_bindings",
@@ -141,7 +141,7 @@ cc_library(
         ":bg_control",
         ":bg_scrolling",
         ":blend",
-        ":obj_attributes",
+        ":objects",
         ":palette",
         ":programs",
         ":tilemap",
