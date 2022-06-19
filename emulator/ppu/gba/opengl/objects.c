@@ -1,4 +1,4 @@
-#include "emulator/ppu/gba/opengl/obj_attributes.h"
+#include "emulator/ppu/gba/opengl/objects.h"
 
 #include <assert.h>
 
@@ -6,10 +6,9 @@
 
 static GLfloat FixedToFloat(int16_t value) { return value / (GLfloat)256.0; }
 
-bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
-                                 const GbaPpuMemory* memory,
-                                 const GbaPpuRegisters* registers,
-                                 GbaPpuDirtyBits* dirty_bits) {
+bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits) {
   if (!registers->dispcnt.object_enable) {
     return false;
   }
@@ -181,8 +180,7 @@ bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
   return true;
 }
 
-void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
-                                GLuint program) {
+void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program) {
   GLint objects = glGetUniformBlockIndex(program, "Objects");
   if (objects >= 0) {
     glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
@@ -203,7 +201,7 @@ void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context) {
+void OpenGlObjectsReload(OpenGlObjects* context) {
   if (context->objects_dirty) {
     glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
     glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
@@ -223,7 +221,7 @@ void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context) {
   }
 }
 
-void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
+void OpenGlObjectsReloadContext(OpenGlObjects* context) {
   glGenBuffers(2, context->buffers);
   glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
   glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_staging),
@@ -236,6 +234,6 @@ void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context) {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context) {
+void OpenGlObjectsDestroy(OpenGlObjects* context) {
   glDeleteBuffers(2, context->buffers);
 }

@@ -39,20 +39,18 @@ typedef struct {
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   bool objects_dirty;
   bool visibility_dirty;
-} OpenGlObjectAttributes;
+} OpenGlObjects;
 
-bool OpenGlObjectAttributesStage(OpenGlObjectAttributes* context,
-                                 const GbaPpuMemory* memory,
-                                 const GbaPpuRegisters* registers,
-                                 GbaPpuDirtyBits* dirty_bits);
+bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlObjectAttributesBind(const OpenGlObjectAttributes* context,
-                                GLuint program);
+void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program);
 
-void OpenGlObjectAttributesReload(OpenGlObjectAttributes* context);
+void OpenGlObjectsReload(OpenGlObjects* context);
 
-void OpenGlObjectAttributesReloadContext(OpenGlObjectAttributes* context);
+void OpenGlObjectsReloadContext(OpenGlObjects* context);
 
-void OpenGlObjectAttributesDestroy(OpenGlObjectAttributes* context);
+void OpenGlObjectsDestroy(OpenGlObjects* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_OBJ_ATTRIBUTES_
