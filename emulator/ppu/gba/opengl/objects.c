@@ -7,13 +7,13 @@
 typedef union {
   struct {
     // x
-    unsigned short top_x;
-    unsigned short top_y;
+    unsigned short canvas_top_x;
+    unsigned short canvas_top_y;
 
     // y
     unsigned short character_name;
-    unsigned char size_x;
-    unsigned char size_y;
+    unsigned char canvas_size_x;
+    unsigned char canvas_size_y;
 
     // z
     unsigned char mosaic_x;
@@ -22,13 +22,15 @@ typedef union {
     unsigned char palette;
 
     // w
+    unsigned char sprite_size_x;
+    unsigned char sprite_size_y;
     unsigned char priority : 2u;
     bool large_palette : 1u;
     bool flip_x : 1u;
     bool flip_y : 1u;
     bool semi_transparent : 1u;
     bool linear_tiles : 1u;
-    uint32_t unused : 25u;
+    unsigned short unused : 9u;
   };
   GLuint values[4u];
 } OpenGlObjectAttribute;
@@ -51,14 +53,14 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
   context->staging.object_transformations[0u][1u][0u] = 0.0;
   context->staging.object_transformations[0u][1u][1u] = 1.0;
 
-  for (uint8_t i = 1u; i <= OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
-    context->staging.object_transformations[i][0u][0u] =
+  for (uint8_t i = 0u; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
+    context->staging.object_transformations[i + 1u][0u][0u] =
         FixedToFloat(memory->oam.rotate_scale[i].pa);
-    context->staging.object_transformations[i][0u][1u] =
+    context->staging.object_transformations[i + 1u][0u][1u] =
         FixedToFloat(memory->oam.rotate_scale[i].pc);
-    context->staging.object_transformations[i][1u][0u] =
+    context->staging.object_transformations[i + 1u][1u][0u] =
         FixedToFloat(memory->oam.rotate_scale[i].pb);
-    context->staging.object_transformations[i][1u][1u] =
+    context->staging.object_transformations[i + 1u][1u][1u] =
         FixedToFloat(memory->oam.rotate_scale[i].pd);
   }
 
@@ -154,14 +156,20 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     uint8_t obj = object_indices[i];
 
     OpenGlObjectAttribute attribute;
-    attribute.top_x =
+    attribute.canvas_top_x =
         memory->oam.internal.object_coordinates[obj].true_x_start +
         memory->oam.internal.object_coordinates[obj].true_x_size;
-    attribute.top_y =
+    attribute.canvas_top_y =
         memory->oam.internal.object_coordinates[obj].true_y_start +
         memory->oam.internal.object_coordinates[obj].true_y_size;
-    attribute.size_x = memory->oam.internal.object_coordinates[obj].true_x_size;
-    attribute.size_y = memory->oam.internal.object_coordinates[obj].true_y_size;
+    attribute.canvas_size_x =
+        memory->oam.internal.object_coordinates[obj].true_x_size;
+    attribute.canvas_size_y =
+        memory->oam.internal.object_coordinates[obj].true_y_size;
+    attribute.sprite_size_x =
+        memory->oam.internal.object_coordinates[obj].pixel_x_size;
+    attribute.sprite_size_y =
+        memory->oam.internal.object_coordinates[obj].pixel_y_size;
     attribute.character_name =
         memory->oam.object_attributes[obj].character_name;
 
