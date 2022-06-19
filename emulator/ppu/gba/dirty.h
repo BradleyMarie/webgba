@@ -19,8 +19,8 @@ typedef struct {
 } GbaPpuVramDirtyBits;
 
 typedef struct {
-  GbaPpuSet objects;
   GbaPpuSet rotations;
+  bool objects;
 } GbaPpuOamDirtyBits;
 
 typedef struct {

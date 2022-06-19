@@ -1,29 +1,33 @@
-#include "emulator/ppu/gba/software/obj_visibility.h"
+#include "emulator/ppu/gba/memory.h"
 
-void GbaPpuObjectVisibilityHidden(GbaPpuObjectVisibility* visibility,
-                                  const GbaPpuObjectAttributeMemory* oam,
+void GbaPpuObjectVisibilityHidden(GbaPpuObjectAttributeMemory* oam,
                                   uint_fast8_t object) {
-  if (visibility->object_coordinates[object].pixel_x_size == 0u) {
+  if (oam->internal.object_coordinates[object].pixel_x_size == 0u) {
     return;
   }
 
-  for (uint8_t x = visibility->object_coordinates[object].pixel_x_start;
-       x < visibility->object_coordinates[object].pixel_x_end; x++) {
-    GbaPpuSetRemove(visibility->x_sets + x, object);
+  for (uint8_t x = oam->internal.object_coordinates[object].pixel_x_start;
+       x < oam->internal.object_coordinates[object].pixel_x_end; x++) {
+    GbaPpuSetRemove(oam->internal.x_sets + x, object);
   }
 
-  for (uint8_t y = visibility->object_coordinates[object].pixel_y_start;
-       y < visibility->object_coordinates[object].pixel_y_end; y++) {
-    GbaPpuSetRemove(visibility->y_sets + y, object);
+  for (uint8_t y = oam->internal.object_coordinates[object].pixel_y_start;
+       y < oam->internal.object_coordinates[object].pixel_y_end; y++) {
+    GbaPpuSetRemove(oam->internal.y_sets + y, object);
   }
 
-  visibility->object_coordinates[object].pixel_x_size = 0u;
+  for (uint8_t i = 0u; i < 4u; i++) {
+    GbaPpuSetRemove(oam->internal.layers + i, object);
+  }
+
+  GbaPpuSetRemove(&oam->internal.window, object);
+
+  oam->internal.object_coordinates[object].pixel_x_size = 0u;
 }
 
-void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
-                                 const GbaPpuObjectAttributeMemory* oam,
+void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
                                  uint_fast8_t object) {
-  assert(visibility->object_coordinates[object].pixel_x_size == 0u);
+  assert(oam->internal.object_coordinates[object].pixel_x_size == 0u);
 
   static const int_fast16_t shape_size_to_x_size_pixels[4][4] = {
       {8u, 16u, 32u, 64u},
@@ -39,7 +43,7 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
 
   if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_0) {
-    visibility->object_coordinates[object].pixel_x_size = 0u;
+    oam->internal.object_coordinates[object].pixel_x_size = 0u;
     return;
   }
 
@@ -51,9 +55,10 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
                                << oam->object_attributes[object].flex_param_0;
   int_fast16_t x_end = x_start + x_render_size;
 
-  visibility->object_coordinates[object].true_x_start = x_start;
-  visibility->object_coordinates[object].true_x_center =
+  oam->internal.object_coordinates[object].true_x_start = x_start;
+  oam->internal.object_coordinates[object].true_x_center =
       x_start + (x_render_size >> 1u);
+  oam->internal.object_coordinates[object].true_x_size = x_render_size;
 
   if (x_start < 0) {
     x_start = 0;
@@ -61,10 +66,6 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
 
   if (x_end > GBA_SCREEN_WIDTH) {
     x_end = GBA_SCREEN_WIDTH;
-  }
-
-  for (int_fast16_t x = x_start; x < x_end; x++) {
-    GbaPpuSetAdd(visibility->x_sets + x, object);
   }
 
   int_fast16_t y_start = oam->object_attributes[object].y_coordinate;
@@ -85,9 +86,10 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
     y_end = y_start + y_render_size;
   }
 
-  visibility->object_coordinates[object].true_y_start = y_start;
-  visibility->object_coordinates[object].true_y_center =
+  oam->internal.object_coordinates[object].true_y_start = y_start;
+  oam->internal.object_coordinates[object].true_y_center =
       y_start + (y_render_size >> 1u);
+  oam->internal.object_coordinates[object].true_y_size = y_render_size;
 
   if (y_start < 0) {
     y_start = 0;
@@ -97,14 +99,29 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectVisibility* visibility,
     y_end = GBA_SCREEN_HEIGHT;
   }
 
-  for (int_fast16_t y = y_start; y < y_end; y++) {
-    GbaPpuSetAdd(visibility->y_sets + y, object);
+  if (x_start == x_end || y_start == y_end) {
+    return;
   }
 
-  visibility->object_coordinates[object].pixel_x_start = x_start;
-  visibility->object_coordinates[object].pixel_x_end = x_end;
-  visibility->object_coordinates[object].pixel_x_size = x_texture_size;
-  visibility->object_coordinates[object].pixel_y_start = y_start;
-  visibility->object_coordinates[object].pixel_y_end = y_end;
-  visibility->object_coordinates[object].pixel_y_size = y_texture_size;
+  for (int_fast16_t x = x_start; x < x_end; x++) {
+    GbaPpuSetAdd(oam->internal.x_sets + x, object);
+  }
+
+  for (int_fast16_t y = y_start; y < y_end; y++) {
+    GbaPpuSetAdd(oam->internal.y_sets + y, object);
+  }
+
+  if (oam->object_attributes[object].obj_mode == 2u) {
+    GbaPpuSetAdd(&oam->internal.window, object);
+  } else {
+    GbaPpuSetAdd(oam->internal.layers + oam->object_attributes[object].priority,
+                 object);
+  }
+
+  oam->internal.object_coordinates[object].pixel_x_start = x_start;
+  oam->internal.object_coordinates[object].pixel_x_end = x_end;
+  oam->internal.object_coordinates[object].pixel_x_size = x_texture_size;
+  oam->internal.object_coordinates[object].pixel_y_start = y_start;
+  oam->internal.object_coordinates[object].pixel_y_end = y_end;
+  oam->internal.object_coordinates[object].pixel_y_size = y_texture_size;
 }
