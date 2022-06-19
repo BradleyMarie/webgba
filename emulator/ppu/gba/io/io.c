@@ -161,6 +161,7 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
       io->dirty->dispcnt = true;
       io->dirty->window = true;
       io->dirty->blend = true;
+      io->dirty->obj_mosaic = true; // This is a little hacky
       break;
     case BG0CNT_OFFSET:
       io->dirty->bg_control[0u] = true;

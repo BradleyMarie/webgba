@@ -56,10 +56,9 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   if ((address & 0x7u) < 4u) {
     GbaPpuObjectVisibilityHidden(oam->memory, address >> 3u);
     GbaPpuObjectVisibilityDrawn(oam->memory, address >> 3u);
-    oam->dirty->objects = true;
-  } else {
-    GbaPpuSetAdd(&oam->dirty->rotations, address >> 5u);
   }
+
+  oam->dirty->overall = true;
 
   return true;
 }
