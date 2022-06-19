@@ -22,11 +22,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->vram.tiles[4u] = true;
   bits->vram.tiles[5u] = true;
 
-  for (uint8_t i = 0u; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
-    GbaPpuSetAdd(&bits->oam.rotations, i);
-  }
-
-  bits->oam.objects = true;
+  bits->oam.overall = true;
 
   bits->io.dispcnt = true;
   bits->io.blend = true;

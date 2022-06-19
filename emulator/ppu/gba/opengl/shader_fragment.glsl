@@ -39,29 +39,11 @@ uniform lowp sampler2D bitmap;
 uniform lowp usampler2D palette_bitmap;
 
 // Objects
-struct Object {
-  mediump mat2 transformation;
-  mediump vec2 center;
-  mediump ivec2 half_size;
-  lowp ivec2 mosaic;
-  lowp ivec2 flip;
-  mediump int tile_base;
-  lowp uint palette;
-  lowp uint priority;
-  bool semi_transparent;
-  bool large_palette;
-};
-
 layout(std140) uniform Objects {
-  Object objects[128];
-  bool object_linear_tiles;
-};
-
-// Object Visibility
-layout(std140) uniform ObjectVisibility {
+  mediump mat2 object_transformations[32];
+  highp uvec4 object_attributes[128];
   highp uvec4 object_columns[240];
   highp uvec4 object_rows[160];
-  lowp uint object_indices[128];
   highp uvec4 object_window;
   highp uvec4 object_drawn;
 };
@@ -319,24 +301,44 @@ lowp uint CheckWindow(bool on_object) {
 
 // Objects
 lowp uint ObjectColorIndex(lowp uint obj) {
+  mediump uint top_x = (object_attributes[obj].x >> 0u) & 0xFFFFu;
+  mediump uint top_y = (object_attributes[obj].x >> 16u) & 0xFFFFu;
+  mediump uint size_x = (object_attributes[obj].y >> 16u) & 0xFFu;
+  mediump uint size_y = (object_attributes[obj].y >> 24u) & 0xFFu;
+  mediump uint half_size_x = size_x >> 1u;
+  mediump uint half_size_y = size_y >> 1u;
+
+  mediump ivec2 center =
+      ivec2(int(top_x) - int(half_size_x), int(top_y) - int(half_size_y));
+  mediump vec2 center_fp = vec2(center) + 0.5;
   mediump vec2 lookup_fp =
-      objects[obj].transformation * (screencoord - objects[obj].center);
-  mediump ivec2 lookup = ivec2(floor(lookup_fp + vec2(0.5, 0.5)));
-  if (any(lessThan(lookup, -objects[obj].half_size)) ||
-      any(greaterThanEqual(lookup, objects[obj].half_size))) {
+      object_transformations[obj] * (screencoord - center_fp) + 0.5;
+
+  mediump ivec2 lookup =
+      ivec2(floor(lookup_fp)) + ivec2(int(half_size_x), int(half_size_y));
+  if (lookup.x < 0 || lookup.x >= int(size_x) || lookup.y < 0 ||
+      lookup.y >= int(size_y)) {
     return 0u;
   }
 
-  lookup = abs(objects[obj].flip - (lookup + objects[obj].half_size));
-  lookup -= lookup % objects[obj].mosaic;
+  if (bool(object_attributes[obj].w & 0x8u)) {
+    lookup.x = int(size_x) - lookup.x - 1;
+  }
+
+  if (bool(object_attributes[obj].w & 0x10u)) {
+    lookup.y = int(size_y) - lookup.y - 1;
+  }
+
+  lookup.x -= lookup.x % int((object_attributes[obj].z >> 0u) & 0xFFu);
+  lookup.y -= lookup.y % int((object_attributes[obj].z >> 8u) & 0xFFu);
 
   mediump int tile_index;
   lowp ivec2 tile = lookup / 8;
-  if (object_linear_tiles) {
-    tile_index = tile.x + tile.y * objects[obj].half_size.x / 4;
+  if (bool(object_attributes[obj].w & 0x4u)) {
+    tile_index = tile.x + tile.y * int(half_size_x) / 4;
   } else {
     lowp int row_width;
-    if (objects[obj].large_palette) {
+    if (bool(object_attributes[obj].w & 0x40u)) {
       row_width = 16;
     } else {
       row_width = 32;
@@ -347,20 +349,21 @@ lowp uint ObjectColorIndex(lowp uint obj) {
   lowp ivec2 tile_pixel = lookup % 8;
 
   lowp uint color_index;
-  if (objects[obj].large_palette) {
+  if (bool(object_attributes[obj].w & 0x4u)) {
     tile_index <<= 1u;
     color_index = texelFetch(object_tiles,
                              ivec2(tile_pixel.x + 8 * (tile_pixel.y % 4),
-                                   objects[obj].tile_base + tile_index +
-                                       (tile_pixel.y / 4)),
+                                   int(object_attributes[obj].z & 0xFFFFu) +
+                                       tile_index + (tile_pixel.y / 4)),
                              0)
                       .r;
   } else {
-    color_index = texelFetch(object_tiles,
-                             ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
-                                   objects[obj].tile_base + tile_index),
-                             0)
-                      .r;
+    color_index =
+        texelFetch(object_tiles,
+                   ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
+                         int(object_attributes[obj].z & 0xFFFFu) + tile_index),
+                   0)
+            .r;
     color_index >>= 4u * (uint(tile_pixel.x) & 1u);
     color_index &= 0xFu;
   }
@@ -585,10 +588,8 @@ void main() {
 
   highp uvec4 window_objects = visible_objects & object_window;
   while (NotEmpty(window_objects)) {
-    lowp uint bit = CountTrailingZeroes(window_objects);
-    window_objects = FlipBit(window_objects, bit);
-
-    lowp uint obj = object_indices[bit];
+    lowp uint obj = CountTrailingZeroes(window_objects);
+    window_objects = FlipBit(window_objects, obj);
 
     lowp uint color_index = ObjectColorIndex(obj);
     if (color_index != 0u) {
@@ -604,18 +605,17 @@ void main() {
   if (bool(window & 0x10u)) {
     highp uvec4 drawn_objects = visible_objects & object_drawn;
     while (NotEmpty(drawn_objects)) {
-      lowp uint bit = CountTrailingZeroes(drawn_objects);
-      drawn_objects = FlipBit(drawn_objects, bit);
-
-      lowp uint obj = object_indices[bit];
+      lowp uint obj = CountTrailingZeroes(drawn_objects);
+      drawn_objects = FlipBit(drawn_objects, obj);
 
       lowp uint color_index = ObjectColorIndex(obj);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
-            object_palette, ivec2(objects[obj].palette + color_index, 0), 0);
-        blend_unit =
-            BlendUnitAddObject(blend_unit, color.rgb, objects[obj].priority,
-                               objects[obj].semi_transparent);
+            object_palette,
+            ivec2(object_attributes[obj].z >> 24u + color_index, 0), 0);
+        blend_unit = BlendUnitAddObject(blend_unit, color.rgb,
+                                        object_attributes[obj].w & 0x3u,
+                                        bool(object_attributes[obj].w & 0x20u));
         break;
       }
     }

@@ -3,7 +3,6 @@
 
 #include "emulator/ppu/gba/memory.h"
 #include "emulator/ppu/gba/registers.h"
-#include "emulator/ppu/gba/set.h"
 
 typedef struct {
   bool palette[2u];
@@ -19,8 +18,7 @@ typedef struct {
 } GbaPpuVramDirtyBits;
 
 typedef struct {
-  GbaPpuSet rotations;
-  bool objects;
+  bool overall;
 } GbaPpuOamDirtyBits;
 
 typedef struct {
