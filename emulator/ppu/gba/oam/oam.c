@@ -51,10 +51,14 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuOam *oam = (GbaPpuOam *)context;
 
   address &= OAM_ADDRESS_MASK;
-  oam->memory->half_words[address >> 1u] = value;
 
   if (address % 8u < 6u) {
     GbaPpuObjectVisibilityHidden(oam->memory, address >> 3u);
+  }
+
+  oam->memory->half_words[address >> 1u] = value;
+
+  if (address % 8u < 6u) {
     GbaPpuObjectVisibilityDrawn(oam->memory, address >> 3u);
   }
 
@@ -66,8 +70,21 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
 static bool OamStore32LE(void *context, uint32_t address, uint32_t value) {
   assert((address & 0x3u) == 0u);
 
-  OamStore16LE(context, address, value);
-  OamStore16LE(context, address + 2u, value >> 16u);
+  GbaPpuOam *oam = (GbaPpuOam *)context;
+
+  address &= OAM_ADDRESS_MASK;
+
+  if (address % 8u < 6u) {
+    GbaPpuObjectVisibilityHidden(oam->memory, address >> 3u);
+  }
+
+  oam->memory->words[address >> 2u] = value;
+
+  if (address % 8u < 6u) {
+    GbaPpuObjectVisibilityDrawn(oam->memory, address >> 3u);
+  }
+
+  oam->dirty->overall = true;
 
   return true;
 }
