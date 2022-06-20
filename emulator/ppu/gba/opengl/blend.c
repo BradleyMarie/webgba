@@ -2,25 +2,9 @@
 
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
-
-static void OpenGlBlendSetGLuint(OpenGlBlend* context, GLuint value,
-                                 GLuint* result, bool* dirty) {
-  if (*result != value) {
-    *result = value;
-    *dirty = true;
-  }
-}
-
-static void OpenGlBlendSetGLfloat(OpenGlBlend* context, unsigned char value,
-                                  GLfloat* result, bool* dirty) {
-  GLfloat as_float = fmin((double)value / 16.0, 1.0);
-  if (*result != as_float) {
-    *result = as_float;
-    *dirty = true;
-  }
-}
 
 bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
                      GbaPpuDirtyBits* dirty_bits) {
@@ -39,27 +23,21 @@ bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
     context->dirty_start = registers->vcount;
   }
 
-  bool row_dirty = false;
-  OpenGlBlendSetGLuint(context, registers->bldcnt.mode,
-                       &context->staging[registers->vcount].bldcnt[0u],
-                       &row_dirty);
-  OpenGlBlendSetGLuint(context, registers->bldcnt.value & 0x3Fu,
-                       &context->staging[registers->vcount].bldcnt[1u],
-                       &row_dirty);
-  OpenGlBlendSetGLuint(context, (registers->bldcnt.value >> 8u) & 0x3F,
-                       &context->staging[registers->vcount].bldcnt[2u],
-                       &row_dirty);
-  OpenGlBlendSetGLfloat(context, registers->bldalpha.eva,
-                        &context->staging[registers->vcount].ev[0u],
-                        &row_dirty);
-  OpenGlBlendSetGLfloat(context, registers->bldalpha.evb,
-                        &context->staging[registers->vcount].ev[1u],
-                        &row_dirty);
-  OpenGlBlendSetGLfloat(context, registers->bldy.evy,
-                        &context->staging[registers->vcount].ev[2u],
-                        &row_dirty);
+  OpenGlBlendRow old_row = context->staging[registers->vcount];
 
-  if (row_dirty) {
+  context->staging[registers->vcount].mode = registers->bldcnt.mode;
+  context->staging[registers->vcount].top = registers->bldcnt.value & 0x3Fu;
+  context->staging[registers->vcount].bottom =
+      (registers->bldcnt.value >> 8u) & 0x3Fu;
+  context->staging[registers->vcount].eva =
+      (registers->bldalpha.eva > 16u) ? 16u : registers->bldalpha.eva;
+  context->staging[registers->vcount].evb =
+      (registers->bldalpha.evb > 16u) ? 16u : registers->bldalpha.evb;
+  context->staging[registers->vcount].evy =
+      (registers->bldy.evy > 16u) ? 16u : registers->bldy.evy;
+
+  if (memcmp(&old_row, &context->staging[registers->vcount],
+             sizeof(OpenGlBlendRow)) != 0) {
     context->dirty_end = registers->vcount;
     context->dirty = true;
   }
