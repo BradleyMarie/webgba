@@ -53,7 +53,7 @@ layout(std140) uniform Backgrounds { highp uvec4 backgrounds[160]; };
 
 // Background Coordinates
 struct ScrollingRow {
-  mediump vec2 origins[4];
+  mediump vec4 origins[2];
 };
 
 layout(std140) uniform ScrollingBackgrounds {
@@ -382,8 +382,14 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   bg_size.x <<= int((backgrounds[int(screencoord.y)][bg] >> 14u) & 0x1u);
   bg_size.y <<= int((backgrounds[int(screencoord.y)][bg] >> 15u) & 0x1u);
 
-  mediump ivec2 tilemap_pixel =
-      ivec2(screencoord + scrolling_rows[int(screencoord.y)].origins[bg]);
+  mediump vec2 origin;
+  if (bool(bg & 1u)) {
+    origin = scrolling_rows[int(screencoord.y)].origins[bg / 2u].zw;
+  } else {
+    origin = scrolling_rows[int(screencoord.y)].origins[bg / 2u].xy;
+  }
+
+  mediump ivec2 tilemap_pixel = ivec2(screencoord + origin);
   tilemap_pixel &= bg_size - 1;
 
   tilemap_pixel.x -= tilemap_pixel.x %
