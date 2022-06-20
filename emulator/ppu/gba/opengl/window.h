@@ -7,8 +7,14 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint windows[4u];
-  GLuint shift_bounds[4u];
+  uint16_t win0;
+  uint16_t win0_shift;
+  uint16_t win1;
+  uint16_t win0_bound;
+  uint16_t winobj;
+  uint16_t win1_shift;
+  uint16_t winout;
+  uint16_t win1_bound;
 } OpenGlWindowRow;
 
 typedef struct {

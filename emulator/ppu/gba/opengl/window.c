@@ -13,24 +13,20 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
   }
 
   bool row_dirty = false;
-  if (context->staging[registers->vcount].windows[0u] !=
-      registers->winin.win0.value) {
-    context->staging[registers->vcount].windows[0u] =
-        registers->winin.win0.value;
+  if (context->staging[registers->vcount].win0 != registers->winin.win0.value) {
+    context->staging[registers->vcount].win0 = registers->winin.win0.value;
     row_dirty = true;
   }
 
-  if (context->staging[registers->vcount].windows[1u] !=
-      registers->winin.win1.value) {
-    context->staging[registers->vcount].windows[1u] =
-        registers->winin.win1.value;
+  if (context->staging[registers->vcount].win1 != registers->winin.win1.value) {
+    context->staging[registers->vcount].win1 = registers->winin.win1.value;
     row_dirty = true;
   }
 
   uint8_t winobj_value =
       registers->winout.winobj.value | (registers->dispcnt.winobj_enable << 5u);
-  if (context->staging[registers->vcount].windows[2u] != winobj_value) {
-    context->staging[registers->vcount].windows[2u] = winobj_value;
+  if (context->staging[registers->vcount].winobj != winobj_value) {
+    context->staging[registers->vcount].winobj = winobj_value;
     row_dirty = true;
   }
 
@@ -42,12 +38,13 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
     winout_value = 0x3Fu;
   }
 
-  if (context->staging[registers->vcount].windows[3u] != winout_value) {
-    context->staging[registers->vcount].windows[3u] = winout_value;
+  if (context->staging[registers->vcount].winout != winout_value) {
+    context->staging[registers->vcount].winout = winout_value;
     row_dirty = true;
   }
 
-  GLuint shift_bounds[4u];
+  uint16_t shifts[2u];
+  uint16_t bounds[2u];
   if (registers->dispcnt.win0_enable) {
     uint16_t start = (registers->win0v.start < GBA_SCREEN_HEIGHT)
                          ? registers->win0v.start
@@ -66,19 +63,19 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                                                       : GBA_SCREEN_WIDTH;
 
       if (start <= end) {
-        shift_bounds[0u] = GBA_SCREEN_WIDTH - start;
-        shift_bounds[1u] = end - start;
+        shifts[0u] = GBA_SCREEN_WIDTH - start;
+        bounds[0u] = end - start;
       } else {
-        shift_bounds[0u] = GBA_SCREEN_WIDTH - start;
-        shift_bounds[1u] = GBA_SCREEN_WIDTH - (start - end);
+        shifts[0u] = GBA_SCREEN_WIDTH - start;
+        bounds[0u] = GBA_SCREEN_WIDTH - (start - end);
       }
     } else {
-      shift_bounds[0u] = 1u;
-      shift_bounds[1u] = 0u;
+      shifts[0u] = 1u;
+      bounds[0u] = 0u;
     }
   } else {
-    shift_bounds[0u] = 1u;
-    shift_bounds[1u] = 0u;
+    shifts[0u] = 1u;
+    bounds[0u] = 0u;
   }
 
   if (registers->dispcnt.win1_enable) {
@@ -99,42 +96,38 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                                                       : GBA_SCREEN_WIDTH;
 
       if (start <= end) {
-        shift_bounds[2u] = GBA_SCREEN_WIDTH - start;
-        shift_bounds[3u] = end - start;
+        shifts[1u] = GBA_SCREEN_WIDTH - start;
+        bounds[1u] = end - start;
       } else {
-        shift_bounds[2u] = GBA_SCREEN_WIDTH - start;
-        shift_bounds[3u] = GBA_SCREEN_WIDTH - (start - end);
+        shifts[1u] = GBA_SCREEN_WIDTH - start;
+        bounds[1u] = GBA_SCREEN_WIDTH - (start - end);
       }
     } else {
-      shift_bounds[2u] = 1u;
-      shift_bounds[3u] = 0u;
+      shifts[1u] = 1u;
+      bounds[1u] = 0u;
     }
   } else {
-    shift_bounds[2u] = 1u;
-    shift_bounds[3u] = 0u;
+    shifts[1u] = 1u;
+    bounds[1u] = 0u;
   }
 
-  if (context->staging[registers->vcount].shift_bounds[0u] !=
-      shift_bounds[0u]) {
-    context->staging[registers->vcount].shift_bounds[0u] = shift_bounds[0u];
+  if (context->staging[registers->vcount].win0_shift != shifts[0u]) {
+    context->staging[registers->vcount].win0_shift = shifts[0u];
     row_dirty = true;
   }
 
-  if (context->staging[registers->vcount].shift_bounds[1u] !=
-      shift_bounds[1u]) {
-    context->staging[registers->vcount].shift_bounds[1u] = shift_bounds[1u];
+  if (context->staging[registers->vcount].win0_bound != bounds[0u]) {
+    context->staging[registers->vcount].win0_bound = bounds[0u];
     row_dirty = true;
   }
 
-  if (context->staging[registers->vcount].shift_bounds[2u] !=
-      shift_bounds[2u]) {
-    context->staging[registers->vcount].shift_bounds[2u] = shift_bounds[2u];
+  if (context->staging[registers->vcount].win1_shift != shifts[1u]) {
+    context->staging[registers->vcount].win1_shift = shifts[1u];
     row_dirty = true;
   }
 
-  if (context->staging[registers->vcount].shift_bounds[3u] !=
-      shift_bounds[3u]) {
-    context->staging[registers->vcount].shift_bounds[3u] = shift_bounds[3u];
+  if (context->staging[registers->vcount].win1_bound != bounds[1u]) {
+    context->staging[registers->vcount].win1_bound = bounds[1u];
     row_dirty = true;
   }
 

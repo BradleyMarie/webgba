@@ -68,8 +68,8 @@ layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
 
 // Window
 struct WindowRow {
-  lowp uvec4 windows;  // Enable WinObj is bit 6 of window 'z'
-  mediump uvec4 shift_bounds;
+  // Enable WinObj is bit 6 of window 'z'
+  highp uvec4 window_and_bounds;
 };
 
 layout(std140) uniform Windows { WindowRow window_rows[160]; };
@@ -280,22 +280,27 @@ lowp uint CheckWindow(bool on_object) {
   mediump uint pixel = uint(screencoord.x);
 
   mediump uint window0_location =
-      (pixel + window_rows[int(screencoord.y)].shift_bounds.x) % 240u;
-  if (window0_location < window_rows[int(screencoord.y)].shift_bounds.y) {
-    return window_rows[int(screencoord.y)].windows.x;
+      (pixel + (window_rows[int(screencoord.y)].window_and_bounds.x >> 16u)) %
+      240u;
+  if (window0_location <
+      (window_rows[int(screencoord.y)].window_and_bounds.y >> 16u)) {
+    return window_rows[int(screencoord.y)].window_and_bounds.x;
   }
 
   mediump uint window1_location =
-      (pixel + window_rows[int(screencoord.y)].shift_bounds.z) % 240u;
-  if (window1_location < window_rows[int(screencoord.y)].shift_bounds.w) {
-    return window_rows[int(screencoord.y)].windows.y;
+      (pixel + (window_rows[int(screencoord.y)].window_and_bounds.z >> 16u)) %
+      240u;
+  if (window1_location <
+      (window_rows[int(screencoord.y)].window_and_bounds.w >> 16u)) {
+    return window_rows[int(screencoord.y)].window_and_bounds.y;
   }
 
-  if (on_object && bool(window_rows[int(screencoord.y)].windows.z & 0x20u)) {
-    return window_rows[int(screencoord.y)].windows.z;
+  if (on_object &&
+      bool(window_rows[int(screencoord.y)].window_and_bounds.z & 0x20u)) {
+    return window_rows[int(screencoord.y)].window_and_bounds.z;
   }
 
-  return window_rows[int(screencoord.y)].windows.w;
+  return window_rows[int(screencoord.y)].window_and_bounds.w;
 }
 
 // Objects
