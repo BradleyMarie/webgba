@@ -53,7 +53,7 @@ static bool OamStore16LE(void *context, uint32_t address, uint16_t value) {
   address &= OAM_ADDRESS_MASK;
   oam->memory->half_words[address >> 1u] = value;
 
-  if ((address & 0x7u) < 4u) {
+  if (address % 8u < 6u) {
     GbaPpuObjectVisibilityHidden(oam->memory, address >> 3u);
     GbaPpuObjectVisibilityDrawn(oam->memory, address >> 3u);
   }
