@@ -34,16 +34,20 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     OpenGlBgAffineLoadFixed(
         context, registers->internal.affine[i].current[0u],
-        &context->staging.rows[registers->vcount].bases[i][0u], &row_dirty);
+        &context->staging.rows[registers->vcount].base_scale[i][0u],
+        &row_dirty);
     OpenGlBgAffineLoadFixed(
         context, registers->internal.affine[i].current[1u],
-        &context->staging.rows[registers->vcount].bases[i][1u], &row_dirty);
+        &context->staging.rows[registers->vcount].base_scale[i][1u],
+        &row_dirty);
     OpenGlBgAffineLoadFixed(
         context, registers->affine[i].pa,
-        &context->staging.rows[registers->vcount].scale[i][0u], &row_dirty);
+        &context->staging.rows[registers->vcount].base_scale[i][2u],
+        &row_dirty);
     OpenGlBgAffineLoadFixed(
         context, registers->affine[i].pc,
-        &context->staging.rows[registers->vcount].scale[i][1u], &row_dirty);
+        &context->staging.rows[registers->vcount].base_scale[i][3u],
+        &row_dirty);
   }
 
   if (row_dirty) {
@@ -63,31 +67,31 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].bases[i][0u] +
-            (context->staging.rows[registers->vcount].bases[i][0u] -
-             context->staging.rows[registers->vcount - 1u].bases[i][0u]),
-        &context->staging.rows[registers->vcount + 1u].bases[i][0u],
+        context->staging.rows[registers->vcount].base_scale[i][0u] +
+            (context->staging.rows[registers->vcount].base_scale[i][0u] -
+             context->staging.rows[registers->vcount - 1u].base_scale[i][0u]),
+        &context->staging.rows[registers->vcount + 1u].base_scale[i][0u],
         &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].bases[i][1u] +
-            (context->staging.rows[registers->vcount].bases[i][1u] -
-             context->staging.rows[registers->vcount - 1u].bases[i][1u]),
-        &context->staging.rows[registers->vcount + 1u].bases[i][1u],
+        context->staging.rows[registers->vcount].base_scale[i][1u] +
+            (context->staging.rows[registers->vcount].base_scale[i][1u] -
+             context->staging.rows[registers->vcount - 1u].base_scale[i][1u]),
+        &context->staging.rows[registers->vcount + 1u].base_scale[i][1u],
         &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].scale[i][0u] +
-            (context->staging.rows[registers->vcount].scale[i][0u] -
-             context->staging.rows[registers->vcount - 1u].scale[i][0u]),
-        &context->staging.rows[registers->vcount + 1u].scale[i][0u],
+        context->staging.rows[registers->vcount].base_scale[i][2u] +
+            (context->staging.rows[registers->vcount].base_scale[i][2u] -
+             context->staging.rows[registers->vcount - 1u].base_scale[i][2u]),
+        &context->staging.rows[registers->vcount + 1u].base_scale[i][2u],
         &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].scale[i][1u] +
-            (context->staging.rows[registers->vcount].scale[i][1u] -
-             context->staging.rows[registers->vcount - 1u].scale[i][1u]),
-        &context->staging.rows[registers->vcount + 1u].scale[i][1u],
+        context->staging.rows[registers->vcount].base_scale[i][3u] +
+            (context->staging.rows[registers->vcount].base_scale[i][3u] -
+             context->staging.rows[registers->vcount - 1u].base_scale[i][3u]),
+        &context->staging.rows[registers->vcount + 1u].base_scale[i][3u],
         &row_dirty);
   }
 

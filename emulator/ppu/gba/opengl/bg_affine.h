@@ -7,8 +7,7 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat bases[2u][4u];
-  GLfloat scale[2u][4u];
+  GLfloat base_scale[2u][4u];
 } OpenGlBgAffineRow;
 
 typedef struct {
