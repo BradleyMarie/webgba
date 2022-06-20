@@ -100,6 +100,7 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
   }
 
   if (x_start == x_end || y_start == y_end) {
+    oam->internal.object_coordinates[object].pixel_x_size = 0u;
     return;
   }
 

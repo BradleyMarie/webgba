@@ -202,6 +202,7 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
       attribute.palette = memory->oam.object_attributes[obj].palette * 16u;
     }
 
+    attribute.priority = memory->oam.object_attributes[obj].priority;
     attribute.semi_transparent =
         (memory->oam.object_attributes[obj].obj_mode == 1u);
     attribute.linear_tiles = registers->dispcnt.object_mode;
