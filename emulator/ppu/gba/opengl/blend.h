@@ -7,8 +7,15 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint bldcnt[4u];
-  GLfloat ev[4u];
+  uint8_t mode;
+  uint8_t eva;
+  uint8_t padding0[2u];
+  uint8_t top;
+  uint8_t evb;
+  uint8_t padding1[2u];
+  uint8_t bottom;
+  uint8_t evy;
+  uint8_t padding2[6u];
 } OpenGlBlendRow;
 
 typedef struct {

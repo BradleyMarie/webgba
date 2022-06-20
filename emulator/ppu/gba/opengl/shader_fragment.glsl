@@ -76,8 +76,9 @@ layout(std140) uniform Windows { WindowRow window_rows[160]; };
 
 // Blend
 struct BlendRow {
-  lowp uvec3 bldcnt;  // mode, top, bottom
-  lowp vec3 ev;       // eva, evb, evy
+  // high: mode, top, bottom
+  // low: eva, evb, evy
+  mediump uvec3 bldcnt_ev;
 };
 
 layout(std140) uniform Blend { BlendRow blend_rows[160]; };
@@ -111,8 +112,9 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
   blend_unit.color[0] = color.bgr;
   blend_unit.priority[0] = priority;
   blend_unit.top[0] =
-      blended || bool(blend_rows[int(screencoord.y)].bldcnt.y & 0x10u);
-  blend_unit.bottom[0] = bool(blend_rows[int(screencoord.y)].bldcnt.z & 0x10u);
+      blended || bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & 0x10u);
+  blend_unit.bottom[0] =
+      bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & 0x10u);
   blend_unit.semi_transparent[0] = blended;
   return blend_unit;
 }
@@ -124,9 +126,9 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
     blend_unit.color[1] = color.bgr;
     blend_unit.priority[1] = priority;
     blend_unit.top[1] =
-        bool(blend_rows[int(screencoord.y)].bldcnt.y & (1u << bg));
+        bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & (1u << bg));
     blend_unit.bottom[1] =
-        bool(blend_rows[int(screencoord.y)].bldcnt.z & (1u << bg));
+        bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & (1u << bg));
     blend_unit.semi_transparent[1] = false;
 
     if (blend_unit.priority[1] < blend_unit.priority[0]) {
@@ -158,15 +160,17 @@ BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec3 color) {
   if (5u < blend_unit.priority[1]) {
     if (5u < blend_unit.priority[0]) {
       blend_unit.color[0] = color.bgr;
-      blend_unit.top[0] = bool(blend_rows[int(screencoord.y)].bldcnt.y & 0x20u);
+      blend_unit.top[0] =
+          bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & 0x20u);
       blend_unit.bottom[0] =
-          bool(blend_rows[int(screencoord.y)].bldcnt.z & 0x20u);
+          bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & 0x20u);
       blend_unit.semi_transparent[0] = false;
     } else {
       blend_unit.color[1] = color.bgr;
-      blend_unit.top[1] = bool(blend_rows[int(screencoord.y)].bldcnt.y & 0x20u);
+      blend_unit.top[1] =
+          bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & 0x20u);
       blend_unit.bottom[1] =
-          bool(blend_rows[int(screencoord.y)].bldcnt.z & 0x20u);
+          bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & 0x20u);
       blend_unit.semi_transparent[1] = false;
     }
   }
@@ -180,8 +184,10 @@ lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit) {
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = blend_rows[int(screencoord.y)].ev.x;
-    evb = blend_rows[int(screencoord.y)].ev.y;
+    eva =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -195,8 +201,10 @@ lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit) {
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = blend_rows[int(screencoord.y)].ev.x;
-    evb = blend_rows[int(screencoord.y)].ev.y;
+    eva =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -213,7 +221,8 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
 
   lowp float evy;
   if (do_brighten) {
-    evy = blend_rows[int(screencoord.y)].ev.z;
+    evy =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.z >> 8u) * (1.0 / 16.0);
   } else {
     evy = 0.0;
   }
@@ -221,8 +230,10 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
   lowp vec3 bottom;
   lowp float eva, evb;
   if (do_blend) {
-    eva = blend_rows[int(screencoord.y)].ev.x;
-    evb = blend_rows[int(screencoord.y)].ev.y;
+    eva =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.y >> 8u) * (1.0 / 16.0);
     bottom = blend_unit.color[1];
   } else {
     eva = 1.0;
@@ -241,15 +252,18 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
 
   lowp float evy;
   if (do_darken) {
-    evy = 1.0 - blend_rows[int(screencoord.y)].ev.z;
+    evy = 1.0 - float(blend_rows[int(screencoord.y)].bldcnt_ev.z >> 8u) *
+                    (1.0 / 16.0);
   } else {
     evy = 1.0;
   }
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = blend_rows[int(screencoord.y)].ev.x;
-    evb = blend_rows[int(screencoord.y)].ev.y;
+    eva =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb =
+        float(blend_rows[int(screencoord.y)].bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = evy;
     evb = 0.0;
@@ -262,11 +276,11 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
   lowp vec3 color;
   if (!enable_blend) {
     color = blend_unit.color[0];
-  } else if (blend_rows[int(screencoord.y)].bldcnt.x == 0u) {
+  } else if ((blend_rows[int(screencoord.y)].bldcnt_ev.x & 0x3u) == 0u) {
     color = BlendUnitNoBlend(blend_unit);
-  } else if (blend_rows[int(screencoord.y)].bldcnt.x == 1u) {
+  } else if ((blend_rows[int(screencoord.y)].bldcnt_ev.x & 0x3u) == 1u) {
     color = BlendUnitAdditiveBlend(blend_unit);
-  } else if (blend_rows[int(screencoord.y)].bldcnt.x == 2u) {
+  } else if ((blend_rows[int(screencoord.y)].bldcnt_ev.x & 0x3u) == 2u) {
     color = BlendUnitBrighten(blend_unit);
   } else {
     color = BlendUnitDarken(blend_unit);
