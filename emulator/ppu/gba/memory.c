@@ -2,10 +2,6 @@
 
 void GbaPpuObjectVisibilityHidden(GbaPpuObjectAttributeMemory* oam,
                                   uint_fast8_t object) {
-  if (oam->internal.object_coordinates[object].pixel_x_size == 0u) {
-    return;
-  }
-
   for (uint8_t x = oam->internal.object_coordinates[object].pixel_x_start;
        x < oam->internal.object_coordinates[object].pixel_x_end; x++) {
     GbaPpuSetRemove(oam->internal.x_sets + x, object);
@@ -16,13 +12,12 @@ void GbaPpuObjectVisibilityHidden(GbaPpuObjectAttributeMemory* oam,
     GbaPpuSetRemove(oam->internal.y_sets + y, object);
   }
 
-  for (uint8_t i = 0u; i < 4u; i++) {
-    GbaPpuSetRemove(oam->internal.layers + i, object);
+  if (oam->object_attributes[object].obj_mode == 2u) {
+    GbaPpuSetRemove(&oam->internal.window, object);
+  } else {
+    GbaPpuSetRemove(
+        oam->internal.layers + oam->object_attributes[object].priority, object);
   }
-
-  GbaPpuSetRemove(&oam->internal.window, object);
-
-  oam->internal.object_coordinates[object].pixel_x_size = 0u;
 }
 
 void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
@@ -43,7 +38,6 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
 
   if (!oam->object_attributes[object].affine &&
       oam->object_attributes[object].flex_param_0) {
-    oam->internal.object_coordinates[object].pixel_x_size = 0u;
     return;
   }
 
@@ -62,9 +56,13 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
 
   if (x_start < 0) {
     x_start = 0;
+  } else if (x_start > GBA_SCREEN_WIDTH) {
+    x_start = GBA_SCREEN_WIDTH;
   }
 
-  if (x_end > GBA_SCREEN_WIDTH) {
+  if (x_end < 0) {
+    x_end = 0;
+  } else if (x_end > GBA_SCREEN_WIDTH) {
     x_end = GBA_SCREEN_WIDTH;
   }
 
@@ -93,15 +91,14 @@ void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
 
   if (y_start < 0) {
     y_start = 0;
+  } else if (y_start > GBA_SCREEN_HEIGHT) {
+    y_start = GBA_SCREEN_HEIGHT;
   }
 
-  if (y_end > GBA_SCREEN_HEIGHT) {
+  if (y_end < 0) {
+    y_end = 0;
+  } else if (y_end > GBA_SCREEN_HEIGHT) {
     y_end = GBA_SCREEN_HEIGHT;
-  }
-
-  if (x_start == x_end || y_start == y_end) {
-    oam->internal.object_coordinates[object].pixel_x_size = 0u;
-    return;
   }
 
   for (int_fast16_t x = x_start; x < x_end; x++) {
