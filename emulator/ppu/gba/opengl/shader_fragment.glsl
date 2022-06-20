@@ -40,7 +40,7 @@ uniform lowp usampler2D palette_bitmap;
 
 // Objects
 layout(std140) uniform Objects {
-  mediump mat2 object_transformations[32];
+  mediump mat2 object_transformations[33];
   highp uvec4 object_attributes[128];
   highp uvec4 object_columns[240];
   highp uvec4 object_rows[160];
