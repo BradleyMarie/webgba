@@ -119,40 +119,41 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
   return blend_unit;
 }
 
+// Assumes priority is less than blend_unit.priority[1]
 BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint bg,
                                  lowp vec3 color) {
   lowp uint priority = backgrounds[int(screencoord.y)][bg] & 0x3u;
-  if (priority < blend_unit.priority[1]) {
-    blend_unit.color[1] = color.bgr;
-    blend_unit.priority[1] = priority;
-    blend_unit.top[1] =
-        bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & (1u << bg));
-    blend_unit.bottom[1] =
-        bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & (1u << bg));
-    blend_unit.semi_transparent[1] = false;
 
-    if (blend_unit.priority[1] < blend_unit.priority[0]) {
-      lowp vec3 temp_color = blend_unit.color[0];
-      blend_unit.color[0] = blend_unit.color[1];
-      blend_unit.color[1] = temp_color;
+  blend_unit.color[1] = color.bgr;
+  blend_unit.priority[1] = priority;
+  blend_unit.top[1] =
+      bool(blend_rows[int(screencoord.y)].bldcnt_ev.y & (1u << bg));
+  blend_unit.bottom[1] =
+      bool(blend_rows[int(screencoord.y)].bldcnt_ev.z & (1u << bg));
+  blend_unit.semi_transparent[1] = false;
 
-      lowp uint temp_uint = blend_unit.priority[0];
-      blend_unit.priority[0] = blend_unit.priority[1];
-      blend_unit.priority[1] = temp_uint;
+  if (blend_unit.priority[1] < blend_unit.priority[0]) {
+    lowp vec3 temp_color = blend_unit.color[0];
+    blend_unit.color[0] = blend_unit.color[1];
+    blend_unit.color[1] = temp_color;
 
-      bool temp_bool = blend_unit.top[0];
-      blend_unit.top[0] = blend_unit.top[1];
-      blend_unit.top[1] = temp_bool;
+    lowp uint temp_uint = blend_unit.priority[0];
+    blend_unit.priority[0] = blend_unit.priority[1];
+    blend_unit.priority[1] = temp_uint;
 
-      temp_bool = blend_unit.bottom[0];
-      blend_unit.bottom[0] = blend_unit.bottom[1];
-      blend_unit.bottom[1] = temp_bool;
+    bool temp_bool = blend_unit.top[0];
+    blend_unit.top[0] = blend_unit.top[1];
+    blend_unit.top[1] = temp_bool;
 
-      temp_bool = blend_unit.semi_transparent[0];
-      blend_unit.semi_transparent[0] = blend_unit.semi_transparent[1];
-      blend_unit.semi_transparent[1] = temp_bool;
-    }
+    temp_bool = blend_unit.bottom[0];
+    blend_unit.bottom[0] = blend_unit.bottom[1];
+    blend_unit.bottom[1] = temp_bool;
+
+    temp_bool = blend_unit.semi_transparent[0];
+    blend_unit.semi_transparent[0] = blend_unit.semi_transparent[1];
+    blend_unit.semi_transparent[1] = temp_bool;
   }
+
   return blend_unit;
 }
 
@@ -397,6 +398,11 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
+  lowp uint priority = backgrounds[int(screencoord.y)][bg] & 0x3u;
+  if (priority >= blend_unit.priority[1]) {
+    return blend_unit;
+  }
+
   mediump ivec2 bg_size = ivec2(256, 256);
   bg_size.x <<= int((backgrounds[int(screencoord.y)][bg] >> 14u) & 0x1u);
   bg_size.y <<= int((backgrounds[int(screencoord.y)][bg] >> 15u) & 0x1u);
@@ -487,6 +493,11 @@ mediump ivec2 AffinePixel(lowp uint bg) {
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint bg) {
+  lowp uint priority = backgrounds[int(screencoord.y)][bg] & 0x3u;
+  if (priority >= blend_unit.priority[1]) {
+    return blend_unit;
+  }
+
   mediump ivec2 tilemap_pixel = AffinePixel(bg);
 
   mediump ivec2 bg_size = ivec2(128, 128)
