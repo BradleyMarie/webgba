@@ -61,8 +61,7 @@ layout(std140) uniform ScrollingBackgrounds {
 };
 
 struct AffineRow {
-  mediump vec2 bases[2];
-  mediump vec2 scale[2];
+  mediump vec4 base_scale[2];
 };
 
 layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
@@ -454,10 +453,11 @@ mediump ivec2 AffinePixel(lowp uint bg) {
   mediump vec2 pixel = floor(samplecoord) / render_scale;
   mediump float interp = mod(pixel.y, 1.0);
   lowp uint row = uint(pixel.y);
-  mediump vec2 base = mix(affine_rows[row].bases[bg - 2u],
-                          affine_rows[row + 1u].bases[bg - 2u], interp);
-  mediump vec2 scale = mix(affine_rows[row].scale[bg - 2u],
-                           affine_rows[row + 1u].scale[bg - 2u], interp);
+  mediump vec2 base = mix(affine_rows[row].base_scale[bg - 2u].xy,
+                          affine_rows[row + 1u].base_scale[bg - 2u].xy, interp);
+  mediump vec2 scale =
+      mix(affine_rows[row].base_scale[bg - 2u].zw,
+          affine_rows[row + 1u].base_scale[bg - 2u].zw, interp);
   return ivec2(floor(base + scale * pixel.x));
 }
 
