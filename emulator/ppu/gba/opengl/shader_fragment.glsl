@@ -13,8 +13,8 @@
 #define PALETTE_BITMAP_BACKGROUND 0
 
 // Inputs
-in mediump vec2 samplecoord;
-in mediump vec2 screencoord;
+in highp vec2 samplecoord;
+in highp vec2 screencoord;
 
 // Outputs
 out lowp vec4 frag_color;
@@ -53,7 +53,7 @@ layout(std140) uniform Backgrounds { highp uvec4 backgrounds[160]; };
 
 // Background Coordinates
 struct ScrollingRow {
-  mediump vec4 origins[2];
+  highp vec4 origins[2];
 };
 
 layout(std140) uniform ScrollingBackgrounds {
@@ -61,7 +61,7 @@ layout(std140) uniform ScrollingBackgrounds {
 };
 
 struct AffineRow {
-  mediump vec4 base_scale[2];
+  highp vec4 base_scale[2];
 };
 
 layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
@@ -407,7 +407,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
   bg_size.x <<= int((backgrounds[int(screencoord.y)][bg] >> 14u) & 0x1u);
   bg_size.y <<= int((backgrounds[int(screencoord.y)][bg] >> 15u) & 0x1u);
 
-  mediump vec2 origin;
+  highp vec2 origin;
   if (bool(bg & 1u)) {
     origin = scrolling_rows[int(screencoord.y)].origins[bg / 2u].zw;
   } else {
@@ -481,12 +481,12 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 mediump ivec2 AffinePixel(lowp uint bg) {
-  mediump vec2 pixel = floor(samplecoord) / render_scale;
-  mediump float interp = mod(pixel.y, 1.0);
-  lowp uint row = uint(pixel.y);
-  mediump vec2 base = mix(affine_rows[row].base_scale[bg - 2u].xy,
-                          affine_rows[row + 1u].base_scale[bg - 2u].xy, interp);
-  mediump vec2 scale =
+  highp vec2 pixel = floor(samplecoord) / render_scale;
+  highp float interp = mod(pixel.y, 1.0);
+  lowp uint row = uint(screencoord.y);
+  highp vec2 base = mix(affine_rows[row].base_scale[bg - 2u].xy,
+                        affine_rows[row + 1u].base_scale[bg - 2u].xy, interp);
+  highp vec2 scale =
       mix(affine_rows[row].base_scale[bg - 2u].zw,
           affine_rows[row + 1u].base_scale[bg - 2u].zw, interp);
   return ivec2(floor(base + scale * pixel.x));
