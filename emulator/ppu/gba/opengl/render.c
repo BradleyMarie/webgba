@@ -154,9 +154,20 @@ void GbaPpuOpenGlRendererSetScreen(GbaPpuOpenGlRenderer* renderer,
 
 void GbaPpuOpenGlRendererSetScale(GbaPpuOpenGlRenderer* renderer,
                                   uint8_t render_scale) {
-  renderer->next_render_scale = render_scale;
-  renderer->flush_required = true;
-  renderer->next_frame_flush_required = true;
+  if (renderer->flush_start == 0u) {
+    if (renderer->render_scale != render_scale) {
+      renderer->flush_required = true;
+    }
+
+    renderer->render_scale = render_scale;
+  } else {
+    renderer->next_render_scale = render_scale;
+
+    if (renderer->render_scale != renderer->next_render_scale) {
+      renderer->flush_required = true;
+      renderer->next_frame_flush_required = true;
+    }
+  }
 }
 
 void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
@@ -210,6 +221,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
                                  GBA_SCREEN_HEIGHT);
     }
 
+    renderer->render_scale = renderer->next_render_scale;
     renderer->flush_required = renderer->next_frame_flush_required;
     renderer->next_frame_flush_required = false;
   }

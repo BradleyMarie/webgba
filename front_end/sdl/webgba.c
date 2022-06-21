@@ -365,7 +365,10 @@ static ReturnType RenderNextFrame() {
   ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_surface->w,
                           /*height=*/g_surface->h);
 
-  GbaEmulatorStep(g_emulator, g_screen, RenderAudioSample);
+  GbaGraphicsRenderOptions options;
+  options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
+  options.opengl_render_scale = 1u;
+  GbaEmulatorStep(g_emulator, g_screen, &options, RenderAudioSample);
 
   //
   // Flip framebuffer

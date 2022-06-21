@@ -72,8 +72,11 @@ int main(int argc, char **argv) {
   ProfilerStart("benchmark.profile");
 #endif  // __EMSCRIPTEN__
 
+  GbaGraphicsRenderOptions options;
+  options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
+  options.opengl_render_scale = 1u;
   for (int i = 0; i < frame_count; i++) {
-    GbaEmulatorStep(emulator, screen, NoOpAudioCallback);
+    GbaEmulatorStep(emulator, screen, &options, NoOpAudioCallback);
   }
 
 #ifndef __EMSCRIPTEN__

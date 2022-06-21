@@ -40,6 +40,7 @@ struct _GbaPpu {
   GbaPpuMemory memory;
   GbaPpuRegisters registers;
   GbaPpuRenderMode next_render_mode;
+  uint8_t next_render_scale;
   GbaPpuState next_wake_state;
   GbaPpuState draw_state;
   GbaPpuDirtyBits dirty;
@@ -254,7 +255,7 @@ bool GbaPpuAllocate(GbaDmaUnit *dma_unit, GbaPlatform *platform, GbaPpu **ppu,
   (*ppu)->registers.dispstat.vcount_status = true;
   GbaPpuDirtyBitsAllDirty(&(*ppu)->dirty);
 
-  GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS);
+  GbaPpuSetRenderMode(*ppu, RENDER_MODE_SOFTWARE_ROWS, 1u);
 
   GbaDmaUnitRetain(dma_unit);
   GbaPlatformRetain(platform);
@@ -278,6 +279,8 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
     case GBA_PPU_DRAW_ROW:
       if (ppu->use_hardware_renderer) {
         if (ppu->registers.vcount == 0u) {
+          GbaPpuOpenGlRendererSetScale(ppu->opengl_renderer,
+                                       ppu->next_render_scale);
           GbaPpuOpenGlRendererSetScreen(ppu->opengl_renderer, screen);
         }
 
@@ -358,7 +361,7 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
         GbaPpuEndHBlank(ppu, 0u);
         ppu->registers.dispstat.vblank_status = false;
         ppu->cycle_count = 0u;
-        GbaPpuSetRenderMode(ppu, ppu->next_render_mode);
+        GbaPpuSetRenderMode(ppu, ppu->next_render_mode, ppu->next_render_scale);
       }
       break;
   }
@@ -366,12 +369,15 @@ bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles) {
   return false;
 }
 
-void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode) {
-  if (ppu->next_render_mode != render_mode) {
+void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode,
+                         uint8_t opengl_render_scale) {
+  if (ppu->next_render_mode != render_mode ||
+      ppu->next_render_scale != opengl_render_scale) {
     ppu->render_mode_changed = true;
   }
 
   ppu->next_render_mode = render_mode;
+  ppu->next_render_scale = opengl_render_scale;
 
   if (ppu->cycle_count != 0) {
     return;

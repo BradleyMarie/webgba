@@ -26,7 +26,8 @@ uint32_t GbaPpuCyclesUntilNextWake(const GbaPpu *ppu);
 bool GbaPpuStep(GbaPpu *ppu, Screen *screen, uint32_t num_cycles);
 
 // Rendering mode changes take effect at the beginning of each frame
-void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode);
+void GbaPpuSetRenderMode(GbaPpu *ppu, GbaPpuRenderMode render_mode,
+                         uint8_t opengl_render_scale);
 
 // Context Loss Recovery
 void GbaPpuReloadContext(GbaPpu *ppu);

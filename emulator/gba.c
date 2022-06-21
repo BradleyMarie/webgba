@@ -255,7 +255,23 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
 }
 
 void GbaEmulatorStep(GbaEmulator *emulator, Screen *screen,
+                     const GbaGraphicsRenderOptions *graphics_renderer,
                      GbaEmulatorRenderAudioSample audio_sample_callback) {
+  switch (graphics_renderer->renderer) {
+    case GBA_RENDERER_SCANLINES_SOFTWARE:
+      GbaPpuSetRenderMode(emulator->ppu, RENDER_MODE_SOFTWARE_ROWS,
+                          graphics_renderer->opengl_render_scale);
+      break;
+    case GBA_RENDERER_SCANLINES_OPENGL:
+      GbaPpuSetRenderMode(emulator->ppu, RENDER_MODE_OPENGL_ROWS,
+                          graphics_renderer->opengl_render_scale);
+      break;
+    case GBA_RENDERER_PIXELS_SOFTWARE:
+      GbaPpuSetRenderMode(emulator->ppu, RENDER_MODE_SOFTWARE_PIXELS,
+                          graphics_renderer->opengl_render_scale);
+      break;
+  }
+
   for (;;) {
     uint32_t cycles_elapsed = GbaTimersCyclesUntilNextWake(emulator->timers);
 
