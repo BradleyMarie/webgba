@@ -38,6 +38,13 @@ static SDL_Surface *g_surface = NULL;
 static GbaEmulator *g_emulator = NULL;
 static Screen *g_screen = NULL;
 static GamePad *g_gamepad = NULL;
+static GbaGraphicsRenderOptions g_render_options = {
+    GBA_RENDERER_SCANLINES_SOFTWARE, 1u};
+
+bool g_accept_equals = true;
+bool g_accept_minus = true;
+bool g_accept_g = true;
+bool g_accept_zero = true;
 
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
@@ -197,6 +204,61 @@ static ReturnType RenderNextFrame() {
   bool down_pressed = key_state[SDLK_DOWN] != 0;
   bool left_pressed = key_state[SDLK_LEFT] != 0;
   bool right_pressed = key_state[SDLK_RIGHT] != 0;
+
+  // Render Control
+  bool equals_pressed = key_state[SDLK_EQUALS] != 0;
+  bool minus_pressed = key_state[SDLK_MINUS] != 0;
+  bool g_pressed = key_state[SDLK_g] != 0;
+  bool zero_pressed = key_state[SDLK_0] != 0;
+
+  if (!equals_pressed) {
+    g_accept_equals = true;
+  } else if (g_accept_equals) {
+    if (g_render_options.renderer == GBA_RENDERER_SCANLINES_OPENGL) {
+      g_render_options.opengl_render_scale += 1u;
+      if (g_render_options.opengl_render_scale > 16u) {
+        g_render_options.opengl_render_scale = 16u;
+      }
+      g_accept_equals = false;
+    }
+  }
+
+  if (!minus_pressed) {
+    g_accept_minus = true;
+  } else if (g_accept_minus) {
+    if (g_render_options.renderer == GBA_RENDERER_SCANLINES_OPENGL) {
+      g_render_options.opengl_render_scale -= 1u;
+      if (g_render_options.opengl_render_scale == 0u) {
+        g_render_options.opengl_render_scale = 1u;
+      }
+      g_accept_minus = false;
+    }
+  }
+
+  if (!g_pressed) {
+    g_accept_g = true;
+  } else if (g_accept_g) {
+    switch (g_render_options.renderer) {
+      case GBA_RENDERER_PIXELS_SOFTWARE:
+        g_render_options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
+        break;
+      case GBA_RENDERER_SCANLINES_SOFTWARE:
+        g_render_options.renderer = GBA_RENDERER_SCANLINES_OPENGL;
+        break;
+      case GBA_RENDERER_SCANLINES_OPENGL:
+        g_render_options.renderer = GBA_RENDERER_PIXELS_SOFTWARE;
+        break;
+    }
+    g_accept_g = false;
+  }
+
+  if (!zero_pressed) {
+    g_accept_zero = true;
+  } else if (g_accept_zero) {
+    g_render_options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
+    g_render_options.opengl_render_scale = 1u;
+    g_accept_zero = false;
+  }
 
   if (!g_joystick && SDL_NumJoysticks() > 0) {
     g_joystick = SDL_JoystickOpen(0);
@@ -365,10 +427,7 @@ static ReturnType RenderNextFrame() {
   ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_surface->w,
                           /*height=*/g_surface->h);
 
-  GbaGraphicsRenderOptions options;
-  options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
-  options.opengl_render_scale = 1u;
-  GbaEmulatorStep(g_emulator, g_screen, &options, RenderAudioSample);
+  GbaEmulatorStep(g_emulator, g_screen, &g_render_options, RenderAudioSample);
 
   //
   // Flip framebuffer
