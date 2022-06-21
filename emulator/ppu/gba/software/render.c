@@ -49,7 +49,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
   bool success;
   switch (registers->dispcnt.mode) {
     case 0:
-      if (draw_bg0 && registers->dispcnt.bg0_enable) {
+      if (draw_bg0 && registers->dispcnt.bg0_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[0u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_0,
                                                  x, registers->vcount, &color);
@@ -58,7 +59,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg1 && registers->dispcnt.bg1_enable) {
+      if (draw_bg1 && registers->dispcnt.bg1_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[1u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_1,
                                                  x, registers->vcount, &color);
@@ -67,7 +69,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg2 && registers->dispcnt.bg2_enable) {
+      if (draw_bg2 && registers->dispcnt.bg2_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[2u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_2,
                                                  x, registers->vcount, &color);
@@ -76,7 +79,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg3 && registers->dispcnt.bg3_enable) {
+      if (draw_bg3 && registers->dispcnt.bg3_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[3u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_3,
                                                  x, registers->vcount, &color);
@@ -86,7 +90,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
       }
       break;
     case 1:
-      if (draw_bg0 && registers->dispcnt.bg0_enable) {
+      if (draw_bg0 && registers->dispcnt.bg0_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[0u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_0,
                                                  x, registers->vcount, &color);
@@ -95,7 +100,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg1 && registers->dispcnt.bg1_enable) {
+      if (draw_bg1 && registers->dispcnt.bg1_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[1u].priority) {
         success = GbaPpuScrollingBackgroundPixel(memory, registers,
                                                  GBA_PPU_SCROLLING_BACKGROUND_1,
                                                  x, registers->vcount, &color);
@@ -104,7 +110,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg2 && registers->dispcnt.bg2_enable) {
+      if (draw_bg2 && registers->dispcnt.bg2_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[2u].priority) {
         success = GbaPpuAffineBackgroundPixel(
             memory, registers, GBA_PPU_AFFINE_BACKGROUND_2, affine_bg2[0u],
             affine_bg2[1u], &color);
@@ -114,7 +121,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
       }
       break;
     case 2:
-      if (draw_bg2 && registers->dispcnt.bg2_enable) {
+      if (draw_bg2 && registers->dispcnt.bg2_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[2u].priority) {
         success = GbaPpuAffineBackgroundPixel(
             memory, registers, GBA_PPU_AFFINE_BACKGROUND_2, affine_bg2[0u],
             affine_bg2[1u], &color);
@@ -123,7 +131,8 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
         }
       }
 
-      if (draw_bg3 && registers->dispcnt.bg3_enable) {
+      if (draw_bg3 && registers->dispcnt.bg3_enable &&
+          blend_unit.priorities[1u] > registers->bgcnt[3u].priority) {
         success = GbaPpuAffineBackgroundPixel(
             memory, registers, GBA_PPU_AFFINE_BACKGROUND_3, affine_bg3[0u],
             affine_bg3[1u], &color);

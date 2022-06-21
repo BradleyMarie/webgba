@@ -9,9 +9,7 @@ static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
                                                  bool top, bool bottom,
                                                  uint16_t color,
                                                  uint_fast8_t priority) {
-  if (blend_unit->priorities[1u] <= priority) {
-    return;
-  }
+  assert(blend_unit->priorities[1u] > priority);
 
   if (blend_unit->priorities[0u] > priority) {
     blend_unit->priorities[1u] = blend_unit->priorities[0u];
@@ -218,9 +216,19 @@ void GbaPpuBlendUnitAddBackground3(GbaPpuBlendUnit* blend_unit,
 void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
                                 const GbaPpuRegisters* registers,
                                 uint16_t color) {
-  GbaPpuBlendUnitAddBackgroundInternal(blend_unit, registers->bldcnt.a_bd,
-                                       registers->bldcnt.b_bd, color,
-                                       GBA_PPU_LAYER_PRIORITY_BACKDROP);
+  if (GBA_PPU_LAYER_PRIORITY_BACKDROP < blend_unit->priorities[1u]) {
+    if (GBA_PPU_LAYER_PRIORITY_BACKDROP < blend_unit->priorities[0]) {
+      blend_unit->layers[0u] = color;
+      blend_unit->top[0u] = registers->bldcnt.a_bd;
+      blend_unit->bottom[0u] = registers->bldcnt.b_bd;
+      blend_unit->is_blended_object[0u] = false;
+    } else {
+      blend_unit->layers[1u] = color;
+      blend_unit->top[1u] = registers->bldcnt.a_bd;
+      blend_unit->bottom[1u] = registers->bldcnt.b_bd;
+      blend_unit->is_blended_object[1u] = false;
+    }
+  }
 }
 
 typedef uint16_t (*BlendFunction)(const GbaPpuBlendUnit*,
