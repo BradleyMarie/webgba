@@ -22,8 +22,6 @@ void GbaPpuObjectVisibilityHidden(GbaPpuObjectAttributeMemory* oam,
 
 void GbaPpuObjectVisibilityDrawn(GbaPpuObjectAttributeMemory* oam,
                                  uint_fast8_t object) {
-  assert(oam->internal.object_coordinates[object].pixel_x_size == 0u);
-
   static const int_fast16_t shape_size_to_x_size_pixels[4][4] = {
       {8u, 16u, 32u, 64u},
       {16u, 32u, 32u, 64u},
