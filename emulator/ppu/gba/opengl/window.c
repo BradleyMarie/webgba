@@ -53,7 +53,7 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                        ? registers->win0v.end
                        : GBA_SCREEN_HEIGHT;
 
-    if ((start <= registers->vcount && registers->vcount <= end) ||
+    if ((start <= registers->vcount && registers->vcount < end) ||
         (start > end &&
          (registers->vcount < end || registers->vcount > start))) {
       start = (registers->win0h.start < GBA_SCREEN_WIDTH)
@@ -86,7 +86,7 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
                        ? registers->win1v.end
                        : GBA_SCREEN_HEIGHT;
 
-    if ((start <= registers->vcount && registers->vcount <= end) ||
+    if ((start <= registers->vcount && registers->vcount < end) ||
         (start > end &&
          (registers->vcount < end || registers->vcount > start))) {
       start = (registers->win1h.start < GBA_SCREEN_WIDTH)
