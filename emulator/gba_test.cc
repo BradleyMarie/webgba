@@ -28,5 +28,8 @@ class GbaEmulatorTest : public testing::Test {
 };
 
 TEST_F(GbaEmulatorTest, EmptyTest) {
-  GbaEmulatorStep(gba_, screen_, AudioCallback);
+  GbaGraphicsRenderOptions options;
+  options.renderer = GBA_RENDERER_PIXELS_SOFTWARE;
+  options.opengl_render_scale = 1u;
+  GbaEmulatorStep(gba_, screen_, &options, AudioCallback);
 }

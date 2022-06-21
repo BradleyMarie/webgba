@@ -155,7 +155,10 @@ void retro_run() {
                           /*width=*/BASE_WIDTH * render_scale,
                           /*height=*/BASE_HEIGHT * render_scale);
 
-  GbaEmulatorStep(emulator, screen, audio_cb);
+  GbaGraphicsRenderOptions options;
+  options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
+  options.opengl_render_scale = render_scale;
+  GbaEmulatorStep(emulator, screen, &options, audio_cb);
   video_cb(RETRO_HW_FRAME_BUFFER_VALID, BASE_WIDTH * render_scale,
            BASE_HEIGHT * render_scale, 0);
 }
