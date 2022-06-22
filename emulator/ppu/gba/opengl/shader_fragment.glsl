@@ -481,7 +481,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint bg) {
 }
 
 mediump ivec2 AffinePixel(lowp uint bg) {
-  highp vec2 pixel = floor(samplecoord) / render_scale;
+  highp vec2 pixel = max(floor(screencoord), floor(samplecoord) / render_scale);
   highp float interp = mod(pixel.y, 1.0);
   lowp uint row = uint(screencoord.y);
   highp vec2 base = mix(affine_rows[row].base_scale[bg - 2u].xy,
