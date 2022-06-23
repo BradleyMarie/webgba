@@ -1,6 +1,7 @@
 #include "emulator/ppu/gba/software/blend.h"
 
 #include <assert.h>
+#include <math.h>
 
 #define GBA_PPU_LAYER_PRIORITY_BACKDROP 5u
 #define GBA_PPU_LAYER_PRIORITY_NOT_SET 6u
@@ -31,140 +32,110 @@ static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
   }
 }
 
-static uint16_t GbaPpuBlendUnitAdditiveBlendInternal(
-    const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
+static void GbaPpuBlendUnitAdditiveBlendInternal(
+    const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers,
+    uint8_t rgb[3u]) {
   assert(blend_unit->top[0u]);
   assert(blend_unit->bottom[1u]);
 
-  static const uint8_t clipped_weights[32u] = {
-      0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u,
-      11u, 12u, 13u, 14u, 15u, 16u, 16u, 16u, 16u, 16u, 16u,
-      16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u, 16u};
-  assert(registers->bldalpha.eva < 32u);
-  assert(registers->bldalpha.evb < 32u);
+  float top_b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
+  float top_g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
+  float top_r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
 
-  uint_fast8_t eva = clipped_weights[registers->bldalpha.eva];
-  uint_fast8_t evb = clipped_weights[registers->bldalpha.evb];
+  float bot_b = (float)((blend_unit->layers[1u] & 0x003Eu) >> 1u) / 31.0f;
+  float bot_g = (float)((blend_unit->layers[1u] & 0x07C0u) >> 6u) / 31.0f;
+  float bot_r = (float)((blend_unit->layers[1u] & 0xF800u) >> 11u) / 31.0f;
 
-  uint_fast32_t top = blend_unit->layers[0u];
-  uint_fast32_t t0 = (((top & 0x003Eu) * eva) >> 1u);
-  uint_fast32_t t1 = (((top & 0x07C0u) * eva) >> 6u);
-  uint_fast32_t t2 = (((top & 0xF800u) * eva) >> 11u);
+  float eva = fminf((float)registers->bldalpha.eva / 16.0f, 1.0f);
+  float evb = fminf((float)registers->bldalpha.evb / 16.0f, 1.0f);
 
-  uint_fast32_t bottom = blend_unit->layers[1u];
-  uint_fast32_t b0 = (((bottom & 0x003Eu) * evb) >> 1u);
-  uint_fast32_t b1 = (((bottom & 0x07C0u) * evb) >> 6u);
-  uint_fast32_t b2 = (((bottom & 0xF800u) * evb) >> 11u);
+  float r = fminf((top_r * eva) + (bot_r * evb), 1.0f);
+  float g = fminf((top_g * eva) + (bot_g * evb), 1.0f);
+  float b = fminf((top_b * eva) + (bot_b * evb), 1.0f);
 
-  static const uint8_t clipped_values[64u] = {
-      0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u, 11u, 12u,
-      13u, 14u, 15u, 16u, 17u, 18u, 19u, 20u, 21u, 22u, 23u, 24u, 25u,
-      26u, 27u, 28u, 29u, 30u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u,
-      31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u, 31u,
-      31u, 31u, 31u, 31u, 56u, 31u, 31u, 31u, 31u, 31u, 31u, 31u};
-
-  assert((t0 + b0) >> 4u < 64u);
-  uint_fast32_t s0 = clipped_values[(t0 + b0) >> 4u] << 1u;
-
-  assert((t1 + b1) >> 4u < 64u);
-  uint_fast32_t s1 = clipped_values[(t1 + b1) >> 4u] << 6u;
-
-  assert((t2 + b2) >> 4u < 64u);
-  uint_fast32_t s2 = clipped_values[(t2 + b2) >> 4u] << 11u;
-
-  return s0 | s1 | s2;
+  rgb[0u] = roundf(r * 255.0f);
+  rgb[1u] = roundf(g * 255.0f);
+  rgb[2u] = roundf(b * 255.0f);
 }
 
-static uint16_t GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
-                                             const GbaPpuRegisters* registers) {
+static void GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
+                                         const GbaPpuRegisters* registers,
+                                         uint8_t rgb[3u]) {
   if (!blend_unit->top[0u] | !blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitNoBlend(blend_unit);
+    GbaPpuBlendUnitNoBlend(blend_unit, rgb);
+    return;
   }
 
-  return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+  GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers, rgb);
 }
 
-static uint16_t GbaPpuBlendUnitNoBlendInternal(
-    const GbaPpuBlendUnit* blend_unit, const GbaPpuRegisters* registers) {
+static void GbaPpuBlendUnitNoBlendInternal(const GbaPpuBlendUnit* blend_unit,
+                                           const GbaPpuRegisters* registers,
+                                           uint8_t rgb[3u]) {
   if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->top[0u] & blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers, rgb);
   }
 
-  return GbaPpuBlendUnitNoBlend(blend_unit);
+  GbaPpuBlendUnitNoBlend(blend_unit, rgb);
 }
 
-static uint16_t GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
-                                      const GbaPpuRegisters* registers) {
+static void GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
+                                  const GbaPpuRegisters* registers,
+                                  uint8_t rgb[3u]) {
   if (!blend_unit->top[0u]) {
-    return GbaPpuBlendUnitNoBlend(blend_unit);
+    GbaPpuBlendUnitNoBlend(blend_unit, rgb);
+    return;
   }
 
   if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+    GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers, rgb);
+    return;
   }
 
-  static const uint8_t clipped_weights[32u] = {
-      16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
-      0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
-  assert(registers->bldy.evy < 32u);
+  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
+  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
+  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
 
-  uint_fast8_t evy = clipped_weights[registers->bldy.evy];
+  float evy = fmaxf(1.0f - (float)registers->bldy.evy / 16.0f, 0.0f);
 
-  uint_fast32_t color = blend_unit->layers[0u];
-  uint_fast32_t c0 = (((color & 0x003Eu) * evy) >> 4u);
-  uint_fast32_t c1 = (((color & 0x07C0u) * evy) >> 4u) & 0x07C0u;
-  uint_fast32_t c2 = (((color & 0xF800u) * evy) >> 4u) & 0xF800u;
+  r *= evy;
+  g *= evy;
+  b *= evy;
 
-  return c0 | c1 | c2;
+  rgb[0u] = roundf(r * 255.0f);
+  rgb[1u] = roundf(g * 255.0f);
+  rgb[2u] = roundf(b * 255.0f);
 }
 
-static uint16_t GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
-                                        const GbaPpuRegisters* registers) {
+static void GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
+                                    const GbaPpuRegisters* registers,
+                                    uint8_t rgb[3u]) {
   if (!blend_unit->top[0u]) {
-    return GbaPpuBlendUnitNoBlend(blend_unit);
+    GbaPpuBlendUnitNoBlend(blend_unit, rgb);
+    return;
   }
 
   if ((blend_unit->is_blended_object[0u] | blend_unit->is_blended_object[1u]) &
       blend_unit->bottom[1u]) {
-    return GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers);
+    GbaPpuBlendUnitAdditiveBlendInternal(blend_unit, registers, rgb);
+    return;
   }
 
-  static const uint8_t clipped_weights[32u] = {
-      16u, 15u, 14u, 13u, 12u, 11u, 10u, 9u, 8u, 7u, 6u, 5u, 4u, 3u, 2u, 1u,
-      0u,  0u,  0u,  0u,  0u,  0u,  0u,  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
-  assert(registers->bldy.evy < 32u);
+  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
+  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
+  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
 
-  uint_fast8_t evy = clipped_weights[registers->bldy.evy];
+  float evy = fminf((float)registers->bldy.evy / 16.0f, 1.0f);
 
-  uint_fast32_t color = blend_unit->layers[0u];
-  uint_fast32_t c0 = (((color & 0x003Eu) * evy) >> 1u);
-  uint_fast32_t c1 = (((color & 0x07C0u) * evy) >> 6u);
-  uint_fast32_t c2 = (((color & 0xF800u) * evy) >> 11u);
+  r += (1.0f - r) * evy;
+  g += (1.0f - g) * evy;
+  b += (1.0f - b) * evy;
 
-  uint_fast8_t inverse_weight = 16u - evy;
-  uint_fast32_t w0 = 31u * inverse_weight;
-  uint_fast32_t w1 = w0;
-  uint_fast32_t w2 = w1;
-
-  static const uint8_t clipped_values[64u] = {
-      0u,  1u,  2u,  3u,  4u,  5u,  6u,  7u,  8u,  9u,  10u, 11u, 12u,
-      13u, 14u, 15u, 16u, 17u, 18u, 19u, 20u, 21u, 22u, 23u, 24u, 25u,
-      26u, 27u, 28u, 29u, 30u, 31u, 31u, 33u, 34u, 35u, 36u, 37u, 38u,
-      39u, 40u, 41u, 42u, 43u, 44u, 45u, 46u, 47u, 48u, 49u, 50u, 51u,
-      52u, 53u, 54u, 55u, 56u, 57u, 58u, 59u, 60u, 61u, 62u, 63u};
-
-  assert((c0 + w0) >> 4u < 64u);
-  uint_fast32_t s0 = clipped_values[(c0 + w0) >> 4u] << 1u;
-
-  assert((c1 + w1) >> 4u < 64u);
-  uint_fast32_t s1 = clipped_values[(c1 + w1) >> 4u] << 6u;
-
-  assert((c2 + w2) >> 4u < 64u);
-  uint_fast32_t s2 = clipped_values[(c2 + w2) >> 4u] << 11u;
-
-  return s0 | s1 | s2;
+  rgb[0u] = roundf(r * 255.0f);
+  rgb[1u] = roundf(g * 255.0f);
+  rgb[2u] = roundf(b * 255.0f);
 }
 
 void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
@@ -231,15 +202,26 @@ void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
   }
 }
 
-typedef uint16_t (*BlendFunction)(const GbaPpuBlendUnit*,
-                                  const GbaPpuRegisters*);
+typedef void (*BlendFunction)(const GbaPpuBlendUnit*, const GbaPpuRegisters*,
+                              uint8_t rgb[3u]);
 
-uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
-                              const GbaPpuRegisters* registers) {
+void GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
+                          const GbaPpuRegisters* registers, uint8_t rgb[3u]) {
   static const BlendFunction blend_table[4u] = {
       GbaPpuBlendUnitNoBlendInternal, GbaPpuBlendUnitAdditiveBlend,
       GbaPpuBlendUnitBrighten, GbaPpuBlendUnitDarken};
   assert(registers->bldcnt.mode < 4u);
 
-  return blend_table[registers->bldcnt.mode](blend_unit, registers);
+  return blend_table[registers->bldcnt.mode](blend_unit, registers, rgb);
+}
+
+void GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit,
+                            uint8_t rgb[3u]) {
+  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
+  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
+  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
+
+  rgb[0u] = roundf(r * 255.0f);
+  rgb[1u] = roundf(g * 255.0f);
+  rgb[2u] = roundf(b * 255.0f);
 }

@@ -12,15 +12,13 @@
 #include "emulator/screen.h"
 
 struct _GbaPpuSoftwareRenderer {
-  uint16_t* pixels;
+  uint8_t* subpixels;
 };
 
-static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
+static void GbaPpuSoftwareRendererDrawPixelImpl(
     GbaPpuSoftwareRenderer* renderer, const GbaPpuMemory* memory,
     const GbaPpuRegisters* registers, GbaPpuDirtyBits* dirty_bits, uint8_t x,
-    const int32_t affine_bg2[2], const int32_t affine_bg3[2]) {
-  assert(renderer->pixels != NULL);
-
+    const int32_t affine_bg2[2], const int32_t affine_bg3[2], uint8_t rgb[3]) {
   uint16_t obj_color;
   uint8_t obj_priority;
   bool object_on_pixel, obj_semi_transparent, on_obj_mask;
@@ -174,12 +172,10 @@ static uint16_t GbaPpuSoftwareRendererDrawPixelImpl(
                              memory->palette.bg.large_palette[0u]);
 
   if (enable_blending) {
-    color = GbaPpuBlendUnitBlend(&blend_unit, registers);
+    GbaPpuBlendUnitBlend(&blend_unit, registers, rgb);
   } else {
-    color = GbaPpuBlendUnitNoBlend(&blend_unit);
+    GbaPpuBlendUnitNoBlend(&blend_unit, rgb);
   }
-
-  return color | 1u;
 }
 
 GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate() {
@@ -188,16 +184,16 @@ GbaPpuSoftwareRenderer* GbaPpuSoftwareRendererAllocate() {
 
 bool GbaPpuSoftwareRendererSetScreen(GbaPpuSoftwareRenderer* renderer,
                                      Screen* screen) {
-  renderer->pixels =
+  renderer->subpixels =
       ScreenGetPixelBuffer(screen, GBA_SCREEN_WIDTH, GBA_SCREEN_HEIGHT);
-  return renderer->pixels != NULL;
+  return renderer->subpixels != NULL;
 }
 
 void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
                                    const GbaPpuMemory* memory,
                                    const GbaPpuRegisters* registers,
                                    GbaPpuDirtyBits* dirty_bits) {
-  if (renderer->pixels == NULL) {
+  if (renderer->subpixels == NULL) {
     return;
   }
 
@@ -208,9 +204,10 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
 
   if (!registers->dispcnt.forced_blank) {
     for (uint8_t i = 0; i < GBA_SCREEN_WIDTH; i++) {
-      uint16_t color = GbaPpuSoftwareRendererDrawPixelImpl(
-          renderer, memory, registers, dirty_bits, i, affine_bg2, affine_bg3);
-      renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + i] = color;
+      GbaPpuSoftwareRendererDrawPixelImpl(
+          renderer, memory, registers, dirty_bits, i, affine_bg2, affine_bg3,
+          &renderer
+               ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i]);
       affine_bg2[0u] += registers->affine[0u].pa;
       affine_bg2[1u] += registers->affine[0u].pc;
       affine_bg3[0u] += registers->affine[1u].pa;
@@ -218,7 +215,15 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
     }
   } else {
     for (uint8_t i = 0; i < GBA_SCREEN_WIDTH; i++) {
-      renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + i] = 1u;
+      renderer
+          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 0u] =
+          0u;
+      renderer
+          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 1u] =
+          0u;
+      renderer
+          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 2u] =
+          0u;
     }
   }
 }
@@ -227,21 +232,28 @@ void GbaPpuSoftwareRendererDrawPixel(GbaPpuSoftwareRenderer* renderer,
                                      const GbaPpuMemory* memory,
                                      const GbaPpuRegisters* registers,
                                      GbaPpuDirtyBits* dirty_bits, uint8_t x) {
-  if (renderer->pixels == NULL) {
+  if (renderer->subpixels == NULL) {
     return;
   }
 
-  uint16_t color = 0u;
   if (!registers->dispcnt.forced_blank) {
-    color = GbaPpuSoftwareRendererDrawPixelImpl(
+    GbaPpuSoftwareRendererDrawPixelImpl(
         renderer, memory, registers, dirty_bits, x,
         registers->internal.affine[0u].current,
-        registers->internal.affine[1u].current);
+        registers->internal.affine[1u].current,
+        &renderer
+             ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x]);
   } else {
-    color = 0u;
+    renderer
+        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 0u] =
+        0u;
+    renderer
+        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 1u] =
+        0u;
+    renderer
+        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 2u] =
+        0u;
   }
-
-  renderer->pixels[registers->vcount * GBA_SCREEN_WIDTH + x] = color;
 }
 
 void GbaPpuSoftwareRendererFree(GbaPpuSoftwareRenderer* renderer) {

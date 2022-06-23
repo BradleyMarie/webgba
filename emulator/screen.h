@@ -11,7 +11,7 @@ Screen *ScreenAllocate();
 void ScreenAttachFramebuffer(Screen *screen, GLuint framebuffer, GLsizei width,
                              GLsizei height);
 
-uint16_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height);
+uint8_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height);
 
 GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height);
 
