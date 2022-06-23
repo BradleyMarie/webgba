@@ -41,6 +41,7 @@ cc_library(
     hdrs = ["blend.h"],
     deps = [
         "//emulator/ppu/gba:registers",
+        "//util:macros",
     ],
 )
 
