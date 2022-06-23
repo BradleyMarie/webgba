@@ -62,12 +62,9 @@ void GbaPpuBlendUnitAddBackdrop(GbaPpuBlendUnit* blend_unit,
                                 const GbaPpuRegisters* registers,
                                 uint16_t color);
 
-uint16_t GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
-                              const GbaPpuRegisters* registers);
+void GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
+                          const GbaPpuRegisters* registers, uint8_t rgb[3u]);
 
-static inline uint16_t GbaPpuBlendUnitNoBlend(
-    const GbaPpuBlendUnit* blend_unit) {
-  return blend_unit->layers[0u];
-}
+void GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit, uint8_t rgb[3u]);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_SOFTWARE_BLEND_
