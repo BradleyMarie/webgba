@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <math.h>
 
+#include "util/macros.h"
+
 #define GBA_PPU_LAYER_PRIORITY_BACKDROP 5u
 #define GBA_PPU_LAYER_PRIORITY_NOT_SET 6u
 
@@ -207,12 +209,22 @@ typedef void (*BlendFunction)(const GbaPpuBlendUnit*, const GbaPpuRegisters*,
 
 void GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
                           const GbaPpuRegisters* registers, uint8_t rgb[3u]) {
-  static const BlendFunction blend_table[4u] = {
-      GbaPpuBlendUnitNoBlendInternal, GbaPpuBlendUnitAdditiveBlend,
-      GbaPpuBlendUnitBrighten, GbaPpuBlendUnitDarken};
-  assert(registers->bldcnt.mode < 4u);
-
-  return blend_table[registers->bldcnt.mode](blend_unit, registers, rgb);
+  switch (registers->bldcnt.mode) {
+    case 0:
+      GbaPpuBlendUnitNoBlendInternal(blend_unit, registers, rgb);
+      break;
+    case 1:
+      GbaPpuBlendUnitAdditiveBlend(blend_unit, registers, rgb);
+      break;
+    case 2:
+      GbaPpuBlendUnitBrighten(blend_unit, registers, rgb);
+      break;
+    case 3:
+      GbaPpuBlendUnitDarken(blend_unit, registers, rgb);
+      break;
+    default:
+      codegen_assert(false);
+  }
 }
 
 void GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit,
