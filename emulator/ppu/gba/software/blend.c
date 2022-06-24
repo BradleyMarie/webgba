@@ -8,6 +8,17 @@
 #define GBA_PPU_LAYER_PRIORITY_BACKDROP 5u
 #define GBA_PPU_LAYER_PRIORITY_NOT_SET 6u
 
+static uint_fast16_t UInt5To8(uint_fast8_t value) {
+  static const uint8_t mapped_values[32u] = {
+      0u,   8u,   16u,  25u,  33u,  41u,  49u,  58u,  66u,  74u,  82u,
+      90u,  99u,  107u, 115u, 123u, 132u, 140u, 148u, 156u, 165u, 173u,
+      181u, 189u, 197u, 206u, 214u, 222u, 230u, 239u, 247u, 255u,
+  };
+
+  assert(value < 32u);
+  return mapped_values[value];
+}
+
 static void GbaPpuBlendUnitAddBackgroundInternal(GbaPpuBlendUnit* blend_unit,
                                                  bool top, bool bottom,
                                                  uint16_t color,
@@ -40,24 +51,26 @@ static void GbaPpuBlendUnitAdditiveBlendInternal(
   assert(blend_unit->top[0u]);
   assert(blend_unit->bottom[1u]);
 
-  float top_b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
-  float top_g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
-  float top_r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
+  uint_fast16_t top_b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t top_g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
+  uint_fast16_t top_r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
-  float bot_b = (float)((blend_unit->layers[1u] & 0x003Eu) >> 1u) / 31.0f;
-  float bot_g = (float)((blend_unit->layers[1u] & 0x07C0u) >> 6u) / 31.0f;
-  float bot_r = (float)((blend_unit->layers[1u] & 0xF800u) >> 11u) / 31.0f;
+  uint_fast16_t bot_b = UInt5To8((blend_unit->layers[1u] & 0x003Eu) >> 1u);
+  uint_fast16_t bot_g = UInt5To8((blend_unit->layers[1u] & 0x07C0u) >> 6u);
+  uint_fast16_t bot_r = UInt5To8((blend_unit->layers[1u] & 0xF800u) >> 11u);
 
-  float eva = fminf((float)registers->bldalpha.eva / 16.0f, 1.0f);
-  float evb = fminf((float)registers->bldalpha.evb / 16.0f, 1.0f);
+  uint_fast16_t eva =
+      registers->bldalpha.eva > 16u ? 16u : registers->bldalpha.eva;
+  uint_fast16_t evb =
+      registers->bldalpha.evb > 16u ? 16u : registers->bldalpha.evb;
 
-  float r = fminf((top_r * eva) + (bot_r * evb), 1.0f);
-  float g = fminf((top_g * eva) + (bot_g * evb), 1.0f);
-  float b = fminf((top_b * eva) + (bot_b * evb), 1.0f);
+  uint_fast16_t r = ((top_r * eva) + (bot_r * evb)) >> 4u;
+  uint_fast16_t g = ((top_g * eva) + (bot_g * evb)) >> 4u;
+  uint_fast16_t b = ((top_b * eva) + (bot_b * evb)) >> 4u;
 
-  rgb[0u] = roundf(r * 255.0f);
-  rgb[1u] = roundf(g * 255.0f);
-  rgb[2u] = roundf(b * 255.0f);
+  rgb[0u] = r > UINT8_MAX ? UINT8_MAX : r;
+  rgb[1u] = g > UINT8_MAX ? UINT8_MAX : g;
+  rgb[2u] = b > UINT8_MAX ? UINT8_MAX : b;
 }
 
 static void GbaPpuBlendUnitAdditiveBlend(const GbaPpuBlendUnit* blend_unit,
@@ -96,19 +109,16 @@ static void GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
     return;
   }
 
-  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
-  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
-  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
+  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
+  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
-  float evy = fmaxf(1.0f - (float)registers->bldy.evy / 16.0f, 0.0f);
+  uint_fast16_t evy =
+      16u - ((registers->bldy.evy > 16u) ? 16u : registers->bldy.evy);
 
-  r *= evy;
-  g *= evy;
-  b *= evy;
-
-  rgb[0u] = roundf(r * 255.0f);
-  rgb[1u] = roundf(g * 255.0f);
-  rgb[2u] = roundf(b * 255.0f);
+  rgb[0u] = (r * evy) >> 4u;
+  rgb[1u] = (g * evy) >> 4u;
+  rgb[2u] = (b * evy) >> 4u;
 }
 
 static void GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
@@ -125,19 +135,19 @@ static void GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
     return;
   }
 
-  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
-  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
-  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
+  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
+  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
-  float evy = fminf((float)registers->bldy.evy / 16.0f, 1.0f);
+  uint_fast16_t evy = registers->bldy.evy > 16u ? 16u : registers->bldy.evy;
 
-  r += (1.0f - r) * evy;
-  g += (1.0f - g) * evy;
-  b += (1.0f - b) * evy;
+  r = (r + (UINT8_MAX - r) * evy) >> 4u;
+  g = (g + (UINT8_MAX - g) * evy) >> 4u;
+  b = (b + (UINT8_MAX - b) * evy) >> 4u;
 
-  rgb[0u] = roundf(r * 255.0f);
-  rgb[1u] = roundf(g * 255.0f);
-  rgb[2u] = roundf(b * 255.0f);
+  rgb[0u] = r > UINT8_MAX ? UINT8_MAX : r;
+  rgb[1u] = g > UINT8_MAX ? UINT8_MAX : g;
+  rgb[2u] = b > UINT8_MAX ? UINT8_MAX : b;
 }
 
 void GbaPpuBlendUnitAddObject(GbaPpuBlendUnit* blend_unit,
