@@ -1,7 +1,6 @@
 #include "emulator/ppu/gba/software/blend.h"
 
 #include <assert.h>
-#include <math.h>
 
 #include "util/macros.h"
 
@@ -239,11 +238,7 @@ void GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
 
 void GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit,
                             uint8_t rgb[3u]) {
-  float b = (float)((blend_unit->layers[0u] & 0x003Eu) >> 1u) / 31.0f;
-  float g = (float)((blend_unit->layers[0u] & 0x07C0u) >> 6u) / 31.0f;
-  float r = (float)((blend_unit->layers[0u] & 0xF800u) >> 11u) / 31.0f;
-
-  rgb[0u] = roundf(r * 255.0f);
-  rgb[1u] = roundf(g * 255.0f);
-  rgb[2u] = roundf(b * 255.0f);
+  rgb[0u] = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
+  rgb[1u] = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
+  rgb[2u] = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
 }
