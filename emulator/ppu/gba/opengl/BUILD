@@ -156,9 +156,9 @@ cc_library(
 
 genrule(
   name = "shader_fragment_generate",
-  srcs = [":shader_fragment.glsl"],
+  srcs = [":shader.frag"],
   outs = ["shader_fragment.h"],
-  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader_fragment.glsl) fragment_shader_source > $@",
+  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader.frag) fragment_shader_source > $@",
   tools = ["//tools/string_generator:string_generator"],
 )
 
@@ -169,9 +169,9 @@ cc_library(
 
 genrule(
   name = "shader_vertex_generate",
-  srcs = [":shader_vertex.glsl"],
+  srcs = [":shader.vert"],
   outs = ["shader_vertex.h"],
-  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader_vertex.glsl) vertex_shader_source > $@",
+  cmd = "./$(location //tools/string_generator:string_generator) $(location :shader.vert) vertex_shader_source > $@",
   tools = ["//tools/string_generator:string_generator"],
 )
 
