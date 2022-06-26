@@ -41,10 +41,10 @@ static GamePad *g_gamepad = NULL;
 static GbaGraphicsRenderOptions g_render_options = {
     GBA_RENDERER_SCANLINES_SOFTWARE, 1u};
 
-bool g_accept_equals = true;
-bool g_accept_minus = true;
-bool g_accept_g = true;
-bool g_accept_zero = true;
+bool g_accept_raise = true;
+bool g_accept_lower = true;
+bool g_accept_mode_change = true;
+bool g_accept_reset = true;
 
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
@@ -206,38 +206,38 @@ static ReturnType RenderNextFrame() {
   bool right_pressed = key_state[SDLK_RIGHT] != 0;
 
   // Render Control
-  bool equals_pressed = key_state[SDLK_EQUALS] != 0;
-  bool minus_pressed = key_state[SDLK_MINUS] != 0;
-  bool g_pressed = key_state[SDLK_g] != 0;
-  bool zero_pressed = key_state[SDLK_0] != 0;
+  bool raise_pressed = key_state[SDLK_j] != 0;
+  bool lower_pressed = key_state[SDLK_h] != 0;
+  bool change_mode_pressed = key_state[SDLK_g] != 0;
+  bool reset_pressed = key_state[SDLK_k] != 0;
 
-  if (!equals_pressed) {
-    g_accept_equals = true;
-  } else if (g_accept_equals) {
+  if (!raise_pressed) {
+    g_accept_raise = true;
+  } else if (g_accept_raise) {
     if (g_render_options.renderer == GBA_RENDERER_SCANLINES_OPENGL) {
       g_render_options.opengl_render_scale += 1u;
       if (g_render_options.opengl_render_scale > 16u) {
         g_render_options.opengl_render_scale = 16u;
       }
-      g_accept_equals = false;
+      g_accept_raise = false;
     }
   }
 
-  if (!minus_pressed) {
-    g_accept_minus = true;
-  } else if (g_accept_minus) {
+  if (!lower_pressed) {
+    g_accept_lower = true;
+  } else if (g_accept_lower) {
     if (g_render_options.renderer == GBA_RENDERER_SCANLINES_OPENGL) {
       g_render_options.opengl_render_scale -= 1u;
       if (g_render_options.opengl_render_scale == 0u) {
         g_render_options.opengl_render_scale = 1u;
       }
-      g_accept_minus = false;
+      g_accept_lower = false;
     }
   }
 
-  if (!g_pressed) {
-    g_accept_g = true;
-  } else if (g_accept_g) {
+  if (!change_mode_pressed) {
+    g_accept_mode_change = true;
+  } else if (g_accept_mode_change) {
     switch (g_render_options.renderer) {
       case GBA_RENDERER_PIXELS_SOFTWARE:
         g_render_options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
@@ -249,19 +249,15 @@ static ReturnType RenderNextFrame() {
         g_render_options.renderer = GBA_RENDERER_PIXELS_SOFTWARE;
         break;
     }
-    g_accept_g = false;
+    g_accept_mode_change = false;
   }
 
-  if (!zero_pressed) {
-    g_accept_zero = true;
-  } else if (g_accept_zero) {
+  if (!reset_pressed) {
+    g_accept_reset = true;
+  } else if (g_accept_reset) {
     g_render_options.renderer = GBA_RENDERER_SCANLINES_SOFTWARE;
     g_render_options.opengl_render_scale = 1u;
-    g_accept_zero = false;
-  }
-
-  if (!g_joystick && SDL_NumJoysticks() > 0) {
-    g_joystick = SDL_JoystickOpen(0);
+    g_accept_reset = false;
   }
 
   if (g_joystick) {
