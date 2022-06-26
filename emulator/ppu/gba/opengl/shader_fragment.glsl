@@ -299,10 +299,8 @@ lowp uint CheckWindow(lowp uint screen_row, bool on_object) {
 
 // Objects
 lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
-  mediump ivec2 canvas_top = ivec2(object.x & 0xFFFFu,
-                                   object.x >> 16u);
-  mediump ivec2 canvas_size = ivec2((object.y >> 16u) & 0xFFu,
-                                    object.y >> 24u);
+  mediump ivec2 canvas_top = ivec2(object.x & 0xFFFFu, object.x >> 16u);
+  mediump ivec2 canvas_size = ivec2((object.y >> 16u) & 0xFFu, object.y >> 24u);
   mediump ivec2 canvas_half_size = canvas_size >> 1;
   mediump ivec2 canvas_center = canvas_top - canvas_half_size;
 
@@ -347,17 +345,16 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
     tile_index <<= 1u;
     color_index = texelFetch(object_tiles,
                              ivec2(tile_pixel.x + 8 * (tile_pixel.y % 4),
-                                   int(object.y & 0xFFFFu) +
-                                       tile_index + (tile_pixel.y / 4)),
+                                   int(object.y & 0xFFFFu) + tile_index +
+                                       (tile_pixel.y / 4)),
                              0)
                       .r;
   } else {
-    color_index =
-        texelFetch(object_tiles,
-                   ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
-                         int(object.y & 0xFFFFu) + tile_index),
-                   0)
-            .r;
+    color_index = texelFetch(object_tiles,
+                             ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
+                                   int(object.y & 0xFFFFu) + tile_index),
+                             0)
+                      .r;
     color_index >>= 4u * (uint(tile_pixel.x) & 1u);
     color_index &= 0xFu;
   }
@@ -388,19 +385,17 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
   mediump ivec2 tilemap_pixel = ivec2(samplecoord + origin);
   tilemap_pixel &= bg_size - 1;
 
-  tilemap_pixel.x -=
-      tilemap_pixel.x % int((bgcnt) >> 16u & 0x1Fu);
-  tilemap_pixel.y -=
-      tilemap_pixel.y % int((bgcnt) >> 24u & 0x1Fu);
+  tilemap_pixel.x -= tilemap_pixel.x % int((bgcnt) >> 16u & 0x1Fu);
+  tilemap_pixel.y -= tilemap_pixel.y % int((bgcnt) >> 24u & 0x1Fu);
 
   lowp ivec2 tilemap_block = tilemap_pixel / 256;
   lowp int tilemap_block_index =
       tilemap_block.x + tilemap_block.y * (bg_size.x / 256);
   mediump ivec2 tilemap_block_tile = (tilemap_pixel / 8) % 32;
 
-  mediump ivec3 tilemap_index = ivec3(
-      tilemap_block_tile.x, tilemap_block_tile.y,
-      int((bgcnt >> 8u) & 0x1Fu) + tilemap_block_index);
+  mediump ivec3 tilemap_index =
+      ivec3(tilemap_block_tile.x, tilemap_block_tile.y,
+            int((bgcnt >> 8u) & 0x1Fu) + tilemap_block_index);
 
   mediump uvec4 tilemap_entry = texelFetch(scrolling_tilemap, tilemap_index, 0);
   mediump int tileblock_offset = int(tilemap_entry.x & 0x3FFu);
@@ -421,8 +416,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
         texelFetch(background_tiles,
                    ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
                          (tile_pixel.y / 4) + tileblock_offset % 512,
-                         int((bgcnt >> 2u) & 0x3u) +
-                             tileblock_offset / 512),
+                         int((bgcnt >> 2u) & 0x3u) + tileblock_offset / 512),
                    0)
             .r;
     if (color_index == 0u) {
@@ -433,8 +427,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
         texelFetch(
             background_tiles,
             ivec3(tile_pixel.x / 2 + 4 * tile_pixel.y, tileblock_offset % 512,
-                  int((bgcnt >> 2u) & 0x3u) +
-                      tileblock_offset / 512),
+                  int((bgcnt >> 2u) & 0x3u) + tileblock_offset / 512),
             0)
             .r;
     color_index >>= 4u * (uint(tile_pixel.x) & 1u);
@@ -471,8 +464,7 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
 
   mediump ivec2 tilemap_pixel = AffinePixel(bg, screen_row, samplecoord);
 
-  mediump ivec2 bg_size = ivec2(128, 128)
-                          << int((bgcnt >> 14u) & 0x3u);
+  mediump ivec2 bg_size = ivec2(128, 128) << int((bgcnt >> 14u) & 0x3u);
   if (!bool(bgcnt & 0x2000u)) {
     if (any(lessThan(tilemap_pixel, ivec2(0, 0))) ||
         any(greaterThanEqual(tilemap_pixel, bg_size))) {
@@ -482,10 +474,8 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
     tilemap_pixel &= bg_size - 1;
   }
 
-  tilemap_pixel.x -=
-      tilemap_pixel.x % int((bgcnt) >> 16u & 0x1Fu);
-  tilemap_pixel.y -=
-      tilemap_pixel.y % int((bgcnt) >> 24u & 0x1Fu);
+  tilemap_pixel.x -= tilemap_pixel.x % int((bgcnt) >> 16u & 0x1Fu);
+  tilemap_pixel.y -= tilemap_pixel.y % int((bgcnt) >> 24u & 0x1Fu);
 
   lowp ivec2 tile = tilemap_pixel / 8;
   lowp ivec2 tile_pixel = tilemap_pixel % 8;
@@ -494,18 +484,16 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
   mediump uint t_index =
       texelFetch(affine_tilemap,
                  ivec3(tile_offset % 64, (tile_offset % 2048) / 64,
-                       int((bgcnt >> 8u) & 0x1Fu) +
-                           tile_offset / 2048),
+                       int((bgcnt >> 8u) & 0x1Fu) + tile_offset / 2048),
                  0)
           .r;
 
-  lowp uint index =
-      texelFetch(background_tiles,
-                 ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
-                       int(t_index << 1u) + (tile_pixel.y / 4),
-                       int((bgcnt >> 2u) & 0x3u)),
-                 0)
-          .r;
+  lowp uint index = texelFetch(background_tiles,
+                               ivec3(tile_pixel.x + 8 * (tile_pixel.y % 4),
+                                     int(t_index << 1u) + (tile_pixel.y / 4),
+                                     int((bgcnt >> 2u) & 0x3u)),
+                               0)
+                        .r;
   if (index == 0u) {
     return blend_unit;
   }
@@ -645,29 +633,29 @@ void main() {
 
 #if SCROLLING_BACKGROUND_0 != 0
   if (bool(window & 0x1u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord,
-                                     bgcnt[0], 0u);
+    blend_unit =
+        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[0], 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (bool(window & 0x2u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord,
-                                     bgcnt[1], 1u);
+    blend_unit =
+        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[1], 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord,
-                                     bgcnt[2], 2u);
+    blend_unit =
+        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[2], 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord,
-                                     bgcnt[3], 3u);
+    blend_unit =
+        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[3], 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
