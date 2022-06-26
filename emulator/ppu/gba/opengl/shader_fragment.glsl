@@ -79,14 +79,9 @@ struct BlendRow {
 
 layout(std140) uniform Blend { BlendRow blend_rows[160]; };
 
-// Screen Coordinates
-highp vec2 SampleCoord() {
-  highp vec2 loc = vec2(gl_FragCoord.x, 160.0 * render_scale - gl_FragCoord.y);
-  return max(floor(loc) / render_scale, floor(loc / render_scale));
-}
-
 // Blend Unit
 struct BlendUnit {
+  mediump uvec3 bldcnt_ev;
   lowp vec3 color[2];
   lowp uint priority[2];
   bool top[2];
@@ -94,8 +89,9 @@ struct BlendUnit {
   bool semi_transparent[2];
 };
 
-BlendUnit CreateBlendUnit() {
+BlendUnit CreateBlendUnit(lowp uint screen_row) {
   BlendUnit result;
+  result.bldcnt_ev = blend_rows[screen_row].bldcnt_ev;
   result.color[0] = vec3(0.0, 0.0, 0.0);
   result.color[1] = vec3(0.0, 0.0, 0.0);
   result.priority[0] = 6u;
@@ -109,14 +105,12 @@ BlendUnit CreateBlendUnit() {
   return result;
 }
 
-BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp uint screen_row,
-                             lowp vec3 color, lowp uint priority,
-                             bool blended) {
-  mediump uvec3 bldcnt_ev = blend_rows[screen_row].bldcnt_ev;
+BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
+                             lowp uint priority, bool blended) {
   blend_unit.color[0] = color.bgr;
   blend_unit.priority[0] = priority;
-  blend_unit.top[0] = blended || bool(bldcnt_ev.y & 0x10u);
-  blend_unit.bottom[0] = bool(bldcnt_ev.z & 0x10u);
+  blend_unit.top[0] = blended || bool(blend_unit.bldcnt_ev.y & 0x10u);
+  blend_unit.bottom[0] = bool(blend_unit.bldcnt_ev.z & 0x10u);
   blend_unit.semi_transparent[0] = blended;
   return blend_unit;
 }
@@ -129,8 +123,8 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint screen_row,
 
   blend_unit.color[1] = color.bgr;
   blend_unit.priority[1] = priority;
-  blend_unit.top[1] = bool(bldcnt_ev.y & (1u << bg));
-  blend_unit.bottom[1] = bool(bldcnt_ev.z & (1u << bg));
+  blend_unit.top[1] = bool(blend_unit.bldcnt_ev.y & (1u << bg));
+  blend_unit.bottom[1] = bool(blend_unit.bldcnt_ev.z & (1u << bg));
   blend_unit.semi_transparent[1] = false;
 
   if (blend_unit.priority[1] < blend_unit.priority[0]) {
@@ -158,34 +152,32 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, lowp uint screen_row,
   return blend_unit;
 }
 
-BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp uint screen_row,
-                               lowp vec3 color) {
+BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec3 color) {
   if (5u < blend_unit.priority[1]) {
-    mediump uvec3 bldcnt_ev = blend_rows[screen_row].bldcnt_ev;
     if (5u < blend_unit.priority[0]) {
       blend_unit.color[0] = color.bgr;
-      blend_unit.top[0] = bool(bldcnt_ev.y & 0x20u);
-      blend_unit.bottom[0] = bool(bldcnt_ev.z & 0x20u);
+      blend_unit.top[0] = bool(blend_unit.bldcnt_ev.y & 0x20u);
+      blend_unit.bottom[0] = bool(blend_unit.bldcnt_ev.z & 0x20u);
       blend_unit.semi_transparent[0] = false;
     } else {
       blend_unit.color[1] = color.bgr;
-      blend_unit.top[1] = bool(bldcnt_ev.y & 0x20u);
-      blend_unit.bottom[1] = bool(bldcnt_ev.z & 0x20u);
+      blend_unit.top[1] = bool(blend_unit.bldcnt_ev.y & 0x20u);
+      blend_unit.bottom[1] = bool(blend_unit.bldcnt_ev.z & 0x20u);
       blend_unit.semi_transparent[1] = false;
     }
   }
   return blend_unit;
 }
 
-lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
+lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit) {
   bool do_blend =
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
       blend_unit.top[0] && blend_unit.bottom[1];
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -194,14 +186,13 @@ lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit,
-                                 mediump uvec3 bldcnt_ev) {
+lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit) {
   bool do_blend = blend_unit.top[0] && blend_unit.bottom[1];
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -210,7 +201,7 @@ lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit,
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec3 BlendUnitBrighten(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
+lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
   bool do_brighten = blend_unit.top[0];
   bool do_blend =
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
@@ -218,7 +209,7 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
 
   lowp float evy;
   if (do_brighten) {
-    evy = float(bldcnt_ev.z >> 8u) * (1.0 / 16.0);
+    evy = float(blend_unit.bldcnt_ev.z >> 8u) * (1.0 / 16.0);
   } else {
     evy = 0.0;
   }
@@ -226,8 +217,8 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
   lowp vec3 bottom;
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
     bottom = blend_unit.color[1];
   } else {
     eva = 1.0;
@@ -238,7 +229,7 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
   return min((blend_unit.color[0] * eva) + (bottom * evb), 1.0);
 }
 
-lowp vec3 BlendUnitDarken(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
+lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
   bool do_darken = blend_unit.top[0];
   bool do_blend =
       (blend_unit.semi_transparent[0] || blend_unit.semi_transparent[1]) &&
@@ -246,15 +237,15 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
 
   lowp float evy;
   if (do_darken) {
-    evy = 1.0 - float(bldcnt_ev.z >> 8u) * (1.0 / 16.0);
+    evy = 1.0 - float(blend_unit.bldcnt_ev.z >> 8u) * (1.0 / 16.0);
   } else {
     evy = 1.0;
   }
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = evy;
     evb = 0.0;
@@ -263,24 +254,22 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit, mediump uvec3 bldcnt_ev) {
   return min((blend_unit.color[0] * eva) + (blend_unit.color[1] * evb), 1.0);
 }
 
-lowp vec4 BlendUnitBlend(BlendUnit blend_unit, lowp uint screen_row,
-                         bool enable_blend) {
+lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
   if (!enable_blend) {
     return vec4(blend_unit.color[0], 1.0);
   }
 
-  mediump uvec3 bldcnt_ev = blend_rows[screen_row].bldcnt_ev;
-  lowp uint mode = bldcnt_ev.x & 0x3u;
+  lowp uint mode = blend_unit.bldcnt_ev.x & 0x3u;
 
   lowp vec3 color;
   if (mode == 0u) {
-    color = BlendUnitNoBlend(blend_unit, bldcnt_ev);
+    color = BlendUnitNoBlend(blend_unit);
   } else if (mode == 1u) {
-    color = BlendUnitAdditiveBlend(blend_unit, bldcnt_ev);
+    color = BlendUnitAdditiveBlend(blend_unit);
   } else if (mode == 2u) {
-    color = BlendUnitBrighten(blend_unit, bldcnt_ev);
+    color = BlendUnitBrighten(blend_unit);
   } else {
-    color = BlendUnitDarken(blend_unit, bldcnt_ev);
+    color = BlendUnitDarken(blend_unit);
   }
 
   return vec4(color, 1.0);
@@ -310,7 +299,7 @@ lowp uint CheckWindow(lowp uint screen_row, bool on_object) {
 }
 
 // Objects
-lowp uint ObjectColorIndex(lowp uint obj) {
+lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint obj) {
   mediump ivec2 canvas_top = ivec2(object_attributes[obj].x & 0xFFFFu,
                                    object_attributes[obj].x >> 16u);
   mediump ivec2 canvas_size = ivec2((object_attributes[obj].y >> 16u) & 0xFFu,
@@ -318,7 +307,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
   mediump ivec2 canvas_half_size = canvas_size >> 1;
   mediump ivec2 canvas_center = canvas_top - canvas_half_size;
 
-  highp vec2 from_center = SampleCoord() - vec2(canvas_center);
+  highp vec2 from_center = samplecoord - vec2(canvas_center);
   highp vec2 lookup_fp =
       object_transformations[(object_attributes[obj].z >> 16u) & 0xFFu] *
       from_center;
@@ -380,7 +369,7 @@ lowp uint ObjectColorIndex(lowp uint obj) {
 
 // Backgrounds
 BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
-                              lowp uint bg) {
+                              highp vec2 samplecoord, lowp uint bg) {
   lowp uint priority = backgrounds[screen_row][bg] & 0x3u;
   if (priority >= blend_unit.priority[1]) {
     return blend_unit;
@@ -397,7 +386,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
     origin = scrolling_rows[screen_row].origins[bg / 2u].xy;
   }
 
-  mediump ivec2 tilemap_pixel = ivec2(SampleCoord() + origin);
+  mediump ivec2 tilemap_pixel = ivec2(samplecoord + origin);
   tilemap_pixel &= bg_size - 1;
 
   tilemap_pixel.x -=
@@ -461,8 +450,8 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
   return BlendUnitAddBackground(blend_unit, screen_row, bg, color.rgb);
 }
 
-mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row) {
-  highp vec2 samplecoord = SampleCoord();
+mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row,
+                          highp vec2 samplecoord) {
   highp float interp = samplecoord.y - float(screen_row);
   highp vec2 base =
       mix(affine_rows[screen_row].base_scale[bg - 2u].xy,
@@ -474,13 +463,13 @@ mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row) {
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
-                           lowp uint bg) {
+                           highp vec2 samplecoord, lowp uint bg) {
   lowp uint priority = backgrounds[screen_row][bg] & 0x3u;
   if (priority >= blend_unit.priority[1]) {
     return blend_unit;
   }
 
-  mediump ivec2 tilemap_pixel = AffinePixel(bg, screen_row);
+  mediump ivec2 tilemap_pixel = AffinePixel(bg, screen_row, samplecoord);
 
   mediump ivec2 bg_size = ivec2(128, 128)
                           << int((backgrounds[screen_row][bg] >> 14u) & 0x3u);
@@ -526,8 +515,8 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
 }
 
 BlendUnit BitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
-                           ivec2 size) {
-  mediump ivec2 lookup = AffinePixel(2u, screen_row);
+                           highp vec2 samplecoord, ivec2 size) {
+  mediump ivec2 lookup = AffinePixel(2u, screen_row, samplecoord);
   if (any(lessThan(lookup, ivec2(0, 0))) || any(greaterThan(lookup, size))) {
     return blend_unit;
   }
@@ -537,8 +526,9 @@ BlendUnit BitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
   return BlendUnitAddBackground(blend_unit, screen_row, 2u, color.rgb);
 }
 
-BlendUnit PaletteBitmapBackground(BlendUnit blend_unit, lowp uint screen_row) {
-  mediump ivec2 lookup = AffinePixel(2u, screen_row);
+BlendUnit PaletteBitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
+                                  highp vec2 samplecoord) {
+  mediump ivec2 lookup = AffinePixel(2u, screen_row, samplecoord);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
       any(greaterThan(lookup, ivec2(240, 160)))) {
     return blend_unit;
@@ -597,9 +587,15 @@ bool NotEmpty(highp uvec4 value) {
 
 // Entry Point
 void main() {
-  BlendUnit blend_unit = CreateBlendUnit();
-
   lowp uint screen_row = 159u - uint(gl_FragCoord.y / render_scale);
+
+  BlendUnit blend_unit = CreateBlendUnit(screen_row);
+
+  highp vec2 samplecoord =
+      vec2(gl_FragCoord.x, 160.0 * render_scale - gl_FragCoord.y);
+  samplecoord =
+      max(floor(samplecoord) / render_scale, floor(samplecoord / render_scale));
+
   bool on_object_window = false;
 
 #if OBJECTS != 0
@@ -612,7 +608,7 @@ void main() {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    lowp uint color_index = ObjectColorIndex(obj);
+    lowp uint color_index = ObjectColorIndex(samplecoord, obj);
     if (color_index != 0u) {
       on_object_window = true;
       break;
@@ -629,13 +625,13 @@ void main() {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      lowp uint color_index = ObjectColorIndex(obj);
+      lowp uint color_index = ObjectColorIndex(samplecoord, obj);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
             object_palette,
             ivec2((object_attributes[obj].z >> 24u) + color_index, 0), 0);
         blend_unit =
-            BlendUnitAddObject(blend_unit, screen_row, color.rgb,
+            BlendUnitAddObject(blend_unit, color.rgb,
                                (object_attributes[obj].w >> 16u) & 0x3u,
                                bool(object_attributes[obj].w & 0x200000u));
         break;
@@ -646,60 +642,62 @@ void main() {
 
 #if SCROLLING_BACKGROUND_0 != 0
   if (bool(window & 0x1u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, 0u);
+    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord, 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (bool(window & 0x2u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, 1u);
+    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord, 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, 2u);
+    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord, 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
-    blend_unit = ScrollingBackground(blend_unit, screen_row, 3u);
+    blend_unit = ScrollingBackground(blend_unit, screen_row, samplecoord, 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
-    blend_unit = AffineBackground(blend_unit, screen_row, 2u);
+    blend_unit = AffineBackground(blend_unit, screen_row, samplecoord, 2u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
-    blend_unit = AffineBackground(blend_unit, screen_row, 3u);
+    blend_unit = AffineBackground(blend_unit, screen_row, samplecoord, 3u);
   }
 #endif  // AFFINE_BACKGROUND_3 != 0
 
 #if SMALL_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
-    blend_unit = BitmapBackground(blend_unit, screen_row, ivec2(160, 128));
+    blend_unit = BitmapBackground(blend_unit, screen_row, samplecoord,
+                                  ivec2(160, 128));
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if LARGE_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
-    blend_unit = BitmapBackground(blend_unit, screen_row, ivec2(240, 160));
+    blend_unit = BitmapBackground(blend_unit, screen_row, samplecoord,
+                                  ivec2(240, 160));
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
-    blend_unit = PaletteBitmapBackground(blend_unit, screen_row);
+    blend_unit = PaletteBitmapBackground(blend_unit, screen_row, samplecoord);
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
   lowp vec4 backdrop = texelFetch(background_palette, ivec2(0, 0), 0);
-  blend_unit = BlendUnitAddBackdrop(blend_unit, screen_row, backdrop.rgb);
+  blend_unit = BlendUnitAddBackdrop(blend_unit, backdrop.rgb);
 
-  frag_color = BlendUnitBlend(blend_unit, screen_row, bool(window & 0x20u));
+  frag_color = BlendUnitBlend(blend_unit, bool(window & 0x20u));
 }
