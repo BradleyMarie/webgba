@@ -48,12 +48,8 @@ layout(std140) uniform Objects {
 layout(std140) uniform Backgrounds { highp uvec4 backgrounds[160]; };
 
 // Background Coordinates
-struct ScrollingRow {
-  highp vec4 origins[2];
-};
-
 layout(std140) uniform ScrollingBackgrounds {
-  ScrollingRow scrolling_rows[160];
+  highp uvec4 scrolling_rows[160];
 };
 
 struct AffineRow {
@@ -363,8 +359,8 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
 }
 
 // Backgrounds
-BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
-                              highp vec2 samplecoord, highp uint bgcnt,
+BlendUnit ScrollingBackground(BlendUnit blend_unit, highp vec2 samplecoord,
+                              highp uint origin, highp uint bgcnt,
                               lowp uint bg) {
   lowp uint priority = bgcnt & 0x3u;
   if (priority >= blend_unit.priority[1]) {
@@ -375,18 +371,12 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, lowp uint screen_row,
   bg_size.x <<= int((bgcnt >> 14u) & 0x1u);
   bg_size.y <<= int((bgcnt >> 15u) & 0x1u);
 
-  highp vec2 origin;
-  if (bool(bg & 1u)) {
-    origin = scrolling_rows[screen_row].origins[bg / 2u].zw;
-  } else {
-    origin = scrolling_rows[screen_row].origins[bg / 2u].xy;
-  }
-
-  mediump ivec2 tilemap_pixel = ivec2(samplecoord + origin);
+  mediump ivec2 tilemap_pixel =
+      ivec2(samplecoord) + ivec2(origin & 0xFFFFu, origin >> 16u);
   tilemap_pixel &= bg_size - 1;
 
-  tilemap_pixel.x -= tilemap_pixel.x % int((bgcnt) >> 16u & 0x1Fu);
-  tilemap_pixel.y -= tilemap_pixel.y % int((bgcnt) >> 24u & 0x1Fu);
+  tilemap_pixel.x -= tilemap_pixel.x % int(bgcnt >> 16u & 0x1Fu);
+  tilemap_pixel.y -= tilemap_pixel.y % int(bgcnt >> 24u & 0x1Fu);
 
   lowp ivec2 tilemap_block = tilemap_pixel / 256;
   lowp int tilemap_block_index =
@@ -631,31 +621,35 @@ void main() {
 
   highp uvec4 bgcnt = backgrounds[screen_row];
 
+#if SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
+  uvec4 origins = scrolling_rows[screen_row];
+#endif  // SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
+
 #if SCROLLING_BACKGROUND_0 != 0
   if (bool(window & 0x1u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[0], 0u);
+        ScrollingBackground(blend_unit, samplecoord, origins[0], bgcnt[0], 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (bool(window & 0x2u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[1], 1u);
+        ScrollingBackground(blend_unit, samplecoord, origins[1], bgcnt[1], 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[2], 2u);
+        ScrollingBackground(blend_unit, samplecoord, origins[2], bgcnt[2], 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, screen_row, samplecoord, bgcnt[3], 3u);
+        ScrollingBackground(blend_unit, samplecoord, origins[3], bgcnt[3], 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 

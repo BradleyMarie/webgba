@@ -38,17 +38,12 @@ bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
       continue;
     }
 
-    if (context->staging[registers->vcount].origins[i][0u] !=
-        registers->bg_offsets[i].x) {
-      context->staging[registers->vcount].origins[i][0u] =
-          registers->bg_offsets[i].x;
-      row_dirty = true;
-    }
+    GLuint value = registers->bg_offsets[i].y;
+    value <<= 16u;
+    value |= registers->bg_offsets[i].x;
 
-    if (context->staging[registers->vcount].origins[i][1u] !=
-        registers->bg_offsets[i].y) {
-      context->staging[registers->vcount].origins[i][1u] =
-          registers->bg_offsets[i].y;
+    if (context->staging[registers->vcount].origins[i] != value) {
+      context->staging[registers->vcount].origins[i] = value;
       row_dirty = true;
     }
   }

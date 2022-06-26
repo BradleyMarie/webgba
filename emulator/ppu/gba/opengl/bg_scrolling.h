@@ -7,7 +7,7 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat origins[GBA_PPU_NUM_BACKGROUNDS][2u];
+  GLuint origins[GBA_PPU_NUM_BACKGROUNDS];
 } OpenGlScrollingRow;
 
 typedef struct {
