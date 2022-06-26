@@ -299,21 +299,20 @@ lowp uint CheckWindow(lowp uint screen_row, bool on_object) {
 }
 
 // Objects
-lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint obj) {
-  mediump ivec2 canvas_top = ivec2(object_attributes[obj].x & 0xFFFFu,
-                                   object_attributes[obj].x >> 16u);
-  mediump ivec2 canvas_size = ivec2((object_attributes[obj].y >> 16u) & 0xFFu,
-                                    object_attributes[obj].y >> 24u);
+lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
+  mediump ivec2 canvas_top = ivec2(object.x & 0xFFFFu,
+                                   object.x >> 16u);
+  mediump ivec2 canvas_size = ivec2((object.y >> 16u) & 0xFFu,
+                                    object.y >> 24u);
   mediump ivec2 canvas_half_size = canvas_size >> 1;
   mediump ivec2 canvas_center = canvas_top - canvas_half_size;
 
   highp vec2 from_center = samplecoord - vec2(canvas_center);
   highp vec2 lookup_fp =
-      object_transformations[(object_attributes[obj].z >> 16u) & 0xFFu] *
-      from_center;
+      object_transformations[(object.z >> 16u) & 0xFFu] * from_center;
 
-  mediump int sprite_size_x = int(object_attributes[obj].w & 0xFFu);
-  mediump int sprite_size_y = int((object_attributes[obj].w >> 8u) & 0xFFu);
+  mediump int sprite_size_x = int(object.w & 0xFFu);
+  mediump int sprite_size_y = int((object.w >> 8u) & 0xFFu);
   highp vec2 sprite_half_size = vec2(sprite_size_x >> 1, sprite_size_y >> 1);
 
   mediump ivec2 lookup = ivec2(lookup_fp + sprite_half_size);
@@ -322,34 +321,34 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint obj) {
     return 0u;
   }
 
-  if (bool(object_attributes[obj].w & 0x80000u)) {
+  if (bool(object.w & 0x80000u)) {
     lookup.x = sprite_size_x - lookup.x - 1;
   }
 
-  if (bool(object_attributes[obj].w & 0x100000u)) {
+  if (bool(object.w & 0x100000u)) {
     lookup.y = sprite_size_y - lookup.y - 1;
   }
 
-  lookup.x -= lookup.x % int((object_attributes[obj].z >> 0u) & 0xFFu);
-  lookup.y -= lookup.y % int((object_attributes[obj].z >> 8u) & 0xFFu);
+  lookup.x -= lookup.x % int((object.z >> 0u) & 0xFFu);
+  lookup.y -= lookup.y % int((object.z >> 8u) & 0xFFu);
 
   mediump int tile_index;
   lowp ivec2 tile = lookup / 8;
-  if (bool(object_attributes[obj].w & 0x400000u)) {
+  if (bool(object.w & 0x400000u)) {
     tile_index = tile.x + tile.y * sprite_size_x / 8;
   } else {
-    lowp int shift_amount = int((object_attributes[obj].w >> 18u) & 1u);
+    lowp int shift_amount = int((object.w >> 18u) & 1u);
     tile_index = tile.x + tile.y * (32 >> shift_amount);
   }
 
   lowp ivec2 tile_pixel = lookup % 8;
 
   lowp uint color_index;
-  if (bool(object_attributes[obj].w & 0x40000u)) {
+  if (bool(object.w & 0x40000u)) {
     tile_index <<= 1u;
     color_index = texelFetch(object_tiles,
                              ivec2(tile_pixel.x + 8 * (tile_pixel.y % 4),
-                                   int(object_attributes[obj].y & 0xFFFFu) +
+                                   int(object.y & 0xFFFFu) +
                                        tile_index + (tile_pixel.y / 4)),
                              0)
                       .r;
@@ -357,7 +356,7 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint obj) {
     color_index =
         texelFetch(object_tiles,
                    ivec2(tile_pixel.x / 2 + 4 * tile_pixel.y,
-                         int(object_attributes[obj].y & 0xFFFFu) + tile_index),
+                         int(object.y & 0xFFFFu) + tile_index),
                    0)
             .r;
     color_index >>= 4u * (uint(tile_pixel.x) & 1u);
@@ -608,7 +607,8 @@ void main() {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    lowp uint color_index = ObjectColorIndex(samplecoord, obj);
+    highp uvec4 object = object_attributes[obj];
+    lowp uint color_index = ObjectColorIndex(samplecoord, object);
     if (color_index != 0u) {
       on_object_window = true;
       break;
@@ -625,15 +625,14 @@ void main() {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      lowp uint color_index = ObjectColorIndex(samplecoord, obj);
+      highp uvec4 object = object_attributes[obj];
+      lowp uint color_index = ObjectColorIndex(samplecoord, object);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
-            object_palette,
-            ivec2((object_attributes[obj].z >> 24u) + color_index, 0), 0);
+            object_palette, ivec2((object.z >> 24u) + color_index, 0), 0);
         blend_unit =
-            BlendUnitAddObject(blend_unit, color.rgb,
-                               (object_attributes[obj].w >> 16u) & 0x3u,
-                               bool(object_attributes[obj].w & 0x200000u));
+            BlendUnitAddObject(blend_unit, color.rgb, (object.w >> 16u) & 0x3u,
+                               bool(object.w & 0x200000u));
         break;
       }
     }
