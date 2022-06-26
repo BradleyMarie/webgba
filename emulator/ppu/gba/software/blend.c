@@ -140,9 +140,9 @@ static void GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
 
   uint_fast16_t evy = registers->bldy.evy > 16u ? 16u : registers->bldy.evy;
 
-  r = (r + (UINT8_MAX - r) * evy) >> 4u;
-  g = (g + (UINT8_MAX - g) * evy) >> 4u;
-  b = (b + (UINT8_MAX - b) * evy) >> 4u;
+  r += ((UINT8_MAX - r) * evy) >> 4u;
+  g += ((UINT8_MAX - g) * evy) >> 4u;
+  b += ((UINT8_MAX - b) * evy) >> 4u;
 
   rgb[0u] = r > UINT8_MAX ? UINT8_MAX : r;
   rgb[1u] = g > UINT8_MAX ? UINT8_MAX : g;
