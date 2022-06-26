@@ -271,17 +271,18 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 }
 
 // Window
-lowp uint CheckWindow(lowp uint screen_row, bool on_object) {
+lowp uint CheckWindow(lowp uint screen_column, lowp uint screen_row,
+                      bool on_object) {
   highp uvec4 window_and_bounds = window_rows[screen_row].window_and_bounds;
 
   mediump uint window0_location =
-      (screen_row + (window_and_bounds.x >> 16u)) % 240u;
+      (screen_column + (window_and_bounds.x >> 16u)) % 240u;
   if (window0_location < window_and_bounds.y >> 16u) {
     return window_and_bounds.x;
   }
 
   mediump uint window1_location =
-      (screen_row + (window_and_bounds.z >> 16u)) % 240u;
+      (screen_column + (window_and_bounds.z >> 16u)) % 240u;
   if (window1_location < window_and_bounds.w >> 16u) {
     return window_and_bounds.y;
   }
@@ -567,6 +568,7 @@ bool NotEmpty(highp uvec4 value) {
 // Entry Point
 void main() {
   lowp uint screen_row = 159u - uint(gl_FragCoord.y / render_scale);
+  lowp uint screen_column = uint(gl_FragCoord.x / render_scale);
 
   BlendUnit blend_unit = CreateBlendUnit(screen_row);
 
@@ -579,8 +581,7 @@ void main() {
 
 #if OBJECTS != 0
   highp uvec4 visible_objects =
-      object_columns[uint(gl_FragCoord.x / render_scale)] &
-      object_rows[screen_row];
+      object_columns[screen_column] & object_rows[screen_row];
 
   highp uvec4 window_objects = visible_objects & object_window;
   while (NotEmpty(window_objects)) {
@@ -596,7 +597,7 @@ void main() {
   }
 #endif  // OBJECTS != 0
 
-  lowp uint window = CheckWindow(screen_row, on_object_window);
+  lowp uint window = CheckWindow(screen_column, screen_row, on_object_window);
 
 #if OBJECTS != 0
   if (bool(window & 0x10u)) {
