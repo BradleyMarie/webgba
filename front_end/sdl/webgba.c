@@ -171,7 +171,7 @@ EM_JS(bool, IsAudioContextUnlocked, (), {
   var ctx = new AudioContext();
   var state = ctx.state;
   ctx.close();
-  return state === 'running';
+  return state == "running";
 });
 #endif  // __EMSCRIPTEN__
 
@@ -443,8 +443,10 @@ static ReturnType RenderNextFrame() {
 #if __EMSCRIPTEN__
   g_audio_context_unlocked = IsAudioContextUnlocked();
   if (!g_audio_context_unlocked) {
+    SDL_LockAudio();
     g_audio_buffer_start = g_audio_buffer_end;
     g_audio_buffer_full = false;
+    SDL_UnlockAudio();
   }
 #endif  // __EMSCRIPTEN__
 
