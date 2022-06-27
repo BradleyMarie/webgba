@@ -16,8 +16,8 @@
 #define WEB_INPUT_B 1
 #define WEB_INPUT_L 4
 #define WEB_INPUT_R 5
-#define WEB_INPUT_START 9
-#define WEB_INPUT_SELECT 8
+#define WEB_INPUT_START 8
+#define WEB_INPUT_SELECT 9
 #define WEB_INPUT_UP 12
 #define WEB_INPUT_DOWN 13
 #define WEB_INPUT_LEFT 14
