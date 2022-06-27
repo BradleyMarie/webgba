@@ -46,17 +46,21 @@ bool g_accept_lower = true;
 bool g_accept_mode_change = true;
 bool g_accept_reset = true;
 
+#if __EMSCRIPTEN__
+bool g_audio_context_unlocked = false;
+#endif  // __EMSCRIPTEN__
+
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
 static size_t g_audio_buffer_start = 0;
 static size_t g_audio_buffer_end = 0;
-static bool g_buffer_full = false;
+static bool g_audio_buffer_full = false;
 
 static void AddSample(float sample) {
   g_audio_buffer[g_audio_buffer_end] = sample;
 
   size_t new_end = (g_audio_buffer_end + 1) % AUDIO_BUFFER_SIZE;
-  if (g_audio_buffer_start == g_audio_buffer_end && g_buffer_full) {
+  if (g_audio_buffer_start == g_audio_buffer_end && g_audio_buffer_full) {
     g_audio_buffer_start = new_end;
     g_audio_buffer_end = new_end;
   } else {
@@ -64,12 +68,12 @@ static void AddSample(float sample) {
   }
 
   if (g_audio_buffer_start == g_audio_buffer_end) {
-    g_buffer_full = true;
+    g_audio_buffer_full = true;
   }
 }
 
 static float RemoveSample() {
-  if (g_audio_buffer_start == g_audio_buffer_end && !g_buffer_full) {
+  if (g_audio_buffer_start == g_audio_buffer_end && !g_audio_buffer_full) {
     return 0;
   }
 
@@ -77,13 +81,19 @@ static float RemoveSample() {
   g_audio_buffer_start = (g_audio_buffer_start + 1) % AUDIO_BUFFER_SIZE;
 
   if (g_audio_buffer_start == g_audio_buffer_end) {
-    g_buffer_full = false;
+    g_audio_buffer_full = false;
   }
 
   return result;
 }
 
 static void RenderAudioSample(int16_t left, int16_t right) {
+#if __EMSCRIPTEN__
+  if (!g_audio_context_unlocked) {
+    return;
+  }
+#endif  // __EMSCRIPTEN__
+
   float input_samples[2];
   src_short_to_float_array(&left, &input_samples[0], 1);
   src_short_to_float_array(&right, &input_samples[1], 1);
@@ -154,6 +164,16 @@ static bool SetVideoMode(int width, int height) {
 
   return true;
 }
+
+#if __EMSCRIPTEN__
+EM_JS(bool, IsAudioContextUnlocked, (), {
+  var AudioContext = window.AudioContext || window.webkitAudioContext;
+  var ctx = new AudioContext();
+  var state = ctx.state;
+  ctx.close();
+  return state === 'running';
+});
+#endif  // __EMSCRIPTEN__
 
 static ReturnType RenderNextFrame() {
   //
@@ -419,6 +439,14 @@ static ReturnType RenderNextFrame() {
   //
   // Run emulation
   //
+
+#if __EMSCRIPTEN__
+  g_audio_context_unlocked = IsAudioContextUnlocked();
+  if (!g_audio_context_unlocked) {
+    g_audio_buffer_start = g_audio_buffer_end;
+    g_audio_buffer_full = false;
+  }
+#endif  // __EMSCRIPTEN__
 
   ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_surface->w,
                           /*height=*/g_surface->h);
