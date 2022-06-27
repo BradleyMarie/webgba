@@ -52,7 +52,16 @@ static size_t g_audio_buffer_start = 0;
 static size_t g_audio_buffer_end = 0;
 static bool g_audio_buffer_full = false;
 static bool g_audio_enabled = true;
+static bool g_audio_first_sample = true;
 static bool g_audio_buffer_read = false;
+
+static size_t NumSamples() {
+  if (g_audio_buffer_start <= g_audio_buffer_end && !g_audio_buffer_full) {
+    return g_audio_buffer_end - g_audio_buffer_start;
+  }
+
+  return (g_audio_buffer_end + AUDIO_BUFFER_SIZE) - g_audio_buffer_start;
+}
 
 static void AddSample(float sample) {
   g_audio_buffer[g_audio_buffer_end] = sample;
@@ -118,6 +127,20 @@ static void RenderAudioSample(int16_t left, int16_t right) {
 
 static void AudioCallback(void *userdata, Uint8 *stream, int len) {
   g_audio_buffer_read = true;
+
+  if (g_audio_first_sample) {
+#if __EMSCRIPTEN__
+    size_t sample_size = sizeof(float);
+#else
+    size_t sample_size = sizeof(int16_t);
+#endif  // __EMSCRIPTEN__
+
+    while (NumSamples() > len / sample_size) {
+      RemoveSample();
+    }
+
+    g_audio_first_sample = false;
+  }
 
   while (len != 0) {
     float sample = RemoveSample();
@@ -438,6 +461,7 @@ static ReturnType RenderNextFrame() {
     g_audio_buffer_start = g_audio_buffer_end;
     g_audio_buffer_full = false;
     g_audio_enabled = false;
+    g_audio_first_sample = true;
   } else {
     g_audio_enabled = true;
   }
