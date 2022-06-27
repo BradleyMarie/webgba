@@ -268,6 +268,10 @@ static ReturnType RenderNextFrame() {
     g_accept_reset = false;
   }
 
+  if (!g_joystick && SDL_NumJoysticks() > 0) {
+    g_joystick = SDL_JoystickOpen(0);
+  }
+
   if (g_joystick) {
 #if __EMSCRIPTEN__
     if (SDL_JoystickGetButton(g_joystick, WEB_INPUT_A)) {
@@ -663,9 +667,6 @@ int main(int argc, char *argv[]) {
   //
 
   SDL_JoystickEventState(SDL_ENABLE);
-  if (SDL_NumJoysticks() > 0) {
-    g_joystick = SDL_JoystickOpen(0);
-  }
 
   //
   // Load Emulator OpenGL Context
