@@ -46,15 +46,13 @@ bool g_accept_lower = true;
 bool g_accept_mode_change = true;
 bool g_accept_reset = true;
 
-#if __EMSCRIPTEN__
-bool g_audio_context_unlocked = false;
-#endif  // __EMSCRIPTEN__
-
 #define AUDIO_BUFFER_SIZE 32768
 static float g_audio_buffer[AUDIO_BUFFER_SIZE];
 static size_t g_audio_buffer_start = 0;
 static size_t g_audio_buffer_end = 0;
 static bool g_audio_buffer_full = false;
+static bool g_audio_enabled = true;
+static bool g_audio_buffer_read = false;
 
 static void AddSample(float sample) {
   g_audio_buffer[g_audio_buffer_end] = sample;
@@ -88,11 +86,9 @@ static float RemoveSample() {
 }
 
 static void RenderAudioSample(int16_t left, int16_t right) {
-#if __EMSCRIPTEN__
-  if (!g_audio_context_unlocked) {
+  if (!g_audio_enabled) {
     return;
   }
-#endif  // __EMSCRIPTEN__
 
   float input_samples[2];
   src_short_to_float_array(&left, &input_samples[0], 1);
@@ -121,6 +117,8 @@ static void RenderAudioSample(int16_t left, int16_t right) {
 }
 
 static void AudioCallback(void *userdata, Uint8 *stream, int len) {
+  g_audio_buffer_read = true;
+
   while (len != 0) {
     float sample = RemoveSample();
 
@@ -164,16 +162,6 @@ static bool SetVideoMode(int width, int height) {
 
   return true;
 }
-
-#if __EMSCRIPTEN__
-EM_JS(bool, IsAudioContextUnlocked, (), {
-  var AudioContext = window.AudioContext || window.webkitAudioContext;
-  var ctx = new AudioContext();
-  var state = ctx.state;
-  ctx.close();
-  return state == "running";
-});
-#endif  // __EMSCRIPTEN__
 
 static ReturnType RenderNextFrame() {
   //
@@ -437,18 +425,26 @@ static ReturnType RenderNextFrame() {
   GamePadToggleRight(g_gamepad, right_pressed);
 
   //
-  // Run emulation
+  // Disable Audio and Flush Buffers if samples are not being read
   //
 
-#if __EMSCRIPTEN__
-  g_audio_context_unlocked = IsAudioContextUnlocked();
-  if (!g_audio_context_unlocked) {
-    SDL_LockAudio();
+  SDL_LockAudio();
+
+  if (!g_audio_buffer_read && g_audio_buffer_full) {
     g_audio_buffer_start = g_audio_buffer_end;
     g_audio_buffer_full = false;
-    SDL_UnlockAudio();
+    g_audio_enabled = false;
+  } else {
+    g_audio_enabled = true;
   }
-#endif  // __EMSCRIPTEN__
+
+  g_audio_buffer_read = false;
+
+  SDL_UnlockAudio();
+
+  //
+  // Run emulation
+  //
 
   ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_surface->w,
                           /*height=*/g_surface->h);
