@@ -16,7 +16,7 @@
 out lowp vec4 frag_color;
 
 // Uniforms
-uniform highp float render_scale;
+uniform lowp uint render_scale;
 
 // Palettes
 uniform lowp sampler2D background_palette;
@@ -567,15 +567,15 @@ bool NotEmpty(highp uvec4 value) {
 
 // Entry Point
 void main() {
-  lowp uint screen_row = 159u - uint(gl_FragCoord.y / render_scale);
-  lowp uint screen_column = uint(gl_FragCoord.x / render_scale);
+  lowp uint screen_row = 159u - uint(gl_FragCoord.y) / render_scale;
+  lowp uint screen_column = uint(gl_FragCoord.x) / render_scale;
 
   BlendUnit blend_unit = CreateBlendUnit(screen_row);
 
   highp vec2 samplecoord =
-      vec2(gl_FragCoord.x, 160.0 * render_scale - gl_FragCoord.y);
-  samplecoord =
-      max(floor(samplecoord) / render_scale, floor(samplecoord / render_scale));
+      vec2(gl_FragCoord.x, float(160u * render_scale) - gl_FragCoord.y);
+  samplecoord = max(floor(samplecoord) / float(render_scale),
+                    floor(samplecoord / float(render_scale)));
 
   bool on_object_window = false;
 
