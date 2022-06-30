@@ -125,7 +125,7 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlTilesBind(&renderer->tiles, program);
 
     GLint render_scale = glGetUniformLocation(program, "render_scale");
-    glUniform1f(render_scale, renderer->render_scale);
+    glUniform1ui(render_scale, renderer->render_scale);
 
     glDrawArrays(GL_TRIANGLES, 0, 3u);
   }
