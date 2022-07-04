@@ -8,6 +8,15 @@ cc_library(
     hdrs = ["memory_bank.h"],
 )
 
+cc_test(
+    name = "memory_bank_test",
+    srcs = ["memory_bank_test.cc"],
+    deps = [
+        ":memory_bank",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "memory",
     srcs = ["memory.c"],
