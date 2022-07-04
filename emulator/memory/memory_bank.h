@@ -1,7 +1,6 @@
 #ifndef _WEBGBA_EMULATOR_MEMORY_MEMORY_BANK_
 #define _WEBGBA_EMULATOR_MEMORY_MEMORY_BANK_
 
-#include <stdbool.h>
 #include <stdint.h>
 
 // A memory bank is a mirrored, contiguous region of memory which can be written
@@ -15,7 +14,6 @@ typedef void (*MemoryBankWriteCallback)(MemoryBank *memory_bank,
                                         uint32_t address, uint32_t value);
 
 MemoryBank *MemoryBankAllocate(uint32_t bank_size, uint32_t num_banks,
-                               bool allow_writes,
                                MemoryBankWriteCallback write_callback);
 
 void MemoryBankLoad32LE(const MemoryBank *memory_bank, uint32_t address,
@@ -31,6 +29,7 @@ void MemoryBankStore16LE(MemoryBank *memory_bank, uint32_t address,
                          uint16_t value);
 void MemoryBankStore8(MemoryBank *memory_bank, uint32_t address, uint8_t value);
 
+void MemoryBankIgnoreWrites(MemoryBank *memory_bank);
 void MemoryBankChangeBank(MemoryBank *memory_bank, uint32_t bank);
 
 void MemoryBankFree(MemoryBank *MemoryBank);
