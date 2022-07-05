@@ -17,6 +17,21 @@ struct _Memory {
   void *context;
 };
 
+static int MemoryBankPointerCompare(const void *left, const void *right) {
+  intptr_t lvalue = (intptr_t)(*(void **)left);
+  intptr_t rvalue = (intptr_t)(*(void **)right);
+
+  if (lvalue < rvalue) {
+    return -1;
+  }
+
+  if (lvalue > rvalue) {
+    return 1;
+  }
+
+  return 0;
+}
+
 Memory *MemoryAllocateWithBanks(void *context, MemoryBank **banks,
                                 uint32_t num_banks, Load32LEFunction load_le_32,
                                 Load16LEFunction load_le_16,
@@ -173,8 +188,15 @@ void MemoryFree(Memory *memory) {
     memory->free_context(memory->context);
   }
 
+  qsort(memory->memory_banks, memory->num_banks, sizeof(MemoryBank *),
+        MemoryBankPointerCompare);
+
+  MemoryBank* last = NULL;
   for (size_t i = 0u; i < memory->num_banks; i++) {
-    MemoryBankFree(memory->memory_banks[i]);
+    if (memory->memory_banks[i] != last) {
+      MemoryBankFree(memory->memory_banks[i]);
+    }
+    last = memory->memory_banks[i];
   }
 
   free(memory->memory_banks);

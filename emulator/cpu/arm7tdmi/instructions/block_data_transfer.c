@@ -693,3 +693,16 @@ void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
   ArmSTMS(registers, memory, Rn, register_list, ADDRESS_MODE_INCREMENT_BEFORE,
           /*writeback=*/true);
 }
+
+void ThumbPOP(ArmAllRegisters *registers, const Memory *memory,
+              uint_fast16_t register_list) {
+  codegen_assert((register_list & (1u << REGISTER_R13)) == 0);
+  ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
+}
+
+void ThumbPUSH(ArmAllRegisters *registers, Memory *memory,
+               uint_fast16_t register_list) {
+  codegen_assert((register_list & (1u << REGISTER_R13)) == 0);
+  codegen_assert((register_list & (1u << REGISTER_PC)) == 0);
+  ArmSTMDBW(registers, memory, REGISTER_R13, register_list);
+}

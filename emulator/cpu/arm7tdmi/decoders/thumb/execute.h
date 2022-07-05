@@ -265,11 +265,11 @@ ThumbInstructionExecute(uint16_t next_instruction, ArmAllRegisters* registers,
       break;
     case THUMB_OPCODE_POP:
       ThumbOperandPopRegisterList(next_instruction, &register_list);
-      ArmLDMIAW(registers, memory, REGISTER_R13, register_list);
+      ThumbPOP(registers, memory, register_list);
       break;
     case THUMB_OPCODE_PUSH:
       ThumbOperandPushRegisterList(next_instruction, &register_list);
-      ArmSTMDBW(registers, memory, REGISTER_R13, register_list);
+      ThumbPUSH(registers, memory, register_list);
       break;
     case THUMB_OPCODE_RORS:
       ThumbOperandDataProcessingRegister(next_instruction, &rd, &rm);

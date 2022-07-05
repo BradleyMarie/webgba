@@ -20,10 +20,6 @@ typedef struct {
   Memory* vram;
   Memory* oam;
   Memory* bad;
-  MemoryBank* ewram;
-  MemoryBank* iwram;
-  MemoryBank* game;
-  MemoryBank* sram;
 } GbaMemory;
 
 static Memory* GbaMemorySelectBank(const GbaMemory* memory, uint32_t* address) {
@@ -147,10 +143,6 @@ static void GbaMemoryFree(void* context) {
   MemoryFree(gba_memory->palette);
   MemoryFree(gba_memory->vram);
   MemoryFree(gba_memory->oam);
-  MemoryBankFree(gba_memory->ewram);
-  MemoryBankFree(gba_memory->iwram);
-  MemoryBankFree(gba_memory->game);
-  MemoryBankFree(gba_memory->sram);
   MemoryFree(gba_memory->bad);
   free(gba_memory);
 }
@@ -268,14 +260,10 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
   }
 
   gba_memory->bios = bios;
-  gba_memory->ewram = ewram;
-  gba_memory->iwram = iwram;
   gba_memory->io = io;
   gba_memory->palette = palette;
   gba_memory->vram = vram;
   gba_memory->oam = oam;
-  gba_memory->game = game;
-  gba_memory->sram = sram;
   gba_memory->bad = bad;
 
   MemoryBank** memory_banks =
