@@ -1098,6 +1098,30 @@ TEST_P(LdmTest, SvcArmLDMSIBW) {
                                                   end_address, GetParam());
 }
 
+TEST_P(LdmTest, ThumbPOP) {
+  if (GetParam() & (1u << REGISTER_R13)) {
+    return;
+  }
+
+  auto registers = CreateArmAllRegisters();
+
+  registers.current.user.gprs.r13 = 0x100u;
+  ThumbPOP(&registers, memory_, GetParam());
+  uint32_t end_address = 0x100u + __builtin_popcount(GetParam()) * 4u;
+
+  uint32_t address_register_expected_value;
+  if (GetParam() & (1u << REGISTER_R13)) {
+    address_register_expected_value = 0u;
+  } else if (GetParam() == 0u) {
+    address_register_expected_value = 0x100u + 0x40u;
+  } else {
+    address_register_expected_value = end_address;
+  }
+
+  ValidateGeneralPurposeRegisterContentsAscending(
+      registers, REGISTER_R13, address_register_expected_value, GetParam());
+}
+
 INSTANTIATE_TEST_SUITE_P(ArmLdmTestModule, LdmTest,
                          testing::Range(std::numeric_limits<uint16_t>::min(),
                                         std::numeric_limits<uint16_t>::max(),
@@ -1803,6 +1827,26 @@ TEST_P(StmTest, SvcArmSTMSIBW) {
   ValidateRegisters(REGISTER_R0, end_address);
 }
 
+TEST_P(StmTest, ThumbPUSH) {
+  if (GetParam() & (1u << REGISTER_R13) || GetParam() & (1u << REGISTER_PC)) {
+    return;
+  }
+
+  registers_.current.user.gprs.r13 = 0x140u;
+  ThumbPUSH(&registers_, memory_, GetParam());
+
+  uint32_t end_address;
+  if (GetParam() == 0u) {
+    end_address = 0x140u - 0x40u;
+  } else {
+    end_address = 0x140u - __builtin_popcount(GetParam()) * 4u;
+  }
+
+  ValidateMemoryContentsDescending(0x13Cu, REGISTER_R13, end_address,
+                                   GetParam());
+  ValidateRegisters(REGISTER_R13, end_address);
+}
+
 INSTANTIATE_TEST_SUITE_P(ArmStmTestModule, StmTest,
                          testing::Range(std::numeric_limits<uint16_t>::min(),
                                         std::numeric_limits<uint16_t>::max(),
@@ -2316,6 +2360,33 @@ TEST_P(MemoryFailsTest, ArmSTMSIBW) {
   ArmSTMSIBW(&registers_, memory_, REGISTER_R0, GetParam());
   uint32_t end_address = 0xFCu + __builtin_popcount(GetParam()) * 4u;
   EXPECT_EQ(end_address, registers_.current.user.gprs.r0);
+
+  EXPECT_TRUE(ArmIsDataAbort(registers_));
+}
+
+TEST_P(MemoryFailsTest, ThumbPOP) {
+  if (GetParam() == 0u || GetParam() & (1u << REGISTER_R13)) {
+    return;
+  }
+
+  auto registers = CreateArmAllRegistersInMode();
+
+  registers.current.user.gprs.r13 = 0x100u;
+  ThumbPOP(&registers, memory_, GetParam());
+  // Writeback is overwritten by exception
+
+  EXPECT_TRUE(ArmIsDataAbort(registers));
+}
+
+TEST_P(MemoryFailsTest, ThumbPUSH) {
+  if (GetParam() == 0u || GetParam() & (1u << REGISTER_R13) ||
+      GetParam() & (1u << REGISTER_PC)) {
+    return;
+  }
+
+  registers_.current.user.gprs.r13 = 0x140u;
+  ThumbPUSH(&registers_, memory_, GetParam());
+  // Writeback is overwritten by exception
 
   EXPECT_TRUE(ArmIsDataAbort(registers_));
 }

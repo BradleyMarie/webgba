@@ -100,4 +100,14 @@ void ArmSTMSIAW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
 void ArmSTMSIBW(ArmAllRegisters *registers, Memory *memory, ArmRegisterIndex Rn,
                 uint_fast16_t register_list);
 
+void ArmLDMSIBW(ArmAllRegisters *registers, const Memory *memory,
+                ArmRegisterIndex Rn, uint_fast16_t register_list);
+
+// THUMB specialized versions of these instructions to ensure optimial codegen
+void ThumbPOP(ArmAllRegisters *registers, const Memory *memory,
+              uint_fast16_t register_list);
+
+void ThumbPUSH(ArmAllRegisters *registers, Memory *memory,
+               uint_fast16_t register_list);
+
 #endif  // _WEBGBA_EMULATOR_CPU_ARM7TDMI_INSTMUCTIONS_BLOCK_DATA_TRANSFER_
