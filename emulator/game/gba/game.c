@@ -6,81 +6,22 @@
 
 #define GBA_GAME_MAX_SIZE 0x2000000u  // 32MB
 
-typedef union {
-  uint8_t bytes[GBA_GAME_MAX_SIZE];
-} GamePak;
-
-static bool GbaGameLoad32LE(const void *context, uint32_t address,
-                            uint32_t *value) {
-  assert((address & 0x3u) == 0u);
-  assert(address + 4u <= GBA_GAME_MAX_SIZE);
-
-  const GamePak *gamepak = (const GamePak *)context;
-  const unsigned char *first_byte = gamepak->bytes + address;
-  *value = *(const uint32_t *)(const void *)first_byte;
-
-  return true;
-}
-
-static bool GbaGameLoad16LE(const void *context, uint32_t address,
-                            uint16_t *value) {
-  assert((address & 0x1u) == 0u);
-  assert(address + 2u <= GBA_GAME_MAX_SIZE);
-
-  const GamePak *gamepak = (const GamePak *)context;
-  const unsigned char *first_byte = gamepak->bytes + address;
-  *value = *(const uint16_t *)(const void *)first_byte;
-
-  return true;
-}
-
-static bool GbaGameLoad8(const void *context, uint32_t address,
-                         uint8_t *value) {
-  assert(address < GBA_GAME_MAX_SIZE);
-
-  const GamePak *gamepak = (const GamePak *)context;
-  *value = gamepak->bytes[address];
-
-  return true;
-}
-
-static bool GbaGameStore32LE(void *context, uint32_t address, uint32_t value) {
-  return false;
-}
-
-static bool GbaGameStore16LE(void *context, uint32_t address, uint16_t value) {
-  return false;
-}
-
-static bool GbaGameStore8(void *context, uint32_t address, uint8_t value) {
-  return false;
-}
-
-void GbaGameFree(void *context) {
-  GamePak *gamepak = (GamePak *)context;
-  free(gamepak);
-}
-
 bool GbaGameLoad(const unsigned char *rom_data, uint32_t rom_size,
-                 SaveStorageType *save_storage_type, Memory **game_rom) {
+                 SaveStorageType *save_storage_type, MemoryBank **game_rom) {
   if (rom_size > GBA_GAME_MAX_SIZE) {
     return false;
   }
 
-  GamePak *gamepak = (GamePak *)calloc(1, sizeof(GamePak));
-  if (gamepak == NULL) {
-    return false;
-  }
-
-  *game_rom = MemoryAllocate(gamepak, GbaGameLoad32LE, GbaGameLoad16LE,
-                             GbaGameLoad8, GbaGameStore32LE, GbaGameStore16LE,
-                             GbaGameStore8, GbaGameFree);
+  *game_rom = MemoryBankAllocate(GBA_GAME_MAX_SIZE, 1u, NULL);
   if (*game_rom == NULL) {
-    free(gamepak);
     return false;
   }
 
-  memcpy(gamepak->bytes, rom_data, rom_size);
+  for (uint32_t i = 0u; i < rom_size; i++) {
+    MemoryBankStore8(*game_rom, i, (char)rom_data[i]);
+  }
+
+  MemoryBankIgnoreWrites(*game_rom);
 
   // Save storage is not implemented yet nor is storage detection, so just
   // treat all games as if they have no save storage

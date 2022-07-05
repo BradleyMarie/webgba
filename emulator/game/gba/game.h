@@ -1,7 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_GAME_GBA_GAME_
 #define _WEBGBA_EMULATOR_GAME_GBA_GAME_
 
-#include "emulator/memory/memory.h"
+#include <stdbool.h>
+
+#include "emulator/memory/memory_bank.h"
 
 // Numbers represent the size in kilobits
 typedef enum {
@@ -15,6 +17,6 @@ typedef enum {
 } SaveStorageType;
 
 bool GbaGameLoad(const unsigned char *rom_data, uint32_t rom_size,
-                 SaveStorageType *save_storage_type, Memory **game_rom);
+                 SaveStorageType *save_storage_type, MemoryBank **game_rom);
 
 #endif  // _WEBGBA_EMULATOR_GAME_GBA_GAME_

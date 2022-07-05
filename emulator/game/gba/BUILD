@@ -7,6 +7,6 @@ cc_library(
     srcs = ["game.c"],
     hdrs = ["game.h"],
     deps = [
-        "//emulator/memory",
+        "//emulator/memory:memory_bank",
     ],
 )
