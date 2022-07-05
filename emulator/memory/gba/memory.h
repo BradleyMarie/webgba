@@ -7,7 +7,6 @@ Memory* GbaMemoryAllocate(Memory* ppu_registers, Memory* sound_registers,
                           Memory* dma_registers, Memory* timer_registers,
                           Memory* peripheral_registers,
                           Memory* platform_registers, Memory* palette,
-                          Memory* vram, Memory* oam, Memory* game,
-                          Memory* sram);
+                          Memory* vram, Memory* oam, MemoryBank* game);
 
 #endif  // _WEBGBA_EMULATOR_MEMORY_GBA_MEMORY_

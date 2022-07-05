@@ -164,7 +164,7 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
   }
 
   SaveStorageType storage_type;
-  Memory *game_rom;
+  MemoryBank *game_rom;
   success = GbaGameLoad(rom_data, rom_size, &storage_type, &game_rom);
   if (!success) {
     GbaTimersFree((*emulator)->timers);
@@ -176,28 +176,14 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
     return false;
   }
 
-  // HACK HACK HACK
   // TODO: Implement SRAM
-  Memory *sram;
-  success = GbaGameLoad(rom_data, rom_size, &storage_type, &sram);
-  if (!success) {
-    MemoryFree(game_rom);
-    GbaSpuRelease((*emulator)->spu);
-    GbaTimersFree((*emulator)->timers);
-    GbaDmaUnitRelease((*emulator)->dma);
-    Arm7TdmiFree((*emulator)->cpu);
-    GbaPlatformRelease((*emulator)->platform);
-    free(*emulator);
-    return false;
-  }
 
   Memory *peripherals_registers;
   success =
       GbaPeripheralsAllocate((*emulator)->platform, &(*emulator)->peripherals,
                              gamepad, &peripherals_registers);
   if (!success) {
-    MemoryFree(sram);
-    MemoryFree(game_rom);
+    MemoryBankFree(game_rom);
     GbaSpuRelease((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
     GbaDmaUnitRelease((*emulator)->dma);
@@ -217,8 +203,7 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
   if (!success) {
     GbaPeripheralsFree((*emulator)->peripherals);
     GamePadFree(*gamepad);
-    MemoryFree(sram);
-    MemoryFree(game_rom);
+    MemoryBankFree(game_rom);
     GbaSpuRelease((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
     GbaDmaUnitRelease((*emulator)->dma);
@@ -228,10 +213,9 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
     return false;
   }
 
-  (*emulator)->memory =
-      GbaMemoryAllocate(ppu_registers, sound_registers, dma_unit_registers,
-                        timer_registers, peripherals_registers,
-                        platform_registers, palette, vram, oam, game_rom, sram);
+  (*emulator)->memory = GbaMemoryAllocate(
+      ppu_registers, sound_registers, dma_unit_registers, timer_registers,
+      peripherals_registers, platform_registers, palette, vram, oam, game_rom);
   if ((*emulator)->memory == NULL) {
     MemoryFree(palette);
     MemoryFree(vram);
@@ -240,8 +224,7 @@ bool GbaEmulatorAllocate(const unsigned char *rom_data, uint32_t rom_size,
     GbaPpuFree((*emulator)->ppu);
     GbaPeripheralsFree((*emulator)->peripherals);
     GamePadFree(*gamepad);
-    MemoryFree(sram);
-    MemoryFree(game_rom);
+    MemoryBankFree(game_rom);
     GbaSpuRelease((*emulator)->spu);
     GbaTimersFree((*emulator)->timers);
     GbaDmaUnitRelease((*emulator)->dma);

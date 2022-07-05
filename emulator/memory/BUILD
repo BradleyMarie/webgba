@@ -21,6 +21,9 @@ cc_library(
     name = "memory",
     srcs = ["memory.c"],
     hdrs = ["memory.h"],
+    deps = [
+        ":memory_bank",
+    ],
 )
 
 cc_test(

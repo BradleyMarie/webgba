@@ -42,16 +42,12 @@ class GbaMemoryTest : public testing::Test {
     oam_ = MemoryAllocate(&oam_, Load32LEFunc, Load16LEFunc, Load8Func,
                           Store32LEFunc, Store16LEFunc, Store8Func, nullptr);
     ASSERT_NE(nullptr, oam_);
-    game_ = MemoryAllocate(&game_, Load32LEFunc, Load16LEFunc, Load8Func,
-                           Store32LEFunc, Store16LEFunc, Store8Func, nullptr);
+    game_ = MemoryBankAllocate(1u, 1u, NULL);
     ASSERT_NE(nullptr, game_);
-    sram_ = MemoryAllocate(&sram_, Load32LEFunc, Load16LEFunc, Load8Func,
-                           Store32LEFunc, Store16LEFunc, Store8Func, nullptr);
-    ASSERT_NE(nullptr, sram_);
     memory_ = GbaMemoryAllocate(ppu_registers_, sound_registers_,
                                 dma_registers_, timer_registers_,
                                 peripheral_registers_, platform_registers_,
-                                palette_, vram_, oam_, game_, sram_);
+                                palette_, vram_, oam_, game_);
     ASSERT_NE(nullptr, memory_);
   }
 
@@ -102,41 +98,6 @@ class GbaMemoryTest : public testing::Test {
     EXPECT_EQ(expected_address_, address);
     EXPECT_EQ(expected8_, value);
     return expected_response_;
-  }
-
-  static void TestStandardAddress(Memory** bank, uint32_t start, uint32_t end) {
-    for (uint32_t addr = start; addr < end; addr++) {
-      expected_bank_ = bank;
-      expected_address_ = addr - start;
-
-      if (addr % 4u == 0u) {
-        expected32_ = addr;
-        expected_response_ = true;
-
-        uint32_t value;
-        EXPECT_TRUE(Store32LE(memory_, addr, expected32_));
-        EXPECT_TRUE(Load32LE(memory_, addr, &value));
-        EXPECT_EQ(expected32_, value);
-      }
-
-      if (addr % 2u == 0) {
-        expected16_ = (uint16_t)addr;
-        expected_response_ = true;
-
-        uint16_t value;
-        EXPECT_TRUE(Store16LE(memory_, addr, expected16_));
-        EXPECT_TRUE(Load16LE(memory_, addr, &value));
-        EXPECT_EQ(expected16_, value);
-      }
-
-      expected8_ = (uint8_t)addr;
-      expected_response_ = true;
-
-      uint8_t value;
-      EXPECT_TRUE(Store8(memory_, addr, expected8_));
-      EXPECT_TRUE(Load8(memory_, addr, &value));
-      EXPECT_EQ(expected8_, value);
-    }
   }
 
   static void TestIoRegisterAddress(Memory** bank, uint32_t start,
@@ -200,9 +161,8 @@ class GbaMemoryTest : public testing::Test {
   static Memory* palette_;
   static Memory* vram_;
   static Memory* oam_;
-  static Memory* game_;
-  static Memory* sram_;
   static Memory* memory_;
+  static MemoryBank* game_;
 
   static Memory** expected_bank_;
   static uint32_t expected_address_;
@@ -221,9 +181,8 @@ Memory* GbaMemoryTest::platform_registers_;
 Memory* GbaMemoryTest::palette_;
 Memory* GbaMemoryTest::vram_;
 Memory* GbaMemoryTest::oam_;
-Memory* GbaMemoryTest::game_;
-Memory* GbaMemoryTest::sram_;
 Memory* GbaMemoryTest::memory_;
+MemoryBank* GbaMemoryTest::game_;
 Memory** GbaMemoryTest::expected_bank_;
 uint32_t GbaMemoryTest::expected_address_;
 uint32_t GbaMemoryTest::expected32_;
@@ -336,34 +295,6 @@ TEST_F(GbaMemoryTest, IoBank) {
   TestIoRegisterAddress(&timer_registers_, 0x4000100u, 0x4000120u);
   TestIoRegisterAddress(&peripheral_registers_, 0x4000120u, 0x4000200u);
   TestIoRegisterAddress(&platform_registers_, 0x4000200u, 0x5000000u);
-}
-
-TEST_F(GbaMemoryTest, ObjBank) {
-  TestStandardAddress(&palette_, 0x5000000u, 0x6000000u);
-}
-
-TEST_F(GbaMemoryTest, VramBank) {
-  TestStandardAddress(&vram_, 0x6000000u, 0x7000000u);
-}
-
-TEST_F(GbaMemoryTest, OamBank) {
-  TestStandardAddress(&oam_, 0x7000000u, 0x8000000u);
-}
-
-TEST_F(GbaMemoryTest, GameBank0) {
-  TestStandardAddress(&game_, 0x08000000u, 0x0A000000u);
-}
-
-TEST_F(GbaMemoryTest, GameBank1) {
-  TestStandardAddress(&game_, 0x0A000000u, 0x0C000000u);
-}
-
-TEST_F(GbaMemoryTest, GameBank2) {
-  TestStandardAddress(&game_, 0x0C000000u, 0x0E000000u);
-}
-
-TEST_F(GbaMemoryTest, SramBank) {
-  TestStandardAddress(&sram_, 0x0E000000u, 0x0F000000u);
 }
 
 TEST_F(GbaMemoryTest, BadBank) {
