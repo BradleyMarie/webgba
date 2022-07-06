@@ -38,10 +38,16 @@ uniform lowp usampler2D palette_bitmap;
 layout(std140) uniform Objects {
   mediump mat2 object_transformations[33];
   highp uvec4 object_attributes[128];
-  highp uvec4 object_columns[240];
-  highp uvec4 object_rows[160];
   highp uvec4 object_window;
   highp uvec4 object_drawn;
+};
+
+layout(std140) uniform ObjectRows {
+  highp uvec4 object_rows[160];
+};
+
+layout(std140) uniform ObjectColumns {
+  highp uvec4 object_columns[240];
 };
 
 // Backgrounds
@@ -56,21 +62,17 @@ layout(std140) uniform AffineBases { highp vec4 affine_bases[161]; };
 layout(std140) uniform AffineScales { highp vec4 affine_scales[161]; };
 
 // Window
-struct WindowRow {
+layout(std140) uniform Windows {
   // Enable WinObj is bit 6 of window 'z'
-  highp uvec4 window_and_bounds;
+  highp uvec4 window_rows[160];
 };
-
-layout(std140) uniform Windows { WindowRow window_rows[160]; };
 
 // Blend
-struct BlendRow {
+layout(std140) uniform Blend {
   // high: mode, top, bottom
   // low: eva, evb, evy
-  mediump uvec3 bldcnt_ev;
+  mediump uvec3 blend_rows[160];
 };
-
-layout(std140) uniform Blend { BlendRow blend_rows[160]; };
 
 // Blend Unit
 struct BlendUnit {
@@ -84,7 +86,7 @@ struct BlendUnit {
 
 BlendUnit CreateBlendUnit(lowp uint screen_row) {
   BlendUnit result;
-  result.bldcnt_ev = blend_rows[screen_row].bldcnt_ev;
+  result.bldcnt_ev = blend_rows[screen_row];
   result.color[0] = vec3(0.0, 0.0, 0.0);
   result.color[1] = vec3(0.0, 0.0, 0.0);
   result.priority[0] = 6u;
@@ -270,7 +272,7 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 // Window
 lowp uint CheckWindow(lowp uint screen_column, lowp uint screen_row,
                       bool on_object) {
-  highp uvec4 window_and_bounds = window_rows[screen_row].window_and_bounds;
+  highp uvec4 window_and_bounds = window_rows[screen_row];
 
   mediump uint window0_location =
       (screen_column + (window_and_bounds.x >> 16u)) % 240u;

@@ -48,19 +48,19 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     return false;
   }
 
-  context->staging.object_transformations[0u][0u][0u] = 1.0;
-  context->staging.object_transformations[0u][0u][1u] = 0.0;
-  context->staging.object_transformations[0u][1u][0u] = 0.0;
-  context->staging.object_transformations[0u][1u][1u] = 1.0;
+  context->objects.object_transformations[0u][0u][0u] = 1.0;
+  context->objects.object_transformations[0u][0u][1u] = 0.0;
+  context->objects.object_transformations[0u][1u][0u] = 0.0;
+  context->objects.object_transformations[0u][1u][1u] = 1.0;
 
   for (uint8_t i = 0u; i < OAM_NUM_ROTATE_SCALE_GROUPS; i++) {
-    context->staging.object_transformations[i + 1u][0u][0u] =
+    context->objects.object_transformations[i + 1u][0u][0u] =
         FixedToFloat(memory->oam.rotate_scale[i].pa);
-    context->staging.object_transformations[i + 1u][0u][1u] =
+    context->objects.object_transformations[i + 1u][0u][1u] =
         FixedToFloat(memory->oam.rotate_scale[i].pc);
-    context->staging.object_transformations[i + 1u][1u][0u] =
+    context->objects.object_transformations[i + 1u][1u][0u] =
         FixedToFloat(memory->oam.rotate_scale[i].pb);
-    context->staging.object_transformations[i + 1u][1u][1u] =
+    context->objects.object_transformations[i + 1u][1u][1u] =
         FixedToFloat(memory->oam.rotate_scale[i].pd);
   }
 
@@ -84,10 +84,10 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     object_indices[insert_index++] = obj;
   }
 
-  context->staging.object_window[0u] = window.objects[0u];
-  context->staging.object_window[1u] = window.objects[0u] >> 32u;
-  context->staging.object_window[2u] = window.objects[1u];
-  context->staging.object_window[3u] = window.objects[1u] >> 32u;
+  context->objects.object_window[0u] = window.objects[0u];
+  context->objects.object_window[1u] = window.objects[0u] >> 32u;
+  context->objects.object_window[2u] = window.objects[1u];
+  context->objects.object_window[3u] = window.objects[1u] >> 32u;
 
   GbaPpuSet drawn;
   GbaPpuSetClear(&drawn);
@@ -108,10 +108,10 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     }
   }
 
-  context->staging.object_drawn[0u] = drawn.objects[0u];
-  context->staging.object_drawn[1u] = drawn.objects[0u] >> 32u;
-  context->staging.object_drawn[2u] = drawn.objects[1u];
-  context->staging.object_drawn[3u] = drawn.objects[1u] >> 32u;
+  context->objects.object_drawn[0u] = drawn.objects[0u];
+  context->objects.object_drawn[1u] = drawn.objects[0u] >> 32u;
+  context->objects.object_drawn[2u] = drawn.objects[1u];
+  context->objects.object_drawn[3u] = drawn.objects[1u] >> 32u;
 
   for (uint8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
     GbaPpuSetClear(context->columns + x);
@@ -137,19 +137,17 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
   }
 
   for (uint8_t x = 0; x < GBA_SCREEN_WIDTH; x++) {
-    context->staging.object_columns[x][0u] = context->columns[x].objects[0u];
-    context->staging.object_columns[x][1u] =
-        context->columns[x].objects[0u] >> 32u;
-    context->staging.object_columns[x][2u] = context->columns[x].objects[1u];
-    context->staging.object_columns[x][3u] =
-        context->columns[x].objects[1u] >> 32u;
+    context->object_columns[x][0u] = context->columns[x].objects[0u];
+    context->object_columns[x][1u] = context->columns[x].objects[0u] >> 32u;
+    context->object_columns[x][2u] = context->columns[x].objects[1u];
+    context->object_columns[x][3u] = context->columns[x].objects[1u] >> 32u;
   }
 
   for (uint8_t y = 0; y < GBA_SCREEN_HEIGHT; y++) {
-    context->staging.object_rows[y][0u] = context->rows[y].objects[0u];
-    context->staging.object_rows[y][1u] = context->rows[y].objects[0u] >> 32u;
-    context->staging.object_rows[y][2u] = context->rows[y].objects[1u];
-    context->staging.object_rows[y][3u] = context->rows[y].objects[1u] >> 32u;
+    context->object_rows[y][0u] = context->rows[y].objects[0u];
+    context->object_rows[y][1u] = context->rows[y].objects[0u] >> 32u;
+    context->object_rows[y][2u] = context->rows[y].objects[1u];
+    context->object_rows[y][3u] = context->rows[y].objects[1u] >> 32u;
   }
 
   for (uint8_t i = 0; i < insert_index; i++) {
@@ -207,10 +205,10 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
         (memory->oam.object_attributes[obj].obj_mode == 1u);
     attribute.linear_tiles = registers->dispcnt.object_mode;
 
-    context->staging.object_attributes[i][0u] = attribute.values[0u];
-    context->staging.object_attributes[i][1u] = attribute.values[1u];
-    context->staging.object_attributes[i][2u] = attribute.values[2u];
-    context->staging.object_attributes[i][3u] = attribute.values[3u];
+    context->objects.object_attributes[i][0u] = attribute.values[0u];
+    context->objects.object_attributes[i][1u] = attribute.values[1u];
+    context->objects.object_attributes[i][2u] = attribute.values[2u];
+    context->objects.object_attributes[i][3u] = attribute.values[3u];
   }
 
   dirty_bits->oam.overall = false;
@@ -222,34 +220,57 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
 
 void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program) {
   GLint objects = glGetUniformBlockIndex(program, "Objects");
-  if (objects >= 0) {
-    glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  if (objects < 0) {
+    return;
   }
+
+  GLint object_rows = glGetUniformBlockIndex(program, "ObjectRows");
+  GLint object_columns = glGetUniformBlockIndex(program, "ObjectColumns");
+
+  glUniformBlockBinding(program, objects, OBJECTS_BUFFER);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECTS_BUFFER, context->buffers[0u]);
+
+  glUniformBlockBinding(program, object_rows, OBJECT_ROWS_BUFFER);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECT_ROWS_BUFFER, context->buffers[1u]);
+
+  glUniformBlockBinding(program, object_columns, OBJECT_COLUMNS_BUFFER);
+  glBindBufferBase(GL_UNIFORM_BUFFER, OBJECT_COLUMNS_BUFFER,
+                   context->buffers[2u]);
 }
 
 void OpenGlObjectsReload(OpenGlObjects* context) {
   if (context->dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
     glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
-                    /*size=*/sizeof(context->staging),
-                    /*data=*/&context->staging);
+                    /*size=*/sizeof(context->objects),
+                    /*data=*/&context->objects);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->object_rows),
+                    /*data=*/context->object_rows);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[2u]);
+    glBufferSubData(GL_UNIFORM_BUFFER, /*offset=*/0,
+                    /*size=*/sizeof(context->object_columns),
+                    /*data=*/context->object_columns);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     context->dirty = false;
   }
 }
 
 void OpenGlObjectsReloadContext(OpenGlObjects* context) {
-  glGenBuffers(1, &context->buffer);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
+  glGenBuffers(3u, context->buffers);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->objects), &context->objects,
                GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_rows),
+               context->object_rows, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[2u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->object_columns),
+               context->object_columns, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlObjectsDestroy(OpenGlObjects* context) {
-  glDeleteBuffers(1, &context->buffer);
+  glDeleteBuffers(3u, context->buffers);
 }

@@ -13,14 +13,14 @@ typedef struct {
   struct {
     GLfloat object_transformations[OAM_NUM_ROTATE_SCALE_GROUPS + 1u][2u][4u];
     GLuint object_attributes[OAM_NUM_OBJECTS][4u];
-    GLuint object_columns[GBA_SCREEN_WIDTH][4u];
-    GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
     GLuint object_window[4u];
     GLuint object_drawn[4u];
-  } staging;
+  } objects;
+  GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
+  GLuint object_columns[GBA_SCREEN_WIDTH][4u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
-  GLuint buffer;
+  GLuint buffers[3u];
   bool dirty;
 } OpenGlObjects;
 
