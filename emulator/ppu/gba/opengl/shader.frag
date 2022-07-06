@@ -52,11 +52,8 @@ layout(std140) uniform ScrollingBackgrounds {
   highp uvec4 scrolling_rows[160];
 };
 
-struct AffineRow {
-  highp vec4 base_scale[2];
-};
-
-layout(std140) uniform AffineBackgrounds { AffineRow affine_rows[161]; };
+layout(std140) uniform AffineBases { highp vec4 affine_bases[161]; };
+layout(std140) uniform AffineScales { highp vec4 affine_scales[161]; };
 
 // Window
 struct WindowRow {
@@ -435,13 +432,19 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, highp vec2 samplecoord,
 
 mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row,
                           highp vec2 samplecoord) {
+  lowp uint x_component = 2u * (bg - 2u);
+  lowp uint y_component = x_component + 1u;
   highp float interp = samplecoord.y - float(screen_row);
-  highp vec2 base =
-      mix(affine_rows[screen_row].base_scale[bg - 2u].xy,
-          affine_rows[screen_row + 1u].base_scale[bg - 2u].xy, interp);
-  highp vec2 scale =
-      mix(affine_rows[screen_row].base_scale[bg - 2u].zw,
-          affine_rows[screen_row + 1u].base_scale[bg - 2u].zw, interp);
+  highp vec2 base = mix(vec2(affine_bases[screen_row][x_component],
+                             affine_bases[screen_row][y_component]),
+                        vec2(affine_bases[screen_row + 1u][x_component],
+                             affine_bases[screen_row + 1u][y_component]),
+                        interp);
+  highp vec2 scale = mix(vec2(affine_scales[screen_row][x_component],
+                              affine_scales[screen_row][y_component]),
+                         vec2(affine_scales[screen_row + 1u][x_component],
+                              affine_scales[screen_row + 1u][y_component]),
+                         interp);
   return ivec2(floor(base + scale * samplecoord.x));
 }
 

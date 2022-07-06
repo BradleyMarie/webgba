@@ -32,22 +32,18 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
 
   bool row_dirty = false;
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
-    OpenGlBgAffineLoadFixed(
-        context, registers->internal.affine[i].current[0u],
-        &context->staging.rows[registers->vcount].base_scale[i][0u],
-        &row_dirty);
-    OpenGlBgAffineLoadFixed(
-        context, registers->internal.affine[i].current[1u],
-        &context->staging.rows[registers->vcount].base_scale[i][1u],
-        &row_dirty);
-    OpenGlBgAffineLoadFixed(
-        context, registers->affine[i].pa,
-        &context->staging.rows[registers->vcount].base_scale[i][2u],
-        &row_dirty);
-    OpenGlBgAffineLoadFixed(
-        context, registers->affine[i].pc,
-        &context->staging.rows[registers->vcount].base_scale[i][3u],
-        &row_dirty);
+    OpenGlBgAffineLoadFixed(context, registers->internal.affine[i].current[0u],
+                            &context->bases[registers->vcount][2u * i + 0u],
+                            &row_dirty);
+    OpenGlBgAffineLoadFixed(context, registers->internal.affine[i].current[1u],
+                            &context->bases[registers->vcount][2u * i + 1u],
+                            &row_dirty);
+    OpenGlBgAffineLoadFixed(context, registers->affine[i].pa,
+                            &context->scales[registers->vcount][2u * i + 0u],
+                            &row_dirty);
+    OpenGlBgAffineLoadFixed(context, registers->affine[i].pc,
+                            &context->scales[registers->vcount][2u * i + 1u],
+                            &row_dirty);
   }
 
   if (row_dirty) {
@@ -67,32 +63,28 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].base_scale[i][0u] +
-            (context->staging.rows[registers->vcount].base_scale[i][0u] -
-             context->staging.rows[registers->vcount - 1u].base_scale[i][0u]),
-        &context->staging.rows[registers->vcount + 1u].base_scale[i][0u],
-        &row_dirty);
+        context->bases[registers->vcount][2u * i + 0u] +
+            (context->bases[registers->vcount][2u * i + 0u] -
+             context->bases[registers->vcount - 1u][2u * i + 0u]),
+        &context->bases[registers->vcount + 1u][2u * i + 0u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].base_scale[i][1u] +
-            (context->staging.rows[registers->vcount].base_scale[i][1u] -
-             context->staging.rows[registers->vcount - 1u].base_scale[i][1u]),
-        &context->staging.rows[registers->vcount + 1u].base_scale[i][1u],
-        &row_dirty);
+        context->bases[registers->vcount][2u * i + 1u] +
+            (context->bases[registers->vcount][2u * i + 1u] -
+             context->bases[registers->vcount - 1u][2u * i + 1u]),
+        &context->bases[registers->vcount + 1u][2u * i + 1u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].base_scale[i][2u] +
-            (context->staging.rows[registers->vcount].base_scale[i][2u] -
-             context->staging.rows[registers->vcount - 1u].base_scale[i][2u]),
-        &context->staging.rows[registers->vcount + 1u].base_scale[i][2u],
-        &row_dirty);
+        context->scales[registers->vcount][2u * i + 0u] +
+            (context->scales[registers->vcount][2u * i + 0u] -
+             context->scales[registers->vcount - 1u][2u * i + 0u]),
+        &context->scales[registers->vcount + 1u][2u * i + 0u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->staging.rows[registers->vcount].base_scale[i][3u] +
-            (context->staging.rows[registers->vcount].base_scale[i][3u] -
-             context->staging.rows[registers->vcount - 1u].base_scale[i][3u]),
-        &context->staging.rows[registers->vcount + 1u].base_scale[i][3u],
-        &row_dirty);
+        context->scales[registers->vcount][2u * i + 1u] +
+            (context->scales[registers->vcount][2u * i + 1u] -
+             context->scales[registers->vcount - 1u][2u * i + 1u]),
+        &context->scales[registers->vcount + 1u][2u * i + 1u], &row_dirty);
   }
 
   if (row_dirty) {
@@ -104,37 +96,50 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
 }
 
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLuint program) {
-  GLint affine_backgrounds =
-      glGetUniformBlockIndex(program, "AffineBackgrounds");
-  if (affine_backgrounds < 0) {
+  GLint affine_bases = glGetUniformBlockIndex(program, "AffineBases");
+  if (affine_bases < 0) {
     return;
   }
 
-  glUniformBlockBinding(program, affine_backgrounds, AFFINE_BUFFER);
+  glUniformBlockBinding(program, affine_bases, AFFINE_BASES_BUFFER);
+  glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_BASES_BUFFER,
+                   context->buffers[0u]);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_BUFFER, context->buffer);
+  GLint affine_scales = glGetUniformBlockIndex(program, "AffineScales");
+
+  glUniformBlockBinding(program, affine_scales, AFFINE_SCALES_BUFFER);
+  glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_SCALES_BUFFER,
+                   context->buffers[1u]);
 
   if (context->dirty) {
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
     glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/sizeof(OpenGlBgAffineRow) * context->dirty_start,
-                    /*size=*/sizeof(OpenGlBgAffineRow) *
+                    /*offset=*/4u * sizeof(GLfloat) * context->dirty_start,
+                    /*size=*/4u * sizeof(GLfloat) *
                         (context->dirty_end - context->dirty_start + 1u),
-                    /*data=*/&context->staging.rows[context->dirty_start]);
+                    /*data=*/&context->bases[context->dirty_start]);
+    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+    glBufferSubData(GL_UNIFORM_BUFFER,
+                    /*offset=*/4u * sizeof(GLfloat) * context->dirty_start,
+                    /*size=*/4u * sizeof(GLfloat) *
+                        (context->dirty_end - context->dirty_start + 1u),
+                    /*data=*/&context->scales[context->dirty_start]);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     context->dirty = false;
   }
-
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
-  glGenBuffers(1, &context->buffer);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
+  glGenBuffers(2, context->buffers);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->bases), context->bases,
+               GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->scales), context->scales,
                GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void OpenGlBgAffineDestroy(OpenGlBgAffine* context) {
-  glDeleteBuffers(1, &context->buffer);
+  glDeleteBuffers(2, context->buffers);
 }
