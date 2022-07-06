@@ -1,6 +1,7 @@
 #include "emulator/ppu/gba/opengl/render.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -126,6 +127,19 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
 
     GLint render_scale = glGetUniformLocation(program, "render_scale");
     glUniform1ui(render_scale, renderer->render_scale);
+
+    glValidateProgram(program);
+
+    GLint success = 0;
+    glGetProgramiv(program, GL_VALIDATE_STATUS, &success);
+    if (success != GL_TRUE) {
+      printf("ERROR: shader validation failed\n");
+
+      GLchar message[500u];
+      glGetProgramInfoLog(program, 500, NULL, message);
+      printf("%s\n", message);
+      exit(EXIT_FAILURE);
+    }
 
     glDrawArrays(GL_TRIANGLES, 0, 3u);
   }

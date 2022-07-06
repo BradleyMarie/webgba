@@ -1,6 +1,7 @@
 #include "emulator/screen.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef enum _RenderMode {
@@ -64,6 +65,18 @@ static GLuint ScreenCreateUpscaleFbo() {
 
   glLinkProgram(program);
 
+  GLint success = 0;
+  glGetProgramiv(program, GL_LINK_STATUS, &success);
+  if (success != GL_TRUE) {
+    printf("ERROR: shader linking failed\n");
+
+    GLchar message[500u];
+    glGetProgramInfoLog(program, 500, NULL, message);
+    printf("%s\n", message);
+
+    exit(EXIT_FAILURE);
+  }
+
   return program;
 }
 
@@ -104,6 +117,18 @@ static GLuint ScreenCreateUpscalePixels() {
   glDeleteShader(fragment_shader);
 
   glLinkProgram(program);
+
+  GLint success = 0;
+  glGetProgramiv(program, GL_LINK_STATUS, &success);
+  if (success != GL_TRUE) {
+    printf("ERROR: shader linking failed\n");
+
+    GLchar message[500u];
+    glGetProgramInfoLog(program, 500, NULL, message);
+    printf("%s\n", message);
+
+    exit(EXIT_FAILURE);
+  }
 
   return program;
 }
@@ -248,6 +273,20 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, screen->framebuffer);
   glViewport(0, 0, screen->framebuffer_width, screen->framebuffer_height);
+
+  glValidateProgram(program);
+
+  GLint success = 0;
+  glGetProgramiv(program, GL_VALIDATE_STATUS, &success);
+  if (success != GL_TRUE) {
+    printf("ERROR: shader validation failed\n");
+
+    GLchar message[500u];
+    glGetProgramInfoLog(program, 500, NULL, message);
+    printf("%s\n", message);
+    exit(EXIT_FAILURE);
+  }
+
   glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
