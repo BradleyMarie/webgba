@@ -16,11 +16,11 @@ static void ValidateProgram(GLuint program) {
 
   printf("ERROR: shader linking failed\n");
 
-  GLchar errorLog[500u];
-  glGetProgramInfoLog(program, 500, NULL, errorLog);
-  printf("%s\n", errorLog);
+  GLchar message[500u];
+  glGetProgramInfoLog(program, 500, NULL, message);
+  printf("%s\n", message);
 
-  exit(-1);
+  exit(EXIT_FAILURE);
 }
 
 static char* GetFragmentShaderSource(bool objects, bool scrolling_bg0,
