@@ -502,7 +502,8 @@ BlendUnit BitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
                            highp vec2 samplecoord, ivec2 size,
                            highp uint bgcnt) {
   mediump ivec2 lookup = AffinePixel(2u, screen_row, samplecoord);
-  if (any(lessThan(lookup, ivec2(0, 0))) || any(greaterThan(lookup, size))) {
+  if (any(lessThan(lookup, ivec2(0, 0))) ||
+      any(greaterThanEqual(lookup, size))) {
     return blend_unit;
   }
   lookup.x -= lookup.x % int(bgcnt >> 16u & 0x1Fu);
@@ -515,7 +516,7 @@ BlendUnit PaletteBitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
                                   highp vec2 samplecoord, highp uint bgcnt) {
   mediump ivec2 lookup = AffinePixel(2u, screen_row, samplecoord);
   if (any(lessThan(lookup, ivec2(0, 0))) ||
-      any(greaterThan(lookup, ivec2(240, 160)))) {
+      any(greaterThanEqual(lookup, ivec2(240, 160)))) {
     return blend_unit;
   }
   lookup.x -= lookup.x % int(bgcnt >> 16u & 0x1Fu);
