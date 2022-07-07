@@ -32,10 +32,10 @@ static GLuint ScreenCreateUpscaleFbo() {
 
   static const char *vertex_shader_source =
       "#version 300 es\n"
-      "out vec2 texcoord;\n"
+      "out highp vec2 texcoord;\n"
       "void main() {\n"
-      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
-      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  highp float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  highp float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
       "  texcoord.x = (x + 1.0) * 0.5;\n"
       "  texcoord.y = (y + 1.0) * 0.5;\n"
       "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
@@ -85,10 +85,10 @@ static GLuint ScreenCreateUpscalePixels() {
 
   static const char *vertex_shader_source =
       "#version 300 es\n"
-      "out vec2 texcoord;\n"
+      "out highp vec2 texcoord;\n"
       "void main() {\n"
-      "  float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
-      "  float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
+      "  highp float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
+      "  highp float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
       "  texcoord.x = (x + 1.0) * 0.5;\n"
       "  texcoord.y = (y - 1.0) * -0.5;\n"
       "  gl_Position = vec4(x, y, 0.0, 1.0);\n"

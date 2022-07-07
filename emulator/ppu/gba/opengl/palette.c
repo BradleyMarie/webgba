@@ -85,7 +85,7 @@ void OpenGlPaletteReloadContext(OpenGlPalette* context) {
                /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                /*pixels=*/context->zeroes);
 
-  glBindBuffer(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void OpenGlPaletteDestroy(OpenGlPalette* context) {
