@@ -33,16 +33,16 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
   bool row_dirty = false;
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     OpenGlBgAffineLoadFixed(context, registers->internal.affine[i].current[0u],
-                            &context->bases[registers->vcount][2u * i + 0u],
+                            &context->base_scale[registers->vcount][i][0u],
                             &row_dirty);
     OpenGlBgAffineLoadFixed(context, registers->internal.affine[i].current[1u],
-                            &context->bases[registers->vcount][2u * i + 1u],
+                            &context->base_scale[registers->vcount][i][1u],
                             &row_dirty);
     OpenGlBgAffineLoadFixed(context, registers->affine[i].pa,
-                            &context->scales[registers->vcount][2u * i + 0u],
+                            &context->base_scale[registers->vcount][i][2u],
                             &row_dirty);
     OpenGlBgAffineLoadFixed(context, registers->affine[i].pc,
-                            &context->scales[registers->vcount][2u * i + 1u],
+                            &context->base_scale[registers->vcount][i][3u],
                             &row_dirty);
   }
 
@@ -63,28 +63,28 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
   for (uint8_t i = 0; i < GBA_PPU_NUM_AFFINE_BACKGROUNDS; i++) {
     OpenGlBgAffineLoadFloat(
         context,
-        context->bases[registers->vcount][2u * i + 0u] +
-            (context->bases[registers->vcount][2u * i + 0u] -
-             context->bases[registers->vcount - 1u][2u * i + 0u]),
-        &context->bases[registers->vcount + 1u][2u * i + 0u], &row_dirty);
+        context->base_scale[registers->vcount][i][0u] +
+            (context->base_scale[registers->vcount][i][0u] -
+             context->base_scale[registers->vcount - 1u][i][0u]),
+        &context->base_scale[registers->vcount + 1u][i][0u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->bases[registers->vcount][2u * i + 1u] +
-            (context->bases[registers->vcount][2u * i + 1u] -
-             context->bases[registers->vcount - 1u][2u * i + 1u]),
-        &context->bases[registers->vcount + 1u][2u * i + 1u], &row_dirty);
+        context->base_scale[registers->vcount][i][1u] +
+            (context->base_scale[registers->vcount][i][1u] -
+             context->base_scale[registers->vcount - 1u][i][1u]),
+        &context->base_scale[registers->vcount + 1u][i][1u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->scales[registers->vcount][2u * i + 0u] +
-            (context->scales[registers->vcount][2u * i + 0u] -
-             context->scales[registers->vcount - 1u][2u * i + 0u]),
-        &context->scales[registers->vcount + 1u][2u * i + 0u], &row_dirty);
+        context->base_scale[registers->vcount][i][2u] +
+            (context->base_scale[registers->vcount][i][2u] -
+             context->base_scale[registers->vcount - 1u][i][2u]),
+        &context->base_scale[registers->vcount + 1u][i][2u], &row_dirty);
     OpenGlBgAffineLoadFloat(
         context,
-        context->scales[registers->vcount][2u * i + 1u] +
-            (context->scales[registers->vcount][2u * i + 1u] -
-             context->scales[registers->vcount - 1u][2u * i + 1u]),
-        &context->scales[registers->vcount + 1u][2u * i + 1u], &row_dirty);
+        context->base_scale[registers->vcount][i][3u] +
+            (context->base_scale[registers->vcount][i][3u] -
+             context->base_scale[registers->vcount - 1u][i][3u]),
+        &context->base_scale[registers->vcount + 1u][i][3u], &row_dirty);
   }
 
   if (row_dirty) {
@@ -96,50 +96,42 @@ bool OpenGlBgAffineLoad(OpenGlBgAffine* context,
 }
 
 void OpenGlBgAffineBind(OpenGlBgAffine* context, GLuint program) {
-  GLint affine_bases = glGetUniformBlockIndex(program, "AffineBases");
-  if (affine_bases < 0) {
+  GLint affine_coordinates =
+      glGetUniformLocation(program, "affine_coordinates");
+  if (affine_coordinates < 0) {
     return;
   }
 
-  glUniformBlockBinding(program, affine_bases, AFFINE_BASES_BUFFER);
-  glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_BASES_BUFFER,
-                   context->buffers[0u]);
-
-  GLint affine_scales = glGetUniformBlockIndex(program, "AffineScales");
-
-  glUniformBlockBinding(program, affine_scales, AFFINE_SCALES_BUFFER);
-  glBindBufferBase(GL_UNIFORM_BUFFER, AFFINE_SCALES_BUFFER,
-                   context->buffers[1u]);
+  glUniform1i(affine_coordinates, BG_AFFINE_COORDINATES_TEXTURE);
+  glActiveTexture(GL_TEXTURE0 + BG_AFFINE_COORDINATES_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->texture);
 
   if (context->dirty) {
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/4u * sizeof(GLfloat) * context->dirty_start,
-                    /*size=*/4u * sizeof(GLfloat) *
-                        (context->dirty_end - context->dirty_start + 1u),
-                    /*data=*/&context->bases[context->dirty_start]);
-    glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/4u * sizeof(GLfloat) * context->dirty_start,
-                    /*size=*/4u * sizeof(GLfloat) *
-                        (context->dirty_end - context->dirty_start + 1u),
-                    /*data=*/&context->scales[context->dirty_start]);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                    /*yoffset=*/context->dirty_start,
+                    /*width=*/GBA_PPU_NUM_AFFINE_BACKGROUNDS,
+                    /*height=*/context->dirty_end - context->dirty_start + 1u,
+                    /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
+                    /*pixels=*/context->base_scale[context->dirty_start]);
     context->dirty = false;
   }
 }
 
 void OpenGlBgAffineReloadContext(OpenGlBgAffine* context) {
-  glGenBuffers(2, context->buffers);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[0u]);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->bases), context->bases,
-               GL_DYNAMIC_DRAW);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffers[1u]);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->scales), context->scales,
-               GL_DYNAMIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glGenTextures(1, &context->texture);
+  glBindTexture(GL_TEXTURE_2D, context->texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
+               /*width=*/GBA_PPU_NUM_AFFINE_BACKGROUNDS,
+               /*height=*/GBA_SCREEN_HEIGHT + 1u, /*border=*/0,
+               /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
+               /*pixels=*/context->base_scale);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void OpenGlBgAffineDestroy(OpenGlBgAffine* context) {
-  glDeleteBuffers(2, context->buffers);
+  glDeleteTextures(1u, &context->texture);
 }

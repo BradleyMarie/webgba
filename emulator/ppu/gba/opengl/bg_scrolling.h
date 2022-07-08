@@ -11,8 +11,8 @@ typedef struct {
 } OpenGlScrollingRow;
 
 typedef struct {
-  OpenGlScrollingRow staging[GBA_SCREEN_HEIGHT];
-  GLuint buffer;
+  GLuint staging[GBA_SCREEN_HEIGHT][GBA_PPU_NUM_BACKGROUNDS];
+  GLuint texture;
   uint8_t dirty_start;
   uint8_t dirty_end;
   bool dirty;

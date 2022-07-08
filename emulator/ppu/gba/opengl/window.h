@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
   OpenGlWindowRow staging[GBA_SCREEN_HEIGHT];
-  GLuint buffer;
+  GLuint texture;
   uint8_t dirty_start;
   uint8_t dirty_end;
   bool dirty;

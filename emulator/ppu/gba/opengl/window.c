@@ -140,31 +140,36 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
 }
 
 void OpenGlWindowBind(OpenGlWindow* context, GLuint program) {
-  GLint window = glGetUniformBlockIndex(program, "Windows");
-  glUniformBlockBinding(program, window, WINDOW_BUFFER);
+  GLint window_rows = glGetUniformLocation(program, "window_rows");
+  glUniform1i(window_rows, WINDOW_TEXTURE);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBindBufferBase(GL_UNIFORM_BUFFER, WINDOW_BUFFER, context->buffer);
+  glActiveTexture(GL_TEXTURE0 + WINDOW_TEXTURE);
+  glBindTexture(GL_TEXTURE_2D, context->texture);
 
   if (context->dirty) {
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    /*offset=*/sizeof(OpenGlWindowRow) * context->dirty_start,
-                    /*size=*/sizeof(OpenGlWindowRow) *
-                        (context->dirty_end - context->dirty_start + 1u),
-                    /*data=*/&context->staging[context->dirty_start]);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
+                    /*yoffset=*/context->dirty_start, /*width=*/1u,
+                    /*height=*/context->dirty_end - context->dirty_start + 1u,
+                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                    /*pixels=*/&context->staging[context->dirty_start]);
     context->dirty = false;
   }
-
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void OpenGlWindowReloadContext(OpenGlWindow* context) {
-  glGenBuffers(1, &context->buffer);
-  glBindBuffer(GL_UNIFORM_BUFFER, context->buffer);
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(context->staging), &context->staging,
-               GL_DYNAMIC_DRAW);
+  glGenTextures(1, &context->texture);
+  glBindTexture(GL_TEXTURE_2D, context->texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+               /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT, /*border=*/0,
+               /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+               /*pixels=*/context->staging);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void OpenGlWindowDestroy(OpenGlWindow* context) {
-  glDeleteTextures(1u, &context->buffer);
+  glDeleteTextures(1u, &context->texture);
 }
