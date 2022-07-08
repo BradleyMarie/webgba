@@ -51,28 +51,17 @@ layout(std140) uniform ObjectColumns {
 };
 
 // Backgrounds
-layout(std140) uniform Backgrounds { highp uvec4 backgrounds[160]; };
+uniform highp usampler2D backgrounds;
 
 // Background Coordinates
-layout(std140) uniform ScrollingBackgrounds {
-  highp uvec4 scrolling_rows[160];
-};
-
-layout(std140) uniform AffineBases { highp vec4 affine_bases[161]; };
-layout(std140) uniform AffineScales { highp vec4 affine_scales[161]; };
+uniform highp usampler2D scrolling_coordinates;
+uniform highp sampler2D affine_coordinates;
 
 // Window
-layout(std140) uniform Windows {
-  // Enable WinObj is bit 6 of window 'z'
-  highp uvec4 window_rows[160];
-};
+uniform highp usampler2D window_rows;
 
 // Blend
-layout(std140) uniform Blend {
-  // high: mode, top, bottom
-  // low: eva, evb, evy
-  mediump uvec3 blend_rows[160];
-};
+uniform mediump usampler2D blend_rows;
 
 // Blend Unit
 struct BlendUnit {
@@ -86,7 +75,7 @@ struct BlendUnit {
 
 BlendUnit CreateBlendUnit(lowp uint screen_row) {
   BlendUnit result;
-  result.bldcnt_ev = blend_rows[screen_row];
+  result.bldcnt_ev = texelFetch(blend_rows, ivec2(0, screen_row), 0).rgb;
   result.color[0] = vec3(0.0, 0.0, 0.0);
   result.color[1] = vec3(0.0, 0.0, 0.0);
   result.priority[0] = 6u;
@@ -272,7 +261,8 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 // Window
 lowp uint CheckWindow(lowp uint screen_column, lowp uint screen_row,
                       bool on_object) {
-  highp uvec4 window_and_bounds = window_rows[screen_row];
+  highp uvec4 window_and_bounds =
+      texelFetch(window_rows, ivec2(0, screen_row), 0);
 
   mediump uint window0_location =
       (screen_column + (window_and_bounds.x >> 16u)) % 240u;
@@ -434,19 +424,16 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, highp vec2 samplecoord,
 
 mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row,
                           highp vec2 samplecoord) {
-  lowp uint x_component = 2u * (bg - 2u);
-  lowp uint y_component = x_component + 1u;
+  lowp uint column = bg - 2u;
+
+  highp vec4 this_row =
+      texelFetch(affine_coordinates, ivec2(column, screen_row), 0);
+  highp vec4 next_row =
+      texelFetch(affine_coordinates, ivec2(column, screen_row + 1u), 0);
+
   highp float interp = samplecoord.y - float(screen_row);
-  highp vec2 base = mix(vec2(affine_bases[screen_row][x_component],
-                             affine_bases[screen_row][y_component]),
-                        vec2(affine_bases[screen_row + 1u][x_component],
-                             affine_bases[screen_row + 1u][y_component]),
-                        interp);
-  highp vec2 scale = mix(vec2(affine_scales[screen_row][x_component],
-                              affine_scales[screen_row][y_component]),
-                         vec2(affine_scales[screen_row + 1u][x_component],
-                              affine_scales[screen_row + 1u][y_component]),
-                         interp);
+  highp vec2 base = mix(this_row.xy, next_row.xy, interp);
+  highp vec2 scale = mix(this_row.zw, next_row.zw, interp);
   return ivec2(floor(base + scale * samplecoord.x));
 }
 
@@ -626,10 +613,10 @@ void main() {
   }
 #endif  // OBJECTS != 0
 
-  highp uvec4 bgcnt = backgrounds[screen_row];
+  highp uvec4 bgcnt = texelFetch(backgrounds, ivec2(0, screen_row), 0);
 
 #if SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
-  uvec4 origins = scrolling_rows[screen_row];
+  uvec4 origins = texelFetch(scrolling_coordinates, ivec2(0, screen_row), 0);
 #endif  // SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
 
 #if SCROLLING_BACKGROUND_0 != 0

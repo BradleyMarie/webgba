@@ -7,20 +7,8 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  uint8_t mode;
-  uint8_t eva;
-  uint8_t padding0[2u];
-  uint8_t top;
-  uint8_t evb;
-  uint8_t padding1[2u];
-  uint8_t bottom;
-  uint8_t evy;
-  uint8_t padding2[6u];
-} OpenGlBlendRow;
-
-typedef struct {
-  OpenGlBlendRow staging[GBA_SCREEN_HEIGHT];
-  GLuint buffer;
+  GLuint staging[GBA_SCREEN_HEIGHT][4u];
+  GLuint texture;
   uint8_t dirty_start;
   uint8_t dirty_end;
   bool dirty;

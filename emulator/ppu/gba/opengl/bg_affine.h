@@ -7,9 +7,9 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat bases[161u][4u];
-  GLfloat scales[161u][4u];
-  GLuint buffers[2u];
+  GLfloat base_scale[GBA_SCREEN_HEIGHT + 1u][GBA_PPU_NUM_AFFINE_BACKGROUNDS]
+                    [4u];
+  GLuint texture;
   uint8_t dirty_start;
   uint8_t dirty_end;
   bool dirty;
