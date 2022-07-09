@@ -84,10 +84,10 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     object_indices[insert_index++] = obj;
   }
 
-  context->object_window[0u] = window.objects[0u];
-  context->object_window[1u] = window.objects[0u] >> 32u;
-  context->object_window[2u] = window.objects[1u];
-  context->object_window[3u] = window.objects[1u] >> 32u;
+  context->staging_object_window[0u] = window.objects[0u];
+  context->staging_object_window[1u] = window.objects[0u] >> 32u;
+  context->staging_object_window[2u] = window.objects[1u];
+  context->staging_object_window[3u] = window.objects[1u] >> 32u;
 
   GbaPpuSet drawn;
   GbaPpuSetClear(&drawn);
@@ -108,10 +108,10 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
     }
   }
 
-  context->object_drawn[0u] = drawn.objects[0u];
-  context->object_drawn[1u] = drawn.objects[0u] >> 32u;
-  context->object_drawn[2u] = drawn.objects[1u];
-  context->object_drawn[3u] = drawn.objects[1u] >> 32u;
+  context->staging_object_drawn[0u] = drawn.objects[0u];
+  context->staging_object_drawn[1u] = drawn.objects[0u] >> 32u;
+  context->staging_object_drawn[2u] = drawn.objects[1u];
+  context->staging_object_drawn[3u] = drawn.objects[1u] >> 32u;
 
   for (uint8_t x = 0u; x < GBA_SCREEN_WIDTH; x++) {
     GbaPpuSetClear(context->columns + x);
@@ -281,6 +281,12 @@ void OpenGlObjectsReload(OpenGlObjects* context) {
                     /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
                     /*pixels=*/context->object_columns);
     glBindTexture(GL_TEXTURE_2D, 0u);
+
+    for (uint8_t i = 0; i < 4u; i++) {
+      context->object_drawn[i] = context->staging_object_drawn[i];
+      context->object_window[i] = context->staging_object_window[i];
+    }
+
     context->dirty = false;
   }
 }

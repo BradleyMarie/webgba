@@ -14,11 +14,13 @@ typedef struct {
   GLuint object_attributes[OAM_NUM_OBJECTS][4u];
   GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
   GLuint object_columns[GBA_SCREEN_WIDTH][4u];
-  GLuint object_drawn[4u];
-  GLuint object_window[4u];
+  GLuint staging_object_drawn[4u];
+  GLuint staging_object_window[4u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GLuint textures[4u];
+  GLuint object_drawn[4u];
+  GLuint object_window[4u];
   bool dirty;
 } OpenGlObjects;
 
