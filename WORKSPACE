@@ -9,13 +9,13 @@ http_archive(
 
 http_archive(
     name = "emsdk",
-    sha256 = "af86db92277df954999e0c3bf116a75252f2bc79374e615788445ebb99fccd3c",
-    strip_prefix = "emsdk-3.1.13/bazel",
-    url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.13.tar.gz",
+    sha256 = "74c7c54b3544555ec38d1e9dcc7e90b9f49ed0e04f2cc3fd44663c598af24124",
+    strip_prefix = "emsdk-3.1.15/bazel",
+    url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.15.tar.gz",
 )
 
 load("@emsdk//:deps.bzl", emsdk_deps = "deps")
 emsdk_deps()
 
 load("@emsdk//:emscripten_deps.bzl", emsdk_emscripten_deps = "emscripten_deps")
-emsdk_emscripten_deps(emscripten_version = "3.1.9")
+emsdk_emscripten_deps(emscripten_version = "3.1.15")
