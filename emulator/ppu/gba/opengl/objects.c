@@ -227,25 +227,25 @@ void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program) {
 
   glUniform1i(object_transformations, OBJECT_TRANSFORMATIONS_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_TRANSFORMATIONS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->textures[0u]);
+  glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][0u]);
 
   GLint object_attributes = glGetUniformLocation(program, "object_attributes");
   glUniform1i(object_attributes, OBJECT_ATTRIBUTES_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + OBJECT_ATTRIBUTES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->textures[1u]);
+  glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][1u]);
 
   GLint object_rows = glGetUniformLocation(program, "object_rows");
   glUniform1i(object_rows, OBJECT_ROWS_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + OBJECT_ROWS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->textures[2u]);
+  glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][2u]);
 
   GLint object_columns = glGetUniformLocation(program, "object_columns");
   glUniform1i(object_columns, OBJECT_COLUMNS_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + OBJECT_COLUMNS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->textures[3u]);
+  glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][3u]);
 
   GLint object_drawn = glGetUniformLocation(program, "object_drawn");
   glUniform4ui(object_drawn, context->object_drawn[0u],
@@ -260,22 +260,27 @@ void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program) {
 
 void OpenGlObjectsReload(OpenGlObjects* context) {
   if (context->dirty) {
-    glBindTexture(GL_TEXTURE_2D, context->textures[0u]);
+    context->texture_index += 1u;
+    if (context->texture_index == GBA_SCREEN_HEIGHT) {
+      context->texture_index = 0u;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][0u]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/1u, /*height=*/OAM_NUM_ROTATE_SCALE_GROUPS + 1u,
                     /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
                     /*pixels=*/context->object_transformations);
-    glBindTexture(GL_TEXTURE_2D, context->textures[1u]);
+    glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][1u]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/1u, /*height=*/OAM_NUM_OBJECTS,
                     /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
                     /*pixels=*/context->object_attributes);
-    glBindTexture(GL_TEXTURE_2D, context->textures[2u]);
+    glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][2u]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT,
                     /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
                     /*pixels=*/context->object_rows);
-    glBindTexture(GL_TEXTURE_2D, context->textures[3u]);
+    glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][3u]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/1u, /*height=*/GBA_SCREEN_WIDTH,
                     /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
@@ -292,46 +297,51 @@ void OpenGlObjectsReload(OpenGlObjects* context) {
 }
 
 void OpenGlObjectsReloadContext(OpenGlObjects* context) {
-  glGenTextures(4, context->textures);
-  glBindTexture(GL_TEXTURE_2D, context->textures[0u]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
-               /*width=*/1u, /*height=*/OAM_NUM_ROTATE_SCALE_GROUPS + 1u,
-               /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
-               /*pixels=*/context->object_transformations);
-  glBindTexture(GL_TEXTURE_2D, context->textures[1u]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-               /*width=*/1u, /*height=*/OAM_NUM_OBJECTS, /*border=*/0,
-               /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-               /*pixels=*/context->object_attributes);
-  glBindTexture(GL_TEXTURE_2D, context->textures[2u]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-               /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT, /*border=*/0,
-               /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-               /*pixels=*/context->object_rows);
-  glBindTexture(GL_TEXTURE_2D, context->textures[3u]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-               /*width=*/1u, /*height=*/GBA_SCREEN_WIDTH, /*border=*/0,
-               /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-               /*pixels=*/context->object_columns);
+  for (uint8_t i = 0u; i < GBA_SCREEN_HEIGHT; i++) {
+    glGenTextures(4, context->textures[i]);
+    glBindTexture(GL_TEXTURE_2D, context->textures[i][0u]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32F,
+                 /*width=*/1u, /*height=*/OAM_NUM_ROTATE_SCALE_GROUPS + 1u,
+                 /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
+                 /*pixels=*/context->object_transformations);
+    glBindTexture(GL_TEXTURE_2D, context->textures[i][1u]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+                 /*width=*/1u, /*height=*/OAM_NUM_OBJECTS, /*border=*/0,
+                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                 /*pixels=*/context->object_attributes);
+    glBindTexture(GL_TEXTURE_2D, context->textures[i][2u]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+                 /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT, /*border=*/0,
+                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                 /*pixels=*/context->object_rows);
+    glBindTexture(GL_TEXTURE_2D, context->textures[i][3u]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+                 /*width=*/1u, /*height=*/GBA_SCREEN_WIDTH, /*border=*/0,
+                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                 /*pixels=*/context->object_columns);
+  }
+
   glBindTexture(GL_TEXTURE_2D, 0u);
 }
 
 void OpenGlObjectsDestroy(OpenGlObjects* context) {
-  glDeleteTextures(4u, context->textures);
+  for (uint8_t i = 0u; i < GBA_SCREEN_HEIGHT; i++) {
+    glDeleteTextures(4u, context->textures[i]);
+  }
 }

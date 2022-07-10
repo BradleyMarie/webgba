@@ -18,9 +18,10 @@ typedef struct {
   GLuint staging_object_window[4u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
-  GLuint textures[4u];
   GLuint object_drawn[4u];
   GLuint object_window[4u];
+  GLuint textures[GBA_SCREEN_HEIGHT][4u];
+  uint8_t texture_index;
   bool dirty;
 } OpenGlObjects;
 
