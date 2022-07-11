@@ -10,7 +10,7 @@
 #include "emulator/ppu/gba/set.h"
 
 typedef struct {
-  GLuint object_indices[GBA_SCREEN_HEIGHT];
+  GLuint object_indices[GBA_SCREEN_HEIGHT][4u];
   GLfloat object_transformations[OAM_NUM_ROTATE_SCALE_GROUPS + 1u][4u];
   GLuint object_attributes[OAM_NUM_OBJECTS][4u];
   GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
@@ -19,7 +19,7 @@ typedef struct {
   GLuint object_window[4u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
-  GLuint textures[7u];
+  GLuint textures[5u];
   uint8_t texture_index;
   uint8_t dirty_start;
   uint8_t dirty_end;
