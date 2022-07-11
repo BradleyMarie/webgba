@@ -58,6 +58,8 @@ static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlBgControlLoad(&renderer->bg_control, registers, dirty_bits);
   result |= OpenGlBlendLoad(&renderer->blend, registers, dirty_bits);
   result |= OpenGlWindowLoad(&renderer->window, registers, dirty_bits);
+  result |=
+      OpenGlObjectsLoad(&renderer->objects, memory, registers, dirty_bits);
   return result;
 }
 
@@ -79,8 +81,6 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlPaletteStage(&renderer->palette, dirty_bits);
   result |=
       OpenGlTilemapStage(&renderer->tilemap, memory, registers, dirty_bits);
-  result |=
-      OpenGlObjectsStage(&renderer->objects, memory, registers, dirty_bits);
   result |= OpenGlTilesStage(&renderer->tiles, memory, registers, dirty_bits);
 
   return result;
@@ -116,13 +116,13 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgControlBind(&renderer->bg_control, program);
     OpenGlBlendBind(&renderer->blend, program);
     OpenGlWindowBind(&renderer->window, program);
+    OpenGlObjectsBind(&renderer->objects, program);
 
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
     OpenGlPaletteBind(&renderer->palette, program);
     OpenGlTilemapBind(&renderer->tilemap, program);
-    OpenGlObjectsBind(&renderer->objects, program);
     OpenGlTilesBind(&renderer->tiles, program);
 
     GLint render_scale = glGetUniformLocation(program, "render_scale");
@@ -221,7 +221,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);
     OpenGlPaletteReload(&renderer->palette, memory);
     OpenGlTilemapReload(&renderer->tilemap, memory);
-    OpenGlObjectsReload(&renderer->objects);
     OpenGlTilesReload(&renderer->tiles, memory);
   }
 
