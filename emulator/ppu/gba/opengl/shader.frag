@@ -39,9 +39,7 @@ uniform mediump sampler2D object_transformations;
 uniform highp usampler2D object_attributes;
 uniform highp usampler2D object_rows;
 uniform highp usampler2D object_columns;
-uniform highp usampler2D object_window;
-uniform highp usampler2D object_drawn;
-uniform lowp usampler2D object_indices;
+uniform highp usampler2D object_indicies_masks;
 
 // Backgrounds
 uniform highp usampler2D backgrounds;
@@ -554,7 +552,6 @@ bool NotEmpty(highp uvec4 value) {
 }
 
 // Entry Point
-
 void main() {
   lowp uint screen_row = 159u - uint(gl_FragCoord.y) / render_scale;
   lowp uint screen_column = uint(gl_FragCoord.x) / render_scale;
@@ -569,7 +566,8 @@ void main() {
   bool on_object_window = false;
 
 #if OBJECTS != 0
-  lowp uint object_set = texelFetch(object_indices, ivec2(0, screen_row), 0).r;
+  lowp uint object_set =
+      texelFetch(object_indicies_masks, ivec2(0, screen_row), 0).r;
 
   highp uvec4 row_objects =
       texelFetch(object_rows, ivec2(screen_row, object_set), 0);
@@ -577,7 +575,8 @@ void main() {
       texelFetch(object_columns, ivec2(screen_column, object_set), 0);
   highp uvec4 visible_objects = row_objects & column_objects;
 
-  highp uvec4 window_mask = texelFetch(object_window, ivec2(0, object_set), 0);
+  highp uvec4 window_mask =
+      texelFetch(object_indicies_masks, ivec2(1, object_set), 0);
   highp uvec4 window_objects = visible_objects & window_mask;
   while (NotEmpty(window_objects)) {
     lowp uint obj = CountTrailingZeroes(window_objects);
@@ -597,7 +596,8 @@ void main() {
 
 #if OBJECTS != 0
   if (bool(window & 0x10u)) {
-    highp uvec4 drawn_mask = texelFetch(object_drawn, ivec2(0, object_set), 0);
+    highp uvec4 drawn_mask =
+        texelFetch(object_indicies_masks, ivec2(2, object_set), 0);
     highp uvec4 drawn_objects = visible_objects & drawn_mask;
     while (NotEmpty(drawn_objects)) {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
