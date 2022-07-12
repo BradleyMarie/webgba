@@ -18,6 +18,9 @@ out lowp vec4 frag_color;
 // Render Scale
 uniform lowp uint render_scale;
 
+// Background Control
+uniform highp uvec4 background_control;
+
 // Palettes
 uniform lowp sampler2D background_palette;
 uniform lowp sampler2D object_palette;
@@ -40,9 +43,6 @@ uniform highp usampler2D object_attributes;
 uniform highp usampler2D object_rows;
 uniform highp usampler2D object_columns;
 uniform highp usampler2D object_indicies_masks;
-
-// Backgrounds
-uniform highp usampler2D backgrounds;
 
 // Background Coordinates
 uniform highp usampler2D scrolling_coordinates;
@@ -618,8 +618,6 @@ void main() {
   }
 #endif  // OBJECTS != 0
 
-  highp uvec4 bgcnt = texelFetch(backgrounds, ivec2(0, screen_row), 0);
-
 #if SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
   uvec4 origins = texelFetch(scrolling_coordinates, ivec2(0, screen_row), 0);
 #endif  // SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
@@ -627,63 +625,70 @@ void main() {
 #if SCROLLING_BACKGROUND_0 != 0
   if (bool(window & 0x1u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[0], bgcnt[0], 0u);
+        ScrollingBackground(blend_unit, samplecoord, origins[0],
+                            background_control[0], 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
 
 #if SCROLLING_BACKGROUND_1 != 0
   if (bool(window & 0x2u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[1], bgcnt[1], 1u);
+        ScrollingBackground(blend_unit, samplecoord, origins[1],
+                            background_control[1], 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
 
 #if SCROLLING_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[2], bgcnt[2], 2u);
+        ScrollingBackground(blend_unit, samplecoord, origins[2],
+                            background_control[2], 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
 
 #if SCROLLING_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[3], bgcnt[3], 3u);
+        ScrollingBackground(blend_unit, samplecoord, origins[3],
+                            background_control[3], 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
 
 #if AFFINE_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
     blend_unit =
-        AffineBackground(blend_unit, screen_row, samplecoord, bgcnt[2], 2u);
+        AffineBackground(blend_unit, screen_row, samplecoord,
+                         background_control[2], 2u);
   }
 #endif  // AFFINE_BACKGROUND_2 != 0
 
 #if AFFINE_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
     blend_unit =
-        AffineBackground(blend_unit, screen_row, samplecoord, bgcnt[3], 3u);
+        AffineBackground(blend_unit, screen_row, samplecoord,
+                         background_control[3], 3u);
   }
 #endif  // AFFINE_BACKGROUND_3 != 0
 
 #if SMALL_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
     blend_unit = BitmapBackground(blend_unit, screen_row, samplecoord,
-                                  ivec2(160, 128), bgcnt[2]);
+                                  ivec2(160, 128), background_control[2]);
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if LARGE_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
     blend_unit = BitmapBackground(blend_unit, screen_row, samplecoord,
-                                  ivec2(240, 160), bgcnt[2]);
+                                  ivec2(240, 160), background_control[2]);
   }
 #endif  // BITMAP_BACKGROUND != 0
 
 #if PALETTE_BITMAP_BACKGROUND != 0
   if (bool(window & 0x4u)) {
     blend_unit =
-        PaletteBitmapBackground(blend_unit, screen_row, samplecoord, bgcnt[2]);
+        PaletteBitmapBackground(blend_unit, screen_row, samplecoord,
+                                background_control[2]);
   }
 #endif  // PALETTE_BITMAP_BACKGROUND != 0
 
