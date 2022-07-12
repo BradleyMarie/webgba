@@ -52,11 +52,10 @@ uniform highp sampler2D affine_coordinates;
 uniform highp usampler2D window_rows;
 
 // Blend
-uniform mediump usampler2D blend_rows;
+uniform mediump uvec3 blend_control_ev;
 
 // Blend Unit
 struct BlendUnit {
-  mediump uvec3 bldcnt_ev;
   lowp vec3 color[2];
   lowp uint priority[2];
   bool top[2];
@@ -66,7 +65,6 @@ struct BlendUnit {
 
 BlendUnit CreateBlendUnit(lowp uint screen_row) {
   BlendUnit result;
-  result.bldcnt_ev = texelFetch(blend_rows, ivec2(0, screen_row), 0).rgb;
   result.color[0] = vec3(0.0, 0.0, 0.0);
   result.color[1] = vec3(0.0, 0.0, 0.0);
   result.priority[0] = 6u;
@@ -84,8 +82,8 @@ BlendUnit BlendUnitAddObject(BlendUnit blend_unit, lowp vec3 color,
                              lowp uint priority, bool blended) {
   blend_unit.color[0] = color.bgr;
   blend_unit.priority[0] = priority;
-  blend_unit.top[0] = blended || bool(blend_unit.bldcnt_ev.y & 0x10u);
-  blend_unit.bottom[0] = bool(blend_unit.bldcnt_ev.z & 0x10u);
+  blend_unit.top[0] = blended || bool(blend_control_ev.y & 0x10u);
+  blend_unit.bottom[0] = bool(blend_control_ev.z & 0x10u);
   blend_unit.semi_transparent[0] = blended;
   return blend_unit;
 }
@@ -97,8 +95,8 @@ BlendUnit BlendUnitAddBackground(BlendUnit blend_unit, highp uint bgcnt,
 
   blend_unit.color[1] = color.bgr;
   blend_unit.priority[1] = priority;
-  blend_unit.top[1] = bool(blend_unit.bldcnt_ev.y & (1u << bg));
-  blend_unit.bottom[1] = bool(blend_unit.bldcnt_ev.z & (1u << bg));
+  blend_unit.top[1] = bool(blend_control_ev.y & (1u << bg));
+  blend_unit.bottom[1] = bool(blend_control_ev.z & (1u << bg));
   blend_unit.semi_transparent[1] = false;
 
   if (blend_unit.priority[1] < blend_unit.priority[0]) {
@@ -130,13 +128,13 @@ BlendUnit BlendUnitAddBackdrop(BlendUnit blend_unit, lowp vec3 color) {
   if (5u < blend_unit.priority[1]) {
     if (5u < blend_unit.priority[0]) {
       blend_unit.color[0] = color.bgr;
-      blend_unit.top[0] = bool(blend_unit.bldcnt_ev.y & 0x20u);
-      blend_unit.bottom[0] = bool(blend_unit.bldcnt_ev.z & 0x20u);
+      blend_unit.top[0] = bool(blend_control_ev.y & 0x20u);
+      blend_unit.bottom[0] = bool(blend_control_ev.z & 0x20u);
       blend_unit.semi_transparent[0] = false;
     } else {
       blend_unit.color[1] = color.bgr;
-      blend_unit.top[1] = bool(blend_unit.bldcnt_ev.y & 0x20u);
-      blend_unit.bottom[1] = bool(blend_unit.bldcnt_ev.z & 0x20u);
+      blend_unit.top[1] = bool(blend_control_ev.y & 0x20u);
+      blend_unit.bottom[1] = bool(blend_control_ev.z & 0x20u);
       blend_unit.semi_transparent[1] = false;
     }
   }
@@ -150,8 +148,8 @@ lowp vec3 BlendUnitNoBlend(BlendUnit blend_unit) {
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_control_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_control_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -165,8 +163,8 @@ lowp vec3 BlendUnitAdditiveBlend(BlendUnit blend_unit) {
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_control_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_control_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = 1.0;
     evb = 0.0;
@@ -183,7 +181,7 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
 
   lowp float evy;
   if (do_brighten) {
-    evy = float(blend_unit.bldcnt_ev.z >> 8u) * (1.0 / 16.0);
+    evy = float(blend_control_ev.z >> 8u) * (1.0 / 16.0);
   } else {
     evy = 0.0;
   }
@@ -191,8 +189,8 @@ lowp vec3 BlendUnitBrighten(BlendUnit blend_unit) {
   lowp vec3 bottom;
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_control_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_control_ev.y >> 8u) * (1.0 / 16.0);
     bottom = blend_unit.color[1];
   } else {
     eva = 1.0;
@@ -211,15 +209,15 @@ lowp vec3 BlendUnitDarken(BlendUnit blend_unit) {
 
   lowp float evy;
   if (do_darken) {
-    evy = 1.0 - float(blend_unit.bldcnt_ev.z >> 8u) * (1.0 / 16.0);
+    evy = 1.0 - float(blend_control_ev.z >> 8u) * (1.0 / 16.0);
   } else {
     evy = 1.0;
   }
 
   lowp float eva, evb;
   if (do_blend) {
-    eva = float(blend_unit.bldcnt_ev.x >> 8u) * (1.0 / 16.0);
-    evb = float(blend_unit.bldcnt_ev.y >> 8u) * (1.0 / 16.0);
+    eva = float(blend_control_ev.x >> 8u) * (1.0 / 16.0);
+    evb = float(blend_control_ev.y >> 8u) * (1.0 / 16.0);
   } else {
     eva = evy;
     evb = 0.0;
@@ -233,7 +231,7 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
     return vec4(blend_unit.color[0], 1.0);
   }
 
-  lowp uint mode = blend_unit.bldcnt_ev.x & 0x3u;
+  lowp uint mode = blend_control_ev.x & 0x3u;
 
   lowp vec3 color;
   if (mode == 0u) {

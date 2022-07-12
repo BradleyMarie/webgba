@@ -7,20 +7,16 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint staging[GBA_SCREEN_HEIGHT][4u];
-  GLuint texture;
-  uint8_t dirty_start;
-  uint8_t dirty_end;
+  GLuint staging[3u];
+  GLuint bldcnt_ev[3u];
   bool dirty;
 } OpenGlBlend;
 
-bool OpenGlBlendLoad(OpenGlBlend* context, const GbaPpuRegisters* registers,
-                     GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
+                      GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBlendBind(OpenGlBlend* context, GLuint program);
+void OpenGlBlendBind(const OpenGlBlend* context, GLuint program);
 
-void OpenGlBlendReloadContext(OpenGlBlend* context);
-
-void OpenGlBlendDestroy(OpenGlBlend* context);
+void OpenGlBlendReload(OpenGlBlend* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BLEND_
