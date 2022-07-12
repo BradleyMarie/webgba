@@ -7,25 +7,17 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint origins[GBA_PPU_NUM_BACKGROUNDS];
-} OpenGlScrollingRow;
-
-typedef struct {
-  GLuint staging[GBA_SCREEN_HEIGHT][GBA_PPU_NUM_BACKGROUNDS];
-  GLuint texture;
-  uint8_t dirty_start;
-  uint8_t dirty_end;
+  GLuint staging[GBA_PPU_NUM_BACKGROUNDS];
+  GLuint scrolling[GBA_PPU_NUM_BACKGROUNDS];
   bool dirty;
 } OpenGlBgScrolling;
 
-bool OpenGlBgScrollingLoad(OpenGlBgScrolling* context,
-                           const GbaPpuRegisters* registers,
-                           GbaPpuDirtyBits* dirty_bits);
+bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
+                            const GbaPpuRegisters* registers,
+                            GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgScrollingBind(OpenGlBgScrolling* context, GLuint program);
+void OpenGlBgScrollingBind(const OpenGlBgScrolling* context, GLuint program);
 
-void OpenGlBgScrollingReloadContext(OpenGlBgScrolling* context);
-
-void OpenGlBgScrollingDestroy(OpenGlBgScrolling* context);
+void OpenGlBgScrollingReload(OpenGlBgScrolling* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_SCROLLING_

@@ -45,7 +45,7 @@ uniform highp usampler2D object_columns;
 uniform highp usampler2D object_indicies_masks;
 
 // Background Coordinates
-uniform highp usampler2D scrolling_coordinates;
+uniform highp uvec4 scrolling_coordinates;
 uniform highp sampler2D affine_coordinates;
 
 // Window
@@ -616,14 +616,10 @@ void main() {
   }
 #endif  // OBJECTS != 0
 
-#if SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
-  uvec4 origins = texelFetch(scrolling_coordinates, ivec2(0, screen_row), 0);
-#endif  // SCROLLING_BACKGROUND_0 != 0 || SCROLLING_BACKGROUND_1 != 0 || SCROLLING_BACKGROUND_2 != 0 || SCROLLING_BACKGROUND_3 != 0
-
 #if SCROLLING_BACKGROUND_0 != 0
   if (bool(window & 0x1u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[0],
+        ScrollingBackground(blend_unit, samplecoord, scrolling_coordinates[0],
                             background_control[0], 0u);
   }
 #endif  // SCROLLING_BACKGROUND_0 != 0
@@ -631,7 +627,7 @@ void main() {
 #if SCROLLING_BACKGROUND_1 != 0
   if (bool(window & 0x2u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[1],
+        ScrollingBackground(blend_unit, samplecoord, scrolling_coordinates[1],
                             background_control[1], 1u);
   }
 #endif  // SCROLLING_BACKGROUND_1 != 0
@@ -639,7 +635,7 @@ void main() {
 #if SCROLLING_BACKGROUND_2 != 0
   if (bool(window & 0x4u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[2],
+        ScrollingBackground(blend_unit, samplecoord, scrolling_coordinates[2],
                             background_control[2], 2u);
   }
 #endif  // SCROLLING_BACKGROUND_2 != 0
@@ -647,7 +643,7 @@ void main() {
 #if SCROLLING_BACKGROUND_3 != 0
   if (bool(window & 0x8u)) {
     blend_unit =
-        ScrollingBackground(blend_unit, samplecoord, origins[3],
+        ScrollingBackground(blend_unit, samplecoord, scrolling_coordinates[3],
                             background_control[3], 3u);
   }
 #endif  // SCROLLING_BACKGROUND_3 != 0
