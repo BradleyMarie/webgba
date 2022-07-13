@@ -24,19 +24,5 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
 
   bits->oam.overall = true;
 
-  bits->io.dispcnt = true;
-  bits->io.blend = true;
-  bits->io.bg_affine[0u] = true;
-  bits->io.bg_affine[1u] = true;
-  bits->io.bg_offset[0u] = true;
-  bits->io.bg_offset[1u] = true;
-  bits->io.bg_offset[2u] = true;
-  bits->io.bg_offset[3u] = true;
-  bits->io.bg_control[0u] = true;
-  bits->io.bg_control[1u] = true;
-  bits->io.bg_control[2u] = true;
-  bits->io.bg_control[3u] = true;
-  bits->io.bg_mosaic = true;
   bits->io.obj_mosaic = true;
-  bits->io.window = true;
 }

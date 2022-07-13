@@ -22,14 +22,7 @@ typedef struct {
 } GbaPpuOamDirtyBits;
 
 typedef struct {
-  bool dispcnt;
-  bool blend;
-  bool bg_affine[GBA_PPU_NUM_AFFINE_BACKGROUNDS];
-  bool bg_offset[GBA_PPU_NUM_BACKGROUNDS];
-  bool bg_control[GBA_PPU_NUM_BACKGROUNDS];
-  bool bg_mosaic;
   bool obj_mosaic;
-  bool window;
 } GbaPpuIoDirtyBits;
 
 typedef struct {
