@@ -52,8 +52,7 @@ static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
     return false;
   }
 
-  bool result = OpenGlBgAffineLoad(&renderer->affine, registers, dirty_bits);
-  result |=
+  bool result =
       OpenGlObjectsLoad(&renderer->objects, memory, registers, dirty_bits);
   return result;
 }
@@ -70,6 +69,7 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlWindowStage(&renderer->window, registers, dirty_bits);
   result |= OpenGlBgControlStage(&renderer->bg_control, registers, dirty_bits);
   result |= OpenGlBlendStage(&renderer->blend, registers, dirty_bits);
+  result |= OpenGlBgAffineStage(&renderer->affine, registers, dirty_bits);
   result |=
       OpenGlBgScrollingStage(&renderer->bg_scrolling, registers, dirty_bits);
   result |= OpenGlBgBitmapMode3Stage(&renderer->bg_bitmap_mode3, memory,
@@ -111,12 +111,12 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
   } else {
     glUseProgram(program);
 
-    OpenGlBgAffineBind(&renderer->affine, program);
     OpenGlObjectsBind(&renderer->objects, program);
 
     OpenGlWindowBind(&renderer->window, program);
     OpenGlBgControlBind(&renderer->bg_control, program);
     OpenGlBlendBind(&renderer->blend, program);
+    OpenGlBgAffineBind(&renderer->affine, program);
     OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
@@ -219,6 +219,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlWindowReload(&renderer->window);
     OpenGlBgControlReload(&renderer->bg_control);
     OpenGlBlendReload(&renderer->blend);
+    OpenGlBgAffineReload(&renderer->affine);
     OpenGlBgScrollingReload(&renderer->bg_scrolling);
     OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory);
@@ -246,7 +247,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
 
 void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
   OpenGlProgramsReloadContext(&renderer->programs);
-  OpenGlBgAffineReloadContext(&renderer->affine);
   OpenGlBgBitmapMode3ReloadContext(&renderer->bg_bitmap_mode3);
   OpenGlBgBitmapMode4ReloadContext(&renderer->bg_bitmap_mode4);
   OpenGlBgBitmapMode5ReloadContext(&renderer->bg_bitmap_mode5);
@@ -263,7 +263,6 @@ void GbaPpuOpenGlRendererReloadContext(GbaPpuOpenGlRenderer* renderer) {
 void GbaPpuOpenGlRendererFree(GbaPpuOpenGlRenderer* renderer) {
   if (renderer->initialized) {
     OpenGlProgramsDestroy(&renderer->programs);
-    OpenGlBgAffineDestroy(&renderer->affine);
     OpenGlBgBitmapMode3Destroy(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Destroy(&renderer->bg_bitmap_mode4);
     OpenGlBgBitmapMode5Destroy(&renderer->bg_bitmap_mode5);
