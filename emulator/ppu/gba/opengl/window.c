@@ -1,48 +1,7 @@
 #include "emulator/ppu/gba/opengl/window.h"
 
-#include <assert.h>
-
-#include "emulator/ppu/gba/opengl/texture_bindings.h"
-
-bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
-                      GbaPpuDirtyBits* dirty_bits) {
-  assert(registers->vcount < GBA_SCREEN_HEIGHT);
-
-  if (!context->dirty) {
-    context->dirty_start = registers->vcount;
-  }
-
-  bool row_dirty = false;
-  if (context->staging[registers->vcount].win0 != registers->winin.win0.value) {
-    context->staging[registers->vcount].win0 = registers->winin.win0.value;
-    row_dirty = true;
-  }
-
-  if (context->staging[registers->vcount].win1 != registers->winin.win1.value) {
-    context->staging[registers->vcount].win1 = registers->winin.win1.value;
-    row_dirty = true;
-  }
-
-  uint8_t winobj_value =
-      registers->winout.winobj.value | (registers->dispcnt.winobj_enable << 5u);
-  if (context->staging[registers->vcount].winobj != winobj_value) {
-    context->staging[registers->vcount].winobj = winobj_value;
-    row_dirty = true;
-  }
-
-  uint8_t winout_value;
-  if (registers->dispcnt.win0_enable || registers->dispcnt.win1_enable ||
-      registers->dispcnt.winobj_enable) {
-    winout_value = registers->winout.winout.value;
-  } else {
-    winout_value = 0x3Fu;
-  }
-
-  if (context->staging[registers->vcount].winout != winout_value) {
-    context->staging[registers->vcount].winout = winout_value;
-    row_dirty = true;
-  }
-
+bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
+                       GbaPpuDirtyBits* dirty_bits) {
   uint16_t shifts[2u];
   uint16_t bounds[2u];
   if (registers->dispcnt.win0_enable) {
@@ -111,65 +70,55 @@ bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
     bounds[1u] = 0u;
   }
 
-  if (context->staging[registers->vcount].win0_shift != shifts[0u]) {
-    context->staging[registers->vcount].win0_shift = shifts[0u];
-    row_dirty = true;
+  uint32_t win0_win0shift = registers->winin.win0.value | (shifts[0u] << 16u);
+  uint32_t win1_win0bound = registers->winin.win1.value | (bounds[0u] << 16u);
+  uint32_t winobj_win1_shift = registers->winout.winobj.value |
+                               (registers->dispcnt.winobj_enable << 5u) |
+                               (shifts[1u] << 16u);
+
+  uint32_t winout_win1_bound = bounds[1u] << 16u;
+  if (registers->dispcnt.win0_enable || registers->dispcnt.win1_enable ||
+      registers->dispcnt.winobj_enable) {
+    winout_win1_bound |= registers->winout.winout.value;
+  } else {
+    winout_win1_bound |= 0x3Fu;
   }
 
-  if (context->staging[registers->vcount].win0_bound != bounds[0u]) {
-    context->staging[registers->vcount].win0_bound = bounds[0u];
-    row_dirty = true;
+  if (context->staging[0u] != win0_win0shift) {
+    context->staging[0u] = win0_win0shift;
+    context->dirty = true;
   }
 
-  if (context->staging[registers->vcount].win1_shift != shifts[1u]) {
-    context->staging[registers->vcount].win1_shift = shifts[1u];
-    row_dirty = true;
+  if (context->staging[1u] != win1_win0bound) {
+    context->staging[1u] = win1_win0bound;
+    context->dirty = true;
   }
 
-  if (context->staging[registers->vcount].win1_bound != bounds[1u]) {
-    context->staging[registers->vcount].win1_bound = bounds[1u];
-    row_dirty = true;
+  if (context->staging[2u] != winobj_win1_shift) {
+    context->staging[2u] = winobj_win1_shift;
+    context->dirty = true;
   }
 
-  if (row_dirty) {
-    context->dirty_end = registers->vcount;
+  if (context->staging[3u] != winout_win1_bound) {
+    context->staging[3u] = winout_win1_bound;
     context->dirty = true;
   }
 
   return context->dirty;
 }
 
-void OpenGlWindowBind(OpenGlWindow* context, GLuint program) {
-  GLint window_rows = glGetUniformLocation(program, "window_rows");
-  glUniform1i(window_rows, WINDOW_TEXTURE);
+void OpenGlWindowBind(const OpenGlWindow* context, GLuint program) {
+  GLint window_and_bounds = glGetUniformLocation(program, "window_and_bounds");
+  glUniform4ui(window_and_bounds, context->window[0u], context->window[1u],
+               context->window[2u], context->window[3u]);
+}
 
-  glActiveTexture(GL_TEXTURE0 + WINDOW_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->texture);
-
+void OpenGlWindowReload(OpenGlWindow* context) {
   if (context->dirty) {
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0,
-                    /*yoffset=*/context->dirty_start, /*width=*/1u,
-                    /*height=*/context->dirty_end - context->dirty_start + 1u,
-                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                    /*pixels=*/&context->staging[context->dirty_start]);
+    context->window[0u] = context->staging[0u];
+    context->window[1u] = context->staging[1u];
+    context->window[2u] = context->staging[2u];
+    context->window[3u] = context->staging[3u];
     context->dirty = false;
   }
-}
-
-void OpenGlWindowReloadContext(OpenGlWindow* context) {
-  glGenTextures(1, &context->texture);
-  glBindTexture(GL_TEXTURE_2D, context->texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-               /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT, /*border=*/0,
-               /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-               /*pixels=*/context->staging);
-  glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void OpenGlWindowDestroy(OpenGlWindow* context) {
-  glDeleteTextures(1u, &context->texture);
 }

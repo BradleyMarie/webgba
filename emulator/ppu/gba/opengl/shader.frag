@@ -49,7 +49,7 @@ uniform highp uvec4 scrolling_coordinates;
 uniform highp sampler2D affine_coordinates;
 
 // Window
-uniform highp usampler2D window_rows;
+uniform highp uvec4 window_and_bounds;
 
 // Blend
 uniform mediump uvec3 blend_control_ev;
@@ -250,9 +250,6 @@ lowp vec4 BlendUnitBlend(BlendUnit blend_unit, bool enable_blend) {
 // Window
 lowp uint CheckWindow(lowp uint screen_column, lowp uint screen_row,
                       bool on_object) {
-  highp uvec4 window_and_bounds =
-      texelFetch(window_rows, ivec2(0, screen_row), 0);
-
   mediump uint window0_location =
       (screen_column + (window_and_bounds.x >> 16u)) % 240u;
   if (window0_location < window_and_bounds.y >> 16u) {
