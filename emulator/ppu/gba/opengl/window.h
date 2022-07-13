@@ -7,31 +7,16 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  uint16_t win0;
-  uint16_t win0_shift;
-  uint16_t win1;
-  uint16_t win0_bound;
-  uint16_t winobj;
-  uint16_t win1_shift;
-  uint16_t winout;
-  uint16_t win1_bound;
-} OpenGlWindowRow;
-
-typedef struct {
-  OpenGlWindowRow staging[GBA_SCREEN_HEIGHT];
-  GLuint texture;
-  uint8_t dirty_start;
-  uint8_t dirty_end;
+  GLuint window[4u];
+  GLuint staging[4u];
   bool dirty;
 } OpenGlWindow;
 
-bool OpenGlWindowLoad(OpenGlWindow* context, const GbaPpuRegisters* registers,
-                      GbaPpuDirtyBits* dirty_bits);
+bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
+                       GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlWindowBind(OpenGlWindow* context, GLuint program);
+void OpenGlWindowBind(const OpenGlWindow* context, GLuint program);
 
-void OpenGlWindowReloadContext(OpenGlWindow* context);
-
-void OpenGlWindowDestroy(OpenGlWindow* context);
+void OpenGlWindowReload(OpenGlWindow* context);
 
 #endif  // _WEBGBA_EMULATOR_PPU_GBA_OPENGL_WINDOW_
