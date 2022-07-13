@@ -169,7 +169,6 @@ static void InitializeMode1(OpenGlPrograms* context, GLuint vertex_shader) {
           free(shader_source);
 
           glCompileShader(fragment_shader);
-
           glAttachShader(context->mode1[obj][bg0][bg1][bg2], fragment_shader);
           glDeleteShader(fragment_shader);
 
