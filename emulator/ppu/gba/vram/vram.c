@@ -43,11 +43,16 @@ static void VRamUpdateDirtyBits(GbaPpuVRam *vram, uint32_t address) {
 
   uint8_t tilemap_block = address / TILEMAP_BLOCK_SIZE_BYTES;
   if (tilemap_block < GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS) {
-    vram->dirty->affine_tilemap[tilemap_block] = true;
-    vram->dirty->scrolling_tilemap[tilemap_block] = true;
+    vram->dirty->affine_tilemap = true;
+    vram->dirty->scrolling_tilemap = true;
   }
 
-  vram->dirty->tiles[address / TILEBLOCK_SIZE_BYTES] = true;
+  uint8_t tile_block = address / TILEBLOCK_SIZE_BYTES;
+  if (tile_block < GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS) {
+    vram->dirty->bg_tiles = true;
+  } else {
+    vram->dirty->obj_tiles = true;
+  }
 }
 
 static inline uint32_t VRamComputeAddress(uint32_t address) {

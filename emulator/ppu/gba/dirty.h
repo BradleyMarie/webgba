@@ -12,9 +12,10 @@ typedef struct {
   bool bitmap_mode_3;
   bool bitmap_mode_4[2u];
   bool bitmap_mode_5[2u];
-  bool affine_tilemap[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
-  bool scrolling_tilemap[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
-  bool tiles[6u];
+  bool affine_tilemap;
+  bool scrolling_tilemap;
+  bool bg_tiles;
+  bool obj_tiles;
 } GbaPpuVramDirtyBits;
 
 typedef struct {

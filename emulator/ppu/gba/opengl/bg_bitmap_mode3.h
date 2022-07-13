@@ -8,7 +8,8 @@
 
 typedef struct {
   uint16_t staging[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
-  GLuint texture;
+  GLuint textures[GBA_SCREEN_HEIGHT];
+  uint8_t texture_index;
   bool enabled;
   bool dirty;
 } OpenGlBgBitmapMode3;

@@ -11,10 +11,12 @@
 #define AFFINE_TILEMAP_TEXTURE_X_SIZE 64u
 
 typedef struct {
-  GLuint affine;
-  GLuint scrolling;
-  bool affine_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
-  bool scrolling_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_MAP_BLOCKS];
+  GLuint affine_textures[GBA_SCREEN_HEIGHT];
+  GLuint scrolling_textures[GBA_SCREEN_HEIGHT];
+  uint8_t affine_texture_index;
+  uint8_t scrolling_texture_index;
+  bool affine_dirty;
+  bool scrolling_dirty;
 } OpenGlTilemap;
 
 bool OpenGlTilemapStage(OpenGlTilemap* context, const GbaPpuMemory* memory,

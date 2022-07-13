@@ -8,11 +8,12 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLuint bg_tiles;
-  GLuint obj_tiles;
-  bool bg_dirty[GBA_TILE_MODE_NUM_BACKGROUND_TILE_BLOCKS];
-  bool obj_dirty[GBA_TILE_MODE_NUM_OBJECT_S_TILES /
-                 GBA_TILE_MODE_TILE_BLOCK_NUM_S_TILES];
+  GLuint bg_textures[GBA_SCREEN_HEIGHT];
+  GLuint obj_textures[GBA_SCREEN_HEIGHT];
+  uint8_t bg_texture_index;
+  uint8_t obj_texture_index;
+  bool bg_dirty;
+  bool obj_dirty;
 } OpenGlTiles;
 
 bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
