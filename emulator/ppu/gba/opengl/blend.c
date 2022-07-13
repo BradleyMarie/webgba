@@ -1,11 +1,5 @@
 #include "emulator/ppu/gba/opengl/blend.h"
 
-#include <assert.h>
-#include <math.h>
-#include <string.h>
-
-#include "emulator/ppu/gba/opengl/texture_bindings.h"
-
 bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
                       GbaPpuDirtyBits* dirty_bits) {
   if ((!registers->dispcnt.win0_enable || !registers->winin.win0.bld) &&

@@ -8,7 +8,6 @@ cc_library(
     hdrs = ["bg_affine.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:memory",
         "//emulator/ppu/gba:registers",
@@ -60,7 +59,6 @@ cc_library(
     hdrs = ["bg_control.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],
@@ -72,7 +70,6 @@ cc_library(
     hdrs = ["bg_scrolling.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],
@@ -84,7 +81,6 @@ cc_library(
     hdrs = ["blend.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],
@@ -215,7 +211,6 @@ cc_library(
     hdrs = ["window.h"],
     linkopts = ["-lGL"],
     deps = [
-        ":texture_bindings",
         "//emulator/ppu/gba:dirty",
         "//emulator/ppu/gba:registers",
     ],

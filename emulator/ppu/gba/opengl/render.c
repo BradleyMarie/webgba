@@ -44,19 +44,6 @@ struct _GbaPpuOpenGlRenderer {
   bool initialized;
 };
 
-static bool GbaPpuOpenGlRendererLoad(GbaPpuOpenGlRenderer* renderer,
-                                     const GbaPpuMemory* memory,
-                                     const GbaPpuRegisters* registers,
-                                     GbaPpuDirtyBits* dirty_bits) {
-  if (registers->dispcnt.forced_blank || registers->dispcnt.mode > 5u) {
-    return false;
-  }
-
-  bool result =
-      OpenGlObjectsLoad(&renderer->objects, memory, registers, dirty_bits);
-  return result;
-}
-
 static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
                                       const GbaPpuMemory* memory,
                                       const GbaPpuRegisters* registers,
@@ -70,6 +57,8 @@ static bool GbaPpuOpenGlRendererStage(GbaPpuOpenGlRenderer* renderer,
   result |= OpenGlBgControlStage(&renderer->bg_control, registers, dirty_bits);
   result |= OpenGlBlendStage(&renderer->blend, registers, dirty_bits);
   result |= OpenGlBgAffineStage(&renderer->affine, registers, dirty_bits);
+  result |=
+      OpenGlObjectsStage(&renderer->objects, memory, registers, dirty_bits);
   result |=
       OpenGlBgScrollingStage(&renderer->bg_scrolling, registers, dirty_bits);
   result |= OpenGlBgBitmapMode3Stage(&renderer->bg_bitmap_mode3, memory,
@@ -111,13 +100,12 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
   } else {
     glUseProgram(program);
 
-    OpenGlObjectsBind(&renderer->objects, program);
-
     OpenGlWindowBind(&renderer->window, program);
     OpenGlBgControlBind(&renderer->bg_control, program);
     OpenGlBlendBind(&renderer->blend, program);
     OpenGlBgAffineBind(&renderer->affine, program);
     OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
+    OpenGlObjectsBind(&renderer->objects, program);
     OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
     OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
     OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
@@ -192,11 +180,6 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     return;
   }
 
-  bool loaded_data =
-      GbaPpuOpenGlRendererLoad(renderer, memory, registers, dirty_bits);
-  renderer->flush_required |= loaded_data;
-  renderer->next_frame_flush_required |= loaded_data;
-
   bool staged_data =
       GbaPpuOpenGlRendererStage(renderer, memory, registers, dirty_bits);
   renderer->flush_required |= staged_data;
@@ -221,6 +204,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
     OpenGlBlendReload(&renderer->blend);
     OpenGlBgAffineReload(&renderer->affine);
     OpenGlBgScrollingReload(&renderer->bg_scrolling);
+    OpenGlObjectsReload(&renderer->objects);
     OpenGlBgBitmapMode3Reload(&renderer->bg_bitmap_mode3);
     OpenGlBgBitmapMode4Reload(&renderer->bg_bitmap_mode4, memory);
     OpenGlBgBitmapMode5Reload(&renderer->bg_bitmap_mode5);

@@ -1,10 +1,5 @@
 #include "emulator/ppu/gba/opengl/bg_scrolling.h"
 
-#include <assert.h>
-#include <string.h>
-
-#include "emulator/ppu/gba/opengl/texture_bindings.h"
-
 bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
                             const GbaPpuRegisters* registers,
                             GbaPpuDirtyBits* dirty_bits) {
