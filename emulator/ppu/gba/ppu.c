@@ -94,24 +94,6 @@ static void GbaPpuDrawnHBlank(GbaPpu *ppu) {
   GbaDmaUnitSignalHBlank(ppu->dma_unit, ppu->registers.vcount);
 
   if (ppu->registers.vcount == GBA_SCREEN_HEIGHT - 1) {
-    if ((ppu->registers.internal.affine[0u].row_start[0u] -
-         ppu->registers.affine[0u].pb * ppu->registers.vcount) !=
-            ppu->registers.affine[0u].x ||
-        (ppu->registers.internal.affine[0u].row_start[1u] -
-         ppu->registers.affine[0u].pd * ppu->registers.vcount) !=
-            ppu->registers.affine[0u].y) {
-      ppu->dirty.io.bg_affine[0u] = true;
-    }
-
-    if ((ppu->registers.internal.affine[1u].row_start[0u] -
-         ppu->registers.affine[1u].pb * ppu->registers.vcount) !=
-            ppu->registers.affine[1u].x ||
-        (ppu->registers.internal.affine[1u].row_start[1u] -
-         ppu->registers.affine[1u].pd * ppu->registers.vcount) !=
-            ppu->registers.affine[1u].y) {
-      ppu->dirty.io.bg_affine[1u] = true;
-    }
-
     ppu->registers.internal.affine[0u].row_start[0u] =
         ppu->registers.affine[0u].x;
     ppu->registers.internal.affine[0u].row_start[1u] =
@@ -121,24 +103,6 @@ static void GbaPpuDrawnHBlank(GbaPpu *ppu) {
     ppu->registers.internal.affine[1u].row_start[1u] =
         ppu->registers.affine[1u].y;
   } else {
-    if ((ppu->registers.internal.affine[0u].current[0u] -
-         ppu->registers.affine[0u].pa * ppu->x) !=
-            ppu->registers.internal.affine[0u].row_start[0u] ||
-        (ppu->registers.internal.affine[0u].current[1u] -
-         ppu->registers.affine[0u].pc * ppu->x) !=
-            ppu->registers.internal.affine[0u].row_start[1u]) {
-      ppu->dirty.io.bg_affine[0u] = true;
-    }
-
-    if ((ppu->registers.internal.affine[1u].current[0u] -
-         ppu->registers.affine[1u].pa * ppu->x) !=
-            ppu->registers.internal.affine[1u].row_start[0u] ||
-        (ppu->registers.internal.affine[1u].current[1u] -
-         ppu->registers.affine[1u].pc * ppu->x) !=
-            ppu->registers.internal.affine[1u].row_start[1u]) {
-      ppu->dirty.io.bg_affine[1u] = true;
-    }
-
     ppu->registers.internal.affine[0u].row_start[0u] +=
         ppu->registers.affine[0u].pb;
     ppu->registers.internal.affine[0u].row_start[1u] +=

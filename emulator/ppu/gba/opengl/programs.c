@@ -359,8 +359,6 @@ static void InitializeMode5(OpenGlPrograms* context, GLuint vertex_shader) {
 bool OpenGlProgramsStage(OpenGlPrograms* context,
                          const GbaPpuRegisters* registers,
                          GbaPpuDirtyBits* dirty_bits) {
-  dirty_bits->io.dispcnt = false;
-
   if (registers->dispcnt.forced_blank || registers->dispcnt.mode > 5) {
     context->staging = 0u;
   } else {
