@@ -42,7 +42,8 @@ uniform mediump sampler2D object_transformations;
 uniform highp usampler2D object_attributes;
 uniform highp usampler2D object_rows;
 uniform highp usampler2D object_columns;
-uniform highp usampler2D object_indicies_masks;
+uniform highp uvec4 object_window;
+uniform highp uvec4 object_drawn;
 
 // Background Coordinates
 uniform highp uvec4 scrolling_coordinates;
@@ -271,8 +272,7 @@ lowp uint CheckWindow(lowp uint screen_column, lowp uint screen_row,
 }
 
 // Objects
-lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint object_set,
-                           highp uvec4 object) {
+lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
   mediump ivec2 canvas_top = ivec2(object.x & 0xFFFFu, object.x >> 16u);
   mediump ivec2 canvas_size = ivec2((object.y >> 16u) & 0xFFu, object.y >> 24u);
   mediump ivec2 canvas_half_size = canvas_size >> 1;
@@ -280,7 +280,7 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, lowp uint object_set,
 
   highp vec2 from_center = samplecoord - vec2(canvas_center);
   highp mat2 transformation = mat2(texelFetch(
-      object_transformations, ivec2((object.z >> 16u) & 0xFFu, object_set), 0));
+      object_transformations, ivec2(0, (object.z >> 16u) & 0xFFu), 0));
   highp vec2 lookup_fp = transformation * from_center;
 
   mediump int sprite_size_x = int(object.w & 0xFFu);
@@ -555,25 +555,18 @@ void main() {
   bool on_object_window = false;
 
 #if OBJECTS != 0
-  lowp uint object_set =
-      texelFetch(object_indicies_masks, ivec2(0, screen_row), 0).r;
-
-  highp uvec4 row_objects =
-      texelFetch(object_rows, ivec2(screen_row, object_set), 0);
+  highp uvec4 row_objects = texelFetch(object_rows, ivec2(0, screen_row), 0);
   highp uvec4 column_objects =
-      texelFetch(object_columns, ivec2(screen_column, object_set), 0);
+      texelFetch(object_columns, ivec2(0, screen_column), 0);
   highp uvec4 visible_objects = row_objects & column_objects;
 
-  highp uvec4 window_mask =
-      texelFetch(object_indicies_masks, ivec2(1, object_set), 0);
-  highp uvec4 window_objects = visible_objects & window_mask;
+  highp uvec4 window_objects = visible_objects & object_window;
   while (NotEmpty(window_objects)) {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    highp uvec4 object =
-        texelFetch(object_attributes, ivec2(obj, object_set), 0);
-    lowp uint color_index = ObjectColorIndex(samplecoord, object_set, object);
+    highp uvec4 object = texelFetch(object_attributes, ivec2(0, obj), 0);
+    lowp uint color_index = ObjectColorIndex(samplecoord, object);
     if (color_index != 0u) {
       on_object_window = true;
       break;
@@ -585,16 +578,13 @@ void main() {
 
 #if OBJECTS != 0
   if (bool(window & 0x10u)) {
-    highp uvec4 drawn_mask =
-        texelFetch(object_indicies_masks, ivec2(2, object_set), 0);
-    highp uvec4 drawn_objects = visible_objects & drawn_mask;
+    highp uvec4 drawn_objects = visible_objects & object_drawn;
     while (NotEmpty(drawn_objects)) {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      highp uvec4 object =
-          texelFetch(object_attributes, ivec2(obj, object_set), 0);
-      lowp uint color_index = ObjectColorIndex(samplecoord, object_set, object);
+      highp uvec4 object = texelFetch(object_attributes, ivec2(0, obj), 0);
+      lowp uint color_index = ObjectColorIndex(samplecoord, object);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
             object_palette, ivec2((object.z >> 24u) + color_index, 0), 0);

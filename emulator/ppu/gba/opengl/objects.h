@@ -10,27 +10,28 @@
 #include "emulator/ppu/gba/set.h"
 
 typedef struct {
-  GLuint object_indices[GBA_SCREEN_HEIGHT][4u];
   GLfloat object_transformations[OAM_NUM_ROTATE_SCALE_GROUPS + 1u][4u];
   GLuint object_attributes[OAM_NUM_OBJECTS][4u];
   GLuint object_rows[GBA_SCREEN_HEIGHT][4u];
   GLuint object_columns[GBA_SCREEN_WIDTH][4u];
-  GLuint object_drawn[4u];
-  GLuint object_window[4u];
+  GLuint staging_object_drawn[4u];
+  GLuint staging_object_window[4u];
   GbaPpuSet rows[GBA_SCREEN_HEIGHT];
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
-  GLuint textures[5u];
+  GLuint object_drawn[4u];
+  GLuint object_window[4u];
+  GLuint textures[GBA_SCREEN_HEIGHT][4u];
   uint8_t texture_index;
-  uint8_t dirty_start;
-  uint8_t dirty_end;
   bool dirty;
 } OpenGlObjects;
 
-bool OpenGlObjectsLoad(OpenGlObjects* context, const GbaPpuMemory* memory,
-                       const GbaPpuRegisters* registers,
-                       GbaPpuDirtyBits* dirty_bits);
+bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
+                        const GbaPpuRegisters* registers,
+                        GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlObjectsBind(OpenGlObjects* context, GLuint program);
+void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program);
+
+void OpenGlObjectsReload(OpenGlObjects* context);
 
 void OpenGlObjectsReloadContext(OpenGlObjects* context);
 
