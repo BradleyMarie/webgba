@@ -8,18 +8,21 @@
 
 typedef struct {
   uint16_t staging[GBA_REDUCED_FRAME_HEIGHT * GBA_REDUCED_FRAME_WIDTH];
-  GLuint textures[2u];
+  GLuint current_textures[2u];
+  GLuint texture_pool[GBA_SCREEN_HEIGHT];
+  uint8_t texture_pool_index;
   uint8_t page;
   bool enabled;
   bool dirty;
 } OpenGlBgBitmapMode5;
 
 bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
-                               const GbaPpuMemory* memory,
-                               const GbaPpuRegisters* registers,
-                               GbaPpuDirtyBits* dirty_bits);
+                              const GbaPpuMemory* memory,
+                              const GbaPpuRegisters* registers,
+                              GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context, GLuint program);
+void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
+                             GLuint program);
 
 void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context);
 

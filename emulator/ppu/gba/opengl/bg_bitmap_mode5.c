@@ -41,26 +41,36 @@ void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
   glUniform1i(bg_mode5, BITMAP_TEXTURE);
 
   glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
+  glBindTexture(GL_TEXTURE_2D, context->current_textures[context->page]);
 }
 
 void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context) {
   if (context->dirty) {
-    glBindTexture(GL_TEXTURE_2D, context->textures[context->page]);
+    context->texture_pool_index += 1u;
+    if (context->texture_pool_index == GBA_SCREEN_HEIGHT) {
+      context->texture_pool_index = 0u;
+    }
+
+    glBindTexture(GL_TEXTURE_2D,
+                  context->texture_pool[context->texture_pool_index]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/GBA_REDUCED_FRAME_WIDTH,
                     /*height=*/GBA_REDUCED_FRAME_HEIGHT,
                     /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_SHORT_5_5_5_1,
                     /*pixels=*/context->staging);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    context->current_textures[context->page] =
+        context->texture_pool[context->texture_pool_index];
+
     context->dirty = false;
   }
 }
 
 void OpenGlBgBitmapMode5ReloadContext(OpenGlBgBitmapMode5* context) {
-  glGenTextures(2u, context->textures);
+  glGenTextures(GBA_SCREEN_HEIGHT, context->texture_pool);
   for (uint8_t i = 0u; i < 2u; i++) {
-    glBindTexture(GL_TEXTURE_2D, context->textures[i]);
+    glBindTexture(GL_TEXTURE_2D, context->texture_pool[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -73,8 +83,13 @@ void OpenGlBgBitmapMode5ReloadContext(OpenGlBgBitmapMode5* context) {
                  /*pixels=*/context->staging);
   }
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  context->current_textures[0u] =
+      context->texture_pool[context->texture_pool_index];
+  context->current_textures[1u] =
+      context->texture_pool[context->texture_pool_index];
 }
 
 void OpenGlBgBitmapMode5Destroy(OpenGlBgBitmapMode5* context) {
-  glDeleteTextures(2u, context->textures);
+  glDeleteTextures(GBA_SCREEN_HEIGHT, context->texture_pool);
 }
