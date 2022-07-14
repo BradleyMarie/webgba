@@ -3,20 +3,17 @@
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
 bool OpenGlPaletteStage(OpenGlPalette* context, GbaPpuDirtyBits* dirty_bits) {
-  bool result = false;
   if (dirty_bits->palette.palette[0u]) {
     dirty_bits->palette.palette[0u] = false;
     context->bg_dirty = true;
-    result = true;
   }
 
   if (dirty_bits->palette.palette[1u]) {
     dirty_bits->palette.palette[1u] = false;
     context->obj_dirty = true;
-    result = true;
   }
 
-  return result;
+  return context->bg_dirty || context->obj_dirty;
 }
 
 void OpenGlPaletteBind(const OpenGlPalette* context, GLuint program) {

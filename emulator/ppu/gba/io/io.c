@@ -154,11 +154,12 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
     value &= 0xFFF8u;
   }
 
+  bool dirty = io->registers->half_words[address >> 1u] != value;
   io->registers->half_words[address >> 1u] = value;
 
   switch (address) {
     case DISPCNT_OFFSET:
-      io->dirty->obj_mosaic = true;  // This is a little hacky
+      io->dirty->obj_mosaic |= dirty;  // This is a little hacky
       break;
     case BG2X_OFFSET:
     case BG2X_OFFSET_HI:
@@ -189,7 +190,7 @@ static bool GbaPpuIoStore16LE(void *context, uint32_t address, uint16_t value) {
           io->registers->affine[1u].y;
       break;
     case MOSAIC_OFFSET:
-      io->dirty->obj_mosaic = true;
+      io->dirty->obj_mosaic |= dirty;
       break;
   }
 
