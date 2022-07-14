@@ -106,8 +106,10 @@ static bool VRamStore32LE(void *context, uint32_t address, uint32_t value) {
   GbaPpuVRam *vram = (GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  vram->memory->words[address >> 2u] = value;
-  VRamUpdateDirtyBits(vram, address);
+  if (vram->memory->words[address >> 2u] != value) {
+    vram->memory->words[address >> 2u] = value;
+    VRamUpdateDirtyBits(vram, address);
+  }
 
   return true;
 }
@@ -118,8 +120,10 @@ static bool VRamStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuVRam *vram = (GbaPpuVRam *)context;
 
   address = VRamComputeAddress(address);
-  vram->memory->half_words[address >> 1u] = value;
-  VRamUpdateDirtyBits(vram, address);
+  if (vram->memory->half_words[address >> 1u] != value) {
+    vram->memory->half_words[address >> 1u] = value;
+    VRamUpdateDirtyBits(vram, address);
+  }
 
   return true;
 }
@@ -133,8 +137,10 @@ static bool VRamStore8(void *context, uint32_t address, uint8_t value) {
   }
 
   uint16_t value16 = ((uint16_t)value << 8u) | value;
-  vram->memory->half_words[address >> 1u] = value16;
-  VRamUpdateDirtyBits(vram, address);
+  if (vram->memory->half_words[address >> 1u] != value16) {
+    vram->memory->half_words[address >> 1u] = value16;
+    VRamUpdateDirtyBits(vram, address);
+  }
 
   return true;
 }

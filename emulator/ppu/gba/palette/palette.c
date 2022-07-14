@@ -64,8 +64,12 @@ static bool PaletteStore16LE(void *context, uint32_t address, uint16_t value) {
   GbaPpuPalette *palette = (GbaPpuPalette *)context;
 
   address &= PALETTE_ADDRESS_MASK;
-  palette->memory->half_words[address >> 1u] = RotateLeft(value, 1u);
-  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] = true;
+
+  uint16_t new_value = RotateLeft(value, 1u);
+  bool dirty = palette->memory->half_words[address >> 1u] != new_value;
+  palette->memory->half_words[address >> 1u] = new_value;
+
+  palette->dirty->palette[address >> PALETTE_DIRTY_SHIFT] |= dirty;
 
   return true;
 }
