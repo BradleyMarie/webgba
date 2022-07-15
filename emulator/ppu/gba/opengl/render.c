@@ -173,7 +173,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   renderer->next_frame_flush_required |= staged_data;
 
   if (registers->vcount != 0u && staged_data) {
-    GLuint framebuffer = ScreenGetRenderBuffer(
+    GLuint framebuffer = ScreenGetFrameBuffer(
         renderer->screen, GBA_SCREEN_WIDTH * renderer->render_scale,
         GBA_SCREEN_HEIGHT * renderer->render_scale, !renderer->frame_flipped);
     renderer->frame_flipped = true;
@@ -202,7 +202,7 @@ void GbaPpuOpenGlRendererDrawRow(GbaPpuOpenGlRenderer* renderer,
   }
 
   if (registers->vcount == GBA_SCREEN_HEIGHT - 1) {
-    GLuint framebuffer = ScreenGetRenderBuffer(
+    GLuint framebuffer = ScreenGetFrameBuffer(
         renderer->screen, GBA_SCREEN_WIDTH * renderer->render_scale,
         GBA_SCREEN_HEIGHT * renderer->render_scale,
         !renderer->frame_flipped && renderer->flush_required);
