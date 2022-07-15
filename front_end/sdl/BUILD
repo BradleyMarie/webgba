@@ -17,7 +17,7 @@ cc_binary(
             "--oformat=html",
             "--preload-file=$(location //third_party/varooom:game.gba)@/game.gba",
             "-s MINIFY_HTML=0",
-            "-s INITIAL_MEMORY=268435456",
+            "-s INITIAL_MEMORY=134217728",
             "-s MAX_WEBGL_VERSION=2",
             "-s MIN_WEBGL_VERSION=2",
         ],
