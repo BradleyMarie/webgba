@@ -141,20 +141,15 @@ uint8_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
 
   screen->subpixels = new_buffer;
 
-  if (screen->pixels_width == 0u && screen->pixels_height == 0u) {
-    glGenTextures(2u, screen->pixels_staging);
-  }
-
   screen->pixels_width = width;
   screen->pixels_height = height;
-
   ScreenAllocateStaging(screen);
 
   return screen->subpixels;
 }
 
 GLuint ScreenGetFrameBuffer(Screen *screen, GLsizei width, GLsizei height,
-                             bool new_framebuffer) {
+                            bool new_framebuffer) {
   assert(width != 0 && height != 0);
 
   if (screen->framebuffer_width == width &&
@@ -174,14 +169,8 @@ GLuint ScreenGetFrameBuffer(Screen *screen, GLsizei width, GLsizei height,
     return screen->intermediate_framebuffers[screen->renderbuffers_index];
   }
 
-  if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
-    glGenFramebuffers(2u, screen->intermediate_framebuffers);
-    glGenRenderbuffers(2u, screen->renderbuffers);
-  }
-
   screen->renderbuffer_width = width;
   screen->renderbuffer_height = height;
-
   ScreenAllocateRenderbuffer(screen);
 
   return screen->intermediate_framebuffers[screen->renderbuffers_index];
@@ -244,21 +233,21 @@ void ScreenReloadContext(Screen *screen) {
   screen->framebuffer_width = 0u;
   screen->framebuffer_height = 0u;
 
+  glGenFramebuffers(2u, screen->intermediate_framebuffers);
+  glGenRenderbuffers(2u, screen->renderbuffers);
   if (screen->renderbuffer_width != 0u && screen->renderbuffer_height != 0u) {
-    glGenFramebuffers(2u, screen->intermediate_framebuffers);
-    glGenRenderbuffers(2u, screen->renderbuffers);
     ScreenAllocateRenderbuffer(screen);
   }
 
+  glGenTextures(2u, screen->pixels_staging);
   if (screen->pixels_width != 0u && screen->pixels_width != 0u) {
-    glGenTextures(2u, screen->pixels_staging);
     ScreenAllocateStaging(screen);
   }
 }
 
 void ScreenFree(Screen *screen) {
   glDeleteProgram(screen->upscale_pixels);
-  glDeleteFramebuffers(2, screen->intermediate_framebuffers);
+  glDeleteFramebuffers(2u, screen->intermediate_framebuffers);
   glDeleteRenderbuffers(2u, screen->renderbuffers);
   glDeleteTextures(2u, screen->pixels_staging);
   free(screen->subpixels);
