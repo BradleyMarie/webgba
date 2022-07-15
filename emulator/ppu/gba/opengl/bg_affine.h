@@ -1,9 +1,8 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_AFFINE_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_AFFINE_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
@@ -16,7 +15,8 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
                          const GbaPpuRegisters* registers,
                          GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program);
+void OpenGlBgAffineBind(const OpenGlBgAffine* context,
+                        const UniformLocations* locations);
 
 void OpenGlBgAffineReload(OpenGlBgAffine* context);
 

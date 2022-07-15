@@ -1,10 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILEMAP_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILEMAP_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 #include "emulator/ppu/gba/registers.h"
 
 #define AFFINE_TILEMAP_TEXTURE_Y_SIZE 32u
@@ -23,7 +22,8 @@ bool OpenGlTilemapStage(OpenGlTilemap* context, const GbaPpuMemory* memory,
                         const GbaPpuRegisters* registers,
                         GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlTilemapBind(const OpenGlTilemap* context, GLuint program);
+void OpenGlTilemapBind(const OpenGlTilemap* context,
+                       const UniformLocations* locations);
 
 void OpenGlTilemapReload(OpenGlTilemap* context, const GbaPpuMemory* memory);
 

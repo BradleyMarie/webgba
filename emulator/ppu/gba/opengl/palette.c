@@ -16,20 +16,16 @@ bool OpenGlPaletteStage(OpenGlPalette* context, GbaPpuDirtyBits* dirty_bits) {
   return context->bg_dirty || context->obj_dirty;
 }
 
-void OpenGlPaletteBind(const OpenGlPalette* context, GLuint program) {
-  GLint background_palette =
-      glGetUniformLocation(program, "background_palette");
-  if (background_palette >= 0) {
-    glUniform1i(background_palette, BG_PALETTE_TEXTURE);
-
+void OpenGlPaletteBind(const OpenGlPalette* context,
+                       const UniformLocations* locations) {
+  if (locations->background_palette >= 0) {
+    glUniform1i(locations->background_palette, BG_PALETTE_TEXTURE);
     glActiveTexture(GL_TEXTURE0 + BG_PALETTE_TEXTURE);
     glBindTexture(GL_TEXTURE_2D, context->bg_palette);
   }
 
-  GLint object_palette = glGetUniformLocation(program, "object_palette");
-  if (object_palette >= 0) {
-    glUniform1i(object_palette, OBJ_PALETTE_TEXTURE);
-
+  if (locations->object_palette >= 0) {
+    glUniform1i(locations->object_palette, OBJ_PALETTE_TEXTURE);
     glActiveTexture(GL_TEXTURE0 + OBJ_PALETTE_TEXTURE);
     glBindTexture(GL_TEXTURE_2D, context->obj_palette);
   }

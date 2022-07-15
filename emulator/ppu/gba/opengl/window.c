@@ -107,10 +107,10 @@ bool OpenGlWindowStage(OpenGlWindow* context, const GbaPpuRegisters* registers,
   return context->dirty;
 }
 
-void OpenGlWindowBind(const OpenGlWindow* context, GLuint program) {
-  GLint window_and_bounds = glGetUniformLocation(program, "window_and_bounds");
-  glUniform4ui(window_and_bounds, context->window[0u], context->window[1u],
-               context->window[2u], context->window[3u]);
+void OpenGlWindowBind(const OpenGlWindow* context,
+                      const UniformLocations* locations) {
+  glUniform4ui(locations->window_and_bounds, context->window[0u],
+               context->window[1u], context->window[2u], context->window[3u]);
 }
 
 void OpenGlWindowReload(OpenGlWindow* context) {

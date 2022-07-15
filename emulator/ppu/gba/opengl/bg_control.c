@@ -43,11 +43,10 @@ bool OpenGlBgControlStage(OpenGlBgControl* context,
   return context->dirty;
 }
 
-void OpenGlBgControlBind(const OpenGlBgControl* context, GLuint program) {
-  GLint background_control =
-      glGetUniformLocation(program, "background_control");
-  glUniform4ui(background_control, context->bgcnt[0u], context->bgcnt[1u],
-               context->bgcnt[2u], context->bgcnt[3u]);
+void OpenGlBgControlBind(const OpenGlBgControl* context,
+                         const UniformLocations* locations) {
+  glUniform4ui(locations->background_control, context->bgcnt[0u],
+               context->bgcnt[1u], context->bgcnt[2u], context->bgcnt[3u]);
 }
 
 void OpenGlBgControlReload(OpenGlBgControl* context) {

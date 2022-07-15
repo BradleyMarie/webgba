@@ -1,9 +1,8 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BLEND_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BLEND_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
@@ -15,7 +14,8 @@ typedef struct {
 bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
                       GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlBlendBind(const OpenGlBlend* context, GLuint program);
+void OpenGlBlendBind(const OpenGlBlend* context,
+                     const UniformLocations* locations);
 
 void OpenGlBlendReload(OpenGlBlend* context);
 
