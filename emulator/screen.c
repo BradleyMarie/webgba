@@ -25,9 +25,9 @@ struct _Screen {
   GLuint pixels_staging[2u];
   uint8_t pixels_staging_index;
   GLuint upscale_fbo;
-  GLuint upscale_fbo_image;
+  GLint upscale_fbo_image;
   GLuint upscale_pixels;
-  GLuint upscale_pixels_image;
+  GLint upscale_pixels_image;
 };
 
 static GLuint ScreenCreateUpscaleFbo() {

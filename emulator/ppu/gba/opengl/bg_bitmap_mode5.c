@@ -32,14 +32,12 @@ bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
 }
 
 void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
-                             GLuint program) {
+                             const UniformLocations* locations) {
   if (!context->enabled) {
     return;
   }
 
-  GLint bg_mode5 = glGetUniformLocation(program, "bitmap");
-  glUniform1i(bg_mode5, BITMAP_TEXTURE);
-
+  glUniform1i(locations->bitmap, BITMAP_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->current_textures[context->page]);
 }

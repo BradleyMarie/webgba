@@ -218,42 +218,34 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
   return true;
 }
 
-void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program) {
-  GLint object_transformations =
-      glGetUniformLocation(program, "object_transformations");
-  if (object_transformations < 0) {
+void OpenGlObjectsBind(const OpenGlObjects* context,
+                       const UniformLocations* locations) {
+  if (locations->object_transformations < 0) {
     return;
   }
 
-  glUniform1i(object_transformations, OBJECT_TRANSFORMATIONS_TEXTURE);
+  glUniform1i(locations->object_transformations,
+              OBJECT_TRANSFORMATIONS_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_TRANSFORMATIONS_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][0u]);
 
-  GLint object_attributes = glGetUniformLocation(program, "object_attributes");
-  glUniform1i(object_attributes, OBJECT_ATTRIBUTES_TEXTURE);
-
+  glUniform1i(locations->object_attributes, OBJECT_ATTRIBUTES_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_ATTRIBUTES_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][1u]);
 
-  GLint object_rows = glGetUniformLocation(program, "object_rows");
-  glUniform1i(object_rows, OBJECT_ROWS_TEXTURE);
-
+  glUniform1i(locations->object_rows, OBJECT_ROWS_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_ROWS_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][2u]);
 
-  GLint object_columns = glGetUniformLocation(program, "object_columns");
-  glUniform1i(object_columns, OBJECT_COLUMNS_TEXTURE);
-
+  glUniform1i(locations->object_columns, OBJECT_COLUMNS_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_COLUMNS_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index][3u]);
 
-  GLint object_drawn = glGetUniformLocation(program, "object_drawn");
-  glUniform4ui(object_drawn, context->object_drawn[0u],
+  glUniform4ui(locations->object_drawn, context->object_drawn[0u],
                context->object_drawn[1u], context->object_drawn[2u],
                context->object_drawn[3u]);
 
-  GLint object_window = glGetUniformLocation(program, "object_window");
-  glUniform4ui(object_window, context->object_window[0u],
+  glUniform4ui(locations->object_window, context->object_window[0u],
                context->object_window[1u], context->object_window[2u],
                context->object_window[3u]);
 }

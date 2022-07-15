@@ -21,20 +21,17 @@ bool OpenGlTilemapStage(OpenGlTilemap* context, const GbaPpuMemory* memory,
   return context->affine_dirty || context->scrolling_dirty;
 }
 
-void OpenGlTilemapBind(const OpenGlTilemap* context, GLuint program) {
-  GLint affine_tilemap = glGetUniformLocation(program, "affine_tilemap");
-  if (affine_tilemap >= 0) {
-    glUniform1i(affine_tilemap, BG_AFFINE_TILEMAP_TEXTURE);
-
+void OpenGlTilemapBind(const OpenGlTilemap* context,
+                       const UniformLocations* locations) {
+  if (locations->affine_tilemap >= 0) {
+    glUniform1i(locations->affine_tilemap, BG_AFFINE_TILEMAP_TEXTURE);
     glActiveTexture(GL_TEXTURE0 + BG_AFFINE_TILEMAP_TEXTURE);
     glBindTexture(GL_TEXTURE_2D_ARRAY,
                   context->affine_textures[context->affine_texture_index]);
   }
 
-  GLint scrolling_tilemap = glGetUniformLocation(program, "scrolling_tilemap");
-  if (scrolling_tilemap >= 0) {
-    glUniform1i(scrolling_tilemap, BG_SCROLLING_TILEMAP_TEXTURE);
-
+  if (locations->scrolling_tilemap >= 0) {
+    glUniform1i(locations->scrolling_tilemap, BG_SCROLLING_TILEMAP_TEXTURE);
     glActiveTexture(GL_TEXTURE0 + BG_SCROLLING_TILEMAP_TEXTURE);
     glBindTexture(
         GL_TEXTURE_2D_ARRAY,

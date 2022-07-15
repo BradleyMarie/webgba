@@ -40,10 +40,10 @@ bool OpenGlBlendStage(OpenGlBlend* context, const GbaPpuRegisters* registers,
   return context->dirty;
 }
 
-void OpenGlBlendBind(const OpenGlBlend* context, GLuint program) {
-  GLint blend_control_ev = glGetUniformLocation(program, "blend_control_ev");
-  glUniform3ui(blend_control_ev, context->bldcnt_ev[0u], context->bldcnt_ev[1u],
-               context->bldcnt_ev[2u]);
+void OpenGlBlendBind(const OpenGlBlend* context,
+                     const UniformLocations* locations) {
+  glUniform3ui(locations->blend_control_ev, context->bldcnt_ev[0u],
+               context->bldcnt_ev[1u], context->bldcnt_ev[2u]);
 }
 
 void OpenGlBlendReload(OpenGlBlend* context) {

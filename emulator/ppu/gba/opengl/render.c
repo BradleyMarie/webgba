@@ -91,28 +91,29 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
   glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
              GBA_SCREEN_HEIGHT * renderer->render_scale);
 
-  GLuint program = OpenGlProgramsGet(&renderer->programs);
+  GLuint program;
+  const UniformLocations* locations;
+  OpenGlProgramsGet(&renderer->programs, &program, &locations);
   if (!program) {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
   } else {
     glUseProgram(program);
 
-    OpenGlWindowBind(&renderer->window, program);
-    OpenGlBgControlBind(&renderer->bg_control, program);
-    OpenGlBlendBind(&renderer->blend, program);
-    OpenGlBgAffineBind(&renderer->affine, program);
-    OpenGlBgScrollingBind(&renderer->bg_scrolling, program);
-    OpenGlObjectsBind(&renderer->objects, program);
-    OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, program);
-    OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, program);
-    OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, program);
-    OpenGlPaletteBind(&renderer->palette, program);
-    OpenGlTilemapBind(&renderer->tilemap, program);
-    OpenGlTilesBind(&renderer->tiles, program);
+    OpenGlWindowBind(&renderer->window, locations);
+    OpenGlBgControlBind(&renderer->bg_control, locations);
+    OpenGlBlendBind(&renderer->blend, locations);
+    OpenGlBgAffineBind(&renderer->affine, locations);
+    OpenGlBgScrollingBind(&renderer->bg_scrolling, locations);
+    OpenGlObjectsBind(&renderer->objects, locations);
+    OpenGlBgBitmapMode3Bind(&renderer->bg_bitmap_mode3, locations);
+    OpenGlBgBitmapMode4Bind(&renderer->bg_bitmap_mode4, locations);
+    OpenGlBgBitmapMode5Bind(&renderer->bg_bitmap_mode5, locations);
+    OpenGlPaletteBind(&renderer->palette, locations);
+    OpenGlTilemapBind(&renderer->tilemap, locations);
+    OpenGlTilesBind(&renderer->tiles, locations);
 
-    GLint render_scale = glGetUniformLocation(program, "render_scale");
-    glUniform1ui(render_scale, renderer->render_scale);
+    glUniform1ui(locations->render_scale, renderer->render_scale);
 
     glDrawArrays(GL_TRIANGLES, 0, 3u);
   }

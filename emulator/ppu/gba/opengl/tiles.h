@@ -1,10 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILES_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_TILES_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
@@ -20,7 +19,8 @@ bool OpenGlTilesStage(OpenGlTiles* context, const GbaPpuMemory* memory,
                       const GbaPpuRegisters* registers,
                       GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlTilesBind(const OpenGlTiles* context, GLuint program);
+void OpenGlTilesBind(const OpenGlTiles* context,
+                     const UniformLocations* locations);
 
 void OpenGlTilesReload(OpenGlTiles* context, const GbaPpuMemory* memory);
 

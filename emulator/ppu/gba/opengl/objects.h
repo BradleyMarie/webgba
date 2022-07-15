@@ -1,11 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_OBJECTS_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_OBJECTS_
 
-#include <GLES3/gl3.h>
-#include <stdalign.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 #include "emulator/ppu/gba/registers.h"
 #include "emulator/ppu/gba/set.h"
 
@@ -29,7 +27,8 @@ bool OpenGlObjectsStage(OpenGlObjects* context, const GbaPpuMemory* memory,
                         const GbaPpuRegisters* registers,
                         GbaPpuDirtyBits* dirty_bits);
 
-void OpenGlObjectsBind(const OpenGlObjects* context, GLuint program);
+void OpenGlObjectsBind(const OpenGlObjects* context,
+                       const UniformLocations* locations);
 
 void OpenGlObjectsReload(OpenGlObjects* context);
 

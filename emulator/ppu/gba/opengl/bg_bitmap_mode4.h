@@ -1,10 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE4_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE4_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 
 typedef struct {
   GLuint current_textures[2u];
@@ -21,7 +20,7 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
                               GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
-                             GLuint program);
+                             const UniformLocations* locations);
 
 void OpenGlBgBitmapMode4Reload(OpenGlBgBitmapMode4* context,
                                const GbaPpuMemory* memory);

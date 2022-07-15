@@ -361,23 +361,32 @@ bool OpenGlProgramsStage(OpenGlPrograms* context,
                          GbaPpuDirtyBits* dirty_bits) {
   if (registers->dispcnt.forced_blank || registers->dispcnt.mode > 5) {
     context->staging = 0u;
+    context->staging_uniform_locations = NULL;
   } else {
     context->staging =
         context->programs
             [registers->dispcnt.mode][registers->dispcnt.object_enable]
             [registers->dispcnt.bg0_enable][registers->dispcnt.bg1_enable]
             [registers->dispcnt.bg2_enable][registers->dispcnt.bg3_enable];
+    context->staging_uniform_locations =
+        &context->all_uniform_locations
+             [registers->dispcnt.mode][registers->dispcnt.object_enable]
+             [registers->dispcnt.bg0_enable][registers->dispcnt.bg1_enable]
+             [registers->dispcnt.bg2_enable][registers->dispcnt.bg3_enable];
   }
 
   return context->staging != context->program;
 }
 
-GLuint OpenGlProgramsGet(const OpenGlPrograms* context) {
-  return context->program;
+void OpenGlProgramsGet(const OpenGlPrograms* context, GLuint* program,
+                       const UniformLocations** locations) {
+  *program = context->program;
+  *locations = context->uniform_locations;
 }
 
 void OpenGlProgramsReload(OpenGlPrograms* context) {
   context->program = context->staging;
+  context->uniform_locations = context->staging_uniform_locations;
 }
 
 void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
@@ -448,6 +457,25 @@ void OpenGlProgramsReloadContext(OpenGlPrograms* context) {
     }
   }
 
+  for (uint8_t mode = 0u; mode < 6u; mode++) {
+    for (uint8_t obj = 0u; obj < 2u; obj++) {
+      for (uint8_t bg0 = 0u; bg0 < 2u; bg0++) {
+        for (uint8_t bg1 = 0u; bg1 < 2u; bg1++) {
+          for (uint8_t bg2 = 0u; bg2 < 2u; bg2++) {
+            for (uint8_t bg3 = 0u; bg3 < 2u; bg3++) {
+              FillUniformLocations(
+                  context->programs[mode][obj][bg0][bg1][bg2][bg3],
+                  &context
+                       ->all_uniform_locations[mode][obj][bg0][bg1][bg2][bg3]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  context->uniform_locations = NULL;
+  context->staging_uniform_locations = NULL;
   context->program = 0u;
   context->staging = 0u;
 }

@@ -28,14 +28,12 @@ bool OpenGlBgBitmapMode4Stage(OpenGlBgBitmapMode4* context,
 }
 
 void OpenGlBgBitmapMode4Bind(const OpenGlBgBitmapMode4* context,
-                             GLuint program) {
+                             const UniformLocations* locations) {
   if (!context->enabled) {
     return;
   }
 
-  GLint bg_mode4 = glGetUniformLocation(program, "palette_bitmap");
-  glUniform1i(bg_mode4, PALETTE_BITMAP_TEXTURE);
-
+  glUniform1i(locations->palette_bitmap, PALETTE_BITMAP_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + PALETTE_BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->current_textures[context->page]);
 }

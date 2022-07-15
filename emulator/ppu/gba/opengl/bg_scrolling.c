@@ -39,14 +39,13 @@ bool OpenGlBgScrollingStage(OpenGlBgScrolling* context,
   return context->dirty;
 }
 
-void OpenGlBgScrollingBind(const OpenGlBgScrolling* context, GLuint program) {
-  GLint scrolling_coordinates =
-      glGetUniformLocation(program, "scrolling_coordinates");
-  if (scrolling_coordinates < 0) {
+void OpenGlBgScrollingBind(const OpenGlBgScrolling* context,
+                           const UniformLocations* locations) {
+  if (locations->scrolling_coordinates < 0) {
     return;
   }
 
-  glUniform4ui(scrolling_coordinates, context->scrolling[0u],
+  glUniform4ui(locations->scrolling_coordinates, context->scrolling[0u],
                context->scrolling[1u], context->scrolling[2u],
                context->scrolling[3u]);
 }

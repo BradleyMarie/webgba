@@ -1,10 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE3_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE3_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 
 typedef struct {
   uint16_t staging[GBA_SCREEN_HEIGHT * GBA_SCREEN_WIDTH];
@@ -20,7 +19,7 @@ bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
                               GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
-                             GLuint program);
+                             const UniformLocations* locations);
 
 void OpenGlBgBitmapMode3Reload(OpenGlBgBitmapMode3* context);
 

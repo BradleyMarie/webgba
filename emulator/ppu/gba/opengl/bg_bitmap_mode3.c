@@ -31,14 +31,12 @@ bool OpenGlBgBitmapMode3Stage(OpenGlBgBitmapMode3* context,
 }
 
 void OpenGlBgBitmapMode3Bind(const OpenGlBgBitmapMode3* context,
-                             GLuint program) {
+                             const UniformLocations* locations) {
   if (!context->enabled) {
     return;
   }
 
-  GLint bg_mode3 = glGetUniformLocation(program, "bitmap");
-  glUniform1i(bg_mode3, BITMAP_TEXTURE);
-
+  glUniform1i(locations->bitmap, BITMAP_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + BITMAP_TEXTURE);
   glBindTexture(GL_TEXTURE_2D, context->textures[context->texture_index]);
 }

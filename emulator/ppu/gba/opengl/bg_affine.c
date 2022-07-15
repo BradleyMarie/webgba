@@ -40,35 +40,28 @@ bool OpenGlBgAffineStage(OpenGlBgAffine* context,
   return true;
 }
 
-void OpenGlBgAffineBind(const OpenGlBgAffine* context, GLuint program) {
-  GLint affine_start_coordinates0 =
-      glGetUniformLocation(program, "affine_start_coordinates[0]");
-  if (affine_start_coordinates0 >= 0) {
-    glUniform4f(affine_start_coordinates0, context->start_base_scale[0u][0u],
-                context->start_base_scale[0u][1u],
-                context->start_base_scale[0u][2u],
-                context->start_base_scale[0u][3u]);
-    GLint affine_end_coordinates0 =
-        glGetUniformLocation(program, "affine_end_coordinates[0]");
-    glUniform4f(affine_end_coordinates0, context->end_base_scale[0u][0u],
-                context->end_base_scale[0u][1u],
-                context->end_base_scale[0u][2u],
-                context->end_base_scale[0u][3u]);
+void OpenGlBgAffineBind(const OpenGlBgAffine* context,
+                        const UniformLocations* locations) {
+  if (locations->affine_start_coordinates[0u] >= 0) {
+    glUniform4f(
+        locations->affine_start_coordinates[0u],
+        context->start_base_scale[0u][0u], context->start_base_scale[0u][1u],
+        context->start_base_scale[0u][2u], context->start_base_scale[0u][3u]);
+    glUniform4f(
+        locations->affine_end_coordinates[0u], context->end_base_scale[0u][0u],
+        context->end_base_scale[0u][1u], context->end_base_scale[0u][2u],
+        context->end_base_scale[0u][3u]);
   }
 
-  GLint affine_start_coordinates1 =
-      glGetUniformLocation(program, "affine_start_coordinates[1]");
-  if (affine_start_coordinates1 >= 0) {
-    glUniform4f(affine_start_coordinates1, context->start_base_scale[1u][0u],
-                context->start_base_scale[1u][1u],
-                context->start_base_scale[1u][2u],
-                context->start_base_scale[1u][3u]);
-    GLint affine_end_coordinates1 =
-        glGetUniformLocation(program, "affine_end_coordinates[1]");
-    glUniform4f(affine_end_coordinates1, context->end_base_scale[1u][0u],
-                context->end_base_scale[1u][1u],
-                context->end_base_scale[1u][2u],
-                context->end_base_scale[1u][3u]);
+  if (locations->affine_start_coordinates[1u] >= 0) {
+    glUniform4f(
+        locations->affine_start_coordinates[1u],
+        context->start_base_scale[1u][0u], context->start_base_scale[1u][1u],
+        context->start_base_scale[1u][2u], context->start_base_scale[1u][3u]);
+    glUniform4f(
+        locations->affine_end_coordinates[1u], context->end_base_scale[1u][0u],
+        context->end_base_scale[1u][1u], context->end_base_scale[1u][2u],
+        context->end_base_scale[1u][3u]);
   }
 }
 

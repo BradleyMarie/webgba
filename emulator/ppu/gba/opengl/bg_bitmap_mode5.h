@@ -1,10 +1,9 @@
 #ifndef _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE5_
 #define _WEBGBA_EMULATOR_PPU_GBA_OPENGL_BG_BITMAP_MODE5_
 
-#include <GLES3/gl3.h>
-
 #include "emulator/ppu/gba/dirty.h"
 #include "emulator/ppu/gba/memory.h"
+#include "emulator/ppu/gba/opengl/uniform_locations.h"
 
 typedef struct {
   uint16_t staging[GBA_REDUCED_FRAME_HEIGHT * GBA_REDUCED_FRAME_WIDTH];
@@ -22,7 +21,7 @@ bool OpenGlBgBitmapMode5Stage(OpenGlBgBitmapMode5* context,
                               GbaPpuDirtyBits* dirty_bits);
 
 void OpenGlBgBitmapMode5Bind(const OpenGlBgBitmapMode5* context,
-                             GLuint program);
+                             const UniformLocations* locations);
 
 void OpenGlBgBitmapMode5Reload(OpenGlBgBitmapMode5* context);
 
