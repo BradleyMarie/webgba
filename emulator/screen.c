@@ -86,7 +86,7 @@ static void ScreenAllocateRenderbuffer(Screen *screen) {
   for (uint8_t i = 0u; i < 2u; i++) {
     glBindRenderbuffer(GL_RENDERBUFFER, screen->renderbuffers[i]);
     glRenderbufferStorage(GL_RENDERBUFFER, /*internalformat=*/GL_RGB8,
-                          screen->renderbuffer_width,
+                          /*width=*/screen->renderbuffer_width,
                           /*height=*/screen->renderbuffer_height);
 
     glBindFramebuffer(GL_FRAMEBUFFER, screen->intermediate_framebuffers[i]);
@@ -153,7 +153,7 @@ uint8_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
   return screen->subpixels;
 }
 
-GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height,
+GLuint ScreenGetFrameBuffer(Screen *screen, GLsizei width, GLsizei height,
                              bool new_framebuffer) {
   assert(width != 0 && height != 0);
 
@@ -171,7 +171,7 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height,
 
   if (screen->renderbuffer_width == width &&
       screen->renderbuffer_height == height) {
-    return screen->renderbuffers[screen->renderbuffers_index];
+    return screen->intermediate_framebuffers[screen->renderbuffers_index];
   }
 
   if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
@@ -184,7 +184,7 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height,
 
   ScreenAllocateRenderbuffer(screen);
 
-  return screen->renderbuffers[screen->renderbuffers_index];
+  return screen->intermediate_framebuffers[screen->renderbuffers_index];
 }
 
 void ScreenClear(const Screen *screen) {
