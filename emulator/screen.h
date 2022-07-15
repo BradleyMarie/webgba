@@ -2,6 +2,7 @@
 #define _WEBGBA_EMULATOR_SCREEN_
 
 #include <GLES3/gl3.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct _Screen Screen;
@@ -13,7 +14,8 @@ void ScreenAttachFramebuffer(Screen *screen, GLuint framebuffer, GLsizei width,
 
 uint8_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height);
 
-GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height);
+GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height,
+                             bool new_framebuffer);
 
 void ScreenClear(const Screen *screen);
 
