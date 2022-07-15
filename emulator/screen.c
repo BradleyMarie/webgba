@@ -25,7 +25,9 @@ struct _Screen {
   GLuint pixels_staging[2u];
   uint8_t pixels_staging_index;
   GLuint upscale_fbo;
+  GLuint upscale_fbo_image;
   GLuint upscale_pixels;
+  GLuint upscale_pixels_image;
 };
 
 static GLuint ScreenCreateUpscaleFbo() {
@@ -259,8 +261,10 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
                        : screen->upscale_fbo;
   glUseProgram(program);
 
-  GLint texture_location = glGetUniformLocation(program, "image");
-  glUniform1i(texture_location, 0);
+  GLint image = (screen->render_mode == RENDER_MODE_SOFTWARE)
+                    ? screen->upscale_pixels_image
+                    : screen->upscale_fbo_image;
+  glUniform1i(image, 0);
 
   glActiveTexture(GL_TEXTURE0);
   if (screen->render_mode == RENDER_MODE_SOFTWARE) {
@@ -283,7 +287,11 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
 
 void ScreenReloadContext(Screen *screen) {
   screen->upscale_fbo = ScreenCreateUpscaleFbo();
+  screen->upscale_fbo_image =
+      glGetUniformLocation(screen->upscale_fbo, "image");
   screen->upscale_pixels = ScreenCreateUpscalePixels();
+  screen->upscale_pixels_image =
+      glGetUniformLocation(screen->upscale_pixels, "image");
   screen->render_mode = RENDER_MODE_DIRECT;
 
   screen->framebuffer = 0u;
