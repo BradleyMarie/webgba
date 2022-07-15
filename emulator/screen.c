@@ -92,6 +92,12 @@ static void ScreenAllocateRenderbuffer(Screen *screen) {
     glBindFramebuffer(GL_FRAMEBUFFER, screen->intermediate_framebuffers[i]);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                               GL_RENDERBUFFER, screen->renderbuffers[i]);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+      printf("ERROR: Framebuffer not ready %d\n", status);
+      exit(EXIT_FAILURE);
+    }
   }
   glBindRenderbuffer(GL_RENDERBUFFER, 0u);
   glBindFramebuffer(GL_FRAMEBUFFER, 0u);
