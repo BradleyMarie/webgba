@@ -92,12 +92,6 @@ static void ScreenAllocateRenderbuffer(Screen *screen) {
     glBindFramebuffer(GL_FRAMEBUFFER, screen->intermediate_framebuffers[i]);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                               GL_RENDERBUFFER, screen->renderbuffers[i]);
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-      printf("ERROR: Framebuffer not ready %d\n", status);
-      exit(EXIT_FAILURE);
-    }
   }
   glBindRenderbuffer(GL_RENDERBUFFER, 0u);
   glBindFramebuffer(GL_FRAMEBUFFER, 0u);
@@ -217,8 +211,9 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
 
     glDrawArrays(GL_TRIANGLES, 0, 3u);
   } else {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER,
-                      screen->renderbuffers[screen->renderbuffers_index]);
+    glBindFramebuffer(
+        GL_READ_FRAMEBUFFER,
+        screen->intermediate_framebuffers[screen->renderbuffers_index]);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, screen->framebuffer);
     glBlitFramebuffer(
         /*srcX0=*/0, /*srcY0=*/0, /*srcX1=*/screen->renderbuffer_width,
