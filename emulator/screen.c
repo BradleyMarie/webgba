@@ -15,8 +15,9 @@ struct _Screen {
   GLuint framebuffer;
   GLsizei framebuffer_width;
   GLsizei framebuffer_height;
-  GLuint renderbuffer;
-  GLuint renderbuffer_texture;
+  GLuint intermediate_framebuffers[2u];
+  GLuint renderbuffers[2u];
+  uint8_t renderbuffers_index;
   GLsizei renderbuffer_width;
   GLsizei renderbuffer_height;
   uint8_t *subpixels;
@@ -24,64 +25,9 @@ struct _Screen {
   GLsizei pixels_height;
   GLuint pixels_staging[2u];
   uint8_t pixels_staging_index;
-  GLuint upscale_fbo;
-  GLint upscale_fbo_image;
   GLuint upscale_pixels;
   GLint upscale_pixels_image;
 };
-
-static GLuint ScreenCreateUpscaleFbo() {
-  GLuint program = glCreateProgram();
-
-  static const char *vertex_shader_source =
-      "#version 300 es\n"
-      "out highp vec2 texcoord;\n"
-      "void main() {\n"
-      "  highp float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
-      "  highp float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
-      "  texcoord.x = (x + 1.0) * 0.5;\n"
-      "  texcoord.y = (y + 1.0) * 0.5;\n"
-      "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
-      "}\n";
-
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1u, &vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
-  glAttachShader(program, vertex_shader);
-  glDeleteShader(vertex_shader);
-
-  static const char *fragment_shader_source =
-      "#version 300 es\n"
-      "uniform lowp sampler2D image;\n"
-      "in mediump vec2 texcoord;\n"
-      "out lowp vec4 color;"
-      "void main() {\n"
-      "  lowp vec4 texcolor = texture(image, texcoord);\n"
-      "  color = vec4(texcolor.rgb, 1.0);\n"
-      "}\n";
-
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1u, &fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
-  glAttachShader(program, fragment_shader);
-  glDeleteShader(fragment_shader);
-
-  glLinkProgram(program);
-
-  GLint success = 0;
-  glGetProgramiv(program, GL_LINK_STATUS, &success);
-  if (success != GL_TRUE) {
-    printf("ERROR: shader linking failed\n");
-
-    GLchar message[500u];
-    glGetProgramInfoLog(program, 500, NULL, message);
-    printf("%s\n", message);
-
-    exit(EXIT_FAILURE);
-  }
-
-  return program;
-}
 
 static GLuint ScreenCreateUpscalePixels() {
   GLuint program = glCreateProgram();
@@ -137,22 +83,18 @@ static GLuint ScreenCreateUpscalePixels() {
 }
 
 static void ScreenAllocateRenderbuffer(Screen *screen) {
-  glBindTexture(GL_TEXTURE_2D, screen->renderbuffer_texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA,
-               /*width=*/screen->renderbuffer_width,
-               /*height=*/screen->renderbuffer_height,
-               /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_UNSIGNED_BYTE,
-               /*pixels=*/NULL);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  for (uint8_t i = 0u; i < 2u; i++) {
+    glBindRenderbuffer(GL_RENDERBUFFER, screen->renderbuffers[i]);
+    glRenderbufferStorage(GL_RENDERBUFFER, /*internalformat=*/GL_RGB8,
+                          screen->renderbuffer_width,
+                          /*height=*/screen->renderbuffer_height);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, screen->renderbuffer);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                         screen->renderbuffer_texture, /*level=*/0);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, screen->intermediate_framebuffers[i]);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                              GL_RENDERBUFFER, screen->renderbuffers[i]);
+  }
+  glBindRenderbuffer(GL_RENDERBUFFER, 0u);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0u);
 }
 
 static void ScreenAllocateStaging(Screen *screen) {
@@ -211,7 +153,8 @@ uint8_t *ScreenGetPixelBuffer(Screen *screen, GLsizei width, GLsizei height) {
   return screen->subpixels;
 }
 
-GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
+GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height,
+                             bool new_framebuffer) {
   assert(width != 0 && height != 0);
 
   if (screen->framebuffer_width == width &&
@@ -220,16 +163,20 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
     return screen->framebuffer;
   }
 
+  if (new_framebuffer) {
+    screen->renderbuffers_index = (screen->renderbuffers_index + 1u) % 2u;
+  }
+
   screen->render_mode = RENDER_MODE_HARDWARE;
 
   if (screen->renderbuffer_width == width &&
       screen->renderbuffer_height == height) {
-    return screen->renderbuffer;
+    return screen->renderbuffers[screen->renderbuffers_index];
   }
 
   if (screen->renderbuffer_width == 0u && screen->renderbuffer_height == 0u) {
-    glGenFramebuffers(1u, &screen->renderbuffer);
-    glGenTextures(1u, &screen->renderbuffer_texture);
+    glGenFramebuffers(2u, screen->intermediate_framebuffers);
+    glGenRenderbuffers(2u, screen->renderbuffers);
   }
 
   screen->renderbuffer_width = width;
@@ -237,7 +184,7 @@ GLuint ScreenGetRenderBuffer(Screen *screen, GLsizei width, GLsizei height) {
 
   ScreenAllocateRenderbuffer(screen);
 
-  return screen->renderbuffer;
+  return screen->renderbuffers[screen->renderbuffers_index];
 }
 
 void ScreenClear(const Screen *screen) {
@@ -256,18 +203,12 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
     return;
   }
 
-  GLuint program = (screen->render_mode == RENDER_MODE_SOFTWARE)
-                       ? screen->upscale_pixels
-                       : screen->upscale_fbo;
-  glUseProgram(program);
-
-  GLint image = (screen->render_mode == RENDER_MODE_SOFTWARE)
-                    ? screen->upscale_pixels_image
-                    : screen->upscale_fbo_image;
-  glUniform1i(image, 0);
-
-  glActiveTexture(GL_TEXTURE0);
   if (screen->render_mode == RENDER_MODE_SOFTWARE) {
+    glUseProgram(screen->upscale_pixels);
+
+    glUniform1i(screen->upscale_pixels_image, 0);
+    glActiveTexture(GL_TEXTURE0);
+
     glBindTexture(GL_TEXTURE_2D,
                   screen->pixels_staging[screen->pixels_staging_index]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
@@ -275,20 +216,25 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
                     /*height=*/screen->pixels_height,
                     /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_BYTE,
                     /*pixels=*/screen->subpixels);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, screen->framebuffer);
+    glViewport(0, 0, screen->framebuffer_width, screen->framebuffer_height);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3u);
   } else {
-    glBindTexture(GL_TEXTURE_2D, screen->renderbuffer_texture);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER,
+                      screen->renderbuffers[screen->renderbuffers_index]);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, screen->framebuffer);
+    glBlitFramebuffer(
+        /*srcX0=*/0, /*srcY0=*/0, /*srcX1=*/screen->renderbuffer_width,
+        /*srcY1=*/screen->renderbuffer_height,
+        /*dstX0=*/0, /*dstY0=*/0, /*dstX1=*/screen->framebuffer_width,
+        /*dstY1=*/screen->framebuffer_height,
+        /*mask=*/GL_COLOR_BUFFER_BIT, /*filter=*/GL_NEAREST);
   }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, screen->framebuffer);
-  glViewport(0, 0, screen->framebuffer_width, screen->framebuffer_height);
-
-  glDrawArrays(GL_TRIANGLES, 0, 3u);
 }
 
 void ScreenReloadContext(Screen *screen) {
-  screen->upscale_fbo = ScreenCreateUpscaleFbo();
-  screen->upscale_fbo_image =
-      glGetUniformLocation(screen->upscale_fbo, "image");
   screen->upscale_pixels = ScreenCreateUpscalePixels();
   screen->upscale_pixels_image =
       glGetUniformLocation(screen->upscale_pixels, "image");
@@ -299,8 +245,8 @@ void ScreenReloadContext(Screen *screen) {
   screen->framebuffer_height = 0u;
 
   if (screen->renderbuffer_width != 0u && screen->renderbuffer_height != 0u) {
-    glGenFramebuffers(1u, &screen->renderbuffer);
-    glGenTextures(1u, &screen->renderbuffer_texture);
+    glGenFramebuffers(2u, screen->intermediate_framebuffers);
+    glGenRenderbuffers(2u, screen->renderbuffers);
     ScreenAllocateRenderbuffer(screen);
   }
 
@@ -311,10 +257,9 @@ void ScreenReloadContext(Screen *screen) {
 }
 
 void ScreenFree(Screen *screen) {
-  glDeleteProgram(screen->upscale_fbo);
   glDeleteProgram(screen->upscale_pixels);
-  glDeleteFramebuffers(1, &screen->renderbuffer);
-  glDeleteTextures(1u, &screen->renderbuffer_texture);
+  glDeleteFramebuffers(2, screen->intermediate_framebuffers);
+  glDeleteRenderbuffers(2u, screen->renderbuffers);
   glDeleteTextures(2u, screen->pixels_staging);
   free(screen->subpixels);
   free(screen);
