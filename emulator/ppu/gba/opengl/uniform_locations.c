@@ -2,6 +2,8 @@
 
 void FillUniformLocations(GLuint program, UniformLocations* locations) {
   locations->render_scale = glGetUniformLocation(program, "render_scale");
+  locations->row_start = glGetUniformLocation(program, "row_start");
+  locations->num_rows = glGetUniformLocation(program, "num_rows");
   locations->background_control =
       glGetUniformLocation(program, "background_control");
   locations->background_palette =

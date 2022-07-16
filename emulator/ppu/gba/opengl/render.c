@@ -81,14 +81,6 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
 
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-  glEnable(GL_SCISSOR_TEST);
-
-  GLint gl_start_row = GBA_SCREEN_HEIGHT - end;
-  GLint num_rows = end - start;
-  glScissor(0u, gl_start_row * renderer->render_scale,
-            GBA_SCREEN_WIDTH * renderer->render_scale,
-            num_rows * renderer->render_scale);
-
   glViewport(0u, 0u, GBA_SCREEN_WIDTH * renderer->render_scale,
              GBA_SCREEN_HEIGHT * renderer->render_scale);
 
@@ -115,11 +107,11 @@ static void GbaPpuOpenGlRendererRender(GbaPpuOpenGlRenderer* renderer,
     OpenGlTilesBind(&renderer->tiles, locations);
 
     glUniform1ui(locations->render_scale, renderer->render_scale);
+    glUniform1i(locations->row_start, 80 - start);
+    glUniform1i(locations->num_rows, end - start);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3u);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4u);
   }
-
-  glDisable(GL_SCISSOR_TEST);
 }
 
 GbaPpuOpenGlRenderer* GbaPpuOpenGlRendererAllocate() {
