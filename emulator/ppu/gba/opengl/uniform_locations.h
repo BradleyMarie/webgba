@@ -5,6 +5,8 @@
 
 typedef struct {
   GLint render_scale;
+  GLint row_start;
+  GLint num_rows;
   GLint background_control;
   GLint background_palette;
   GLint object_palette;
