@@ -278,16 +278,16 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
   mediump ivec2 canvas_half_size = canvas_size >> 1;
   mediump ivec2 canvas_center = canvas_top - canvas_half_size;
 
-  highp vec2 from_center = samplecoord - vec2(canvas_center);
-  highp mat2 transformation = mat2(texelFetch(
-      object_transformations, ivec2(0, (object.z >> 16u) & 0xFFu), 0));
-  highp vec2 lookup_fp = transformation * from_center;
-
   mediump int sprite_size_x = int(object.w & 0xFFu);
   mediump int sprite_size_y = int((object.w >> 8u) & 0xFFu);
   highp vec2 sprite_half_size = vec2(sprite_size_x >> 1, sprite_size_y >> 1);
 
-  mediump ivec2 lookup = ivec2(lookup_fp + sprite_half_size);
+  highp vec2 from_center = samplecoord - vec2(canvas_center);
+  highp mat2 transformation = mat2(texelFetch(
+      object_transformations, ivec2(0u, (object.z >> 16u) & 0xFFu), 0));
+  highp vec2 lookup_fp = sprite_half_size + transformation * from_center;
+
+  mediump ivec2 lookup = ivec2(lookup_fp);
   if (lookup.x < 0 || lookup.x >= sprite_size_x || lookup.y < 0 ||
       lookup.y >= sprite_size_y) {
     return 0u;
@@ -407,7 +407,7 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, highp vec2 samplecoord,
     color_index += 16u * (tilemap_entry.x >> 12u);
   }
 
-  lowp vec4 color = texelFetch(background_palette, ivec2(color_index, 0), 0);
+  lowp vec4 color = texelFetch(background_palette, ivec2(color_index, 0u), 0);
   return BlendUnitAddBackground(blend_unit, bgcnt, bg, color.rgb);
 }
 
@@ -416,7 +416,8 @@ mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row,
   highp float interp = samplecoord.y - float(screen_row);
   highp vec4 base_scale = mix(affine_start_coordinates[bg - 2u],
                               affine_end_coordinates[bg - 2u], interp);
-  return ivec2(floor(base_scale.xy + base_scale.zw * samplecoord.x));
+  highp vec2 samplepoint = floor(base_scale.xy + base_scale.zw * samplecoord.x);
+  return ivec2(samplepoint);
 }
 
 BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
@@ -463,7 +464,7 @@ BlendUnit AffineBackground(BlendUnit blend_unit, lowp uint screen_row,
     return blend_unit;
   }
 
-  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0u), 0);
   return BlendUnitAddBackground(blend_unit, bgcnt, bg, color.rgb);
 }
 
@@ -495,7 +496,7 @@ BlendUnit PaletteBitmapBackground(BlendUnit blend_unit, lowp uint screen_row,
     return blend_unit;
   }
 
-  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0), 0);
+  lowp vec4 color = texelFetch(background_palette, ivec2(index, 0u), 0);
   return BlendUnitAddBackground(blend_unit, bgcnt, 2u, color.rgb);
 }
 
@@ -555,9 +556,9 @@ void main() {
   bool on_object_window = false;
 
 #if OBJECTS != 0
-  highp uvec4 row_objects = texelFetch(object_rows, ivec2(0, screen_row), 0);
+  highp uvec4 row_objects = texelFetch(object_rows, ivec2(0u, screen_row), 0);
   highp uvec4 column_objects =
-      texelFetch(object_columns, ivec2(0, screen_column), 0);
+      texelFetch(object_columns, ivec2(0u, screen_column), 0);
   highp uvec4 visible_objects = row_objects & column_objects;
 
   highp uvec4 window_objects = visible_objects & object_window;
@@ -565,7 +566,7 @@ void main() {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    highp uvec4 object = texelFetch(object_attributes, ivec2(0, obj), 0);
+    highp uvec4 object = texelFetch(object_attributes, ivec2(0u, obj), 0);
     lowp uint color_index = ObjectColorIndex(samplecoord, object);
     if (color_index != 0u) {
       on_object_window = true;
@@ -583,11 +584,11 @@ void main() {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      highp uvec4 object = texelFetch(object_attributes, ivec2(0, obj), 0);
+      highp uvec4 object = texelFetch(object_attributes, ivec2(0u, obj), 0);
       lowp uint color_index = ObjectColorIndex(samplecoord, object);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
-            object_palette, ivec2((object.z >> 24u) + color_index, 0), 0);
+            object_palette, ivec2((object.z >> 24u) + color_index, 0u), 0);
         blend_unit =
             BlendUnitAddObject(blend_unit, color.rgb, (object.w >> 16u) & 0x3u,
                                bool(object.w & 0x200000u));
