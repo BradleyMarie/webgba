@@ -18,8 +18,6 @@ typedef struct {
   GLint palette_bitmap;
   GLint object_transformations;
   GLint object_attributes;
-  GLint object_rows;
-  GLint object_columns;
   GLint object_window;
   GLint object_drawn;
   GLint scrolling_coordinates;

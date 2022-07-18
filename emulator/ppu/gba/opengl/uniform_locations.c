@@ -21,8 +21,6 @@ void FillUniformLocations(GLuint program, UniformLocations* locations) {
       glGetUniformLocation(program, "object_transformations");
   locations->object_attributes =
       glGetUniformLocation(program, "object_attributes");
-  locations->object_rows = glGetUniformLocation(program, "object_rows");
-  locations->object_columns = glGetUniformLocation(program, "object_columns");
   locations->object_window = glGetUniformLocation(program, "object_window");
   locations->object_drawn = glGetUniformLocation(program, "object_drawn");
   locations->scrolling_coordinates =

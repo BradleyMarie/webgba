@@ -1,6 +1,6 @@
 #include "emulator/ppu/gba/opengl/objects.h"
 
-#include <assert.h>
+#include <stdlib.h>
 
 #include "emulator/ppu/gba/opengl/texture_bindings.h"
 
@@ -230,23 +230,15 @@ void OpenGlObjectsBind(const OpenGlObjects* context,
   glUniform1i(locations->object_transformations,
               OBJECT_TRANSFORMATIONS_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_TRANSFORMATIONS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D,
-                context->textures[context->transformations_texture_index][0u]);
+  glBindTexture(
+      GL_TEXTURE_2D,
+      context->transformation_textures[context->transformations_texture_index]);
 
   glUniform1i(locations->object_attributes, OBJECT_ATTRIBUTES_TEXTURE);
   glActiveTexture(GL_TEXTURE0 + OBJECT_ATTRIBUTES_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D,
-                context->textures[context->attributes_texture_index][1u]);
-
-  glUniform1i(locations->object_rows, OBJECT_ROWS_TEXTURE);
-  glActiveTexture(GL_TEXTURE0 + OBJECT_ROWS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D,
-                context->textures[context->attributes_texture_index][2u]);
-
-  glUniform1i(locations->object_columns, OBJECT_COLUMNS_TEXTURE);
-  glActiveTexture(GL_TEXTURE0 + OBJECT_COLUMNS_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D,
-                context->textures[context->attributes_texture_index][3u]);
+  glBindTexture(
+      GL_TEXTURE_2D,
+      context->attributes_textures[context->attributes_texture_index]);
 
   glUniform4ui(locations->object_drawn, context->object_drawn[0u],
                context->object_drawn[1u], context->object_drawn[2u],
@@ -266,7 +258,8 @@ void OpenGlObjectsReload(OpenGlObjects* context) {
 
     glBindTexture(
         GL_TEXTURE_2D,
-        context->textures[context->transformations_texture_index][0u]);
+        context
+            ->transformation_textures[context->transformations_texture_index]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
                     /*width=*/1u, /*height=*/OAM_NUM_ROTATE_SCALE_GROUPS + 1u,
                     /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
@@ -280,24 +273,21 @@ void OpenGlObjectsReload(OpenGlObjects* context) {
       context->attributes_texture_index = 0u;
     }
 
-    glBindTexture(GL_TEXTURE_2D,
-                  context->textures[context->attributes_texture_index][1u]);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        context->attributes_textures[context->attributes_texture_index]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                    /*width=*/1u, /*height=*/OAM_NUM_OBJECTS,
-                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                    /*pixels=*/context->object_attributes);
-    glBindTexture(GL_TEXTURE_2D,
-                  context->textures[context->attributes_texture_index][2u]);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                    /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT,
-                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                    /*pixels=*/context->object_rows);
-    glBindTexture(GL_TEXTURE_2D,
-                  context->textures[context->attributes_texture_index][3u]);
-    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
-                    /*width=*/1u, /*height=*/GBA_SCREEN_WIDTH,
+                    /*width=*/GBA_SCREEN_WIDTH, /*height=*/1u,
                     /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
                     /*pixels=*/context->object_columns);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/1,
+                    /*width=*/GBA_SCREEN_HEIGHT, /*height=*/1u,
+                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                    /*pixels=*/context->object_rows);
+    glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/2,
+                    /*width=*/OAM_NUM_OBJECTS, /*height=*/1u,
+                    /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                    /*pixels=*/context->object_attributes);
     glBindTexture(GL_TEXTURE_2D, 0u);
 
     for (uint8_t i = 0; i < 4u; i++) {
@@ -312,9 +302,9 @@ void OpenGlObjectsReload(OpenGlObjects* context) {
 }
 
 void OpenGlObjectsReloadContext(OpenGlObjects* context) {
+  glGenTextures(GBA_SCREEN_HEIGHT, context->transformation_textures);
   for (uint8_t i = 0u; i < GBA_SCREEN_HEIGHT; i++) {
-    glGenTextures(4, context->textures[i]);
-    glBindTexture(GL_TEXTURE_2D, context->textures[i][0u]);
+    glBindTexture(GL_TEXTURE_2D, context->transformation_textures[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -323,40 +313,29 @@ void OpenGlObjectsReloadContext(OpenGlObjects* context) {
                  /*width=*/1u, /*height=*/OAM_NUM_ROTATE_SCALE_GROUPS + 1u,
                  /*border=*/0, /*format=*/GL_RGBA, /*type=*/GL_FLOAT,
                  /*pixels=*/context->object_transformations);
-    glBindTexture(GL_TEXTURE_2D, context->textures[i][1u]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-                 /*width=*/1u, /*height=*/OAM_NUM_OBJECTS, /*border=*/0,
-                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                 /*pixels=*/context->object_attributes);
-    glBindTexture(GL_TEXTURE_2D, context->textures[i][2u]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-                 /*width=*/1u, /*height=*/GBA_SCREEN_HEIGHT, /*border=*/0,
-                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                 /*pixels=*/context->object_rows);
-    glBindTexture(GL_TEXTURE_2D, context->textures[i][3u]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
-                 /*width=*/1u, /*height=*/GBA_SCREEN_WIDTH, /*border=*/0,
-                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
-                 /*pixels=*/context->object_columns);
   }
 
   glBindTexture(GL_TEXTURE_2D, 0u);
+
+  void* zeroes = calloc(GBA_SCREEN_WIDTH * 3u, sizeof(uint32_t) * 4u);
+
+  glGenTextures(GBA_SCREEN_HEIGHT, context->attributes_textures);
+  for (uint8_t i = 0u; i < GBA_SCREEN_HEIGHT; i++) {
+    glBindTexture(GL_TEXTURE_2D, context->attributes_textures[i]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, /*level=*/0, /*internal_format=*/GL_RGBA32UI,
+                 /*width=*/GBA_SCREEN_WIDTH, /*height=*/3u, /*border=*/0,
+                 /*format=*/GL_RGBA_INTEGER, /*type=*/GL_UNSIGNED_INT,
+                 /*pixels=*/zeroes);
+  }
+
+  free(zeroes);
 }
 
 void OpenGlObjectsDestroy(OpenGlObjects* context) {
-  for (uint8_t i = 0u; i < GBA_SCREEN_HEIGHT; i++) {
-    glDeleteTextures(4u, context->textures[i]);
-  }
+  glDeleteTextures(GBA_SCREEN_HEIGHT, context->transformation_textures);
+  glDeleteTextures(GBA_SCREEN_HEIGHT, context->attributes_textures);
 }
