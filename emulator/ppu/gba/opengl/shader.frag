@@ -558,9 +558,9 @@ void main() {
 
 #if OBJECTS != 0
   highp uvec4 visible_objects =
-      texelFetch(object_attributes, ivec2(screen_column, 0), 0);
+      texelFetch(object_attributes, ivec2(screen_column, 0u), 0);
   if (any(notEqual(visible_objects, uvec4(0u, 0u, 0u, 0u)))) {
-    visible_objects &= texelFetch(object_attributes, ivec2(screen_row, 1), 0);
+    visible_objects &= texelFetch(object_attributes, ivec2(screen_row, 1u), 0);
   }
 
   highp uvec4 window_objects = visible_objects & object_window;
@@ -568,7 +568,7 @@ void main() {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2), 0);
+    highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2u), 0);
     lowp uint color_index = ObjectColorIndex(samplecoord, object);
     if (color_index != 0u) {
       on_object_window = true;
@@ -586,7 +586,7 @@ void main() {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2), 0);
+      highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2u), 0);
       lowp uint color_index = ObjectColorIndex(samplecoord, object);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
