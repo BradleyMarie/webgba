@@ -6,9 +6,18 @@
 #include "emulator/ppu/gba/registers.h"
 
 typedef struct {
-  GLfloat start_base_scale[GBA_PPU_NUM_AFFINE_BACKGROUNDS][4u];
-  GLfloat end_base_scale[GBA_PPU_NUM_AFFINE_BACKGROUNDS][4u];
-  GLfloat final_base_scale[GBA_PPU_NUM_AFFINE_BACKGROUNDS][4u];
+  float base_row;
+  int32_t bases[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t base_dx[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t base_dy[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  float next_row;
+  int32_t next_bases[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t next_dx[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t next_dy[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t final_bases[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t final_dx[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  int32_t final_dy[GBA_PPU_NUM_AFFINE_BACKGROUNDS][2u];
+  bool final_row;
 } OpenGlBgAffine;
 
 bool OpenGlBgAffineStage(OpenGlBgAffine* context,

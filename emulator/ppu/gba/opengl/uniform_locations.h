@@ -23,8 +23,9 @@ typedef struct {
   GLint object_window;
   GLint object_drawn;
   GLint scrolling_coordinates;
-  GLint affine_start_coordinates[2u];
-  GLint affine_end_coordinates[2u];
+  GLint affine_base_row;
+  GLint affine_base[2u];
+  GLint affine_delta[2u];
   GLint window_and_bounds;
   GLint blend_control_ev;
 } UniformLocations;
