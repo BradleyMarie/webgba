@@ -19,7 +19,8 @@ typedef struct {
 } GbaPpuVramDirtyBits;
 
 typedef struct {
-  bool overall;
+  bool transformations;
+  bool attributes;
 } GbaPpuOamDirtyBits;
 
 typedef struct {
