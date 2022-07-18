@@ -559,7 +559,7 @@ void main() {
 #if OBJECTS != 0
   highp uvec4 visible_objects =
       texelFetch(object_attributes, ivec2(screen_column, 0u), 0);
-  if (any(notEqual(visible_objects, uvec4(0u, 0u, 0u, 0u)))) {
+  if (NotEmpty(visible_objects)) {
     visible_objects &= texelFetch(object_attributes, ivec2(screen_row, 1u), 0);
   }
 
