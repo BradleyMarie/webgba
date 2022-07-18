@@ -27,14 +27,13 @@ void FillUniformLocations(GLuint program, UniformLocations* locations) {
   locations->object_drawn = glGetUniformLocation(program, "object_drawn");
   locations->scrolling_coordinates =
       glGetUniformLocation(program, "scrolling_coordinates");
-  locations->affine_start_coordinates[0u] =
-      glGetUniformLocation(program, "affine_start_coordinates[0]");
-  locations->affine_start_coordinates[1u] =
-      glGetUniformLocation(program, "affine_start_coordinates[1]");
-  locations->affine_end_coordinates[0u] =
-      glGetUniformLocation(program, "affine_end_coordinates[0]");
-  locations->affine_end_coordinates[1u] =
-      glGetUniformLocation(program, "affine_end_coordinates[1]");
+  locations->affine_base_row = glGetUniformLocation(program, "affine_base_row");
+  locations->affine_base[0u] = glGetUniformLocation(program, "affine_base[0]");
+  locations->affine_base[1u] = glGetUniformLocation(program, "affine_base[1]");
+  locations->affine_delta[0u] =
+      glGetUniformLocation(program, "affine_delta[0]");
+  locations->affine_delta[1u] =
+      glGetUniformLocation(program, "affine_delta[1]");
   locations->window_and_bounds =
       glGetUniformLocation(program, "window_and_bounds");
   locations->blend_control_ev =

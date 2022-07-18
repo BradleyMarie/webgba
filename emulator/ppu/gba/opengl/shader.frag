@@ -45,10 +45,13 @@ uniform highp usampler2D object_columns;
 uniform highp uvec4 object_window;
 uniform highp uvec4 object_drawn;
 
-// Background Coordinates
+// Affine Background Coordinates
+uniform highp float affine_base_row;
+uniform highp vec4 affine_base[2];
+uniform highp vec4 affine_delta[2];
+
+// Scrolling Background Coordinates
 uniform highp uvec4 scrolling_coordinates;
-uniform highp vec4 affine_start_coordinates[2];
-uniform highp vec4 affine_end_coordinates[2];
 
 // Window
 uniform highp uvec4 window_and_bounds;
@@ -413,10 +416,10 @@ BlendUnit ScrollingBackground(BlendUnit blend_unit, highp vec2 samplecoord,
 
 mediump ivec2 AffinePixel(lowp uint bg, lowp uint screen_row,
                           highp vec2 samplecoord) {
-  highp float interp = samplecoord.y - float(screen_row);
-  highp vec4 base_scale = mix(affine_start_coordinates[bg - 2u],
-                              affine_end_coordinates[bg - 2u], interp);
-  highp vec2 samplepoint = floor(base_scale.xy + base_scale.zw * samplecoord.x);
+  highp float interp = samplecoord.y - affine_base_row;
+  highp vec2 base = affine_base[bg - 2u].xy + interp * affine_delta[bg - 2u].xy;
+  highp vec2 dx = affine_base[bg - 2u].zw + interp * affine_delta[bg - 2u].zw;
+  highp vec2 samplepoint = floor(base + dx * samplecoord.x);
   return ivec2(samplepoint);
 }
 
