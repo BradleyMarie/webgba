@@ -18,7 +18,8 @@ typedef struct {
   GbaPpuSet columns[GBA_SCREEN_WIDTH];
   GLuint object_drawn[4u];
   GLuint object_window[4u];
-  GLuint textures[GBA_SCREEN_HEIGHT][4u];
+  GLuint transformation_textures[GBA_SCREEN_HEIGHT];
+  GLuint attributes_textures[GBA_SCREEN_HEIGHT];
   uint8_t transformations_texture_index;
   uint8_t attributes_texture_index;
   bool transformations_dirty;

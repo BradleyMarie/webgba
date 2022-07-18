@@ -40,8 +40,6 @@ uniform lowp usampler2D palette_bitmap;
 // Objects
 uniform mediump sampler2D object_transformations;
 uniform highp usampler2D object_attributes;
-uniform highp usampler2D object_rows;
-uniform highp usampler2D object_columns;
 uniform highp uvec4 object_window;
 uniform highp uvec4 object_drawn;
 
@@ -559,17 +557,18 @@ void main() {
   bool on_object_window = false;
 
 #if OBJECTS != 0
-  highp uvec4 row_objects = texelFetch(object_rows, ivec2(0u, screen_row), 0);
-  highp uvec4 column_objects =
-      texelFetch(object_columns, ivec2(0u, screen_column), 0);
-  highp uvec4 visible_objects = row_objects & column_objects;
+  highp uvec4 visible_objects =
+      texelFetch(object_attributes, ivec2(screen_column, 0), 0);
+  if (any(notEqual(visible_objects, uvec4(0u, 0u, 0u, 0u)))) {
+    visible_objects &= texelFetch(object_attributes, ivec2(screen_row, 1), 0);
+  }
 
   highp uvec4 window_objects = visible_objects & object_window;
   while (NotEmpty(window_objects)) {
     lowp uint obj = CountTrailingZeroes(window_objects);
     window_objects = FlipBit(window_objects, obj);
 
-    highp uvec4 object = texelFetch(object_attributes, ivec2(0u, obj), 0);
+    highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2), 0);
     lowp uint color_index = ObjectColorIndex(samplecoord, object);
     if (color_index != 0u) {
       on_object_window = true;
@@ -587,7 +586,7 @@ void main() {
       lowp uint obj = CountTrailingZeroes(drawn_objects);
       drawn_objects = FlipBit(drawn_objects, obj);
 
-      highp uvec4 object = texelFetch(object_attributes, ivec2(0u, obj), 0);
+      highp uvec4 object = texelFetch(object_attributes, ivec2(obj, 2), 0);
       lowp uint color_index = ObjectColorIndex(samplecoord, object);
       if (color_index != 0u) {
         lowp vec4 color = texelFetch(
