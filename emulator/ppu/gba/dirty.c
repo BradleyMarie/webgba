@@ -12,6 +12,7 @@ void GbaPpuDirtyBitsAllDirty(GbaPpuDirtyBits *bits) {
   bits->vram.scrolling_tilemap = true;
   bits->vram.bg_tiles = true;
   bits->vram.obj_tiles = true;
-  bits->oam.overall = true;
+  bits->oam.transformations = true;
+  bits->oam.attributes = true;
   bits->io.obj_mosaic = true;
 }
