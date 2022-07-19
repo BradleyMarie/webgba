@@ -286,7 +286,7 @@ lowp uint ObjectColorIndex(highp vec2 samplecoord, highp uvec4 object) {
   highp vec2 from_center = samplecoord - vec2(canvas_center);
   highp mat2 transformation = mat2(texelFetch(
       object_transformations, ivec2(0u, (object.z >> 16u) & 0xFFu), 0));
-  highp vec2 lookup_fp = sprite_half_size + transformation * from_center;
+  highp vec2 lookup_fp = floor(sprite_half_size + transformation * from_center);
 
   mediump ivec2 lookup = ivec2(lookup_fp);
   if (lookup.x < 0 || lookup.x >= sprite_size_x || lookup.y < 0 ||
