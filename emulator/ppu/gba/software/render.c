@@ -202,12 +202,12 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
   int32_t affine_bg3[2] = {registers->internal.affine[1u].current[0u],
                            registers->internal.affine[1u].current[1u]};
 
+  uint8_t row = GBA_SCREEN_HEIGHT - registers->vcount - 1u;
   if (!registers->dispcnt.forced_blank) {
     for (uint8_t i = 0; i < GBA_SCREEN_WIDTH; i++) {
       GbaPpuSoftwareRendererDrawPixelImpl(
           renderer, memory, registers, dirty_bits, i, affine_bg2, affine_bg3,
-          &renderer
-               ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i]);
+          &renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * i]);
       affine_bg2[0u] += registers->affine[0u].pa;
       affine_bg2[1u] += registers->affine[0u].pc;
       affine_bg3[0u] += registers->affine[1u].pa;
@@ -215,15 +215,9 @@ void GbaPpuSoftwareRendererDrawRow(GbaPpuSoftwareRenderer* renderer,
     }
   } else {
     for (uint8_t i = 0; i < GBA_SCREEN_WIDTH; i++) {
-      renderer
-          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 0u] =
-          0u;
-      renderer
-          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 1u] =
-          0u;
-      renderer
-          ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * i + 2u] =
-          0u;
+      renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * i + 0u] = 0u;
+      renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * i + 1u] = 0u;
+      renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * i + 2u] = 0u;
     }
   }
 }
@@ -236,23 +230,17 @@ void GbaPpuSoftwareRendererDrawPixel(GbaPpuSoftwareRenderer* renderer,
     return;
   }
 
+  uint8_t row = GBA_SCREEN_HEIGHT - registers->vcount - 1u;
   if (!registers->dispcnt.forced_blank) {
     GbaPpuSoftwareRendererDrawPixelImpl(
         renderer, memory, registers, dirty_bits, x,
         registers->internal.affine[0u].current,
         registers->internal.affine[1u].current,
-        &renderer
-             ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x]);
+        &renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * x]);
   } else {
-    renderer
-        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 0u] =
-        0u;
-    renderer
-        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 1u] =
-        0u;
-    renderer
-        ->subpixels[registers->vcount * 3u * GBA_SCREEN_WIDTH + 3u * x + 2u] =
-        0u;
+    renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * x + 0u] = 0u;
+    renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * x + 1u] = 0u;
+    renderer->subpixels[row * 3u * GBA_SCREEN_WIDTH + 3u * x + 2u] = 0u;
   }
 }
 

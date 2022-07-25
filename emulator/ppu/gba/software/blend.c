@@ -50,13 +50,13 @@ static void GbaPpuBlendUnitAdditiveBlendInternal(
   assert(blend_unit->top[0u]);
   assert(blend_unit->bottom[1u]);
 
-  uint_fast16_t top_b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t top_r = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
   uint_fast16_t top_g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
-  uint_fast16_t top_r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
+  uint_fast16_t top_b = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
-  uint_fast16_t bot_b = UInt5To8((blend_unit->layers[1u] & 0x003Eu) >> 1u);
+  uint_fast16_t bot_r = UInt5To8((blend_unit->layers[1u] & 0x003Eu) >> 1u);
   uint_fast16_t bot_g = UInt5To8((blend_unit->layers[1u] & 0x07C0u) >> 6u);
-  uint_fast16_t bot_r = UInt5To8((blend_unit->layers[1u] & 0xF800u) >> 11u);
+  uint_fast16_t bot_b = UInt5To8((blend_unit->layers[1u] & 0xF800u) >> 11u);
 
   uint_fast16_t eva =
       registers->bldalpha.eva > 16u ? 16u : registers->bldalpha.eva;
@@ -108,9 +108,9 @@ static void GbaPpuBlendUnitDarken(const GbaPpuBlendUnit* blend_unit,
     return;
   }
 
-  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
   uint_fast16_t g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
-  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
+  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
   uint_fast16_t evy =
       16u - ((registers->bldy.evy > 16u) ? 16u : registers->bldy.evy);
@@ -134,9 +134,9 @@ static void GbaPpuBlendUnitBrighten(const GbaPpuBlendUnit* blend_unit,
     return;
   }
 
-  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
   uint_fast16_t g = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
-  uint_fast16_t r = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
+  uint_fast16_t b = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 
   uint_fast16_t evy = registers->bldy.evy > 16u ? 16u : registers->bldy.evy;
 
@@ -238,7 +238,7 @@ void GbaPpuBlendUnitBlend(const GbaPpuBlendUnit* blend_unit,
 
 void GbaPpuBlendUnitNoBlend(const GbaPpuBlendUnit* blend_unit,
                             uint8_t rgb[3u]) {
-  rgb[0u] = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
+  rgb[0u] = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
   rgb[1u] = UInt5To8((blend_unit->layers[0u] & 0x07C0u) >> 6u);
-  rgb[2u] = UInt5To8((blend_unit->layers[0u] & 0x003Eu) >> 1u);
+  rgb[2u] = UInt5To8((blend_unit->layers[0u] & 0xF800u) >> 11u);
 }
