@@ -360,9 +360,30 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_RESET_NOTIFICATION,
                       SDL_GL_CONTEXT_RESET_LOSE_CONTEXT);
 
-  g_window = SDL_CreateWindow(
-      "WebGBA", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      /*width=*/240, /*height=*/160, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+  int width, height;
+#ifndef __EMSCRIPTEN__
+  width = 240;
+  height = 160;
+#else
+  emscripten_get_screen_size(&width, &height);
+  if (height > width) {
+    int temp = width;
+    width = height;
+    height = temp;
+  }
+
+  width /= 240;
+  height /= 160;
+
+  int scale = (width < height) ? width : height;
+  width = 240 * scale;
+  height = 160 * scale;
+#endif  // __EMSCRIPTEN__
+
+  g_window =
+      SDL_CreateWindow("WebGBA", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                       /*width=*/width, /*height=*/height,
+                       SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
   if (g_window == NULL) {
     printf("ERROR: Failed to create window (%s)\n", SDL_GetError());
