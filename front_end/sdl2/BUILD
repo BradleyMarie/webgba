@@ -16,6 +16,7 @@ cc_binary(
         ":wasm_build": [
             "--oformat=html",
             "--preload-file=$(location //third_party/varooom:game.gba)@/game.gba",
+            "-s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['$$autoResumeAudioContext']",
             "-s MINIFY_HTML=0",
             "-s INITIAL_MEMORY=134217728",
             "-s MAX_WEBGL_VERSION=2",
