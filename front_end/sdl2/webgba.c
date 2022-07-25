@@ -70,11 +70,11 @@ static void RenderNextFrame() {
             break;
         }
         break;
-      case SDL_CONTROLLERBUTTONDOWN:
-      case SDL_FINGERDOWN:
-      case SDL_JOYBUTTONDOWN:
-      case SDL_KEYDOWN:
-      case SDL_MOUSEBUTTONDOWN:
+      case SDL_CONTROLLERBUTTONUP:
+      case SDL_FINGERUP:
+      case SDL_JOYBUTTONUP:
+      case SDL_KEYUP:
+      case SDL_MOUSEBUTTONUP:
         g_audio_unlocked = true;
         break;
     }
