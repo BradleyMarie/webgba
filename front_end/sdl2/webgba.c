@@ -20,6 +20,8 @@ static Screen *g_screen = NULL;
 static GamePad *g_gamepad = NULL;
 static GbaGraphicsRenderOptions g_render_options = {
     GBA_RENDERER_SCANLINES_SOFTWARE, 1u};
+static int g_width = 0;
+static int g_height = 0;
 
 bool g_accept_raise = true;
 bool g_accept_lower = true;
@@ -55,7 +57,8 @@ static void RenderNextFrame() {
 #endif  // __EMSCRIPTEN__
             return;
           case SDL_WINDOWEVENT_RESIZED:
-            // TODO
+            g_width = event.window.data1;
+            g_height = event.window.data2;
             break;
         }
     }
@@ -230,18 +233,11 @@ static void RenderNextFrame() {
   GamePadToggleRight(g_gamepad, right_pressed);
 
   //
-  // Get screen dimensions
-  //
-
-  int width, height;
-  SDL_GetWindowSize(g_window, &width, &height);
-
-  //
   // Run emulation
   //
 
-  ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/width,
-                          /*height=*/height);
+  ScreenAttachFramebuffer(g_screen, /*fbo=*/0u, /*width=*/g_width,
+                          /*height=*/g_height);
 
   GbaEmulatorStep(g_emulator, g_screen, &g_render_options, RenderAudioSample);
 
@@ -360,29 +356,16 @@ int main(int argc, char *argv[]) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_RESET_NOTIFICATION,
                       SDL_GL_CONTEXT_RESET_LOSE_CONTEXT);
 
-  int width, height;
 #ifndef __EMSCRIPTEN__
-  width = 240;
-  height = 160;
+  g_width = 240;
+  g_height = 160;
 #else
-  emscripten_get_screen_size(&width, &height);
-  if (height > width) {
-    int temp = width;
-    width = height;
-    height = temp;
-  }
-
-  width /= 240;
-  height /= 160;
-
-  int scale = (width < height) ? width : height;
-  width = 240 * scale;
-  height = 160 * scale;
+  emscripten_get_screen_size(&g_width, &g_height);
 #endif  // __EMSCRIPTEN__
 
   g_window =
       SDL_CreateWindow("WebGBA", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                       /*width=*/width, /*height=*/height,
+                       /*width=*/g_width, /*height=*/g_height,
                        SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
   if (g_window == NULL) {
