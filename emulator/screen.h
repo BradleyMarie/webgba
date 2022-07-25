@@ -19,7 +19,7 @@ GLuint ScreenGetFrameBuffer(Screen *screen, GLsizei width, GLsizei height,
 
 void ScreenClear(const Screen *screen);
 
-void ScreenRenderToFramebuffer(const Screen *screen);
+void ScreenRenderToFramebuffer(const Screen *screen, bool lock_aspect_ratio);
 
 void ScreenReloadContext(Screen *screen);
 

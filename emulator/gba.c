@@ -283,7 +283,7 @@ void GbaEmulatorStep(GbaEmulator *emulator, Screen *screen,
     GbaTimersStep(emulator->timers, cycles_elapsed);
     GbaSpuStep(emulator->spu, cycles_elapsed, audio_sample_callback);
     if (GbaPpuStep(emulator->ppu, screen, cycles_elapsed)) {
-      ScreenRenderToFramebuffer(screen);
+      ScreenRenderToFramebuffer(screen, true);
       break;
     }
   }

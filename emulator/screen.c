@@ -27,6 +27,7 @@ struct _Screen {
   uint8_t pixels_staging_index;
   GLuint upscale_pixels;
   GLint upscale_pixels_image;
+  GLint upscale_pixels_texscale;
 };
 
 static GLuint ScreenCreateUpscalePixels() {
@@ -34,12 +35,13 @@ static GLuint ScreenCreateUpscalePixels() {
 
   static const char *vertex_shader_source =
       "#version 300 es\n"
+      "uniform highp vec2 texscale;"
       "out highp vec2 texcoord;\n"
       "void main() {\n"
       "  highp float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
       "  highp float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
-      "  texcoord.x = (x + 1.0) * 0.5;\n"
-      "  texcoord.y = (y + 1.0) * 0.5;\n"
+      "  texcoord.x = x * texscale.x;\n"
+      "  texcoord.y = y * texscale.y;\n"
       "  gl_Position = vec4(x, y, 0.0, 1.0);\n"
       "}\n";
 
@@ -55,7 +57,12 @@ static GLuint ScreenCreateUpscalePixels() {
       "in mediump vec2 texcoord;\n"
       "out lowp vec4 color;"
       "void main() {\n"
-      "  color = texture(image, texcoord);\n"
+      "  if (any(lessThan(texcoord, vec2(-0.5, -0.5))) ||"
+      "      any(greaterThan(texcoord, vec2(0.5, 0.5)))) {"
+      "    color = vec4(0.0, 0.0, 0.0, 1.0);"
+      "    return;"
+      "  }"
+      "  color = texture(image, texcoord + vec2(0.5, 0.5));\n"
       "}\n";
 
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -122,6 +129,29 @@ static void ScreenAllocateStaging(Screen *screen) {
                  /*pixels=*/screen->subpixels);
   }
   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+static void ScreenComputeTexScale(bool lock_aspect_ratio,
+                                  GLsizei renderbuffer_x,
+                                  GLsizei renderbuffer_y, GLsizei framebuffer_x,
+                                  GLsizei framebuffer_y, GLfloat texscale[2u]) {
+  texscale[0u] = 0.5;
+  texscale[1u] = 0.5;
+
+  if (!lock_aspect_ratio) {
+    return;
+  }
+
+  double framebuffer_aspect_ratio =
+      (double)framebuffer_x / (double)framebuffer_y;
+  double renderbuffer_aspect_ratio =
+      (double)renderbuffer_x / (double)renderbuffer_y;
+
+  if (framebuffer_aspect_ratio > renderbuffer_aspect_ratio) {
+    texscale[0u] *= framebuffer_aspect_ratio / renderbuffer_aspect_ratio;
+  } else if (framebuffer_aspect_ratio < renderbuffer_aspect_ratio) {
+    texscale[1u] *= renderbuffer_aspect_ratio / framebuffer_aspect_ratio;
+  }
 }
 
 Screen *ScreenAllocate() { return calloc(1u, sizeof(Screen)); }
@@ -197,7 +227,7 @@ void ScreenClear(const Screen *screen) {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void ScreenRenderToFramebuffer(const Screen *screen) {
+void ScreenRenderToFramebuffer(const Screen *screen, bool lock_aspect_ratio) {
   if (screen->render_mode == RENDER_MODE_DIRECT ||
       screen->framebuffer_height == 0u || screen->framebuffer_width == 0u) {
     return;
@@ -209,6 +239,12 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
   glActiveTexture(GL_TEXTURE0);
 
   if (screen->render_mode == RENDER_MODE_SOFTWARE) {
+    GLfloat texscale[2u];
+    ScreenComputeTexScale(lock_aspect_ratio, screen->pixels_width,
+                          screen->pixels_height, screen->framebuffer_width,
+                          screen->framebuffer_height, texscale);
+    glUniform2f(screen->upscale_pixels_texscale, texscale[0u], texscale[1u]);
+
     glBindTexture(GL_TEXTURE_2D,
                   screen->pixels_staging[screen->pixels_staging_index]);
     glTexSubImage2D(GL_TEXTURE_2D, /*level=*/0, /*xoffset=*/0, /*yoffset=*/0,
@@ -217,6 +253,13 @@ void ScreenRenderToFramebuffer(const Screen *screen) {
                     /*format=*/GL_RGB, /*type=*/GL_UNSIGNED_BYTE,
                     /*pixels=*/screen->subpixels);
   } else {
+    GLfloat texscale[2u];
+    ScreenComputeTexScale(lock_aspect_ratio, screen->renderbuffer_width,
+                          screen->renderbuffer_height,
+                          screen->framebuffer_width, screen->framebuffer_height,
+                          texscale);
+    glUniform2f(screen->upscale_pixels_texscale, texscale[0u], texscale[1u]);
+
     glBindTexture(GL_TEXTURE_2D,
                   screen->intermediate_textures[screen->intermediate_index]);
   }
@@ -231,6 +274,8 @@ void ScreenReloadContext(Screen *screen) {
   screen->upscale_pixels = ScreenCreateUpscalePixels();
   screen->upscale_pixels_image =
       glGetUniformLocation(screen->upscale_pixels, "image");
+  screen->upscale_pixels_texscale =
+      glGetUniformLocation(screen->upscale_pixels, "texscale");
   screen->render_mode = RENDER_MODE_DIRECT;
 
   screen->framebuffer = 0u;
