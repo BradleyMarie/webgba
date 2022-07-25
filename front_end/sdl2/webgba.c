@@ -69,12 +69,12 @@ static void RenderNextFrame() {
             g_height = event.window.data2;
             break;
         }
+        break;
+      case SDL_CONTROLLERBUTTONDOWN:
       case SDL_FINGERDOWN:
-      case SDL_MOUSEBUTTONDOWN:
-      case SDL_JOYAXISMOTION:
-      case SDL_JOYBALLMOTION:
-      case SDL_JOYHATMOTION:
       case SDL_JOYBUTTONDOWN:
+      case SDL_KEYDOWN:
+      case SDL_MOUSEBUTTONDOWN:
         g_audio_unlocked = true;
         break;
     }
