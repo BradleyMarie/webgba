@@ -5,10 +5,10 @@ cc_library(
 	hdrs = glob(["include/*.h"]),
 	includes = ["include", "src"],
     copts = [
-        "-pthread"
+        #"-pthread"
     ],
     linkopts = [
-        "-pthread",
+        #"-pthread",
     ],
 	defines = [
         "HAVE_SDL_MISC",
@@ -25,7 +25,7 @@ cc_library(
         "SDL_FILESYSTEM_EMSCRIPTEN",
         "SDL_JOYSTICK_EMSCRIPTEN",
         "SDL_POWER_EMSCRIPTEN",
-        "SDL_THREAD_PTHREAD",
+        "SDL_THREADS_DISABLED",
         "SDL_TIMER_UNIX",
         "SDL_LOADSO_DLOPEN",
         "SDL_VIDEO_DRIVER_EMSCRIPTEN",
@@ -101,10 +101,10 @@ cc_library(
 		"src/stdlib/*.h",
 		"src/thread/*.c",
 		"src/thread/*.h",
-		# "src/thread/generic/*.c",
+		"src/thread/generic/*.c",
 		"src/thread/generic/*.h",
-		"src/thread/pthread/*.c",
-		"src/thread/pthread/*.h",
+		# "src/thread/pthread/*.c",
+		# "src/thread/pthread/*.h",
 		"src/timer/*.c",
 		"src/timer/*.h",
 		"src/timer/unix/*.c",

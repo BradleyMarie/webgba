@@ -162,16 +162,7 @@ int Emscripten_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rec
     }
 
     /* Send the data to the display */
-
-    if (emscripten_is_main_runtime_thread()) {
-        Emscripten_UpdateWindowFramebufferWorker(surface);
-    } else {
-        emscripten_sync_run_in_main_runtime_thread(
-            EM_FUNC_SIG_VI,
-            Emscripten_UpdateWindowFramebufferWorker,
-            (uint32_t)surface
-        );
-    }
+    Emscripten_UpdateWindowFramebufferWorker(surface);
 
     if (emscripten_has_asyncify() && SDL_GetHintBoolean(SDL_HINT_EMSCRIPTEN_ASYNCIFY, SDL_TRUE)) {
         /* give back control to browser for screen refresh */

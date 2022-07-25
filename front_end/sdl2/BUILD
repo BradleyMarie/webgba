@@ -20,7 +20,6 @@ cc_binary(
             "-s INITIAL_MEMORY=134217728",
             "-s MAX_WEBGL_VERSION=2",
             "-s MIN_WEBGL_VERSION=2",
-            "-s USE_PTHREADS",
         ],
     }),
     deps = select({

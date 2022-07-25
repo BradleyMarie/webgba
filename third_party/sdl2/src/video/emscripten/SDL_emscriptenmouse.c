@@ -129,25 +129,13 @@ Emscripten_CreateCursor(SDL_Surface* surface, int hot_x, int hot_y)
         return NULL;
     }
 
-    if (emscripten_is_main_runtime_thread()) {
-        cursor_url = Emscripten_GetCursorUrl(
-            surface->w,
-            surface->h,
-            hot_x,
-            hot_y,
-            conv_surf->pixels
-        );
-    } else {
-        cursor_url = (const char *)emscripten_sync_run_in_main_runtime_thread(
-            EM_FUNC_SIG_IIIIIII,
-            Emscripten_GetCursorUrl,
-            surface->w,
-            surface->h,
-            hot_x,
-            hot_y,
-            conv_surf->pixels
-        );
-    }
+    cursor_url = Emscripten_GetCursorUrl(
+        surface->w,
+        surface->h,
+        hot_x,
+        hot_y,
+        conv_surf->pixels
+    );
 
     SDL_FreeSurface(conv_surf);
 
