@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
       /*width=*/240, /*height=*/160, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
   if (g_window == NULL) {
-    printf("ERROR: Failed to create window\n");
+    printf("ERROR: Failed to create window (%s)\n", SDL_GetError());
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
     SDL_Quit();
@@ -375,7 +375,7 @@ int main(int argc, char *argv[]) {
 
   g_glcontext = SDL_GL_CreateContext(g_window);
   if (g_glcontext == NULL) {
-    printf("ERROR: Failed to create GL context\n");
+    printf("ERROR: Failed to create GL context (%s)\n", SDL_GetError());
     SDL_DestroyWindow(g_window);
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
@@ -403,7 +403,7 @@ int main(int argc, char *argv[]) {
       SDL_OpenAudioDevice(/*device=*/NULL, /*iscapture=*/0, &want, &have,
                           /*allowed_changes=*/0);
   if (g_audiodevice == 0) {
-    printf("ERROR: Failed to open audio device\n");
+    printf("ERROR: Failed to open audio device (%s)\n", SDL_GetError());
     SDL_GL_DeleteContext(g_glcontext);
     SDL_DestroyWindow(g_window);
     GbaEmulatorFree(g_emulator);
