@@ -23,6 +23,12 @@ static GbaGraphicsRenderOptions g_render_options = {
 static int g_width = 0;
 static int g_height = 0;
 
+#ifdef __EMSCRIPTEN__
+bool g_audio_unlocked = false;
+#else
+bool g_audio_unlocked = true;
+#endif  // __EMSCRIPTEN__
+
 bool g_accept_raise = true;
 bool g_accept_lower = true;
 bool g_accept_mode_change = true;
@@ -30,8 +36,10 @@ bool g_accept_reset = true;
 bool g_main_loop_running = true;
 
 static void RenderAudioSample(int16_t left, int16_t right) {
-  int16_t buffer[2] = {left, right};
-  SDL_QueueAudio(g_audiodevice, buffer, sizeof(buffer));
+  if (g_audio_unlocked) {
+    int16_t buffer[2] = {left, right};
+    SDL_QueueAudio(g_audiodevice, buffer, sizeof(buffer));
+  }
 }
 
 static void RenderNextFrame() {
@@ -61,6 +69,14 @@ static void RenderNextFrame() {
             g_height = event.window.data2;
             break;
         }
+      case SDL_FINGERDOWN:
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_JOYAXISMOTION:
+      case SDL_JOYBALLMOTION:
+      case SDL_JOYHATMOTION:
+      case SDL_JOYBUTTONDOWN:
+        g_audio_unlocked = true;
+        break;
     }
   }
 
