@@ -56,6 +56,11 @@ static void RenderNextFrame() {
         emscripten_cancel_main_loop();
 #endif  // __EMSCRIPTEN__
         return;
+      case SDL_FINGERUP:
+      case SDL_KEYUP:
+      case SDL_MOUSEBUTTONUP:
+        g_audio_unlocked = true;
+        break;
       case SDL_WINDOWEVENT:
         switch (event.window.event) {
           case SDL_WINDOWEVENT_CLOSE:
@@ -69,13 +74,6 @@ static void RenderNextFrame() {
             g_height = event.window.data2;
             break;
         }
-        break;
-      case SDL_CONTROLLERBUTTONUP:
-      case SDL_FINGERUP:
-      case SDL_JOYBUTTONUP:
-      case SDL_KEYUP:
-      case SDL_MOUSEBUTTONUP:
-        g_audio_unlocked = true;
         break;
     }
   }
