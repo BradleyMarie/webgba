@@ -27,7 +27,7 @@
         var Module = {
             canvas: (function () {
                 var canvas = document.getElementById('canvas');
-                canvas.getContext('2d', { alpha: false });
+                canvas.getContext('webgl2', { alpha: false });
 
                 // TODO: Make this robust
                 canvas.addEventListener("webglcontextlost", function (e) {
