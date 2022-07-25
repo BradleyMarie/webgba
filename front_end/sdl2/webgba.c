@@ -1,6 +1,13 @@
-#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+
+#include "third_party/sdl2/include/SDL.h"
+#else
+#include <SDL2/SDL.h>
+#endif  // __EMSCRIPTEN__
 
 #include "emulator/gba.h"
 
@@ -18,13 +25,14 @@ bool g_accept_raise = true;
 bool g_accept_lower = true;
 bool g_accept_mode_change = true;
 bool g_accept_reset = true;
+bool g_main_loop_running = true;
 
 static void RenderAudioSample(int16_t left, int16_t right) {
   int16_t buffer[2] = {left, right};
   SDL_QueueAudio(g_audiodevice, buffer, sizeof(buffer));
 }
 
-static bool RenderNextFrame() {
+static void RenderNextFrame() {
   //
   // Check for events
   //
@@ -33,11 +41,13 @@ static bool RenderNextFrame() {
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
       case SDL_QUIT:
-        return false;
+        g_main_loop_running = false;
+        return;
       case SDL_WINDOWEVENT:
         switch (event.window.event) {
           case SDL_WINDOWEVENT_CLOSE:
-            return false;
+            g_main_loop_running = false;
+            return;
           case SDL_WINDOWEVENT_RESIZED:
             // TODO
             break;
@@ -234,8 +244,6 @@ static bool RenderNextFrame() {
   //
 
   SDL_GL_SwapWindow(g_window);
-
-  return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -418,10 +426,14 @@ int main(int argc, char *argv[]) {
   // Run
   //
 
-  bool running = true;
-  while (running) {
-    running = RenderNextFrame();
+#if __EMSCRIPTEN__
+  emscripten_set_main_loop(RenderNextFrame, /*fps=*/0,
+                           /*simulate_infinite_loop=*/true);
+#else
+  while (g_main_loop_running) {
+    RenderNextFrame();
   }
+#endif  // __EMSCRIPTEN__
 
   //
   // Cleanup

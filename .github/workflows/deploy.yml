@@ -18,13 +18,20 @@ jobs:
       run: bazel test -c opt emulator/...
 
     - name: Build
-      run: bazel build -c opt front_end/sdl:webgba_wasm
+      run: |
+        bazel build -c opt front_end/sdl:webgba_wasm
+        bazel build -c opt front_end/sdl2:webgba_wasm
 
     - name: Prepare Output
       run: |
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.data front_end/pwa/
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.js front_end/pwa/
         cp bazel-bin/front_end/sdl/webgba_wasm/webgba.wasm front_end/pwa/
+        mkdir -p front_end/pwa/sdl2
+        cp bazel-bin/front_end/sdl2/webgba_wasm/webgba.data front_end/pwa/sdl2
+        cp bazel-bin/front_end/sdl2/webgba_wasm/webgba.html front_end/pwa/sdl2
+        cp bazel-bin/front_end/sdl2/webgba_wasm/webgba.js front_end/pwa/sdl2
+        cp bazel-bin/front_end/sdl2/webgba_wasm/webgba.wasm front_end/pwa/sdl2
         cp third_party/totushi/generated/favicon.ico front_end/pwa/
         cp third_party/totushi/magenta.png front_end/pwa/
 
