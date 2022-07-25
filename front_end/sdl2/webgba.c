@@ -253,10 +253,12 @@ static void RenderNextFrame() {
 }
 
 int main(int argc, char *argv[]) {
+#ifndef __EMSCRIPTEN__
   if (argc < 2) {
     printf("usage: webgba <game>");
     return EXIT_SUCCESS;
   }
+#endif  // __EMSCRIPTEN__
 
   //
   // Initialize SDL
@@ -264,7 +266,7 @@ int main(int argc, char *argv[]) {
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
                SDL_INIT_EVENTS) < 0) {
-    fprintf(stderr, "ERROR: Failed to initialize SDL\n");
+    printf("ERROR: Failed to initialize SDL\n");
     return EXIT_FAILURE;
   }
 
@@ -272,23 +274,28 @@ int main(int argc, char *argv[]) {
   // Load Game
   //
 
+#ifndef __EMSCRIPTEN__
+  SDL_RWops *file = SDL_RWFromFile("/game.gba", "rb");
+#else
   SDL_RWops *file = SDL_RWFromFile(argv[1], "rb");
+#endif  // __EMSCRIPTEN__
+
   if (file == NULL) {
-    printf("Failed to load game file\n");
+    printf("ERROR: Failed to load game file\n");
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
   Sint64 size = SDL_RWsize(file);
   if (size < 0) {
-    printf("Failed to get game file size\n");
+    printf("ERROR: Failed to get game file size\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
   if ((uint64_t)size > SIZE_MAX) {
-    printf("Out of memory\n");
+    printf("ERROR: Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
@@ -296,7 +303,7 @@ int main(int argc, char *argv[]) {
 
   void *game = SDL_malloc((size_t)size);
   if (!game) {
-    printf("Out of memory\n");
+    printf("ERROR: Out of memory\n");
     SDL_RWclose(file);
     SDL_Quit();
     return EXIT_FAILURE;
@@ -306,7 +313,7 @@ int main(int argc, char *argv[]) {
   SDL_RWclose(file);
 
   if (objects_read != 1) {
-    printf("Failed to read game file\n");
+    printf("ERROR: Failed to read game file\n");
     SDL_free(game);
     SDL_Quit();
     return EXIT_FAILURE;
@@ -320,7 +327,7 @@ int main(int argc, char *argv[]) {
   SDL_free(game);
 
   if (!success) {
-    printf("Out of memory\n");
+    printf("ERROR: Out of memory\n");
     SDL_Quit();
     return EXIT_FAILURE;
   }
@@ -359,7 +366,7 @@ int main(int argc, char *argv[]) {
       /*width=*/240, /*height=*/160, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 
   if (g_window == NULL) {
-    printf("Failed to create window\n");
+    printf("ERROR: Failed to create window\n");
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
     SDL_Quit();
@@ -368,7 +375,7 @@ int main(int argc, char *argv[]) {
 
   g_glcontext = SDL_GL_CreateContext(g_window);
   if (g_glcontext == NULL) {
-    printf("Failed to create GL context\n");
+    printf("ERROR: Failed to create GL context\n");
     SDL_DestroyWindow(g_window);
     GbaEmulatorFree(g_emulator);
     GamePadFree(g_gamepad);
@@ -396,7 +403,7 @@ int main(int argc, char *argv[]) {
       SDL_OpenAudioDevice(/*device=*/NULL, /*iscapture=*/0, &want, &have,
                           /*allowed_changes=*/0);
   if (g_audiodevice == 0) {
-    printf("Failed to open audio device\n");
+    printf("ERROR: Failed to open audio device\n");
     SDL_GL_DeleteContext(g_glcontext);
     SDL_DestroyWindow(g_window);
     GbaEmulatorFree(g_emulator);
