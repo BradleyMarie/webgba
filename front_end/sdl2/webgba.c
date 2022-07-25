@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
   // Load Game
   //
 
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
   SDL_RWops *file = SDL_RWFromFile("/game.gba", "rb");
 #else
   SDL_RWops *file = SDL_RWFromFile(argv[1], "rb");
