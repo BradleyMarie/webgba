@@ -136,6 +136,7 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
                                Arm7TdmiInterruptLineFree);
   if (*rst == NULL) {
     free(*cpu);
+    return false;
   }
 
   *fiq = InterruptLineAllocate(*cpu, Arm7TdmiSetLevelFiq,
@@ -143,6 +144,7 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
   if (*rst == NULL) {
     InterruptLineFree(*rst);
     free(*cpu);
+    return false;
   }
 
   *irq = InterruptLineAllocate(*cpu, Arm7TdmiSetLevelIrq,
@@ -151,9 +153,10 @@ bool Arm7TdmiAllocate(Arm7Tdmi** cpu, InterruptLine** rst, InterruptLine** fiq,
     InterruptLineFree(*fiq);
     InterruptLineFree(*rst);
     free(*cpu);
+    return false;
   }
 
-  return cpu;
+  return true;
 }
 
 uint32_t Arm7TdmiStep(Arm7Tdmi* cpu, Memory* memory, uint32_t num_cycles) {
